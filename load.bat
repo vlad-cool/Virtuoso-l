@@ -1,0 +1,1 @@
+scp app.py main.kv vlad@192.168.2.5:project/
