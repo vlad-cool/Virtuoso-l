@@ -1,3 +1,6 @@
+#copy with 'scp install_kivy.sh "user"@192.168.2.5:project' (mkdir project first) 
+#run with 'sudo bash install_kivy.sh'
+
 sudo apt -y update
 sudo apt -y upgrade
 sudo apt -y install python3-pip
