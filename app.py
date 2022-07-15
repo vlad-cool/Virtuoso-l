@@ -11,6 +11,9 @@ Config.set('graphics', 'height', '480')
 Config.set('graphics', 'borderless', '0')
 
 Config.set('kivy', 'exit_on_escape', '1') #Debug
+#Config.set('kivy', 'show_fps', '1')
+
+Config.set('modules', 'monitor', '')
 
 Config.write()
 
