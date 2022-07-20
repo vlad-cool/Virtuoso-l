@@ -36,7 +36,7 @@ sudo apt -y update
 sudo apt -y upgrade
 
 pip3 install kivy
-
+pip3 install pyinstaller
 #sudo apt -y autoremove
 
 ###sudo apt -y install pkg-config libgl1-mesa-dev libgles2-mesa-dev \
