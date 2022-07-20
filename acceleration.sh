@@ -15,6 +15,7 @@ apt -y install libavfilter-dev
 apt -y install libavdevice-dev
 apt -y install clang lldb lld
 apt -y install libxcb-shm0-dev
+apt -y install xinit xorg
 
 pip3 install meson
 pip3 install setuptools
@@ -62,3 +63,15 @@ cd mesa-22.1.3
 
 meson build/
 ninja -C build/
+
+apt -y install mesa-utils
+
+
+
+
+
+
+
+################
+
+################
