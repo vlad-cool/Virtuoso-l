@@ -1,7 +1,9 @@
-sudo dd if=/dev/zero of=/swap_file bs=256MB count=8
-sudo chmod 600 /swap_file
-sudo mkswap /swap_file
-sudo chmod 600 /swap_file
-sudo swapon /swap_file
-
+#creates swap files (8x256MB=2GB)
+#run with 'sudo bash swap.sh'
 #add '/swap_file swap swap defaults 0 0' to /etc/fstab
+
+dd if=/dev/zero of=/swap_file bs=256MB count=8
+chmod 600 /swap_file
+mkswap /swap_file
+chmod 600 /swap_file
+swapon /swap_file

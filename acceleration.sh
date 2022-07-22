@@ -16,6 +16,7 @@ apt -y install libavdevice-dev
 apt -y install clang lldb lld
 apt -y install libxcb-shm0-dev
 apt -y install xinit xorg
+apt -y install mesa-utils
 
 pip3 install meson
 pip3 install setuptools
@@ -23,6 +24,14 @@ pip3 install Mako
 . ~/.profile
 
 #sudo apt install gcc-mingw-w64 #May work without this line
+####
+########git clone git://anongit.freedesktop.org/mesa/drm
+########cd drm
+########./configure
+########make
+########make install
+########cd
+####
 
 wget https://dri.freedesktop.org/libdrm/libdrm-2.4.112.tar.xz
 tar xf libdrm-2.4.112.tar.xz
@@ -34,16 +43,16 @@ ninja -C build/ install
 ##
 cd
 
-git clone https://gitlab.freedesktop.org/wayland/wayland
-cd waylad
-meson build/ -Ddocumentation=false
-sudo -E ninja -C build/ install
-cd
+###git clone https://gitlab.freedesktop.org/wayland/wayland
+###cd waylad
+###meson build/ -Ddocumentation=false
+###sudo -E ninja -C build/ install
+###cd
 
-https://github.com/wayland-project/wayland-protocols.git
-cd wayland-protocols
-meson build/
-cd
+###https://github.com/wayland-project/wayland-protocols.git
+###cd wayland-protocols
+###meson build/
+###cd
 
 #git clone https://github.com/wayland-project/wayland-protocols.git
 #cd wayland-protocols
@@ -56,6 +65,16 @@ cd cmake-3.23.2
 make
 make install
 cd
+
+git clone https://github.com/llvm/llvm-project.git
+cd llvm-project
+cmake -S llvm -B build -G Ninja
+cmake --build build
+cd
+
+
+####git clone https://github.com/mesa3d/mesa.git
+####cd mesa
 wget https://archive.mesa3d.org//mesa-22.1.3.tar.xz
 tar xf mesa-22.1.3.tar.xz
 rm mesa-22.1.3.tar.xz
@@ -64,7 +83,6 @@ cd mesa-22.1.3
 meson build/
 ninja -C build/
 
-apt -y install mesa-utils
 
 
 
@@ -75,3 +93,12 @@ apt -y install mesa-utils
 ################
 
 ################
+
+
+
+
+
+
+
+
+##################################################### 
