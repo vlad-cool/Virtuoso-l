@@ -1,8 +1,8 @@
 #run this script with 'sudo -E bash acceleration.sh'
 
-g++ zlib1g-dev libexpat1-dev libdrm-dev flex bison libx11-dev libxext-dev libxdamage-dev \
-libxcb-glx0-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-dri3-dev libxcb-present-dev libxshmfence-dev \
-libxxf86vm-dev libxrandr-dev x11proto-gl-dev x11proto-dri2-dev gettext pkg-config
+#apt -y g++ zlib1g-dev libexpat1-dev libdrm-dev flex bison libx11-dev libxext-dev libxdamage-dev \
+#libxcb-glx0-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-dri3-dev libxcb-present-dev libxshmfence-dev \
+#libxxf86vm-dev bn-dev x11proto-gl-dev x11proto-dri2-dev gettext pkg-config
 
 apt -y update
 apt -y upgrade
