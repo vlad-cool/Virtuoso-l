@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 
-from re import L
 import kivy
 from kivy.core.window import Window
 from kivy.app import App
