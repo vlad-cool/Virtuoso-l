@@ -26,10 +26,8 @@ class KivyApp(App):
     def build(self):
         return Builder.load_file('main.kv')
 
-    def on_start(self, **kwargs):
-        print("Loaded")
+    def on_start(self):
         app = App.get_running_app()
-        print(app.root.ids)
         app.root.ids[f"weapon_{weapon}"].state = "down"
 
 if __name__ == "__main__":
