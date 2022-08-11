@@ -1,18 +1,18 @@
-#!/usr/bin/env python3 
+#!/usr/bin/env python3
 import kivy
 from kivy.core.window import Window
-from kivy.app import App
 from kivy.lang import Builder
+from kivy.app import App
 import pickle
 import os
 
 global app_config #app config dictionaty
 
-with (open("config", "rb")) as f: #loading app config
-    try:
+try:
+    with (open("config", "rb")) as f: #loading app config
         app_config = pickle.load(f)
-    except:
-        app_config = {"weapon" : 1} #default config dictionary
+except:
+    app_config = {"weapon" : 1} #default config dictionary
 
 weapon = app_config["weapon"]
 

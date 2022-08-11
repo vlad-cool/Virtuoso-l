@@ -50,14 +50,32 @@ Carousel:
             pos: 0, 0
             color: [0.8, 0, 0, 1]
 
-        Label:
-            id: score_l
-            text: "00"
-            font_size: 400
+        Carousel:
+            direction: "top"
+            loop: True
             size: 480, 480
             size_hint: None, None
             pos: 1440, 0
-            color: [0, 0.8, 0, 1]
+
+            on_index: print("jkghjknlghbj")
+
+            Label:
+                id: score_r
+                text: "21"
+                font_size: 400
+                #size: 480, 480
+                #size_hint: None, None
+                #pos: 1440, 0
+                color: [0, 0.8, 0, 1]
+
+            #Label:
+            #    id: score_r123212
+            #    text: "32"
+            #    font_size: 400
+            #    #size: 480, 480
+            #    #size_hint: None, None
+            #    #pos: 1440, 0
+            #    color: [0, 0.8, 0, 1]
 
         Label:
             id: timer
