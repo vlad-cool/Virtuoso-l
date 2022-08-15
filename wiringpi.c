@@ -1,3 +1,5 @@
+//Compile with gcc -o test wiringpi.c -lwiringPi
+
 #include <wiringPi.h>
 #include <stdio.h>
 
@@ -60,7 +62,7 @@ int main (void)
             break;
         
         default:
-            printf("er ")
+            printf("er ");
             break;
         }
 
@@ -82,7 +84,16 @@ int main (void)
             printf("s\n");
         }
 
-        getchar();
+        if (digitalRead(37))
+        {
+            printf("37 - 1\n");
+        }
+        else
+        {
+            printf("37 - 0\n");
+        }
+
+        //getchar();
     }
     return 0;
 }

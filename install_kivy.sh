@@ -27,6 +27,7 @@ pip3 install ffpyplayer
 export PATH=/home/vlad/.local/bin:$PATH #!!!
 sudo systemctl enable multi-user.target --force
 sudo systemctl set-default multi-user.target
+#sudo systemctl set-default graphical.target
 sudo apt -y update
 sudo apt -y upgrade
 

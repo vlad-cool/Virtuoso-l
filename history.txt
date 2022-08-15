@@ -36,3 +36,14 @@ sudo modprobe -v sun4i-drm
 sudo cat /var/log/messages | tail
 sudo modprobe -r lima
 sudo reboot
+
+
+############
+
+
+sudo modprobe -r lima
+lsmod
+sudo modprobe sun4i-drm
+lsmod
+sudo modprobe sun4i-drm
+sudo modprobe lima
