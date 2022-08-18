@@ -1,4 +1,4 @@
-//Compile with gcc -o test wiringpi.c -lwiringPi
+//Compile with `gcc -o test wiringpi.c -lwiringPi`
 
 #include <wiringPi.h>
 #include <stdio.h>
@@ -12,6 +12,7 @@ int main (void)
     pinMode(10, 1);
     pinMode(12, 1);
     pinMode(16, 1);
+    pinMode(19, 1);
     pinMode(21, 1);
     pinMode(23, 1);
     pinMode(24, 1);
@@ -21,18 +22,20 @@ int main (void)
     digitalWrite(10, 1);
     digitalWrite(12, 1);
     digitalWrite(16, 1);
+    digitalWrite(19, 1);
     digitalWrite(21, 1);
     digitalWrite(23, 1);
     digitalWrite(24, 1);
 
     // Uart (11) (WIP)
+    pinMode(11, 0);
 
     // Recording
     pinMode(18, 0);
 
     // IR remote emulation
-    pinMode(26, 1);
-    digitalWrite(26, 1);
+    pinMode(26, 0);
+  //  digitalWrite(26, 1);
     
     // Weapon select
     pinMode(37, 0);
@@ -87,13 +90,28 @@ int main (void)
         if (digitalRead(37))
         {
             printf("37 - 1\n");
+            //pinMode(26, 0);
         }
         else
         {
             printf("37 - 0\n");
+            //pinMode(26, 1);
+            //digitalWrite(26, 1);
         }
 
-        //getchar();
+        int qqq = 0, p = 0, r;
+        while (!digitalRead(37))
+        {
+            r = digitalRead(26);
+            printf("%i", r);
+            if (p != r)
+            {
+                qqq++;
+            }
+            p = r;
+        }
+        printf("asasd fd %i\n", qqq);
+        getchar();
     }
     return 0;
 }

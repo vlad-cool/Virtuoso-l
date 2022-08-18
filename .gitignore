@@ -1,2 +1,5 @@
 /venv
-/ov2640
+/.vscode
+history.txt
+gpio_in
+*test*
