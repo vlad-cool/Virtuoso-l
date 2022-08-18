@@ -37,21 +37,28 @@ class KivyApp(App):
 
 
 def get_data(dt):
+    data = []
+    app = App.get_running_app()
+    for i in range(9):
+        data.append([0] * 8)
     for j in range(9):
         b = gpio_in.read(1)
         a = int.from_bytes(b, "big")
         if a == 0 and j == 0:
             break
-        s = ""
         for i in range(8):
-            s += str(a % 2)
+            data[j][7 - i] = a % 2
             a //= 2
-        
-        s = s[::-1]
-        print(s)
+        if j == 0 and data[0][3] == 1:
+            break
     else:
-        app = App.get_running_app()
-        app.root.ids[f"weapon_{weapon}"].text = s
+        app.root.ids["test_output"].text = str(data)[1:-1].replace(", ", "").replace("[", "").replace("]", "\n")
+
+    if (1 - data[0][7]) * 2 + 1 - data[0][6] < 3:
+            for i in range(3):
+                app.root.ids[f"weapon_{i}"].state = "normal"
+            weapon = (1 - data[0][7]) * 2 + 1 - data[0][6]
+            app.root.ids[f"weapon_{weapon}"].state = "down"
 
 if __name__ == "__main__":
     gpio_in = open("./gpio_in", "rb")

@@ -34,6 +34,9 @@ int main(void) {
     digitalWrite(23, 1);
     digitalWrite(24, 1);
 
+    FILE * pipe = fopen("./gpio_in", "wb");
+    fclose(pipe);
+
     int byte;
     int err = 0;
     int k = 0;
@@ -44,12 +47,11 @@ int main(void) {
 
     while (1)
     {
-        
-        FILE * pipe = fopen("./gpio_in", "wb");
         for (int i = 0; i < 9; i++)
         {
             data[i] = 0;
         }
+        //err = serialDataAvail(desc) == 0;
         while(err == 0 && data[7] < 224)
         {
             for (int i = 0; i < 7; i++)
@@ -59,7 +61,9 @@ int main(void) {
             byte = serialGetchar(desc);
             if (byte == -1)
             {
+                //serialClose(desc); //try without this line
                 err = 1;
+                //int desc = serialOpen("/dev/ttyS2", 38400); //try without this line
             }
             else
             {
@@ -83,6 +87,7 @@ int main(void) {
         data[8] <<= 1;
         data[8] += digitalRead(36);
 
+        FILE * pipe = fopen("./gpio_in", "wb");
         fwrite(&data[8], 1, 1, pipe);
         printf("data %d: %d\n", 8, data[8]);
         for (int i = 0; i < 8; i++)
@@ -92,7 +97,8 @@ int main(void) {
         }
         printf("ABOBA\n");
         fclose(pipe);
-        sleep(1);
+        err = 0;
+        sleep(.3);
     }
 
     printf("FINISH\n");
