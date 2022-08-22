@@ -1,5 +1,7 @@
 /venv
 /.vscode
+ir_emulation
 history.txt
 gpio_in
+a.out
 *test*

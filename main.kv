@@ -4,7 +4,7 @@ Carousel:
     loop: True
 
     FloatLayout:
-        BoxLayout: 
+        BoxLayout:
             id: weapon_selector
             orientation: 'horizontal'
             size: 640, 100
@@ -43,7 +43,7 @@ Carousel:
 
         Label:
             id: score_l
-            text: "00"
+            text: "0  "
             font_size: 400
             size: 480, 480
             size_hint: None, None
@@ -57,11 +57,9 @@ Carousel:
             size_hint: None, None
             pos: 1440, 0
 
-            on_index: print("jkghjknlghbj")
-
             Label:
                 id: score_r
-                text: "21"
+                text: " 0"
                 font_size: 400
                 #size: 480, 480
                 #size_hint: None, None
@@ -104,31 +102,39 @@ Carousel:
             pos: 460, 330
             color: [0.8, 0, 0, 1]
 
-        Button:
+        ToggleButton:
             id: warning_top_l
             size: 100, 50
             size_hint: None, None
             pos: 460, 260
 
-            canvas:
-                Color:
-                    rgba: 1, 0.5, 0.5, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+            #text: "test"
 
-        Button:
+            #color: [0.3, 0.3, 0.3, 1] if self.state == 'normal' else [0.7, 0.7, 0.7, 1]
+
+            background_color: [1, 0.5, 0.5, 1] if self.state == 'normal' else [0, 1, 0, 1]
+            #canvas:
+            #    Color:
+            #        rgba: 1, 1, 1, 1
+            #    Rectangle:
+            #        pos: self.pos
+            #        size: self.size
+
+        ToggleButton:
             id: warning_bot_l
             size: 100, 50
             size_hint: None, None
             pos: 460, 190
 
-            canvas:
-                Color:
-                    rgba: 0.8, 0.8, 0, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+            background_color: [1, 0.5, 0.5, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
+
+
+            #canvas:
+            #    Color:
+            #        rgba: 0.8, 0.8, 0, 1
+            #    Rectangle:
+            #        pos: self.pos
+            #        size: self.size
 
         Label:
             id: priority_r
@@ -139,31 +145,35 @@ Carousel:
             pos: 1360, 330
             color: [0, 0.8, 0, 1]
 
-        Button:
+        ToggleButton:
             id: warning_top_r
             size: 100, 50
             size_hint: None, None
             pos: 1360, 260
 
-            canvas:
-                Color:
-                    rgba: 1, 0.5, 0.5, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+            background_color: [1, 0.5, 0.5, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
 
-        Button:
+            #canvas:
+            #    Color:
+            #        rgba: 1, 0.5, 0.5, 1
+            #    Rectangle:
+            #        pos: self.pos
+            #        size: self.size
+
+        ToggleButton:
             id: warning_bot_r
             size: 100, 50
             size_hint: None, None
             pos: 1360, 190
 
-            canvas:
-                Color:
-                    rgba: 0.8, 0.8, 0, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+            background_color: [1, 0.5, 0.5, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
+
+            #canvas:
+            #    Color:
+            #        rgba: 0.8, 0.8, 0, 1
+            #    Rectangle:
+            #        pos: self.pos
+            #        size: self.size
 
     Label:
         text: "Video"

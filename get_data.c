@@ -1,3 +1,5 @@
+//Compile with `gcc -o input get_data.c -lwiringPi`
+
 #include <wiringSerial.h>
 #include <wiringPi.h>
 #include <stdio.h>
@@ -24,7 +26,7 @@ int main(void) {
     pinMode(23, 1);
     pinMode(24, 1);
 
-    
+
     digitalWrite(8, 1);
     digitalWrite(10, 1);
     digitalWrite(12, 1);
@@ -61,16 +63,14 @@ int main(void) {
             byte = serialGetchar(desc);
             if (byte == -1)
             {
-                //serialClose(desc); //try without this line
                 err = 1;
-                //int desc = serialOpen("/dev/ttyS2", 38400); //try without this line
             }
             else
             {
                 data[7] = byte;
             }
         }
-        
+
         data[8] += 1;
         data[8] <<= 1;
         data[8] += 1;

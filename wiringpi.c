@@ -6,7 +6,7 @@
 int main (void)
 {
     wiringPiSetupPhys();
-    
+
     // AtMega programming pins
     pinMode(8, 1);
     pinMode(10, 1);
@@ -17,7 +17,7 @@ int main (void)
     pinMode(23, 1);
     pinMode(24, 1);
 
-    
+
     digitalWrite(8, 1);
     digitalWrite(10, 1);
     digitalWrite(12, 1);
@@ -34,16 +34,16 @@ int main (void)
     pinMode(18, 0);
 
     // IR remote emulation
-    pinMode(26, 0);
-  //  digitalWrite(26, 1);
-    
+    pinMode(26, 1);
+    digitalWrite(26, 1);
+
     // Weapon select
     pinMode(37, 0);
 
     // Weapon type
     pinMode(32, 0);
     pinMode(36, 0);
-    
+
     // Weapon connection type
     pinMode(11, 0);
 
@@ -63,7 +63,7 @@ int main (void)
         case 3:
             printf("ra ");
             break;
-        
+
         default:
             printf("er ");
             break;
