@@ -1,4 +1,4 @@
-//Compile with `gcc -o output send_data.c -lwiringPi`
+//Compile with `gcc -o ir_emu send_data.c -lwiringPi`
 
 #include <wiringPi.h>
 #include <unistd.h>
@@ -8,59 +8,61 @@
 
 #define TIMING 889
 
-int main(int argc, char *argv[])
+void setup()
 {
     wiringPiSetupPhys();
     pinMode(26, 1);
     digitalWrite(26, 1);
-    sleep(0.1);
+}
 
-    printf("%d\n", argc);
-    int toggle_bit = 1, data[14], to_transmit;
+void send(int to_transmit, int toggle_bit)
+{
+    int data[14];
     unsigned long time;
     struct timespec t;
-    data[0] = 1;
-    data[1] = 1;
+
+    to_transmit += 12288;
+    to_transmit += toggle_bit * 2048;
+
+    for (int i = 0; i < 14; i++)
+    {
+        data[13 - i] = to_transmit % 2;
+        to_transmit /= 2;
+    }
+
+    clock_gettime(CLOCK_BOOTTIME, &t);
+
+    for (int i = 0; i < 14; i++)
+    {
+        time = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
+        digitalWrite(26, 0 + data[i]);
+
+        while (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time < TIMING)
+        {
+            clock_gettime(CLOCK_BOOTTIME, &t);
+        }
+
+        time = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
+        digitalWrite(26, 1 - data[i]);
+
+        while (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time < TIMING)
+        {
+            clock_gettime(CLOCK_BOOTTIME, &t);
+        }
+    }
+
+    digitalWrite(26, 1);
+}
+
+int main(int argc, char *argv[])
+{
+    int toggle_bit = 1;
+    setup();
+
     for (int i = 1; i < argc; i++)
     {
-        data[2] = toggle_bit;
-        to_transmit = atoi(argv[i]);
-
-        for (int j = 0; j < 11; j++)
-        {
-            data[13 - j] = to_transmit % 2;
-            to_transmit /= 2;
-        }
+        send_data(atoi(argv[i]), toggle_bit);
         toggle_bit = !toggle_bit;
-
-        for (int j = 0; j < 14; j++)
-        {
-            printf("%d ", data[j]);
-        }
-
-        int j = 0;
-        printf("\n!\n");
-        clock_gettime(CLOCK_BOOTTIME, &t);
-        while (j < 14)
-        {
-            time = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
-            digitalWrite(26, data[j]);
-
-            while (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time < TIMING)
-            {
-                clock_gettime(CLOCK_BOOTTIME, &t);
-            }
-
-            time = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
-            digitalWrite(26, !data[j]);
-
-            while (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time < TIMING)
-            {
-                clock_gettime(CLOCK_BOOTTIME, &t);
-            }
-            j++;
-        }
-        digitalWrite(26, 1);
         sleep(0.05);
     }
 }

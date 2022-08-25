@@ -177,8 +177,26 @@ Carousel:
 
     Label:
         text: "Video"
-    Label:
-        text: "Settings"
+    TabbedPanel:
+        TabbedPanelItem:
+            text: "hardware"
+            BoxLayout:
+                Button:
+                    text: "sync hardware"
+                    on_press:
+        TabbedPanelItem:
+            text: 'tab2'
+            BoxLayout:
+                Label:
+                    text: 'Second tab content area'
+                Button:
+                    text: 'Button that does nothing'
+        TabbedPanelItem:
+            text: 'tab3'
+            RstDocument:
+                text:
+                    '\\n'.join(("Hello world", "-----------",
+                    "You are in the third tab."))
     Label:
         id: test_output
         text: "ABOBUS"

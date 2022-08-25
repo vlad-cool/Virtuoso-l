@@ -9,7 +9,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-int main(void) {
+void setup()
+{
     wiringPiSetupPhys();
 
     pinMode(7, 0);
@@ -26,6 +27,7 @@ int main(void) {
     pinMode(23, 1);
     pinMode(24, 1);
 
+    pinMode(26, 1);
 
     digitalWrite(8, 1);
     digitalWrite(10, 1);
@@ -36,71 +38,72 @@ int main(void) {
     digitalWrite(23, 1);
     digitalWrite(24, 1);
 
-    FILE * pipe = fopen("./gpio_in", "wb");
-    fclose(pipe);
+    digitalWrite(26, 1);
+}
 
-    int byte;
+void get_data(int descriptor, const char *file_name)
+{
     int err = 0;
-    int k = 0;
-    char data[9];
-    int desc = serialOpen("/dev/ttyS2", 38400);
-    printf("OBABO\n");
+    char data = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    int byte;
 
+    err = serialDataAvail(desc) == 0
+
+    while(err == 0 && byte != serialDataAvail(desc) != 0)
+    {
+        byte = serialGetchar(desc);
+        data[byte / 32] = byte;
+    }
+
+    if (data[8] == 0)
+    {
+        FILE * pipe = fopen(file_name, "rb");
+
+        for (int i = 0; i < 9; i++)
+        {
+            fread(data + i, 1, 1, pipe);
+        }
+
+        fclose(pipe);
+    }
+
+    data[0] += 1;
+    data[0] <<= 1;
+    data[0] += 1;
+    data[0] <<= 1;
+    data[0] += 1;
+    data[0] <<= 1;
+    data[0] += err;
+    data[0] <<= 1;
+    data[0] += digitalRead(7);
+    data[0] <<= 1;
+    data[0] += digitalRead(18);
+    data[0] <<= 1;
+    data[0] += digitalRead(32);
+    data[0] <<= 1;
+    data[0] += digitalRead(36);
+
+    FILE * pipe = fopen(file_name, "wb");
+
+    for (int i = 0; i < 9; i++)
+    {
+        fwrite(&data[i], 1, 1, pipe);
+        printf("data %d: %d\n", i, data[i]);
+    }
+
+    fclose(pipe);
+}
+
+int main(void)
+{
+    setup();
+    int descriptor = serialOpen("/dev/ttyS2", 38400);
 
     while (1)
     {
-        for (int i = 0; i < 9; i++)
-        {
-            data[i] = 0;
-        }
-        //err = serialDataAvail(desc) == 0;
-        while(err == 0 && data[7] < 224)
-        {
-            for (int i = 0; i < 7; i++)
-            {
-                data[i] = data[i + 1];
-            }
-            byte = serialGetchar(desc);
-            if (byte == -1)
-            {
-                err = 1;
-            }
-            else
-            {
-                data[7] = byte;
-            }
-        }
-
-        data[8] += 1;
-        data[8] <<= 1;
-        data[8] += 1;
-        data[8] <<= 1;
-        data[8] += 1;
-        data[8] <<= 1;
-        data[8] += err;
-        data[8] <<= 1;
-        data[8] += digitalRead(7);
-        data[8] <<= 1;
-        data[8] += digitalRead(18);
-        data[8] <<= 1;
-        data[8] += digitalRead(32);
-        data[8] <<= 1;
-        data[8] += digitalRead(36);
-
-        FILE * pipe = fopen("./gpio_in", "wb");
-        fwrite(&data[8], 1, 1, pipe);
-        printf("data %d: %d\n", 8, data[8]);
-        for (int i = 0; i < 8; i++)
-        {
-            fwrite(&data[i], 1, 1, pipe);
-            printf("data %d: %d\n", i, data[i]);
-        }
-        printf("ABOBA\n");
-        fclose(pipe);
-        err = 0;
+        get_data(descriptor, "./gpio_in");
         sleep(.3);
     }
 
-    printf("FINISH\n");
-    serialClose(desc);
+    serialClose(descriptor);
 }
