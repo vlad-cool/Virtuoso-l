@@ -44,26 +44,25 @@ void setup()
 void get_data(int descriptor, const char *file_name)
 {
     int err = 0;
-    char data = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    char data[] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     int byte;
-
-    err = serialDataAvail(desc) == 0
-
-    while(err == 0 && byte != serialDataAvail(desc) != 0)
+    printf("data avail          %d\n", serialDataAvail(descriptor));
+    while(serialDataAvail(descriptor) != 0)
     {
-        byte = serialGetchar(desc);
+        byte = serialGetchar(descriptor);
+        printf("                  byte: %d\n");
         data[byte / 32] = byte;
     }
 
     if (data[8] == 0)
     {
         FILE * pipe = fopen(file_name, "rb");
+        err = 1;
 
         for (int i = 0; i < 9; i++)
         {
-            fread(data + i, 1, 1, pipe);
+            fread(&data[i], 1, 1, pipe);
         }
-
         fclose(pipe);
     }
 
@@ -88,7 +87,7 @@ void get_data(int descriptor, const char *file_name)
     for (int i = 0; i < 9; i++)
     {
         fwrite(&data[i], 1, 1, pipe);
-        printf("data %d: %d\n", i, data[i]);
+       // printf("data %d: %d\n", i, data[i]);
     }
 
     fclose(pipe);
@@ -102,7 +101,7 @@ int main(void)
     while (1)
     {
         get_data(descriptor, "./gpio_in");
-        sleep(.3);
+        sleep(1);
     }
 
     serialClose(descriptor);
