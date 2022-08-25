@@ -1,7 +1,9 @@
 /venv
 /.vscode
+/__pycache__
 ir_emulation
 history.txt
+gpio_out
 gpio_in
 a.out
 *test*

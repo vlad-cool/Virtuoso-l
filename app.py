@@ -2,10 +2,11 @@
 import kivy
 from kivy.core.window import Window
 from kivy.lang import Builder
-from kivy.app import App
 from kivy.clock import Clock
+from kivy.app import App
 import platform
 import pickle
+#import get_address.py
 
 read_interval = .1 #(seconds) time between trying to read data from gpio_in pipe
 global app_config #app config dictionaty
