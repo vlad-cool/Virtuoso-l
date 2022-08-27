@@ -36,7 +36,7 @@ cd
 wget https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-14.0.6.tar.gz
 tar xf llvmorg-14.0.6.tar.gz
 rm llvmorg-14.0.6.tar.gz
-cd llvmorg-14.0.6
+cd llvm-project-llvmorg-14.0.6
 cmake -S llvm -B build -G Ninja
 cmake --build build
 cd
