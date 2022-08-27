@@ -1,4 +1,6 @@
 #run this script with 'sudo -E bash acceleration.sh'
+cd
+
 sudo apt -y update
 sudo apt -y upgrade
 
@@ -31,8 +33,9 @@ meson build/
 sudo -E ninja -C build/ install
 cd
 
-https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-14.0.6.tar.gz
+wget https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-14.0.6.tar.gz
 tar xf llvmorg-14.0.6.tar.gz
+rm llvmorg-14.0.6.tar.gz
 cd llvmorg-14.0.6
 cmake -S llvm -B build -G Ninja
 cmake --build build
@@ -42,10 +45,10 @@ wget https://gitlab.freedesktop.org/mesa/mesa/-/archive/mesa-22.1.6/mesa-mesa-22
 tar xf mesa-mesa-22.1.6.tar.gz
 cd mesa-mesa-22.1.6
 
-meson build/ --optimization s --buildtype release --prefix=/usr/local --libdir=lib/arm-linux-gnueabihf \
--Dgallium-drivers=lima,panfrost,kmsro,swrast -Dplatforms=x11 -Dvulkan-drivers= -Ddri-drivers= \
--Dllvm=false
+#meson build/ --optimization s --buildtype release --prefix=/usr/local --libdir=lib/arm-linux-gnueabihf \
+#-Dgallium-drivers=lima,panfrost,kmsro,swrast -Dplatforms=x11,drm -Dvulkan-drivers= -Ddri-drivers= \
+#-Dllvm=false
 
-ninja -C build/
+#ninja -C build/
 
-sudo -E ninja -C build/ install
+#sudo -E ninja -C build/ install

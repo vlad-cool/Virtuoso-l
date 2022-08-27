@@ -1,7 +1,6 @@
 import subprocess
 from time import sleep
 
-
 def get_address():
     spacing_time = .3
     data = []

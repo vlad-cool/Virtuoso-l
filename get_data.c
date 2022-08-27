@@ -9,8 +9,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-void setup()
-{
+void setup() {
+
     wiringPiSetupPhys();
 
     pinMode(7, 0);
@@ -41,68 +41,72 @@ void setup()
     digitalWrite(26, 1);
 }
 
-void get_data(int descriptor, const char *file_name)
-{
-    int err = 0;
-    char data[] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+int main() {
     int byte;
-    printf("data avail          %d\n", serialDataAvail(descriptor));
-    while(serialDataAvail(descriptor) != 0)
-    {
-        byte = serialGetchar(descriptor);
-        printf("                  byte: %d\n");
-        data[byte / 32] = byte;
-    }
-
-    if (data[8] == 0)
-    {
-        FILE * pipe = fopen(file_name, "rb");
-        err = 1;
-
-        for (int i = 0; i < 9; i++)
-        {
-            fread(&data[i], 1, 1, pipe);
-        }
-        fclose(pipe);
-    }
-
-    data[0] += 1;
-    data[0] <<= 1;
-    data[0] += 1;
-    data[0] <<= 1;
-    data[0] += 1;
-    data[0] <<= 1;
-    data[0] += err;
-    data[0] <<= 1;
-    data[0] += digitalRead(7);
-    data[0] <<= 1;
-    data[0] += digitalRead(18);
-    data[0] <<= 1;
-    data[0] += digitalRead(32);
-    data[0] <<= 1;
-    data[0] += digitalRead(36);
-
-    FILE * pipe = fopen(file_name, "wb");
-
-    for (int i = 0; i < 9; i++)
-    {
-        fwrite(&data[i], 1, 1, pipe);
-       // printf("data %d: %d\n", i, data[i]);
-    }
-
-    fclose(pipe);
-}
-
-int main(void)
-{
+    int err = 1;
+    int k = 0;
+    char data[9];
+    int desc = serialOpen("/dev/ttyS2", 38400);
     setup();
-    int descriptor = serialOpen("/dev/ttyS2", 38400);
 
     while (1)
     {
-        get_data(descriptor, "./gpio_in");
-        sleep(1);
+        for (int i = 0; i < 9; i++)
+        {
+            data[i] = 0;
+        }
+
+        printf("%d\n", serialDataAvail(desc));
+        int available = serialDataAvail(desc);
+        for (int i = 0; i < available; i++)
+        {
+            err = 0;
+            byte = serialGetchar(desc);
+            data[byte / 32 + 1] = byte;
+        }
+
+        /*
+        if (err)
+        {
+            FILE * pipe = fopen("./gpio_in", "rb");
+
+            for (int i = 1; i < 9; i++)
+            {
+                fread(data + i, 1, 1, pipe);
+            }
+
+            fclose(pipe);
+        }
+        */
+
+        data[0] += 1;
+        data[0] <<= 1;
+        data[0] += 1;
+        data[0] <<= 1;
+        data[0] += 1;
+        data[0] <<= 1;
+        data[0] += err;
+        data[0] <<= 1;
+        data[0] += digitalRead(7);
+        data[0] <<= 1;
+        data[0] += digitalRead(18);
+        data[0] <<= 1;
+        data[0] += digitalRead(32);
+        data[0] <<= 1;
+        data[0] += digitalRead(36);
+
+        FILE * pipe = fopen("./gpio_in", "wb");
+
+        for (int i = 0; i < 9; i++)
+        {
+            fwrite(&data[i], 1, 1, pipe);
+            printf("data %d: %d\n", i, data[i]);
+        }
+
+        fclose(pipe);
+        err = 1;
+        usleep(500 * 1000);
     }
 
-    serialClose(descriptor);
+    serialClose(desc);
 }

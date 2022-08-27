@@ -7,3 +7,5 @@ gpio_out
 gpio_in
 a.out
 *test*
+builded-mesa-22.1.3.tar.gz
+get_data_old.c

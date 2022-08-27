@@ -15,65 +15,94 @@ Carousel:
                 id: weapon_0
                 text: "fleuret"
                 font_size: 40
-                on_press: app.root.ids["weapon_0"].state = "down"
-                on_press: weapon = 0
+                font_name:"agencyb"
                 group: "weapon"
                 color: [0.3, 0.3, 0.3, 1] if self.state == 'normal' else [0.7, 0.7, 0.7, 1]
                 background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
+                on_press: app.set_weapon(0)
 
             ToggleButton:
                 id: weapon_1
                 text: "epee"
                 font_size: 40
-                on_press: app.root.ids["weapon_1"].state = "down"
-                on_press: weapon = 1
+                font_name:"agencyb"
                 group: "weapon"
                 color: [0.3, 0.3, 0.3, 1] if self.state == 'normal' else [0.7, 0.7, 0.7, 1]
                 background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
+                on_press: app.set_weapon(1)
 
             ToggleButton:
                 id: weapon_2
                 text: "sabre"
                 font_size: 40
-                on_press: app.root.ids["weapon_2"].state = "down"
-                on_press: weapon = 2
+                font_name:"agencyb"
                 group: "weapon"
                 color: [0.3, 0.3, 0.3, 1] if self.state == 'normal' else [0.7, 0.7, 0.7, 1]
                 background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
+                on_press: app.set_weapon(2)
 
         Label:
-            id: score_l
-            text: "0  "
-            font_size: 400
-            size: 480, 480
+            id: score_l_l
+            text: "0"
+            font_size: 380
+            font_name:"agencyb"
+            size: 240, 480
             size_hint: None, None
             pos: 0, 0
             color: [0.8, 0, 0, 1]
 
+        Label:
+            id: score_l_r
+            text: " "
+            font_size: 380
+            font_name:"agencyb"
+            size: 240, 480
+            size_hint: None, None
+            pos: 240, 0
+            color: [0.8, 0, 0, 1]
+
         Carousel:
+            id: right_score_carousel
             direction: "top"
             loop: True
             size: 480, 480
             size_hint: None, None
             pos: 1440, 0
+            min_move: 0.1
 
-            Label:
-                id: score_r
-                text: " 0"
-                font_size: 400
-                #size: 480, 480
-                #size_hint: None, None
-                #pos: 1440, 0
-                color: [0, 0.8, 0, 1]
+            on_index: app.carousel_handler(args[1], 1)
 
-            #Label:
-            #    id: score_r123212
-            #    text: "32"
-            #    font_size: 400
-            #    #size: 480, 480
-            #    #size_hint: None, None
-            #    #pos: 1440, 0
-            #    color: [0, 0.8, 0, 1]
+            Button:
+                text: "1"
+                on_press: app.carousel_btn_handler(1)
+
+            Button:
+                text: "2"
+                on_press: app.carousel_btn_handler(1)
+
+            Button:
+                text: "3"
+                on_press: app.carousel_btn_handler(1)
+
+        Label:
+            id: score_r_l
+            text: " "
+            font_size: 380
+            font_name:"agencyb"
+            size: 240, 480
+            size_hint: None, None
+            pos: 1440, 0
+            color: [0, 0.8, 0, 1]
+
+        Label:
+            id: score_r_r
+            text: "0"
+            font_size: 380
+            font_name:"agencyb"
+            size: 240, 480
+            size_hint: None, None
+            pos: 1680, 0
+            color: [0, 0.8, 0, 1]
 
         Label:
             id: timer
@@ -108,17 +137,10 @@ Carousel:
             size_hint: None, None
             pos: 460, 260
 
-            #text: "test"
+            background_color: [1, 0.5, 0.5, 1] if self.state == 'normal' else [0.8, 0, 0, 1]
 
-            #color: [0.3, 0.3, 0.3, 1] if self.state == 'normal' else [0.7, 0.7, 0.7, 1]
-
-            background_color: [1, 0.5, 0.5, 1] if self.state == 'normal' else [0, 1, 0, 1]
-            #canvas:
-            #    Color:
-            #        rgba: 1, 1, 1, 1
-            #    Rectangle:
-            #        pos: self.pos
-            #        size: self.size
+            background_down: ""
+            background_normal: ""
 
         ToggleButton:
             id: warning_bot_l
@@ -126,15 +148,10 @@ Carousel:
             size_hint: None, None
             pos: 460, 190
 
-            background_color: [1, 0.5, 0.5, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
+            background_color: [0.6, 0.6, 0.2, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
 
-
-            #canvas:
-            #    Color:
-            #        rgba: 0.8, 0.8, 0, 1
-            #    Rectangle:
-            #        pos: self.pos
-            #        size: self.size
+            background_down: ""
+            background_normal: ""
 
         Label:
             id: priority_r
@@ -151,14 +168,10 @@ Carousel:
             size_hint: None, None
             pos: 1360, 260
 
-            background_color: [1, 0.5, 0.5, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
+            background_color: [1, 0.5, 0.5, 1] if self.state == 'normal' else [0.8, 0, 0, 1]
 
-            #canvas:
-            #    Color:
-            #        rgba: 1, 0.5, 0.5, 1
-            #    Rectangle:
-            #        pos: self.pos
-            #        size: self.size
+            background_down: ""
+            background_normal: ""
 
         ToggleButton:
             id: warning_bot_r
@@ -166,14 +179,10 @@ Carousel:
             size_hint: None, None
             pos: 1360, 190
 
-            background_color: [1, 0.5, 0.5, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
+            background_color: [0.6, 0.6, 0.2, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
 
-            #canvas:
-            #    Color:
-            #        rgba: 0.8, 0.8, 0, 1
-            #    Rectangle:
-            #        pos: self.pos
-            #        size: self.size
+            background_down: ""
+            background_normal: ""
 
     Label:
         text: "Video"
