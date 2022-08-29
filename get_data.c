@@ -65,10 +65,11 @@ int main() {
             data[byte / 32 + 1] = byte;
         }
 
-        /*
+
         if (err)
         {
             FILE * pipe = fopen("./gpio_in", "rb");
+            fread(data + 1, 1, 1, pipe);
 
             for (int i = 1; i < 9; i++)
             {
@@ -77,7 +78,7 @@ int main() {
 
             fclose(pipe);
         }
-        */
+
 
         data[0] += 1;
         data[0] <<= 1;

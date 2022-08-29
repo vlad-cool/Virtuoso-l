@@ -11,12 +11,15 @@ from kivy.core.text import LabelBase
 
 send_queue = deque()
 read_interval = .2
-send_interval = .9
+send_interval = .2
 rc5_address = 0
 toggle_bit = 1
 weapon = 0
 carousel_codes = [[2, 3, 2], [9, 15, 9]]
 carousel_indexes = [0, 0]
+get_proc = None
+send_proc = None
+send_proc_running = False
 
 with open("./rc5_address", "r") as file:
     rc5_address = int(file.readline())
@@ -139,35 +142,45 @@ def get_data(dt):
 
     if score_l < 10:
         app.root.ids["score_l_l"].text = str(score_l)
+        app.root.ids["score_l_r"].text = " "
     else:
         app.root.ids["score_l_l"].text = str(score_l // 10)
         app.root.ids["score_l_r"].text = str(score_l % 10)
 
     if score_r < 10:
+        app.root.ids["score_r_l"].text = " "
         app.root.ids["score_r_r"].text = str(score_r)
     else:
-        app.root.ids["score_r_l"].text = str(score_l // 10)
-        app.root.ids["score_r_r"].text = str(score_l % 10)
+        app.root.ids["score_r_l"].text = str(score_r // 10)
+        app.root.ids["score_r_r"].text = str(score_r % 10)
 
-    app.root.ids["score_r"].text = score_r
+    #app.root.ids["score_r"].text = score_r
     app.root.ids["timer"].text = timer
 
 def send_data(dt):
     global send_queue
     global toggle_bit
+    global send_proc
+    global send_proc_running
 
+    if send_proc_running and send_proc.poll() is None:
+        return
+    send_proc_running = False
     if len(send_queue) > 0:
         if platform.machine() != "armv7l":
             print(send_queue[0])
             send_queue.popleft()
             return
-        subprocess.run(["sudo", "./output", send_queue[0], str(toggle_bit)])
+        #subprocess.run(["sudo", "./output", send_queue[0], str(toggle_bit)])
+        send_proc = subprocess.Popen(f"sudo ./output {send_queue[0]} {toggle_bit}", shell=True)
         toggle_bit = 1 - toggle_bit
         send_queue.popleft()
+        send_proc_running = True
 
 if __name__ == "__main__":
     LabelBase.register(name="agencyb", fn_regular='AGENCYB.TTF')
     LabelBase.register(name="agencyr", fn_regular='AGENCYR.TTF')
     Clock.schedule_interval(get_data, read_interval)
     Clock.schedule_interval(send_data, send_interval)
+    get_proc = subprocess.Popen("sudo ./V24m/input", shell=True)
     KivyApp().run()
