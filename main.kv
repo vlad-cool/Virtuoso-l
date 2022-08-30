@@ -41,6 +41,28 @@ Carousel:
                 background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
                 on_press: app.set_weapon(2)
 
+        Carousel:
+            id: left_score_carousel
+            direction: "top"
+            loop: True
+            size: 480, 480
+            size_hint: None, None
+            pos: 0, 0
+            min_move: 0.1
+
+            on_index: app.carousel_handler(args[1], 0)
+
+            Button:
+                text: "1"
+                on_press: app.carousel_btn_handler(0)
+
+            Button:
+                text: "2"
+                on_press: app.carousel_btn_handler(0)
+
+            Button:
+                text: "3"
+                on_press: app.carousel_btn_handler(1)
         Label:
             id: score_l_l
             text: "0"

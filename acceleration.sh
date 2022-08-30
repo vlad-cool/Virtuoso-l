@@ -1,4 +1,4 @@
-#run this script with 'sudo -E bash acceleration.sh'
+#run this script with 'bash acceleration.sh'
 cd
 
 sudo apt -y update
@@ -20,9 +20,6 @@ wget https://github.com/Kitware/CMake/releases/download/v3.23.2/cmake-3.23.2.tar
 tar xf cmake-3.23.2.tar.gz
 rm cmake-3.23.2.tar.gz
 cd cmake-3.23.2
-#./bootstrap
-#make
-#sudo make install
 cmake .
 make
 sudo make install
@@ -36,14 +33,6 @@ meson build/
 sudo -E ninja -C build/ install
 cd
 
-#wget https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-14.0.6.tar.gz
-#tar xf llvmorg-14.0.6.tar.gz
-#rm llvmorg-14.0.6.tar.gz
-#cd llvm-project-llvmorg-14.0.6
-#cmake -S llvm -B build -G Ninja
-#cmake --build build
-#cd
-
 wget https://gitlab.freedesktop.org/mesa/mesa/-/archive/mesa-22.1.6/mesa-mesa-22.1.6.tar.gz
 tar xf mesa-mesa-22.1.6.tar.gz
 cd mesa-mesa-22.1.6
@@ -54,4 +43,4 @@ meson build/ --optimization s --buildtype release --prefix=/usr/local --libdir=l
 
 ninja -C build/
 
-#sudo -E ninja -C build/ install
+sudo -E ninja -C build/ install

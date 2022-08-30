@@ -50,10 +50,9 @@ class KivyApp(App):
         global weapon
 
         if (3 + new_weapon - weapon) % 3 == 1:
-            subprocess.run(["sudo", "./weapon", "1"])
-
+            subprocess.Popen("sudo ./weapon 1", shell=True)
         if (3 + new_weapon - weapon) % 3 == 2:
-            subprocess.run(["sudo", "./weapon", "2"])
+            subprocess.Popen("sudo ./weapon 2", shell=True)
 
         weapon = new_weapon
 
@@ -63,8 +62,8 @@ class KivyApp(App):
 def get_data(dt):
     global weapon
     global send_queue
-    if len(send_queue) > 0:
-        return
+    #if len(send_queue) > 0:
+    #    return
     data = []
     app = App.get_running_app()
     for i in range(9):
