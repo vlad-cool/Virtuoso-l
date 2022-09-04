@@ -8,6 +8,8 @@ import platform
 import subprocess
 from collections import deque
 from kivy.core.text import LabelBase
+import time
+import get_address
 
 send_queue = deque()
 read_interval = .2
@@ -15,14 +17,15 @@ send_interval = .2
 rc5_address = 0
 toggle_bit = 1
 weapon = 0
-carousel_codes = [[2, 3, 2], [9, 15, 9]]
-carousel_indexes = [0, 0]
+carousel_codes = [[3, 2, 2], [15, 9, 9], [6, 14, 13], [0, 0, 4], [0, 0, 11], [0, 0, 8]]
+carousel_indexes = [0] * len(carousel_codes)
 get_proc = None
 send_proc = None
 send_proc_running = False
+passive_timer = -1
 
-with open("./rc5_address", "r") as file:
-    rc5_address = int(file.readline())
+with open("./rc5_address", "r") as address_file:
+    rc5_address = int(address_file.readline())
 
 if platform.machine() == "armv7l": #for bananapi, it have much better performance when running vertically
     Window.rotation = 90
@@ -30,6 +33,10 @@ if platform.machine() == "armv7l": #for bananapi, it have much better performanc
 kivy.require('2.1.0')
 
 class KivyApp(App):
+    def write_address(a):
+        with open("rc5_address", "w") as address_file:
+            address_file.write(f"{get_address()}\n")
+
     def carousel_btn_handler(a, carousel_number):
         global carousel_indexes
         global carousel_codes
@@ -59,11 +66,16 @@ class KivyApp(App):
     def build(self):
         return Builder.load_file('main.kv')
 
+    def on_start(seelf):
+        pass
+
+    def on_stop(self):
+        pass
+
 def get_data(dt):
     global weapon
     global send_queue
-    #if len(send_queue) > 0:
-    #    return
+    global passive_timer
     data = []
     app = App.get_running_app()
     for i in range(9):
@@ -79,7 +91,8 @@ def get_data(dt):
                 a //= 2
             if j == 0 and data[0][3] == 1:
                 break
-        app.root.ids["test_output"].text = str(data)[1:-1].replace(", ", "").replace("[", "").replace("]", "\n") #debug output
+        if data[0][3] == 0:
+            app.root.ids["test_output"].text = str(data)[1:-1].replace(", ", "").replace("[", "").replace("]", "\n") #debug output
 
     if 3 - data[0][7] * 2 - data[0][6] < 3:
         for i in range(3):
@@ -103,7 +116,6 @@ def get_data(dt):
     timer_m = 0
     timer_d = 0
     timer_s = 0
-    timer = ""
 
     for i in data[2][6:]:
         timer_m *= 2
@@ -117,7 +129,27 @@ def get_data(dt):
         timer_s *= 2
         timer_s += i
 
-    timer = f"{timer_m}:{timer_d}{timer_s}"
+    period = 0
+    for i in range(4):
+        period *= 2
+        period +=data[7][4 + i]
+
+    if period == 15:
+        app.root.ids["priority_r"].state = "down"
+        app.root.ids["priority_l"].state = "normal"
+        app.root.ids["period"].text = ""
+    elif period == 14:
+        app.root.ids["priority_r"].state = "normal"
+        app.root.ids["priority_l"].state = "down"
+        app.root.ids["period"].text = ""
+    elif period == 14:
+        app.root.ids["priority_r"].state = "normal"
+        app.root.ids["priority_l"].state = "normal"
+        app.root.ids["period"].text = ""
+    elif period >= 1 and period <= 9:
+        app.root.ids["priority_r"].state = "normal"
+        app.root.ids["priority_l"].state = "normal"
+        app.root.ids["period"].text = str(period)
 
     if data[8][5]:
         app.root.ids["warning_bot_l"].state = "down"
@@ -153,8 +185,43 @@ def get_data(dt):
         app.root.ids["score_r_l"].text = str(score_r // 10)
         app.root.ids["score_r_r"].text = str(score_r % 10)
 
-    #app.root.ids["score_r"].text = score_r
-    app.root.ids["timer"].text = timer
+    app.root.ids["timer_min"].text = str(timer_m)
+    app.root.ids["timer_dec"].text = str(timer_d)
+    app.root.ids["timer_sec"].text = str(timer_s)
+
+    if data[8][4] == 1:
+        app.root.ids["warning_bot_l"].state = "down"
+        app.root.ids["warning_top_l"].state = "down"
+    elif data[8][5] == 1:
+        app.root.ids["warning_bot_l"].state = "down"
+        app.root.ids["warning_top_l"].state = "normal"
+    else:
+        app.root.ids["warning_bot_l"].state = "normal"
+        app.root.ids["warning_top_l"].state = "normal"
+
+    if data[8][6] == 1:
+        app.root.ids["warning_bot_r"].state = "down"
+        app.root.ids["warning_top_r"].state = "down"
+    elif data[8][7] == 1:
+        app.root.ids["warning_bot_r"].state = "down"
+        app.root.ids["warning_top_r"].state = "normal"
+    else:
+        app.root.ids["warning_bot_r"].state = "normal"
+        app.root.ids["warning_top_r"].state = "normal"
+
+    if passive_timer == -1 and data[3][3] == 1:
+        passive_timer = time.time()
+    elif passive_timer != -1 and data[3][3] == 0:
+        passive_timer = -1
+        app.root.ids["passive_red"].state = "normal"
+
+    if timer_s % 2 == 0 or data[3][3] == 0:
+        if app.root.ids["timer_dot"].text != ":" and passive_timer != -1 and data[3][3] == 1:
+
+            pass
+        app.root.ids["timer_dot"].text = ":"
+    else:
+        app.root.ids["timer_dot"].text = " "
 
 def send_data(dt):
     global send_queue
@@ -170,7 +237,6 @@ def send_data(dt):
             print(send_queue[0])
             send_queue.popleft()
             return
-        #subprocess.run(["sudo", "./output", send_queue[0], str(toggle_bit)])
         send_proc = subprocess.Popen(f"sudo ./output {send_queue[0]} {toggle_bit}", shell=True)
         toggle_bit = 1 - toggle_bit
         send_queue.popleft()
@@ -181,5 +247,4 @@ if __name__ == "__main__":
     LabelBase.register(name="agencyr", fn_regular='AGENCYR.TTF')
     Clock.schedule_interval(get_data, read_interval)
     Clock.schedule_interval(send_data, send_interval)
-    get_proc = subprocess.Popen("sudo ./V24m/input", shell=True)
     KivyApp().run()

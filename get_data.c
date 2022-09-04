@@ -101,7 +101,7 @@ int main() {
         for (int i = 0; i < 9; i++)
         {
             fwrite(&data[i], 1, 1, pipe);
-            printf("data %d: %d\n", i, data[i]);
+            //printf("data %d: %d\n", i, data[i]);
         }
 
         fclose(pipe);

@@ -12,8 +12,18 @@ Carousel:
             pos: 640, 0
 
             ToggleButton:
-                id: weapon_0
+                id: weapon_2
                 text: "fleuret"
+                font_size: 40
+                font_name:"agencyb"
+                group: "weapon"
+                color: [0.3, 0.3, 0.3, 1] if self.state == 'normal' else [0.7, 0.7, 0.7, 1]
+                background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
+                on_press: app.set_weapon(2)
+
+            ToggleButton:
+                id: weapon_0
+                text: "epee"
                 font_size: 40
                 font_name:"agencyb"
                 group: "weapon"
@@ -23,7 +33,7 @@ Carousel:
 
             ToggleButton:
                 id: weapon_1
-                text: "epee"
+                text: "sabre"
                 font_size: 40
                 font_name:"agencyb"
                 group: "weapon"
@@ -31,44 +41,43 @@ Carousel:
                 background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
                 on_press: app.set_weapon(1)
 
-            ToggleButton:
-                id: weapon_2
-                text: "sabre"
-                font_size: 40
-                font_name:"agencyb"
-                group: "weapon"
-                color: [0.3, 0.3, 0.3, 1] if self.state == 'normal' else [0.7, 0.7, 0.7, 1]
-                background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
-                on_press: app.set_weapon(2)
-
         Carousel:
             id: left_score_carousel
             direction: "top"
             loop: True
-            size: 480, 480
+            size: 400, 480
             size_hint: None, None
             pos: 0, 0
-            min_move: 0.1
+            min_move: 0.05
 
             on_index: app.carousel_handler(args[1], 0)
 
             Button:
-                text: "1"
                 on_press: app.carousel_btn_handler(0)
+                background_color: [0, 0, 0, 1]
+                background_down: ""
+                background_normal: ""
+
 
             Button:
-                text: "2"
                 on_press: app.carousel_btn_handler(0)
+                background_color: [0, 0, 0, 1]
+                background_down: ""
+                background_normal: ""
+
 
             Button:
-                text: "3"
                 on_press: app.carousel_btn_handler(0)
+                background_color: [0, 0, 0, 1]
+                background_down: ""
+                background_normal: ""
+
         Label:
             id: score_l_l
             text: "0"
             font_size: 380
             font_name:"agencyb"
-            size: 240, 480
+            size: 200, 480
             size_hint: None, None
             pos: 0, 0
             color: [0.8, 0, 0, 1]
@@ -78,42 +87,48 @@ Carousel:
             text: " "
             font_size: 380
             font_name:"agencyb"
-            size: 240, 480
+            size: 200, 480
             size_hint: None, None
-            pos: 240, 0
+            pos: 200, 0
             color: [0.8, 0, 0, 1]
 
         Carousel:
             id: right_score_carousel
             direction: "top"
             loop: True
-            size: 480, 480
+            size: 400, 480
             size_hint: None, None
-            pos: 1440, 0
-            min_move: 0.1
+            pos: 1520, 0
+            min_move: 0.05
 
             on_index: app.carousel_handler(args[1], 1)
 
             Button:
-                text: "1"
                 on_press: app.carousel_btn_handler(1)
+                background_color: [0, 0, 0, 0]
+                background_down: ""
+                background_normal: ""
 
             Button:
-                text: "2"
                 on_press: app.carousel_btn_handler(1)
+                background_color: [0, 0, 0, 0]
+                background_down: ""
+                background_normal: ""
 
             Button:
-                text: "3"
                 on_press: app.carousel_btn_handler(1)
+                background_color: [0, 0, 0, 0]
+                background_down: ""
+                background_normal: ""
 
         Label:
             id: score_r_l
             text: " "
             font_size: 380
             font_name:"agencyb"
-            size: 240, 480
+            size: 200, 480
             size_hint: None, None
-            pos: 1440, 0
+            pos: 1520, 0
             color: [0, 0.8, 0, 1]
 
         Label:
@@ -121,48 +136,152 @@ Carousel:
             text: "0"
             font_size: 380
             font_name:"agencyb"
-            size: 240, 480
+            size: 200, 480
             size_hint: None, None
-            pos: 1680, 0
+            pos: 1720, 0
             color: [0, 0.8, 0, 1]
 
-        Label:
-            id: timer
-            text: "0:00"
-            font_size: 300
-            size: 600, 300
+            background_color: [1, 0, 1, 1]
+
+        Carousel:
+            id: timer_carousel
+            direction: "top"
+            loop: True
+            size: 520, 300
             size_hint: None, None
-            pos: 560 + 200, 140
+            pos: 530 + 200, 140
+            min_move: 0.05
+
+            on_index: app.carousel_handler(args[1], 2)
+
+            #canvas:
+            #    Color:
+            #        rgba: 1, 0.5, 0.5, .3
+            #    Rectangle:
+            #        pos: self.pos
+            #        size: self.size
+
+
+            Button:
+                on_press: app.carousel_btn_handler(2)
+                background_color: [0, 0, 0, 0]
+                background_down: ""
+                background_normal: ""
+
+            Button:
+                on_press: app.carousel_btn_handler(2)
+                background_color: [0, 0, 0, 0]
+                background_down: ""
+                background_normal: ""
+
+            Button:
+                on_press: app.carousel_btn_handler(2)
+                background_color: [0, 0, 0, 0]
+                background_down: ""
+                background_normal: ""
+
+        Label:
+            id: timer_min
+            text: "0"
+            font_size: 300
+            font_name:"agencyb"
+            size: 150, 300
+            size_hint: None, None
+            pos: 730 + 150 * 0, 140
             color: [0.8, 0.8, 0, 1]
 
-        Label:
-            id: period
-            text: "3"
-            font_size: 200
-            size: 200, 200
-            size_hint: None, None
-            pos: 560, 140
-            color: [0.1, 0.1, 0.8, 1]
+            background_color: [1, 0, 1, 1]
 
         Label:
-            id: priority_l
-            text: "P"
-            font_size: 100
-            size: 100, 100
+            id: timer_dot
+            text: ":"
+            font_size: 300
+            font_name:"agencyb"
+            size: 150, 300
             size_hint: None, None
-            pos: 460, 330
-            color: [0.8, 0, 0, 1]
+            pos: 730 + 150 * 1 - 40, 140
+            color: [0.8, 0.8, 0, 1]
+
+            background_color: [1, 0, 1, 1]
+
+        Label:
+            id: timer_dec
+            text: "0"
+            font_size: 300
+            font_name:"agencyb"
+            size: 150, 300
+            size_hint: None, None
+            pos: 730 + 150 * 2 - 80, 140
+            color: [0.8, 0.8, 0, 1]
+
+            background_color: [1, 0, 1, 1]
+
+        Label:
+            id: timer_sec
+            text: "0"
+            font_size: 300
+            font_name:"agencyb"
+            size: 150, 300
+            size_hint: None, None
+            pos: 730 + 150 * 3 - 80, 140
+            color: [0.8, 0.8, 0, 1]
+
+            background_color: [1, 0, 1, 1]
+
+        ToggleButton:
+            id: passive_yel
+            size: 33, 40
+            size_hint: None, None
+            pos: 898, 203
+            disabled: True
+
+            background_color: [0.8, 0.8, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+        ToggleButton:
+            id: passive_red
+            size: 33, 40
+            size_hint: None, None
+            pos: 898, 297
+            disabled: True
+
+            background_color: [0.8, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+        Button:
+            id: period
+            text: "1"
+            font_size: 200
+            font_name:"agencyb"
+            size: 120, 200
+            size_hint: None, None
+            pos: 580, 140
+            color: [0.1, 0.1, 0.8, 1]
+
+            on_press: app.carousel_btn_handler(5)
+
+            background_color: [0, 1, 0, .2]
+            background_down: ""
+            background_normal: ""
 
         ToggleButton:
             id: warning_top_l
             size: 100, 50
             size_hint: None, None
             pos: 460, 260
+            disabled: True
 
-            background_color: [1, 0.5, 0.5, 1] if self.state == 'normal' else [0.8, 0, 0, 1]
-
+            background_color: [0.2, 0, 0, 1] if self.state == 'normal' else [0.8, 0, 0, 1]
             background_down: ""
             background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
 
         ToggleButton:
             id: warning_bot_l
@@ -170,19 +289,25 @@ Carousel:
             size_hint: None, None
             pos: 460, 190
 
-            background_color: [0.6, 0.6, 0.2, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
+            disabled: True
 
+            background_color: [0.2, 0.2, 0, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
             background_down: ""
             background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
 
-        Label:
-            id: priority_r
-            text: "P"
-            font_size: 100
-            size: 100, 100
+        Button:
+            id: left_warning_button
+            size: 100, 120
             size_hint: None, None
-            pos: 1360, 330
-            color: [0, 0.8, 0, 1]
+            pos: 460, 190
+
+            on_press: app.carousel_btn_handler(3)
+
+            background_color: [0, 0, 0, 0]
+            background_down: ""
+            background_normal: ""
 
         ToggleButton:
             id: warning_top_r
@@ -190,10 +315,13 @@ Carousel:
             size_hint: None, None
             pos: 1360, 260
 
-            background_color: [1, 0.5, 0.5, 1] if self.state == 'normal' else [0.8, 0, 0, 1]
+            disabled: True
 
+            background_color: [0.2, 0, 0, 1] if self.state == 'normal' else [0.8, 0, 0, 1]
             background_down: ""
             background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
 
         ToggleButton:
             id: warning_bot_r
@@ -201,10 +329,80 @@ Carousel:
             size_hint: None, None
             pos: 1360, 190
 
-            background_color: [0.6, 0.6, 0.2, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
+            disabled: True
+
+            background_color: [0.2, 0.2, 0, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
 
             background_down: ""
             background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+        Button:
+            id: right_warning_button
+            size: 100, 120
+            size_hint: None, None
+            pos: 1360, 190
+
+            on_press: app.carousel_btn_handler(4)
+
+            background_color: [0, 0, 0, 0]
+            background_down: ""
+            background_normal: ""
+
+        ToggleButton:
+            id: priority_l
+            text: "P"
+            font_size: 100
+            font_name:"agencyb"
+            size: 100, 100
+            size_hint: None, None
+            pos: 460, 330
+            color: [0.2, 0, 0, 1] if self.state == 'normal' else [0.8, 0, 0, 1]
+            background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
+
+            background_down: ""
+            background_normal: ""
+
+        ToggleButton:
+            id: priority_r
+            text: "P"
+            font_size: 100
+            font_name:"agencyb"
+            size: 100, 100
+            size_hint: None, None
+            pos: 1360, 330
+            color: [0, 0.2, 0, 1] if self.state == 'normal' else [0, 0.8, 0, 1]
+            background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
+
+            background_down: ""
+            background_normal: ""
+
+        #ToggleButton:
+        #    id: passive_yel
+        #    size: 100, 400
+        #    size_hint: None, None
+        #    pos: 0, 0
+        #    background_color: [0, 0, 0, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
+        #    disabled: True
+        #
+        #    background_down: ""
+        #    background_normal: ""
+        #    background_disabled_down: ""
+        #    background_disabled_normal: ""
+        #
+        #ToggleButton:
+        #    id: passive_red
+        #    size: 100, 400
+        #    size_hint: None, None
+        #    pos: 100, 0
+        #    background_color: [0, 0, 0, 1] if self.state == 'normal' else [0.8, 0, 0, 1]
+        #    disabled: True
+        #
+        #    background_down: ""
+        #    background_normal: ""
+        #    background_disabled_down: ""
+        #    background_disabled_normal: ""
 
     Label:
         text: "Video"
@@ -214,7 +412,7 @@ Carousel:
             BoxLayout:
                 Button:
                     text: "sync hardware"
-                    on_press:
+                    on_press: app.write_address()
         TabbedPanelItem:
             text: 'tab2'
             BoxLayout:
@@ -231,3 +429,5 @@ Carousel:
     Label:
         id: test_output
         text: "ABOBUS"
+    VKeyboard:
+        id: abc
