@@ -23,6 +23,8 @@ get_proc = None
 send_proc = None
 send_proc_running = False
 passive_timer = -1
+passive_yel_size = 40
+passive_red_size = 40
 
 with open("./rc5_address", "r") as address_file:
     rc5_address = int(address_file.readline())
@@ -63,6 +65,14 @@ class KivyApp(App):
 
         weapon = new_weapon
 
+    def set_weapon_connection_type(a, type):
+        if platform.machine() != "armv7l":
+            print(f"weapon connection type: {type}")
+            return
+
+        subprocess.Popen(f"sudo ./weapon_type {type}", shell=True)
+
+
     def build(self):
         return Builder.load_file('main.kv')
 
@@ -78,6 +88,8 @@ def get_data(dt):
     global passive_timer
     data = []
     app = App.get_running_app()
+    #app.root.ids["passive_red"].size[1] += 1
+    #app.root.ids["passive_yel"].size = (100, 100)
     for i in range(9):
         data.append([0] * 8)
     with open("./gpio_in", "rb") as gpio_in:
@@ -85,7 +97,7 @@ def get_data(dt):
             b = gpio_in.read(1)
             a = int.from_bytes(b, "big")
             if a == 0 and j == 0:
-                return
+                return #####DEBUG
             for i in range(8):
                 data[j][7 - i] = a % 2
                 a //= 2
@@ -99,6 +111,39 @@ def get_data(dt):
             app.root.ids[f"weapon_{i}"].state = "normal"
         weapon = (1 - data[0][7]) * 2 + 1 - data[0][6]
         app.root.ids[f"weapon_{weapon}"].state = "down"
+
+    #data[0][4] = 1 # DEBUG!!!!!!!!!!!!!!
+
+    if passive_timer == -1 and data[0][4] == 1:
+        passive_timer = time.time()
+    elif passive_timer != -1 and (data[3][3] == 0 and data[8][0] != 0):
+        passive_timer = -1
+        app.root.ids["passive_red"].size[1] = 0
+        app.root.ids["passive_yel"].size[1] = 0
+
+
+    if passive_timer != -1:
+        current_time = int(time.time() - passive_timer)
+
+        app.root.ids["passive_yel"].size[1] = min(passive_yel_size * current_time // 30, passive_yel_size)
+        app.root.ids["passive_red"].size[1] = min(max(passive_red_size * (current_time - 30) // 30, 0), passive_red_size)
+
+
+        #if current_time <= 30 * 4:
+        #    if current_time % 2 == 0:
+        #        app.root.ids["passive_yel"].size[1] = 0
+        #    else:
+        #        app.root.ids["passive_yel"].size[1] = passive_yel_size * current_time / 4 / 30
+        #else:
+        #    app.root.ids["passive_yel"].size[1] = passive_yel_size
+        #
+        #    if (current_time <= 60 * 4):
+        #        if current_time % 2 == 0:
+        #            app.root.ids["passive_red"].size[1] = 0
+        #        else:
+        #            app.root.ids["passive_red"].size[1] = passive_red_size * (current_time - 30) / 4 / 30
+    
+    #return #DEBUG!!!!!!!!!!!!!!!
 
     if data[8][0] == 0:
         return
@@ -209,15 +254,10 @@ def get_data(dt):
         app.root.ids["warning_bot_r"].state = "normal"
         app.root.ids["warning_top_r"].state = "normal"
 
-    if passive_timer == -1 and data[3][3] == 1:
-        passive_timer = time.time()
-    elif passive_timer != -1 and data[3][3] == 0:
-        passive_timer = -1
-        app.root.ids["passive_red"].state = "normal"
-
     if timer_s % 2 == 0 or data[3][3] == 0:
-        if app.root.ids["timer_dot"].text != ":" and passive_timer != -1 and data[3][3] == 1:
+        if app.root.ids["timer_dot"].text != ":" and passive_timer != -1:
 
+            app.root.ids["passive_red"].size[0] = 0
             pass
         app.root.ids["timer_dot"].text = ":"
     else:

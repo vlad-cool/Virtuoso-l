@@ -12,6 +12,15 @@ Carousel:
             pos: 640, 0
 
             ToggleButton:
+                id: weapon_connection_type
+                text: "wl"
+                font_size: 40
+                font_name:"agencyb"
+                color: [0.3, 0.3, 0.3, 1] if self.state == 'normal' else [0.7, 0.7, 0.7, 1]
+                background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
+                on_press: app.set_weapon_connection_type(self.state == 'normal')
+
+            ToggleButton:
                 id: weapon_2
                 text: "fleuret"
                 font_size: 40
@@ -228,31 +237,33 @@ Carousel:
 
             background_color: [1, 0, 1, 1]
 
-        ToggleButton:
+        Label:
             id: passive_yel
-            size: 33, 40
+            size: 33, 0
             size_hint: None, None
             pos: 898, 203
             disabled: True
 
-            background_color: [0.8, 0.8, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
-            background_down: ""
-            background_normal: ""
-            background_disabled_down: ""
-            background_disabled_normal: ""
+            canvas:
+                Color:
+                    rgba: 0.8, 0.8, 0, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
 
-        ToggleButton:
+        Label:
             id: passive_red
-            size: 33, 40
+            size: 33, 0
             size_hint: None, None
             pos: 898, 297
             disabled: True
 
-            background_color: [0.8, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
-            background_down: ""
-            background_normal: ""
-            background_disabled_down: ""
-            background_disabled_normal: ""
+            canvas:
+                Color:
+                    rgba: 0.8, 0, 0, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
 
         Button:
             id: period

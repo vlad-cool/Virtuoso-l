@@ -23,6 +23,9 @@ cd cmake-3.23.2
 cmake .
 make
 sudo make install
+#./bootstrap
+#make
+#sudo make install
 cd
 
 wget https://dri.freedesktop.org/libdrm/libdrm-2.4.112.tar.xz
@@ -38,9 +41,21 @@ tar xf mesa-mesa-22.1.6.tar.gz
 cd mesa-mesa-22.1.6
 
 meson build/ --optimization s --buildtype release --prefix=/usr/local --libdir=lib/arm-linux-gnueabihf \
--Dgallium-drivers=lima,panfrost,kmsro,swrast -Dplatforms=x11 -Dvulkan-drivers= -Ddri-drivers= \
+-Dgallium-drivers=lima -Dplatforms=x11 -Dvulkan-drivers= -Ddri-drivers= \
 -Dllvm=false
 
 ninja -C build/
 
 sudo -E ninja -C build/ install
+
+#meson build/ --optimization s --buildtype release --prefix=/usr/local --libdir=lib/arm-linux-gnueabihf \
+#-Dgallium-drivers=lima -Dplatforms=x11 -Dvulkan-drivers= -Ddri-drivers=sun4i_drm \
+#-Dllvm=false
+#
+#ninja -C build/
+#
+#sudo -E ninja -C build/ install
+
+#meson build/
+#ninja -C build/
+#sudo ninja -C build/ install
