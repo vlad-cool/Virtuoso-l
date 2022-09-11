@@ -184,7 +184,7 @@ Carousel:
 
         Label:
             id: timer_min
-            text: str(app.timer_0)
+            text: app.timer_0
             font_size: 300
             font_name:"agencyb"
             size: 150, 300
@@ -194,7 +194,7 @@ Carousel:
 
         Label:
             id: timer_dot
-            text: str(app.timer_1)
+            text: app.timer_1 if app.timer_running == 0 or time.time() - app.flash_timer < 0.5 else " "
             font_size: 300
             font_name:"agencyb"
             size: 150, 300
@@ -204,7 +204,7 @@ Carousel:
 
         Label:
             id: timer_dec
-            text: str(app.timer_2)
+            text: app.timer_2
             font_size: 300
             font_name:"agencyb"
             size: 150, 300
@@ -214,7 +214,7 @@ Carousel:
 
         Label:
             id: timer_sec
-            text: str(app.timer_3)
+            text: app.timer_3
             font_size: 300
             font_name:"agencyb"
             size: 150, 300
@@ -238,7 +238,6 @@ Carousel:
 
         Label:
             id: passive_red
-            #flash_timer: time.time()
             size: 33, app.passive_red_size if app.passive_timer != -1 else 0
             size_hint: None, None
             pos: 898, 297
@@ -272,7 +271,7 @@ Carousel:
             size: 100, 50
             size_hint: None, None
             pos: 460, 260
-            disabled: True
+            disabled: True if app.warning_l < 2 else False
 
             background_color: [0.2, 0, 0, 1] if self.state == 'normal' else [0.8, 0, 0, 1]
             background_down: ""
@@ -285,8 +284,7 @@ Carousel:
             size: 100, 50
             size_hint: None, None
             pos: 460, 190
-
-            disabled: True
+            disabled: True if app.warning_l < 1 else False
 
             background_color: [0.2, 0.2, 0, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
             background_down: ""
@@ -311,8 +309,7 @@ Carousel:
             size: 100, 50
             size_hint: None, None
             pos: 1360, 260
-
-            disabled: True
+            disabled: True if app.warning_r < 2 else False
 
             background_color: [0.2, 0, 0, 1] if self.state == 'normal' else [0.8, 0, 0, 1]
             background_down: ""
@@ -325,8 +322,7 @@ Carousel:
             size: 100, 50
             size_hint: None, None
             pos: 1360, 190
-
-            disabled: True
+            disabled: True if app.warning_r < 1 else False
 
             background_color: [0.2, 0.2, 0, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
 

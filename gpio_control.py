@@ -3,45 +3,44 @@ from ctypes    import *
 from time      import sleep
 from platform  import machine
 
-if machine() != "armv7l":
-    exit()
+if machine() == "armv7l":
 
-off_time = 250
-on_time  = 250
+    off_time = 250
+    on_time  = 250
 
-gpio = cdll.LoadLibrary("wiringPi.h")
+    gpio = cdll.LoadLibrary("wiringPi.h")
 
-gpio.wiringPiSetupPhys();
+    gpio.wiringPiSetupPhys();
 
-gpio.pinMode(8, 1)
-gpio.pinMode(10, 1)
-gpio.pinMode(12, 1)
-gpio.pinMode(16, 1)
-gpio.pinMode(19, 1)
-gpio.pinMode(21, 1)
-gpio.pinMode(23, 1)
-gpio.pinMode(24, 1)
+    gpio.pinMode(8, 1)
+    gpio.pinMode(10, 1)
+    gpio.pinMode(12, 1)
+    gpio.pinMode(16, 1)
+    gpio.pinMode(19, 1)
+    gpio.pinMode(21, 1)
+    gpio.pinMode(23, 1)
+    gpio.pinMode(24, 1)
 
-gpio.digitalWrite(8, 1)
-gpio.digitalWrite(10, 1)
-gpio.digitalWrite(12, 1)
-gpio.digitalWrite(16, 1)
-gpio.digitalWrite(19, 1)
-gpio.digitalWrite(21, 1)
-gpio.digitalWrite(23, 1)
-gpio.digitalWrite(24, 1)
+    gpio.digitalWrite(8, 1)
+    gpio.digitalWrite(10, 1)
+    gpio.digitalWrite(12, 1)
+    gpio.digitalWrite(16, 1)
+    gpio.digitalWrite(19, 1)
+    gpio.digitalWrite(21, 1)
+    gpio.digitalWrite(23, 1)
+    gpio.digitalWrite(24, 1)
 
-gpio.pinMode(18, 0)
+    gpio.pinMode(18, 0)
 
-gpio.pinMode(26, 1)
-gpio.pinMode(37, 1)
+    gpio.pinMode(26, 1)
+    gpio.pinMode(37, 1)
 
-gpio.digitalWrite(26, 1)
-gpio.digitalWrite(37, 1)
+    gpio.digitalWrite(26, 1)
+    gpio.digitalWrite(37, 1)
 
-gpio.pinMode(32, 0)
-gpio.pinMode(36, 0)
-gpio.pinMode(7, 0)
+    gpio.pinMode(32, 0)
+    gpio.pinMode(36, 0)
+    gpio.pinMode(7, 0)
 
 def run_in_thread(func):
     def inner1(*args):

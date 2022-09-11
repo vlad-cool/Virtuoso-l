@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from dataclasses import dataclass
+from socketserver import DatagramRequestHandler
 import kivy
 from kivy.core.window import Window
 from kivy.lang import Builder
@@ -90,13 +92,13 @@ class KivyApp(App):
                     [1, 1, 0, 0, 0, 0, 0, 0],
                     [1, 1, 1, 0, 0, 0, 0, 0],]
         
-        score_r = data[8][3]
-        for i in data[6][3:]:
+        score_r = data[7][3]
+        for i in data[5][3:]:
             score_r *= 2
             score_r += i
 
-        score_l = data[7][3]
-        for i in data[5][3:]:
+        score_l = data[6][3]
+        for i in data[4][3:]:
             score_l *= 2
             score_l += i
 
@@ -114,26 +116,34 @@ class KivyApp(App):
             self.score_r_l = str(score_r // 10)
             self.score_r_r = str(score_r % 10)
 
-        self.timer_0 = 0
-        self.timer_2 = 0
-        self.timer_3 = 0
         period = 0
+        timer_m = 0
+        timer_d = 0
+        timer_s = 0
 
-        for i in data[2][6:]:
-            timer_0 *= 2
-            timer_0 += i
+        for i in data[1][6:]:
+            timer_m *= 2
+            timer_m += i
+
+        for i in data[2][4:]:
+            timer_d *= 2
+            timer_d += i
 
         for i in data[3][4:]:
-            timer_2 *= 2
-            timer_2 += i
+            timer_s *= 2
+            timer_s += i
+        
+        if self.timer_3 != str(timer_s):
+            self.flash_timer = time.time()
 
-        for i in data[4][4:]:
-            timer_3 *= 2
-            timer_3 += i
+        self.timer_0 = str(timer_m)
+        self.timer_2 = str(timer_d)
+        self.timer_3 = str(timer_s)
+        self.timer_running = data[2][3]
 
         for i in range(4):
             period *= 2
-            period +=data[7][4 + i]
+            period +=data[6][4 + i]
 
         if period == 15:
             self.priority = 1
@@ -145,9 +155,9 @@ class KivyApp(App):
             self.priority = 0
             self.period = period
             
-        if self.passive_timer == -1 and data[0][4] == 1:
+        if self.passive_timer == -1 and self.timer_running == 1:
             self.passive_timer = time.time()
-        elif self.passive_timer != -1 and (data[3][3] == 0 and data[8][0] != 0):
+        elif self.passive_timer != -1 and self.timer_running == 0:
             self.passive_timer = -1
 
         if self.passive_timer != -1:
@@ -156,63 +166,8 @@ class KivyApp(App):
             self.passive_yel_size = min(self.passive_yel_max_size * current_time // 30, self.passive_yel_max_size)
             self.passive_red_size = min(max(self.passive_red_max_size * (current_time - 30) // 30, 0), self.passive_red_max_size)
 
-        return
-
-        
-
-
-        
-        
-        
-        if data[8][5]:
-            app.root.ids["warning_bot_l"].state = "down"
-            app.root.ids["warning_top_l"].state = "normal"
-        elif data[8][4]:
-            app.root.ids["warning_bot_l"].state = "down"
-            app.root.ids["warning_top_l"].state = "down"
-        else:
-            app.root.ids["warning_bot_l"].state = "normal"
-            app.root.ids["warning_top_l"].state = "normal"
-
-        if data[8][7]:
-            app.root.ids["warning_bot_r"].state = "down"
-            app.root.ids["warning_top_r"].state = "normal"
-        elif data[8][6]:
-            app.root.ids["warning_bot_r"].state = "down"
-            app.root.ids["warning_top_r"].state = "down"
-        else:
-            app.root.ids["warning_bot_r"].state = "normal"
-            app.root.ids["warning_top_r"].state = "normal"
-
-        
-        if data[8][4] == 1:
-            app.root.ids["warning_bot_l"].state = "down"
-            app.root.ids["warning_top_l"].state = "down"
-        elif data[8][5] == 1:
-            app.root.ids["warning_bot_l"].state = "down"
-            app.root.ids["warning_top_l"].state = "normal"
-        else:
-            app.root.ids["warning_bot_l"].state = "normal"
-            app.root.ids["warning_top_l"].state = "normal"
-
-        if data[8][6] == 1:
-            app.root.ids["warning_bot_r"].state = "down"
-            app.root.ids["warning_top_r"].state = "down"
-        elif data[8][7] == 1:
-            app.root.ids["warning_bot_r"].state = "down"
-            app.root.ids["warning_top_r"].state = "normal"
-        else:
-            app.root.ids["warning_bot_r"].state = "normal"
-            app.root.ids["warning_top_r"].state = "normal"
-
-        if timer_s % 2 == 0 or data[3][3] == 0:
-            if app.root.ids["timer_dot"].text != ":" and passive_timer != -1:
-
-                app.root.ids["passive_red"].size[0] = 0
-                pass
-            app.root.ids["timer_dot"].text = ":"
-        else:
-            app.root.ids["timer_dot"].text = " "
+        self.warning_l = data[7][4] * 2 + data[7][5]
+        self.warning_r = data[7][7] * 2 + data[7][6]
 
     def build(self):
         self.send_queue = deque()
@@ -235,9 +190,12 @@ class KivyApp(App):
         self.timer_1 = ":"
         self.timer_2 = "0"
         self.timer_3 = "0"
+        self.flash_timer = time.time()
         self.timer_running = 0
         self.period = 0
         self.priority = 0
+        self.warning_l = 0
+        self.warning_r = 0
 
         self.color_left_score     = [0.8, 0.0, 0.0, 1]
         self.color_right_score    = [0.0, 0.8, 0.0, 1]
@@ -253,14 +211,14 @@ class KivyApp(App):
         return Builder.load_file("main.kv")
 
     def on_start(self):
-
         Clock.schedule_interval(self.get_data, read_interval)
         Clock.schedule_interval(self.send_data, send_interval)
         with open("./rc5_address", "r") as address_file:
             self.rc5_address = int(address_file.readline())
 
     def on_stop(self):
-        self.data_rx.close()
+        if self.data_rx is not None:
+            self.data_rx.close()
 
 if __name__ == "__main__":
     LabelBase.register(name="agencyb", fn_regular='AGENCYB.TTF')
