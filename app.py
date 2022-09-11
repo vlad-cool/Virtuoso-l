@@ -1,24 +1,21 @@
 #!/usr/bin/env python3
-from dataclasses import dataclass
-from socketserver import DatagramRequestHandler
 import kivy
-from kivy.core.window import Window
-from kivy.lang import Builder
-from kivy.clock import Clock
-from kivy.app import App
-import platform
-import subprocess
-from collections import deque
-from kivy.core.text import LabelBase
-import serial
 import time
+import serial
 import get_address
 import gpio_control
+from kivy.core.window import Window
+from kivy.lang        import Builder
+from kivy.clock       import Clock
+from kivy.app         import App
+from kivy.core.text   import LabelBase
+from collections      import deque
+from platform         import machine
 
 read_interval = .2
 send_interval = .2
 
-if platform.machine() == "armv7l": #for bananapi, it have much better performance when running vertically
+if machine() == "armv7l": #for bananapi, it have much better performance when running vertically
     Window.rotation = 90
 
 kivy.require('2.1.0')
@@ -36,7 +33,7 @@ class KivyApp(App):
         self.send_handler(commands[(2 + new_index - old_index) % 3])
         
     def set_weapon(self, a, new_weapon):
-        if platform.machine() != "armv7l":
+        if machine() != "armv7l":
             print(f"weapon: {new_weapon}")
             return
 
@@ -44,7 +41,7 @@ class KivyApp(App):
         self.weapon = new_weapon
 
     def change_weapon_connection_type(a):
-        if platform.machine() != "armv7l":
+        if machine() != "armv7l":
             print("weapon connection type changed")
             return
 
@@ -54,11 +51,11 @@ class KivyApp(App):
         if self.send_proc is not None and self.send_proc.poll() is None:
             return
         if len(self.send_queue) > 0:
-            if platform.machine() != "armv7l":
+            if machine() != "armv7l":
                 print(self.send_queue[0])
                 self.send_queue.popleft()
                 return
-            self.send_proc = subprocess.Popen(f"sudo ./output {self.send_queue[0]} {self.toggle_bit}", shell=True)
+            #self.send_proc = subprocess.Popen(f"sudo ./output {self.send_queue[0]} {self.toggle_bit}", shell=True)
             self.toggle_bit = 1 - self.toggle_bit
             self.send_queue.popleft()
 
@@ -70,17 +67,17 @@ class KivyApp(App):
         return a[::-1]
 
     def get_data(self, dt):
-        data = []
+        data = [] * 8
 
-        if platform.machine() == "armv7l":
+        if machine() == "armv7l":
             while self.data_rx.inWaiting // 8 > 0:
                 for i in range(8):
                     byte = int.from_bytes(self.data_rx.read(), "big")
                     data[byte // 2 ** 5] = self.byte_to_arr(byte)
         
             self.weapon                 = gpio_control.read_pin(32) * 2 + gpio_control.read_pin(36)
-            self.weapon_connection_type = gpio_control.read_pin(7)
             self.video_timer            = gpio_control.read_pin(18)
+            self.weapon_connection_type = gpio_control.read_pin(7)
 
         else:
             data = [[0, 0, 0, 0, 0, 0, 0, 0],
@@ -210,7 +207,7 @@ class KivyApp(App):
         self.color_timer_enabled  = [1.0, 1.0, 1.0, 1]
         self.color_timer_disabled = [0.8, 0.4, 0.0, 1]
 
-        if platform.machine() == "armv7l":
+        if machine() == "armv7l":
             self.data_rx = serial.Serial("/dev/ttyS2", 38400)
         else:
             self.data_rx = None
