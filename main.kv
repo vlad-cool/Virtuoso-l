@@ -59,47 +59,48 @@ Carousel:
             pos: 0, 0
             min_move: 0.05
 
-            on_index: app.carousel_handler(args[1], 0)
+            old_index: 0
+            on_index: app.carousel_handler(0, self.old_index, self.index, [3, 2]); self.old_index = self.index
 
             Button:
-                on_press: app.carousel_btn_handler(0)
+                on_press: app.send_handler(3)
                 background_color: [0, 0, 0, 1]
                 background_down: ""
                 background_normal: ""
 
 
             Button:
-                on_press: app.carousel_btn_handler(0)
+                on_press: app.send_handler(3)
                 background_color: [0, 0, 0, 1]
                 background_down: ""
                 background_normal: ""
 
 
             Button:
-                on_press: app.carousel_btn_handler(0)
+                on_press: app.send_handler(3)
                 background_color: [0, 0, 0, 1]
                 background_down: ""
                 background_normal: ""
 
         Label:
             id: score_l_l
-            text: "0"
+            text: app.score_l_l
             font_size: 380
             font_name:"agencyb"
             size: 200, 480
             size_hint: None, None
             pos: 0, 0
-            color: [0.8, 0, 0, 1]
+            color: app.color_left_score
 
         Label:
             id: score_l_r
-            text: " "
+            text: app.score_l_r
             font_size: 380
             font_name:"agencyb"
             size: 200, 480
             size_hint: None, None
             pos: 200, 0
-            color: [0.8, 0, 0, 1]
+            color: app.color_left_score
 
         Carousel:
             id: right_score_carousel
@@ -110,47 +111,46 @@ Carousel:
             pos: 1520, 0
             min_move: 0.05
 
-            on_index: app.carousel_handler(args[1], 1)
+            old_index: 0
+            on_index: app.carousel_handler(0, self.old_index, self.index, [15, 9]); self.old_index = self.index
 
             Button:
-                on_press: app.carousel_btn_handler(1)
+                on_press: app.send_handler(9)
                 background_color: [0, 0, 0, 0]
                 background_down: ""
                 background_normal: ""
 
             Button:
-                on_press: app.carousel_btn_handler(1)
+                on_press: app.send_handler(9)
                 background_color: [0, 0, 0, 0]
                 background_down: ""
                 background_normal: ""
 
             Button:
-                on_press: app.carousel_btn_handler(1)
+                on_press: app.send_handler(9)
                 background_color: [0, 0, 0, 0]
                 background_down: ""
                 background_normal: ""
 
         Label:
             id: score_r_l
-            text: " "
+            text: app.score_r_l
             font_size: 380
             font_name:"agencyb"
             size: 200, 480
             size_hint: None, None
             pos: 1520, 0
-            color: [0, 0.8, 0, 1]
+            color: app.color_right_score
 
         Label:
             id: score_r_r
-            text: "0"
+            text: app.score_r_r
             font_size: 380
             font_name:"agencyb"
             size: 200, 480
             size_hint: None, None
             pos: 1720, 0
-            color: [0, 0.8, 0, 1]
-
-            background_color: [1, 0, 1, 1]
+            color: app.color_right_score
 
         Carousel:
             id: timer_carousel
@@ -161,85 +161,70 @@ Carousel:
             pos: 530 + 200, 140
             min_move: 0.05
 
-            on_index: app.carousel_handler(args[1], 2)
-
-            #canvas:
-            #    Color:
-            #        rgba: 1, 0.5, 0.5, .3
-            #    Rectangle:
-            #        pos: self.pos
-            #        size: self.size
-
+            old_index: 0
+            on_index: app.carousel_handler(0, self.old_index, self.index, [6, 14]); self.old_index = self.index
 
             Button:
-                on_press: app.carousel_btn_handler(2)
+                on_press: app.send_handler(13)
                 background_color: [0, 0, 0, 0]
                 background_down: ""
                 background_normal: ""
 
             Button:
-                on_press: app.carousel_btn_handler(2)
+                on_press: app.send_handler(13)
                 background_color: [0, 0, 0, 0]
                 background_down: ""
                 background_normal: ""
 
             Button:
-                on_press: app.carousel_btn_handler(2)
+                on_press: app.send_handler(13)
                 background_color: [0, 0, 0, 0]
                 background_down: ""
                 background_normal: ""
 
         Label:
             id: timer_min
-            text: "0"
+            text: str(app.timer_0)
             font_size: 300
             font_name:"agencyb"
             size: 150, 300
             size_hint: None, None
             pos: 730 + 150 * 0, 140
-            color: [0.8, 0.8, 0, 1]
-
-            background_color: [1, 0, 1, 1]
+            color: app.color_timer_enabled if app.timer_running else app.color_timer_disabled
 
         Label:
             id: timer_dot
-            text: ":"
+            text: str(app.timer_1)
             font_size: 300
             font_name:"agencyb"
             size: 150, 300
             size_hint: None, None
             pos: 730 + 150 * 1 - 40, 140
-            color: [0.8, 0.8, 0, 1]
-
-            background_color: [1, 0, 1, 1]
+            color: app.color_timer_enabled if app.timer_running else app.color_timer_disabled
 
         Label:
             id: timer_dec
-            text: "0"
+            text: str(app.timer_2)
             font_size: 300
             font_name:"agencyb"
             size: 150, 300
             size_hint: None, None
             pos: 730 + 150 * 2 - 80, 140
-            color: [0.8, 0.8, 0, 1]
-
-            background_color: [1, 0, 1, 1]
+            color: app.color_timer_enabled if app.timer_running else app.color_timer_disabled
 
         Label:
             id: timer_sec
-            text: "0"
+            text: str(app.timer_3)
             font_size: 300
             font_name:"agencyb"
             size: 150, 300
             size_hint: None, None
             pos: 730 + 150 * 3 - 80, 140
-            color: [0.8, 0.8, 0, 1]
-
-            background_color: [1, 0, 1, 1]
+            color: app.color_timer_enabled if app.timer_running else app.color_timer_disabled
 
         Label:
             id: passive_yel
-            size: 33, 0
+            size: 33, app.passive_yel_size if app.passive_timer != -1 else 0
             size_hint: None, None
             pos: 898, 203
             disabled: True
@@ -253,7 +238,8 @@ Carousel:
 
         Label:
             id: passive_red
-            size: 33, 0
+            #flash_timer: time.time()
+            size: 33, app.passive_red_size if app.passive_timer != -1 else 0
             size_hint: None, None
             pos: 898, 297
             disabled: True
@@ -273,9 +259,9 @@ Carousel:
             size: 120, 200
             size_hint: None, None
             pos: 580, 140
-            color: [0.1, 0.1, 0.8, 1]
+            color: app.color_period
 
-            on_press: app.carousel_btn_handler(5)
+            on_press: app.send_handler(8)
 
             background_color: [0, 1, 0, .2]
             background_down: ""
@@ -314,7 +300,7 @@ Carousel:
             size_hint: None, None
             pos: 460, 190
 
-            on_press: app.carousel_btn_handler(3)
+            on_press: app.send_handler(4)
 
             background_color: [0, 0, 0, 0]
             background_down: ""
@@ -355,7 +341,7 @@ Carousel:
             size_hint: None, None
             pos: 1360, 190
 
-            on_press: app.carousel_btn_handler(4)
+            on_press: app.send_handler(11)
 
             background_color: [0, 0, 0, 0]
             background_down: ""
@@ -369,7 +355,7 @@ Carousel:
             size: 100, 100
             size_hint: None, None
             pos: 460, 330
-            color: [0.2, 0, 0, 1] if self.state == 'normal' else [0.8, 0, 0, 1]
+            color: [0.2, 0, 0, 1] if self.state == 'normal' else app.color_left_score
             background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
 
             background_down: ""
@@ -383,37 +369,11 @@ Carousel:
             size: 100, 100
             size_hint: None, None
             pos: 1360, 330
-            color: [0, 0.2, 0, 1] if self.state == 'normal' else [0, 0.8, 0, 1]
+            color: [0, 0.2, 0, 1] if self.state == 'normal' else app.color_right_score
             background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
 
             background_down: ""
             background_normal: ""
-
-        #ToggleButton:
-        #    id: passive_yel
-        #    size: 100, 400
-        #    size_hint: None, None
-        #    pos: 0, 0
-        #    background_color: [0, 0, 0, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
-        #    disabled: True
-        #
-        #    background_down: ""
-        #    background_normal: ""
-        #    background_disabled_down: ""
-        #    background_disabled_normal: ""
-        #
-        #ToggleButton:
-        #    id: passive_red
-        #    size: 100, 400
-        #    size_hint: None, None
-        #    pos: 100, 0
-        #    background_color: [0, 0, 0, 1] if self.state == 'normal' else [0.8, 0, 0, 1]
-        #    disabled: True
-        #
-        #    background_down: ""
-        #    background_normal: ""
-        #    background_disabled_down: ""
-        #    background_disabled_normal: ""
 
     Label:
         text: "Video"

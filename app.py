@@ -8,26 +8,13 @@ import platform
 import subprocess
 from collections import deque
 from kivy.core.text import LabelBase
+import serial
 import time
 import get_address
+import gpio_control
 
-send_queue = deque()
 read_interval = .2
 send_interval = .2
-rc5_address = 0
-toggle_bit = 1
-weapon = 0
-carousel_codes = [[3, 2, 2], [15, 9, 9], [6, 14, 13], [0, 0, 4], [0, 0, 11], [0, 0, 8]]
-carousel_indexes = [0] * len(carousel_codes)
-get_proc = None
-send_proc = None
-send_proc_running = False
-passive_timer = -1
-passive_yel_size = 40
-passive_red_size = 40
-
-with open("./rc5_address", "r") as address_file:
-    rc5_address = int(address_file.readline())
 
 if platform.machine() == "armv7l": #for bananapi, it have much better performance when running vertically
     Window.rotation = 90
@@ -36,255 +23,247 @@ kivy.require('2.1.0')
 
 class KivyApp(App):
     def write_address(a):
+        rc5_address = get_address()
         with open("rc5_address", "w") as address_file:
-            address_file.write(f"{get_address()}\n")
+            address_file.write(f"{rc5_address}\n")
 
-    def carousel_btn_handler(a, carousel_number):
-        global carousel_indexes
-        global carousel_codes
-        global send_queue
-        send_queue.append(str(rc5_address * (2**6) + carousel_codes[carousel_number][2]))
+    def send_handler(self, code):
+        self.send_queue.append(str(self.rc5_address * (2**6) + code))
 
-    def carousel_handler(a, new_index, carousel_number):
-        global carousel_indexes
-        global carousel_codes
-        global send_queue
-        send_queue.append(str(rc5_address * (2**6) + carousel_codes[carousel_number][(3 + new_index - carousel_indexes[carousel_number]) % 3 - 1]))
-        carousel_indexes[carousel_number] = new_index % 3
-
-    def set_weapon(a, new_weapon):
+    def carousel_handler(self, a, old_index, new_index, commands):
+        self.send_handler(commands[(2 + new_index - old_index) % 3])
+        
+    def set_weapon(self, a, new_weapon):
         if platform.machine() != "armv7l":
             print(f"weapon: {new_weapon}")
             return
-        global weapon
 
-        if (3 + new_weapon - weapon) % 3 == 1:
-            subprocess.Popen("sudo ./weapon 1", shell=True)
-        if (3 + new_weapon - weapon) % 3 == 2:
-            subprocess.Popen("sudo ./weapon 2", shell=True)
-
-        weapon = new_weapon
+        subprocess.Popen(f"sudo ./weapon {3 + new_weapon - self.weapon}", shell=True)
+        self.weapon = new_weapon
 
     def set_weapon_connection_type(a, type):
         if platform.machine() != "armv7l":
             print(f"weapon connection type: {type}")
             return
 
-        subprocess.Popen(f"sudo ./weapon_type {type}", shell=True)
+        subprocess.Popen(f"sudo ./change_weapon_type", shell=True)
 
+    def send_data(self, dt):
+        if self.send_proc is not None and self.send_proc.poll() is None:
+            return
+        if len(self.send_queue) > 0:
+            if platform.machine() != "armv7l":
+                print(self.send_queue[0])
+                self.send_queue.popleft()
+                return
+            self.send_proc = subprocess.Popen(f"sudo ./output {self.send_queue[0]} {self.toggle_bit}", shell=True)
+            self.toggle_bit = 1 - self.toggle_bit
+            self.send_queue.popleft()
+
+    def byte_to_arr(byte):
+        a = [0] * 8
+        for i in range(8):
+                byte[i] = a % 2
+                byte //= 2
+        return a[::-1]
+
+    def get_data(self, dt):
+        data = []
+
+        if platform.machine() == "armv7l":
+            while self.data_rx.inWaiting // 8 > 0:
+                for i in range(8):
+                    byte = int.from_bytes(self.data_rx.read(), "big")
+                    data[byte // 2 ** 5] = self.byte_to_arr(byte)
+        
+            self.weapon                 = gpio_control.read_pin(32) * 2 + gpio_control.read_pin(36)
+            self.weapon_connection_type = gpio_control.read_pin(7)
+            self.video_timer            = gpio_control.read_pin(18)
+
+        else:
+            data = [[0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 1, 0, 0, 0, 0, 0],
+                    [0, 1, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 1, 0, 0, 0, 0, 0],
+                    [1, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 0, 1, 0, 0, 0, 0, 0],
+                    [1, 1, 0, 0, 0, 0, 0, 0],
+                    [1, 1, 1, 0, 0, 0, 0, 0],]
+        
+        score_r = data[8][3]
+        for i in data[6][3:]:
+            score_r *= 2
+            score_r += i
+
+        score_l = data[7][3]
+        for i in data[5][3:]:
+            score_l *= 2
+            score_l += i
+
+        if score_l < 10:
+            self.score_l_l = str(score_l)
+            self.score_l_r = " "
+        else:
+            self.score_l_l = str(score_l // 10)
+            self.score_l_r = str(score_l % 10)
+
+        if score_r < 10:
+            self.score_r_l = " "
+            self.score_r_r = str(score_r)
+        else:
+            self.score_r_l = str(score_r // 10)
+            self.score_r_r = str(score_r % 10)
+
+        self.timer_0 = 0
+        self.timer_2 = 0
+        self.timer_3 = 0
+        period = 0
+
+        for i in data[2][6:]:
+            timer_0 *= 2
+            timer_0 += i
+
+        for i in data[3][4:]:
+            timer_2 *= 2
+            timer_2 += i
+
+        for i in data[4][4:]:
+            timer_3 *= 2
+            timer_3 += i
+
+        for i in range(4):
+            period *= 2
+            period +=data[7][4 + i]
+
+        if period == 15:
+            self.priority = 1
+        elif period == 14:
+            self.priority = -1
+        elif period == 13:
+            self.priority = 0
+        elif period >= 1 and period <= 9:
+            self.priority = 0
+            self.period = period
+            
+        if self.passive_timer == -1 and data[0][4] == 1:
+            self.passive_timer = time.time()
+        elif self.passive_timer != -1 and (data[3][3] == 0 and data[8][0] != 0):
+            self.passive_timer = -1
+
+        if self.passive_timer != -1:
+            current_time = int(time.time() - self.passive_timer)
+
+            self.passive_yel_size = min(self.passive_yel_max_size * current_time // 30, self.passive_yel_max_size)
+            self.passive_red_size = min(max(self.passive_red_max_size * (current_time - 30) // 30, 0), self.passive_red_max_size)
+
+        return
+
+        
+
+
+        
+        
+        
+        if data[8][5]:
+            app.root.ids["warning_bot_l"].state = "down"
+            app.root.ids["warning_top_l"].state = "normal"
+        elif data[8][4]:
+            app.root.ids["warning_bot_l"].state = "down"
+            app.root.ids["warning_top_l"].state = "down"
+        else:
+            app.root.ids["warning_bot_l"].state = "normal"
+            app.root.ids["warning_top_l"].state = "normal"
+
+        if data[8][7]:
+            app.root.ids["warning_bot_r"].state = "down"
+            app.root.ids["warning_top_r"].state = "normal"
+        elif data[8][6]:
+            app.root.ids["warning_bot_r"].state = "down"
+            app.root.ids["warning_top_r"].state = "down"
+        else:
+            app.root.ids["warning_bot_r"].state = "normal"
+            app.root.ids["warning_top_r"].state = "normal"
+
+        
+        if data[8][4] == 1:
+            app.root.ids["warning_bot_l"].state = "down"
+            app.root.ids["warning_top_l"].state = "down"
+        elif data[8][5] == 1:
+            app.root.ids["warning_bot_l"].state = "down"
+            app.root.ids["warning_top_l"].state = "normal"
+        else:
+            app.root.ids["warning_bot_l"].state = "normal"
+            app.root.ids["warning_top_l"].state = "normal"
+
+        if data[8][6] == 1:
+            app.root.ids["warning_bot_r"].state = "down"
+            app.root.ids["warning_top_r"].state = "down"
+        elif data[8][7] == 1:
+            app.root.ids["warning_bot_r"].state = "down"
+            app.root.ids["warning_top_r"].state = "normal"
+        else:
+            app.root.ids["warning_bot_r"].state = "normal"
+            app.root.ids["warning_top_r"].state = "normal"
+
+        if timer_s % 2 == 0 or data[3][3] == 0:
+            if app.root.ids["timer_dot"].text != ":" and passive_timer != -1:
+
+                app.root.ids["passive_red"].size[0] = 0
+                pass
+            app.root.ids["timer_dot"].text = ":"
+        else:
+            app.root.ids["timer_dot"].text = " "
 
     def build(self):
-        return Builder.load_file('main.kv')
+        self.send_queue = deque()
+        self.toggle_bit = 1
+        self.weapon = 0
+        self.weapon_connection_type = 0
+        self.video_timer = 0
+        self.send_proc = None
+        self.passive_timer = -1
+        self.rc5_address = 0
+        self.passive_yel_max_size = 40
+        self.passive_red_max_size = 40
+        self.passive_yel_size = 0
+        self.passive_red_size = 0
+        self.score_l_l = "0"
+        self.score_l_r = " "
+        self.score_r_l = " "
+        self.score_r_r = "0"
+        self.timer_0 = "0"
+        self.timer_1 = ":"
+        self.timer_2 = "0"
+        self.timer_3 = "0"
+        self.timer_running = 0
+        self.period = 0
+        self.priority = 0
 
-    def on_start(seelf):
-        pass
+        self.color_left_score     = [0.8, 0.0, 0.0, 1]
+        self.color_right_score    = [0.0, 0.8, 0.0, 1]
+        self.color_period         = [0.1, 0.1, 0.8, 1]
+        self.color_timer_enabled  = [1.0, 1.0, 1.0, 1]
+        self.color_timer_disabled = [0.8, 0.4, 0.0, 1]
+
+        if platform.machine() == "armv7l":
+            self.data_rx = serial.Serial("/dev/ttyS2", 38400)
+        else:
+            self.data_rx = None
+        
+        return Builder.load_file("main.kv")
+
+    def on_start(self):
+
+        Clock.schedule_interval(self.get_data, read_interval)
+        Clock.schedule_interval(self.send_data, send_interval)
+        with open("./rc5_address", "r") as address_file:
+            self.rc5_address = int(address_file.readline())
 
     def on_stop(self):
-        pass
-
-def get_data(dt):
-    global weapon
-    global send_queue
-    global passive_timer
-    data = []
-    app = App.get_running_app()
-    #app.root.ids["passive_red"].size[1] += 1
-    #app.root.ids["passive_yel"].size = (100, 100)
-    for i in range(9):
-        data.append([0] * 8)
-    with open("./gpio_in", "rb") as gpio_in:
-        for j in range(9):
-            b = gpio_in.read(1)
-            a = int.from_bytes(b, "big")
-            if a == 0 and j == 0:
-                return #####DEBUG
-            for i in range(8):
-                data[j][7 - i] = a % 2
-                a //= 2
-            if j == 0 and data[0][3] == 1:
-                break
-        if data[0][3] == 0:
-            app.root.ids["test_output"].text = str(data)[1:-1].replace(", ", "").replace("[", "").replace("]", "\n") #debug output
-
-    if 3 - data[0][7] * 2 - data[0][6] < 3:
-        for i in range(3):
-            app.root.ids[f"weapon_{i}"].state = "normal"
-        weapon = (1 - data[0][7]) * 2 + 1 - data[0][6]
-        app.root.ids[f"weapon_{weapon}"].state = "down"
-
-    #data[0][4] = 1 # DEBUG!!!!!!!!!!!!!!
-
-    if passive_timer == -1 and data[0][4] == 1:
-        passive_timer = time.time()
-    elif passive_timer != -1 and (data[3][3] == 0 and data[8][0] != 0):
-        passive_timer = -1
-        app.root.ids["passive_red"].size[1] = 0
-        app.root.ids["passive_yel"].size[1] = 0
-
-
-    if passive_timer != -1:
-        current_time = int(time.time() - passive_timer)
-
-        app.root.ids["passive_yel"].size[1] = min(passive_yel_size * current_time // 30, passive_yel_size)
-        app.root.ids["passive_red"].size[1] = min(max(passive_red_size * (current_time - 30) // 30, 0), passive_red_size)
-
-
-        #if current_time <= 30 * 4:
-        #    if current_time % 2 == 0:
-        #        app.root.ids["passive_yel"].size[1] = 0
-        #    else:
-        #        app.root.ids["passive_yel"].size[1] = passive_yel_size * current_time / 4 / 30
-        #else:
-        #    app.root.ids["passive_yel"].size[1] = passive_yel_size
-        #
-        #    if (current_time <= 60 * 4):
-        #        if current_time % 2 == 0:
-        #            app.root.ids["passive_red"].size[1] = 0
-        #        else:
-        #            app.root.ids["passive_red"].size[1] = passive_red_size * (current_time - 30) / 4 / 30
-    
-    #return #DEBUG!!!!!!!!!!!!!!!
-
-    if data[8][0] == 0:
-        return
-
-    score_r = data[8][3]
-    for i in data[6][3:]:
-        score_r *= 2
-        score_r += i
-
-    score_l = data[7][3]
-    for i in data[5][3:]:
-        score_l *= 2
-        score_l += i
-
-    timer_m = 0
-    timer_d = 0
-    timer_s = 0
-
-    for i in data[2][6:]:
-        timer_m *= 2
-        timer_m += i
-
-    for i in data[3][4:]:
-        timer_d *= 2
-        timer_d += i
-
-    for i in data[4][4:]:
-        timer_s *= 2
-        timer_s += i
-
-    period = 0
-    for i in range(4):
-        period *= 2
-        period +=data[7][4 + i]
-
-    if period == 15:
-        app.root.ids["priority_r"].state = "down"
-        app.root.ids["priority_l"].state = "normal"
-        app.root.ids["period"].text = ""
-    elif period == 14:
-        app.root.ids["priority_r"].state = "normal"
-        app.root.ids["priority_l"].state = "down"
-        app.root.ids["period"].text = ""
-    elif period == 14:
-        app.root.ids["priority_r"].state = "normal"
-        app.root.ids["priority_l"].state = "normal"
-        app.root.ids["period"].text = ""
-    elif period >= 1 and period <= 9:
-        app.root.ids["priority_r"].state = "normal"
-        app.root.ids["priority_l"].state = "normal"
-        app.root.ids["period"].text = str(period)
-
-    if data[8][5]:
-        app.root.ids["warning_bot_l"].state = "down"
-        app.root.ids["warning_top_l"].state = "normal"
-    elif data[8][4]:
-        app.root.ids["warning_bot_l"].state = "down"
-        app.root.ids["warning_top_l"].state = "down"
-    else:
-        app.root.ids["warning_bot_l"].state = "normal"
-        app.root.ids["warning_top_l"].state = "normal"
-
-    if data[8][7]:
-        app.root.ids["warning_bot_r"].state = "down"
-        app.root.ids["warning_top_r"].state = "normal"
-    elif data[8][6]:
-        app.root.ids["warning_bot_r"].state = "down"
-        app.root.ids["warning_top_r"].state = "down"
-    else:
-        app.root.ids["warning_bot_r"].state = "normal"
-        app.root.ids["warning_top_r"].state = "normal"
-
-    if score_l < 10:
-        app.root.ids["score_l_l"].text = str(score_l)
-        app.root.ids["score_l_r"].text = " "
-    else:
-        app.root.ids["score_l_l"].text = str(score_l // 10)
-        app.root.ids["score_l_r"].text = str(score_l % 10)
-
-    if score_r < 10:
-        app.root.ids["score_r_l"].text = " "
-        app.root.ids["score_r_r"].text = str(score_r)
-    else:
-        app.root.ids["score_r_l"].text = str(score_r // 10)
-        app.root.ids["score_r_r"].text = str(score_r % 10)
-
-    app.root.ids["timer_min"].text = str(timer_m)
-    app.root.ids["timer_dec"].text = str(timer_d)
-    app.root.ids["timer_sec"].text = str(timer_s)
-
-    if data[8][4] == 1:
-        app.root.ids["warning_bot_l"].state = "down"
-        app.root.ids["warning_top_l"].state = "down"
-    elif data[8][5] == 1:
-        app.root.ids["warning_bot_l"].state = "down"
-        app.root.ids["warning_top_l"].state = "normal"
-    else:
-        app.root.ids["warning_bot_l"].state = "normal"
-        app.root.ids["warning_top_l"].state = "normal"
-
-    if data[8][6] == 1:
-        app.root.ids["warning_bot_r"].state = "down"
-        app.root.ids["warning_top_r"].state = "down"
-    elif data[8][7] == 1:
-        app.root.ids["warning_bot_r"].state = "down"
-        app.root.ids["warning_top_r"].state = "normal"
-    else:
-        app.root.ids["warning_bot_r"].state = "normal"
-        app.root.ids["warning_top_r"].state = "normal"
-
-    if timer_s % 2 == 0 or data[3][3] == 0:
-        if app.root.ids["timer_dot"].text != ":" and passive_timer != -1:
-
-            app.root.ids["passive_red"].size[0] = 0
-            pass
-        app.root.ids["timer_dot"].text = ":"
-    else:
-        app.root.ids["timer_dot"].text = " "
-
-def send_data(dt):
-    global send_queue
-    global toggle_bit
-    global send_proc
-    global send_proc_running
-
-    if send_proc_running and send_proc.poll() is None:
-        return
-    send_proc_running = False
-    if len(send_queue) > 0:
-        if platform.machine() != "armv7l":
-            print(send_queue[0])
-            send_queue.popleft()
-            return
-        send_proc = subprocess.Popen(f"sudo ./output {send_queue[0]} {toggle_bit}", shell=True)
-        toggle_bit = 1 - toggle_bit
-        send_queue.popleft()
-        send_proc_running = True
+        self.data_rx.close()
 
 if __name__ == "__main__":
     LabelBase.register(name="agencyb", fn_regular='AGENCYB.TTF')
     LabelBase.register(name="agencyr", fn_regular='AGENCYR.TTF')
-    Clock.schedule_interval(get_data, read_interval)
-    Clock.schedule_interval(send_data, send_interval)
-    KivyApp().run()
+    app = KivyApp()
+    app.run()
