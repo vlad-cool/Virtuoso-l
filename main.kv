@@ -18,7 +18,7 @@ Carousel:
                 font_name:"agencyb"
                 color: [0.3, 0.3, 0.3, 1] if self.state == 'normal' else [0.7, 0.7, 0.7, 1]
                 background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
-                on_press: app.set_weapon_connection_type(int(self.state == 'normal'))
+                on_press: app.change_weapon_connection_type()
 
             ToggleButton:
                 id: weapon_2

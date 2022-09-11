@@ -40,15 +40,15 @@ class KivyApp(App):
             print(f"weapon: {new_weapon}")
             return
 
-        subprocess.Popen(f"sudo ./weapon {3 + new_weapon - self.weapon}", shell=True)
+        gpio_control.button_emu(37, (3 + new_weapon - self.weapon) % 3)
         self.weapon = new_weapon
 
-    def set_weapon_connection_type(a, type):
+    def change_weapon_connection_type(a):
         if platform.machine() != "armv7l":
-            print(f"weapon connection type: {type}")
+            print("weapon connection type changed")
             return
 
-        subprocess.Popen(f"sudo ./change_weapon_type", shell=True)
+        gpio_control.button_emu(27, 1)
 
     def send_data(self, dt):
         if self.send_proc is not None and self.send_proc.poll() is None:
@@ -116,7 +116,6 @@ class KivyApp(App):
             self.score_r_l = str(score_r // 10)
             self.score_r_r = str(score_r % 10)
 
-        period = 0
         timer_m = 0
         timer_d = 0
         timer_s = 0
@@ -141,9 +140,11 @@ class KivyApp(App):
         self.timer_3 = str(timer_s)
         self.timer_running = data[2][3]
 
+        period = 0
+        
         for i in range(4):
             period *= 2
-            period +=data[6][4 + i]
+            period += data[6][4 + i]
 
         if period == 15:
             self.priority = 1
@@ -172,24 +173,30 @@ class KivyApp(App):
     def build(self):
         self.send_queue = deque()
         self.toggle_bit = 1
+        self.rc5_address = 0
+        self.send_proc = None
+
         self.weapon = 0
         self.weapon_connection_type = 0
+        
         self.video_timer = 0
-        self.send_proc = None
-        self.passive_timer = -1
-        self.rc5_address = 0
+
         self.passive_yel_max_size = 40
         self.passive_red_max_size = 40
         self.passive_yel_size = 0
         self.passive_red_size = 0
+        self.passive_timer = -1
+
         self.score_l_l = "0"
         self.score_l_r = " "
         self.score_r_l = " "
         self.score_r_r = "0"
+
         self.timer_0 = "0"
         self.timer_1 = ":"
         self.timer_2 = "0"
         self.timer_3 = "0"
+
         self.flash_timer = time.time()
         self.timer_running = 0
         self.period = 0

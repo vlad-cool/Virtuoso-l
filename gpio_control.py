@@ -10,7 +10,7 @@ if machine() == "armv7l":
 
     gpio = cdll.LoadLibrary("wiringPi.h")
 
-    gpio.wiringPiSetupPhys();
+    gpio.wiringPiSetupPhys()
 
     gpio.pinMode(8, 1)
     gpio.pinMode(10, 1)
