@@ -2,19 +2,53 @@
 
 Carousel:
     loop: True
+    
+    weapon: 0
+    weapon_connection_type: 0
+    
+    video_timer: 0
 
+    score_l_l: "0"
+    score_l_r: " "
+    score_r_l: " "
+    score_r_r: "0"
+
+    timer_0: "0"
+    timer_1: ":"
+    timer_2: "0"
+    timer_3: "0"
+    timer_3_new: "0"
+
+    timer_running: 0
+
+    period: 0
+    priority: 0
+    warning_l: 0
+    warning_r: 0
+
+    passive_timer: -1
+    passive_yel_size: 0
+    passive_red_size: 0
+
+    flash_timer: 0
+    current_time: 0
+    
     FloatLayout:
         BoxLayout:
             id: weapon_selector
-            orientation: 'horizontal'
-            size: 640, 100
+            orientation: "horizontal"
+            size: 800, 100
             size_hint: None, None
-            pos: 640, 0
+            pos: 560, 0
 
             ToggleButton:
                 id: weapon_connection_type
                 text: "wl"
-                font_size: 40
+                #rexr: root.warning_l
+                #text: str(int(root.flash_timer * 1000) % 1000000)
+                #text: str(root.warning_l)
+                state: "down" if root.weapon_connection_type == 1 else "normal"
+                font_size: 60
                 font_name:"agencyb"
                 color: [0.3, 0.3, 0.3, 1] if self.state == 'normal' else [0.7, 0.7, 0.7, 1]
                 background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
@@ -23,7 +57,10 @@ Carousel:
             ToggleButton:
                 id: weapon_2
                 text: "fleuret"
-                font_size: 40
+                #text: str(root.warning_r)
+                #text: str(int(root.current_time * 1000) % 1000000)
+                state: "down" if root.weapon == 2 else "normal"
+                font_size: 60
                 font_name:"agencyb"
                 group: "weapon"
                 color: [0.3, 0.3, 0.3, 1] if self.state == 'normal' else [0.7, 0.7, 0.7, 1]
@@ -32,8 +69,10 @@ Carousel:
 
             ToggleButton:
                 id: weapon_0
+                #text: str(int(root.current_time - root.flash_timer * 100) % 1000)
                 text: "epee"
-                font_size: 40
+                state: "down" if root.weapon == 3 else "normal"
+                font_size: 60
                 font_name:"agencyb"
                 group: "weapon"
                 color: [0.3, 0.3, 0.3, 1] if self.state == 'normal' else [0.7, 0.7, 0.7, 1]
@@ -43,7 +82,8 @@ Carousel:
             ToggleButton:
                 id: weapon_1
                 text: "sabre"
-                font_size: 40
+                state: "down" if root.weapon == 1 else "normal"
+                font_size: 60
                 font_name:"agencyb"
                 group: "weapon"
                 color: [0.3, 0.3, 0.3, 1] if self.state == 'normal' else [0.7, 0.7, 0.7, 1]
@@ -63,28 +103,28 @@ Carousel:
             on_index: app.carousel_handler(0, self.old_index, self.index, [3, 2]); self.old_index = self.index
 
             Button:
-                on_press: app.send_handler(3)
+                on_press: app.send_handler(2)
                 background_color: [0, 0, 0, 1]
                 background_down: ""
                 background_normal: ""
 
 
             Button:
-                on_press: app.send_handler(3)
+                on_press: app.send_handler(2)
                 background_color: [0, 0, 0, 1]
                 background_down: ""
                 background_normal: ""
 
 
             Button:
-                on_press: app.send_handler(3)
+                on_press: app.send_handler(2)
                 background_color: [0, 0, 0, 1]
                 background_down: ""
                 background_normal: ""
 
         Label:
             id: score_l_l
-            text: app.score_l_l
+            text: root.score_l_l
             font_size: 380
             font_name:"agencyb"
             size: 200, 480
@@ -94,7 +134,7 @@ Carousel:
 
         Label:
             id: score_l_r
-            text: app.score_l_r
+            text: root.score_l_r
             font_size: 380
             font_name:"agencyb"
             size: 200, 480
@@ -134,7 +174,7 @@ Carousel:
 
         Label:
             id: score_r_l
-            text: app.score_r_l
+            text: root.score_r_l
             font_size: 380
             font_name:"agencyb"
             size: 200, 480
@@ -144,7 +184,7 @@ Carousel:
 
         Label:
             id: score_r_r
-            text: app.score_r_r
+            text: root.score_r_r
             font_size: 380
             font_name:"agencyb"
             size: 200, 480
@@ -184,47 +224,48 @@ Carousel:
 
         Label:
             id: timer_min
-            text: app.timer_0
+            text: root.timer_0
             font_size: 300
             font_name:"agencyb"
             size: 150, 300
             size_hint: None, None
             pos: 730 + 150 * 0, 140
-            color: app.color_timer_enabled if app.timer_running else app.color_timer_disabled
+            color: app.color_timer_enabled if root.timer_running else app.color_timer_disabled
 
         Label:
             id: timer_dot
-            text: app.timer_1 if app.timer_running == 0 or time.time() - app.flash_timer < 0.5 else " "
+            text: root.timer_1 if root.timer_running == 0 or root.current_time - root.flash_timer < 0.5 else " "
+            #text: f"{int(root.current_time % 1000} {int(root.flash_timer * 1000) % 1000}"
             font_size: 300
             font_name:"agencyb"
             size: 150, 300
             size_hint: None, None
             pos: 730 + 150 * 1 - 40, 140
-            color: app.color_timer_enabled if app.timer_running else app.color_timer_disabled
-
+            color: app.color_timer_enabled if root.timer_running else app.color_timer_disabled
+        
         Label:
             id: timer_dec
-            text: app.timer_2
+            text: root.timer_2
             font_size: 300
             font_name:"agencyb"
             size: 150, 300
             size_hint: None, None
             pos: 730 + 150 * 2 - 80, 140
-            color: app.color_timer_enabled if app.timer_running else app.color_timer_disabled
+            color: app.color_timer_enabled if root.timer_running else app.color_timer_disabled
 
         Label:
             id: timer_sec
-            text: app.timer_3
+            text: root.timer_3
             font_size: 300
             font_name:"agencyb"
             size: 150, 300
             size_hint: None, None
             pos: 730 + 150 * 3 - 80, 140
-            color: app.color_timer_enabled if app.timer_running else app.color_timer_disabled
+            color: app.color_timer_enabled if root.timer_running else app.color_timer_disabled
 
         Label:
             id: passive_yel
-            size: 33, app.passive_yel_size if app.passive_timer != -1 else 0
+            size: 33, root.passive_yel_size if root.timer_running else 0
             size_hint: None, None
             pos: 898, 203
             disabled: True
@@ -238,7 +279,7 @@ Carousel:
 
         Label:
             id: passive_red
-            size: 33, app.passive_red_size if app.passive_timer != -1 else 0
+            size: 33, root.passive_red_size if root.timer_running else 0
             size_hint: None, None
             pos: 898, 297
             disabled: True
@@ -252,7 +293,7 @@ Carousel:
 
         Button:
             id: period
-            text: "1"
+            text: str(root.period)
             font_size: 200
             font_name:"agencyb"
             size: 120, 200
@@ -262,7 +303,7 @@ Carousel:
 
             on_press: app.send_handler(8)
 
-            background_color: [0, 1, 0, .2]
+            background_color: [0, 0, 0, 1]
             background_down: ""
             background_normal: ""
 
@@ -271,9 +312,9 @@ Carousel:
             size: 100, 50
             size_hint: None, None
             pos: 460, 260
-            disabled: True if app.warning_l < 2 else False
+            disabled: True if root.warning_l < 2 else False
 
-            background_color: [0.2, 0, 0, 1] if self.state == 'normal' else [0.8, 0, 0, 1]
+            background_color: [0.2, 0, 0, 1] if self.disabled else [0.8, 0, 0, 1]
             background_down: ""
             background_normal: ""
             background_disabled_down: ""
@@ -284,9 +325,9 @@ Carousel:
             size: 100, 50
             size_hint: None, None
             pos: 460, 190
-            disabled: True if app.warning_l < 1 else False
+            disabled: True if root.warning_l < 1 else False
 
-            background_color: [0.2, 0.2, 0, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
+            background_color: [0.2, 0.2, 0, 1] if self.disabled else [0.8, 0.8, 0, 1]
             background_down: ""
             background_normal: ""
             background_disabled_down: ""
@@ -309,9 +350,9 @@ Carousel:
             size: 100, 50
             size_hint: None, None
             pos: 1360, 260
-            disabled: True if app.warning_r < 2 else False
+            disabled: True if root.warning_r < 2 else False
 
-            background_color: [0.2, 0, 0, 1] if self.state == 'normal' else [0.8, 0, 0, 1]
+            background_color: [0.2, 0, 0, 1] if self.disabled else [0.8, 0, 0, 1]
             background_down: ""
             background_normal: ""
             background_disabled_down: ""
@@ -322,9 +363,9 @@ Carousel:
             size: 100, 50
             size_hint: None, None
             pos: 1360, 190
-            disabled: True if app.warning_r < 1 else False
+            disabled: True if root.warning_r < 1 else False
 
-            background_color: [0.2, 0.2, 0, 1] if self.state == 'normal' else [0.8, 0.8, 0, 1]
+            background_color: [0.2, 0.2, 0, 1] if self.disabled else [0.8, 0.8, 0, 1]
 
             background_down: ""
             background_normal: ""
@@ -353,6 +394,7 @@ Carousel:
             pos: 460, 330
             color: [0.2, 0, 0, 1] if self.state == 'normal' else app.color_left_score
             background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
+            state: "down" if root.weapon_connection_type == -1 else "normal"
 
             background_down: ""
             background_normal: ""
@@ -367,6 +409,7 @@ Carousel:
             pos: 1360, 330
             color: [0, 0.2, 0, 1] if self.state == 'normal' else app.color_right_score
             background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
+            state: "down" if root.weapon_connection_type == +1 else "normal"
 
             background_down: ""
             background_normal: ""
