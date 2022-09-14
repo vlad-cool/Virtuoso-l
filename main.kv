@@ -44,9 +44,6 @@ Carousel:
             ToggleButton:
                 id: weapon_connection_type
                 text: "wl"
-                #rexr: root.warning_l
-                #text: str(int(root.flash_timer * 1000) % 1000000)
-                #text: str(root.warning_l)
                 state: "down" if root.weapon_connection_type == 1 else "normal"
                 font_size: 60
                 font_name:"agencyb"
@@ -57,8 +54,6 @@ Carousel:
             ToggleButton:
                 id: weapon_2
                 text: "fleuret"
-                #text: str(root.warning_r)
-                #text: str(int(root.current_time * 1000) % 1000000)
                 state: "down" if root.weapon == 2 else "normal"
                 font_size: 60
                 font_name:"agencyb"
@@ -69,7 +64,6 @@ Carousel:
 
             ToggleButton:
                 id: weapon_0
-                #text: str(int(root.current_time - root.flash_timer * 100) % 1000)
                 text: "epee"
                 state: "down" if root.weapon == 3 else "normal"
                 font_size: 60
@@ -235,7 +229,6 @@ Carousel:
         Label:
             id: timer_dot
             text: root.timer_1 if root.timer_running == 0 or root.current_time - root.flash_timer < 0.5 else " "
-            #text: f"{int(root.current_time % 1000} {int(root.flash_timer * 1000) % 1000}"
             font_size: 300
             font_name:"agencyb"
             size: 150, 300

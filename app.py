@@ -48,14 +48,11 @@ class KivyApp(App):
         gpio_control.button_emu(27, 1)
 
     def send_data(self, dt):
-        #if self.send_proc is not None and self.send_proc.poll() is None:
-        #    return
         if len(self.send_queue) > 0:
             if machine() != "armv7l":
                 print(self.send_queue[0])
                 self.send_queue.popleft()
                 return
-            #self.send_proc = subprocess.Popen(f"sudo ./output {self.send_queue[0]} {self.toggle_bit}", shell=True)
             gpio_control.ir_emu(self.send_queue[0], self.toggle_bit)
             self.toggle_bit = 1 - self.toggle_bit
             self.send_queue.popleft()
