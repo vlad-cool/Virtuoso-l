@@ -28,7 +28,7 @@ int main (void)
     digitalWrite(24, 1);
 
     // Uart (11) (WIP)
-    pinMode(11, 0);
+    //pinMode(11, 0);
 
     // Recording
     pinMode(18, 0);
