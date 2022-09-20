@@ -17,11 +17,12 @@ Carousel:
     timer_1: ":"
     timer_2: "0"
     timer_3: "0"
-    timer_3_new: "0"
+
+    timer_text: ""
 
     timer_running: 0
 
-    period: 0
+    period: 1
     priority: 0
     warning_l: 0
     warning_r: 0
@@ -43,7 +44,7 @@ Carousel:
 
             ToggleButton:
                 id: weapon_connection_type
-                text: "wl"
+                text: "wls"
                 state: "down" if root.weapon_connection_type == 1 else "normal"
                 font_size: 60
                 font_name:"agencyb"
@@ -228,6 +229,7 @@ Carousel:
 
         Label:
             id: timer_dot
+            #text: ":"
             text: root.timer_1 if root.timer_running == 0 or root.current_time - root.flash_timer < 0.5 else " "
             font_size: 300
             font_name:"agencyb"
@@ -257,8 +259,19 @@ Carousel:
             color: app.color_timer_enabled if root.timer_running else app.color_timer_disabled
 
         Label:
+            id: timer_text
+            text: root.timer_text
+            font_size: 300
+            font_name:"agencyb"
+            size: 600, 300
+            size_hint: None, None
+            pos: 730, 140
+            color: app.color_timer_enabled if root.timer_running else app.color_timer_disabled
+
+        Label:
             id: passive_yel
-            size: 33, root.passive_yel_size if root.timer_running else 0
+            size: 0 if int(root.current_time - root.passive_timer) > 50 and int(root.current_time - root.passive_timer) < 60 and root.current_time - root.flash_timer > 0.5 else 33, root.passive_yel_size
+            #size: 33, root.passive_yel_size if root.timer_running else 0
             size_hint: None, None
             pos: 898, 203
             disabled: True
@@ -272,9 +285,10 @@ Carousel:
 
         Label:
             id: passive_red
-            size: 33, root.passive_red_size if root.timer_running else 0
+            size: 0 if int(root.current_time - root.passive_timer) > 50 and int(root.current_time - root.passive_timer) < 60 and root.current_time - root.flash_timer > 0.5 else 33, root.passive_red_size
+            #size: 33, root.passive_red_size if root.timer_running else 0
             size_hint: None, None
-            pos: 898, 297
+            pos: 898, 203 + app.passive_yel_max_size
             disabled: True
 
             canvas:
