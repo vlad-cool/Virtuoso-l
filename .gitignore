@@ -1,6 +1,7 @@
 /venv
 /.vscode
 /__pycache__
+/BPI-WiringPi2
 ir_emulation
 history.txt
 gpio_out
@@ -17,3 +18,4 @@ Xorg.0.log.old
 xorg.log
 glxinfo
 rc5_address
+config

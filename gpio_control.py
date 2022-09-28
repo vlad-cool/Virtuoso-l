@@ -8,7 +8,7 @@ on_time  = 250
 TIMING = 889
 
 if machine() == "armv7l":
-    gpio = cdll.LoadLibrary("/usr/lib/libwiringPi.so")
+    gpio = cdll.LoadLibrary("/usr/lib/libwiringPiDev.so")
 
     gpio.wiringPiSetupPhys()
 
@@ -43,22 +43,13 @@ if machine() == "armv7l":
     gpio.pinMode(7, 0)
 
 def run_in_thread(func):
-    def inner1(*args):
-        thread = Thread(target=func, args=args)
+    def inner1(*args, **kwargs):
+        thread = Thread(target=func, args=args, kwargs=kwargs)
         thread.start()
     return inner1
 
-@run_in_thread
-def button_emu(pin, times):
-    for i in range(times):
-        gpio.digitalWrite(pin, 0)
-        sleep(off_time / 1000)
-        gpio.digitalWrite(pin, 1)
-        sleep(on_time  / 1000)
-
-@run_in_thread
-def ir_emu(to_transmit, toggle_bit):
-    print(to_transmit)
+def ir_emu_blocking(to_transmit, toggle_bit, pin=26):
+    print(to_transmit, pin)
     data = [0] * 14
     to_transmit += 12288
     to_transmit += toggle_bit * 2048
@@ -70,7 +61,7 @@ def ir_emu(to_transmit, toggle_bit):
     print(data)
 
     for i in range(14):
-        gpio.digitalWrite(26, 0 + data[i])
+        gpio.digitalWrite(pin, 0 + data[i])
         
         t = time_ns() // 1000
 
@@ -79,12 +70,76 @@ def ir_emu(to_transmit, toggle_bit):
         
         t = time_ns() // 1000
 
-        gpio.digitalWrite(26, 1 - data[i])
+        gpio.digitalWrite(pin, 1 - data[i])
 
         while time_ns() // 1000 - t < TIMING:
             pass
 
-    gpio.digitalWrite(26, 1)
+    gpio.digitalWrite(pin, 1)
+
+@run_in_thread
+def button_emu(pin, times):
+    for i in range(times):
+        gpio.digitalWrite(pin, 0)
+        sleep(off_time / 1000)
+        gpio.digitalWrite(pin, 1)
+        sleep(on_time  / 1000)
+
+@run_in_thread
+def ir_emu(to_transmit, toggle_bit, pin=26):
+    ir_emu_blocking(to_transmit, toggle_bit, pin)
 
 def read_pin(pin):
     return gpio.digitalRead(pin)
+
+def get_address():
+    spacing_time = .3
+    data = []
+    for i in range(9):
+        data.append([0] * 8)
+    with open("./gpio_in", "rb") as gpio_in:
+        for j in range(9):
+            b = gpio_in.read(1)
+            a = int.from_bytes(b, "big")
+            if a == 0 and j == 0:
+                return
+            for i in range(8):
+                data[j][7 - i] = a % 2
+                a //= 2
+            if j == 0 and data[0][3] == 1:
+                break
+    val = data[5][7]
+    timer = data[3][3]
+    if timer:
+        command = 13 #timer start stop
+    elif val:
+        command = 3  #left -
+    else:
+        command = 2  #left +
+
+
+    for k in range(32):
+        ir_emu_blocking(k * 2**6 + command)
+        sleep(spacing_time + timer)
+        for j in range(9):
+            data[j] = [0] * 8
+        with open("./gpio_in", "rb") as gpio_in:
+            for j in range(9):
+                b = gpio_in.read(1)
+                a = int.from_bytes(b, "big")
+                if a == 0 and j == 0:
+                    return
+                for i in range(8):
+                    data[j][7 - i] = a % 2
+                    a //= 2
+                if j == 0 and data[0][3] == 1:
+                    break
+        if (val != data[5][7] or timer != data[3][3]):
+            if timer:
+                ir_emu_blocking(k * 2**6 + command)
+            else:
+                ir_emu_blocking(k * 2**6 + 5 - command)
+
+            return k
+        print(k, data)
+    return -1

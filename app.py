@@ -2,7 +2,6 @@
 import kivy
 import time
 import serial
-import get_address
 import gpio_control
 from kivy.clock       import Clock
 from kivy.core.window import Window
@@ -21,6 +20,9 @@ if machine() == "armv7l": #for bananapi, it have much better performance when ru
 kivy.require('2.1.0')
 
 class KivyApp(App):
+    #Symbols = ["A", "B", "C", "D", "E", "F", "Sc", "On", "Off", " ", "1", "2", "3", "4", "5", "6"]
+    Symbols = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
+
     def write_address(a):
         rc5_address = get_address()
         with open("rc5_address", "w") as address_file:
@@ -46,6 +48,11 @@ class KivyApp(App):
             return
 
         gpio_control.button_emu(27, 1)
+
+    def hide_passive(self, dt):
+        self.root.passive_yel_size = 0
+        self.root.passive_red_size = 0
+
 
     def send_data(self, dt):
         if len(self.send_queue) > 0:
@@ -107,15 +114,25 @@ class KivyApp(App):
             timer_s *= 2
             timer_s += i
         
-        if self.old_sec != str(timer_s):
-            root.flash_timer = time.time()
-            pass
+        if data[1][5] == 0:
+            
+            if self.old_sec != str(timer_s):
+                root.flash_timer = time.time()
+                pass
 
-        self.old_sec = str(timer_s)
-        root.timer_0 = str(timer_m)
-        root.timer_2 = str(timer_d)
-        root.timer_3 = str(timer_s)
-        root.timer_running = data[2][3]
+            self.old_sec = str(timer_s)
+            root.timer_0 = str(timer_m)
+            root.timer_1 = ":"
+            root.timer_2 = str(timer_d)
+            root.timer_3 = str(timer_s)
+            root.timer_running = data[2][3]
+            root.timer_text = ""
+        else:
+            root.timer_0 = ""
+            root.timer_1 = ""
+            root.timer_2 = ""
+            root.timer_3 = ""
+            root.timer_text = KivyApp.Symbols[timer_d] + KivyApp.Symbols[timer_s]
 
         period = 0
         
@@ -132,21 +149,22 @@ class KivyApp(App):
         elif period >= 1 and period <= 9:
             root.priority = 0
             root.period = period
+
+        #app.root.ids["weapon_connection_type"].text = str(period)
             
         if root.passive_timer == -1 and root.timer_running == 1:
             root.passive_timer = time.time()
         elif root.passive_timer != -1 and root.timer_running == 0:
             root.passive_timer = -1
+            Clock.schedule_once(self.hide_passive, 2)
 
         if root.passive_timer != -1:
             current_time = int(time.time() - root.passive_timer)
-
             root.passive_yel_size = min(self.passive_yel_max_size * current_time // 30, self.passive_yel_max_size)
-            root.passive_red_size = min(max(self.passive_red_max_size * (current_time - 30) // 30, 0), self.passive_red_max_size)
+            root.passive_red_size = min(max(self.passive_red_max_size * (current_time - 30) // 20, 0), self.passive_red_max_size)
 
         root.warning_l = data[7][4] * 2 + data[7][5]
         root.warning_r = data[7][6] * 2 + data[7][7]
-
 
     def get_data(self, dt):
         self.root.current_time = time.time()
@@ -157,6 +175,7 @@ class KivyApp(App):
                     byte = int.from_bytes(self.data_rx.read(), "big")
                     data[byte // 2 ** 5] = self.byte_to_arr(byte)
 
+                print("data_got!")
                 self.data_update(data)
 
             self.root.weapon                 = gpio_control.read_pin(32) * 2 + gpio_control.read_pin(36)
@@ -181,8 +200,8 @@ class KivyApp(App):
         self.rc5_address          = 0
         self.old_sec = "0"
 
-        self.passive_yel_max_size = 40
-        self.passive_red_max_size = 40
+        self.passive_yel_max_size = 98
+        self.passive_red_max_size = 98
 
         self.color_left_score     = [0.8, 0.0, 0.0, 1]
         self.color_right_score    = [0.0, 0.8, 0.0, 1]
