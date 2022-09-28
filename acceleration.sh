@@ -20,9 +20,6 @@ wget https://github.com/Kitware/CMake/releases/download/v3.23.2/cmake-3.23.2.tar
 tar xf cmake-3.23.2.tar.gz
 rm cmake-3.23.2.tar.gz
 cd cmake-3.23.2
-#cmake .
-#make
-#sudo make install
 ./bootstrap
 make
 sudo make install
@@ -48,14 +45,4 @@ ninja -C build/
 
 sudo -E ninja -C build/ install
 
-#meson build/ --optimization s --buildtype release --prefix=/usr/local --libdir=lib/arm-linux-gnueabihf \
-#-Dgallium-drivers=lima -Dplatforms=x11 -Dvulkan-drivers= -Ddri-drivers=sun4i_drm \
-#-Dllvm=false
-#
-#ninja -C build/
-#
-#sudo -E ninja -C build/ install
-
-#meson build/
-#ninja -C build/
-#sudo ninja -C build/ install
+sudo adduser "$USER" render
