@@ -8,7 +8,7 @@ on_time  = 250
 TIMING = 889
 
 if machine() == "armv7l":
-    gpio = cdll.LoadLibrary("/usr/lib/libwiringPiDev.so")
+    gpio = CDLL("/usr/lib/libwiringPi.so", mode = 1)
 
     gpio.wiringPiSetupPhys()
 
