@@ -12,7 +12,6 @@ cd BPI-WiringPi2
 sudo ./build
 cd
 
-sudo adduser "$USER" render
 sudo apt -y update
 sudo apt -y upgrade
 sudo apt -y install libglfw3-dev libglu1-mesa-dev
@@ -23,18 +22,18 @@ sudo apt -y install libavfilter-dev
 sudo apt -y install libavdevice-dev
 sudo apt -y install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
 sudo apt -y install mesa-utils
-sudo apt -y install python3-setuptools python3-pip python3-dev git-core
+sudo apt -y install python3-setuptools python3-pip python3-dev python3-venv git-core
 sudo apt -y install pkg-config libgstreamer1.0-dev gstreamer1.0-plugins-{bad,base,good,ugly} gstreamer1.0-{omx,alsa} libmtdev-dev xclip xsel
 sudo apt -y install libfreetype6-dev libgl1-mesa-dev libgles2-mesa-dev libdrm-dev libgbm-dev libudev-dev libasound2-dev liblzma-dev libjpeg-dev libtiff-dev libwebp-dev git build-essential
 sudo apt -y install gir1.2-ibus-1.0 libdbus-1-dev libegl1-mesa-dev libibus-1.0-5 libibus-1.0-dev libice-dev libsm-dev libsndio-dev libwayland-bin libwayland-dev libxi-dev libxinerama-dev libxkbcommon-dev libxrandr-dev libxss-dev libxt-dev libxv-dev x11proto-randr-dev x11proto-scrnsaver-dev x11proto-video-dev x11proto-xinerama-dev
 
 wget https://libsdl.org/release/SDL2-2.0.10.tar.gz
 tar -zxvf SDL2-2.0.10.tar.gz
-pushd SDL2-2.0.10
+cd SDL2-2.0.10
 ./configure --enable-video-kmsdrm --disable-video-opengl --disable-video-x11 --disable-video-rpi
 make -j$(nproc)
 sudo make install
-popd
+cd
 
 wget https://libsdl.org/projects/SDL_image/release/SDL2_image-2.0.5.tar.gz
 tar -zxvf SDL2_image-2.0.5.tar.gz
@@ -60,13 +59,17 @@ make -j$(nproc)
 sudo make install
 cd
 
-python3 -m pip install --upgrade pip setuptools virtualenv
-python3 -m pip install Pillow
-python3 -m pip install "kivy[base]"
-python3 -m pip install pyserial
-python3 -m pip install setuptools
-python3 -m pip install cython
-python3 -m pip install clang
-python3 -m pip install ffpyplayer
+sudo apt -y autoremove
 
-sudo apt autoremove
+mkdir -p V24m
+cd V24m
+python3 -m venv venv
+venv/bin/python3 -m pip install --upgrade pip setuptools virtualenv
+venv/bin/python3 -m pip install Pillow
+venv/bin/python3 -m pip install pyserial
+venv/bin/python3 -m pip install setuptools
+venv/bin/python3 -m pip install cython
+venv/bin/python3 -m pip install clang
+venv/bin/python3 -m pip install ffpyplayer
+venv/bin/python3 -m pip install "kivy[base]"
+cd
