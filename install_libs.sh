@@ -74,4 +74,6 @@ venv/bin/python3 -m pip install clang
 venv/bin/python3 -m pip install ffpyplayer
 TMPDIR=tmp venv/bin/python3 -m pip install kivy
 rm -rf tmp
+sudo chown root:users venv/bin/python3
+sudo chmod ug+s venv/bin/python3
 cd
