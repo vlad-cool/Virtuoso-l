@@ -9,7 +9,7 @@ libxcb-glx0-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-dri3-dev libxcb-present-
 libxxf86vm-dev libxrandr-dev x11proto-gl-dev x11proto-dri2-dev gettext pkg-config build-essential \
 ninja-build python3-pip python3-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev libsdl2-dev \
 libxml2-dev ffmpeg libavcodec-dev libavfilter-dev libavdevice-dev clang lldb lld libxcb-shm0-dev \
-xinit xorg mesa-utils llvm-dev
+xinit xorg mesa-utils llvm-dev cmake
 
 pip3 install setuptools
 pip3 install meson
@@ -20,7 +20,8 @@ wget https://github.com/Kitware/CMake/releases/download/v3.23.2/cmake-3.23.2.tar
 tar xf cmake-3.23.2.tar.gz
 rm cmake-3.23.2.tar.gz
 cd cmake-3.23.2
-./bootstrap
+#./bootstrap
+cmake .
 make
 sudo make install
 cd
