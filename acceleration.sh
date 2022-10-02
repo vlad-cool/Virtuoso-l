@@ -46,4 +46,4 @@ ninja -C build/
 
 sudo -E ninja -C build/ install
 
-sudo adduser "$USER" render
+#sudo adduser "$USER" render

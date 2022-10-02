@@ -59,19 +59,17 @@ make -j$(nproc)
 sudo make install
 cd
 
-sudo apt -y autoremove
-
+mkdir -p V24m
 cd V24m
 sudo mount -o remount,size=4G /tmp/
 python3 -m venv venv
 venv/bin/python3 -m pip install --upgrade pip setuptools virtualenv
 venv/bin/python3 -m pip install Pillow
-venv/bin/python3 -m pip install pyserial
 venv/bin/python3 -m pip install setuptools
 venv/bin/python3 -m pip install cython
 venv/bin/python3 -m pip install clang
-venv/bin/python3 -m pip install ffpyplayer
 venv/bin/python3 -m pip install kivy
+venv/bin/python3 -m pip install pyserial
 sudo chown root:users venv/bin/python3
 sudo chmod ug+s venv/bin/python3
 cd
