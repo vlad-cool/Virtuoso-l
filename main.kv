@@ -103,13 +103,11 @@ Carousel:
                 background_down: ""
                 background_normal: ""
 
-
             Button:
                 on_press: app.send_handler(2)
                 background_color: [0, 0, 0, 1]
                 background_down: ""
                 background_normal: ""
-
 
             Button:
                 on_press: app.send_handler(2)
@@ -394,6 +392,7 @@ Carousel:
         ToggleButton:
             id: priority_l
             text: "P"
+            disabled: True
             font_size: 100
             font_name:"agencyb"
             size: 100, 100
@@ -401,14 +400,17 @@ Carousel:
             pos: 460, 330
             color: [0.2, 0, 0, 1] if self.state == 'normal' else app.color_left_score
             background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
-            state: "down" if root.weapon_connection_type == -1 else "normal"
+            state: "down" if root.priority == -1 else "normal"
 
             background_down: ""
             background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
 
         ToggleButton:
             id: priority_r
             text: "P"
+            disabled: True
             font_size: 100
             font_name:"agencyb"
             size: 100, 100
@@ -416,35 +418,32 @@ Carousel:
             pos: 1360, 330
             color: [0, 0.2, 0, 1] if self.state == 'normal' else app.color_right_score
             background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
-            state: "down" if root.weapon_connection_type == +1 else "normal"
+            state: "down" if root.priority == +1 else "normal"
 
             background_down: ""
             background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
 
-    Label:
-        text: "Video"
     TabbedPanel:
         TabbedPanelItem:
-            text: "hardware"
+            text: "Hardware"
             BoxLayout:
                 Button:
                     text: "sync hardware"
                     on_press: app.write_address()
         TabbedPanelItem:
-            text: 'tab2'
+            text: "System"
             BoxLayout:
-                Label:
-                    text: 'Second tab content area'
                 Button:
-                    text: 'Button that does nothing'
+                    text: "Reboot"
+                    on_press: app.system_reboot()
+                Button:
+                    text: "Poweroff"
+                    on_press: app.system_poweroff()
         TabbedPanelItem:
-            text: 'tab3'
-            RstDocument:
-                text:
-                    '\\n'.join(("Hello world", "-----------",
-                    "You are in the third tab."))
-    Label:
-        id: test_output
-        text: "ABOBUS"
-    VKeyboard:
-        id: abc
+            text: "Apps"
+            BoxLayout:
+                Button:
+                    text: "TEST"
+                    on_press: app.run_app("test")

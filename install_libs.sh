@@ -70,6 +70,6 @@ venv/bin/python3 -m pip install cython
 venv/bin/python3 -m pip install clang
 venv/bin/python3 -m pip install kivy
 venv/bin/python3 -m pip install pyserial
-sudo chown root:users venv/bin/python3
-sudo chmod ug+s venv/bin/python3
 cd
+
+./kivy_config.py

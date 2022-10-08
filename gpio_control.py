@@ -7,6 +7,9 @@ off_time = 250
 on_time  = 250
 TIMING = 889
 
+button_emulating = []
+ir_emulating = 0
+
 if machine() == "armv7l":
     gpio = CDLL("/usr/lib/libwiringPi.so", mode = 1)
 
@@ -79,37 +82,53 @@ def ir_emu_blocking(to_transmit, toggle_bit, pin=26):
 
 @run_in_thread
 def button_emu(pin, times):
+    global button_emulating
+    while pin in button_emulating:
+        sleep(1)
+    button_emulating.append(pin)
     for i in range(times):
         gpio.digitalWrite(pin, 0)
         sleep(off_time / 1000)
         gpio.digitalWrite(pin, 1)
         sleep(on_time  / 1000)
+    button_emulating.remove(pin)
 
 @run_in_thread
 def ir_emu(to_transmit, toggle_bit, pin=26):
+    global ir_emulating
+    while ir_emulating == 1:
+        sleep(.3)
+    ir_emulating = 1
     ir_emu_blocking(to_transmit, toggle_bit, pin)
+    ir_emulating = 0
 
 def read_pin(pin):
     return gpio.digitalRead(pin)
 
-def get_address():
-    spacing_time = .3
-    data = []
-    for i in range(9):
-        data.append([0] * 8)
-    with open("./gpio_in", "rb") as gpio_in:
-        for j in range(9):
-            b = gpio_in.read(1)
-            a = int.from_bytes(b, "big")
-            if a == 0 and j == 0:
-                return
-            for i in range(8):
-                data[j][7 - i] = a % 2
-                a //= 2
-            if j == 0 and data[0][3] == 1:
-                break
-    val = data[5][7]
-    timer = data[3][3]
+def byte_to_arr(byte):
+    a = [0] * 8
+    for i in range(8):
+            a[i] = byte % 2
+            byte //= 2
+    return a[::-1]
+
+def get_address(data_rx):
+    spacing_time = .3 + 1
+    toggle_bit = 0
+
+    button_emu(37, 3)
+    sleep(2)
+
+    while data_rx.inWaiting() // 8 > 0:
+        data = [[0] * 8] * 8
+        for i in range(8):
+            byte = int.from_bytes(data_rx.read(), "big")
+            data[byte // 2 ** 5] = byte_to_arr(byte)
+    
+    print(str(data).replace(']', ']\n'))
+
+    val = data[4][7]
+    timer = data[2][3]
     if timer:
         command = 13 #timer start stop
     elif val:
@@ -117,29 +136,22 @@ def get_address():
     else:
         command = 2  #left +
 
-
-    for k in range(32):
-        ir_emu_blocking(k * 2**6 + command)
+    for k in range(32): ######!!!!!!!!!!replace to 32 later
+        ir_emu_blocking(k * 2**6 + command, toggle_bit)
+        toggle_bit = 1 - toggle_bit
         sleep(spacing_time + timer)
-        for j in range(9):
-            data[j] = [0] * 8
-        with open("./gpio_in", "rb") as gpio_in:
-            for j in range(9):
-                b = gpio_in.read(1)
-                a = int.from_bytes(b, "big")
-                if a == 0 and j == 0:
-                    return
-                for i in range(8):
-                    data[j][7 - i] = a % 2
-                    a //= 2
-                if j == 0 and data[0][3] == 1:
-                    break
-        if (val != data[5][7] or timer != data[3][3]):
+        
+        while data_rx.inWaiting() // 8 > 0:
+            for i in range(8):
+                byte = int.from_bytes(data_rx.read(), "big")
+                data[byte // 2 ** 5] = byte_to_arr(byte)
+        
+        print(str(data).replace(']', ']\n'))
+        if (val != data[4][7] or timer != data[2][3]):
             if timer:
-                ir_emu_blocking(k * 2**6 + command)
+                ir_emu_blocking(k * 2**6 + command, toggle_bit)
             else:
-                ir_emu_blocking(k * 2**6 + 5 - command)
+                ir_emu_blocking(k * 2**6 + 5 - command, toggle_bit)
 
             return k
-        print(k, data)
     return -1

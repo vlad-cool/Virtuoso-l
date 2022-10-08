@@ -2,6 +2,7 @@
 import kivy
 import time
 import serial
+import subprocess
 import gpio_control
 from kivy.clock       import Clock
 from kivy.core.window import Window
@@ -23,8 +24,19 @@ class KivyApp(App):
     #Symbols = ["A", "B", "C", "D", "E", "F", "Sc", "On", "Off", " ", "1", "2", "3", "4", "5", "6"]
     Symbols = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
 
-    def write_address(a):
-        rc5_address = get_address()
+    def run_app(self, s):
+        print(s)
+        if self.proc is None or self.proc.poll():
+            self.proc = subprocess.Popen("./kivy_test.py",shell=False)
+
+    def system_poweroff(a):
+        subprocess.run(["sudo", "poweroff"])
+
+    def system_reboot(a):
+        subprocess.run(["sudo", "reboot"])
+
+    def write_address(self):
+        rc5_address = gpio_control.get_address(self.data_rx)
         with open("rc5_address", "w") as address_file:
             address_file.write(f"{rc5_address}\n")
 
@@ -40,9 +52,8 @@ class KivyApp(App):
             return
 
         gpio_control.button_emu(37, (3 + new_weapon - self.root.weapon) % 3)
-        self.weapon = new_weapon
-
-    def change_weapon_connection_type(a):
+        
+    def change_weapon_connection_type(self, a):
         if machine() != "armv7l":
             print("weapon connection type changed")
             return
@@ -53,14 +64,13 @@ class KivyApp(App):
         self.root.passive_yel_size = 0
         self.root.passive_red_size = 0
 
-
     def send_data(self, dt):
         if len(self.send_queue) > 0:
             if machine() != "armv7l":
                 print(self.send_queue[0])
                 self.send_queue.popleft()
                 return
-            gpio_control.ir_emu(self.send_queue[0], self.toggle_bit)
+            gpio_control.ir_emu_blocking(self.send_queue[0], self.toggle_bit)
             self.toggle_bit = 1 - self.toggle_bit
             self.send_queue.popleft()
 
@@ -169,18 +179,21 @@ class KivyApp(App):
     def get_data(self, dt):
         self.root.current_time = time.time()
         if machine() == "armv7l":
+            data = [[0] * 8] * 8
             while self.data_rx.inWaiting() // 8 > 0:
-                data = [[0] * 8] * 8
                 for i in range(8):
                     byte = int.from_bytes(self.data_rx.read(), "big")
                     data[byte // 2 ** 5] = self.byte_to_arr(byte)
 
                 print("data_got!")
                 self.data_update(data)
-
-            self.root.weapon                 = gpio_control.read_pin(32) * 2 + gpio_control.read_pin(36)
+            if 37 not in gpio_control.button_emulating or self.root.timer_running:
+                self.root.weapon                 = 0
+                self.root.weapon                 = gpio_control.read_pin(32) * 2 + gpio_control.read_pin(36)
+            if 27 not in gpio_control.button_emulating or self.root.timer_running:
+                self.root.weapon_connection_type = 0
+                self.root.weapon_connection_type = gpio_control.read_pin(7)
             self.root.video_timer            = gpio_control.read_pin(18)
-            self.root.weapon_connection_type = gpio_control.read_pin(7)
 
         else:
             data = [[0, 0, 0, 0, 0, 0, 0, 0],
@@ -208,6 +221,8 @@ class KivyApp(App):
         self.color_period         = [0.1, 0.1, 0.8, 1]
         self.color_timer_enabled  = [1.0, 1.0, 1.0, 1]
         self.color_timer_disabled = [0.8, 0.4, 0.0, 1]
+
+        self.proc = None
 
         if machine() == "armv7l":
             self.data_rx = serial.Serial("/dev/ttyS2", 38400)
