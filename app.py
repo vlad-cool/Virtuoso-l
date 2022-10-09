@@ -186,6 +186,8 @@ class KivyApp(App):
                     data[byte // 2 ** 5] = self.byte_to_arr(byte)
 
                 print("data_got!")
+                print(data[2][3])
+                print(str(data).replace("], ", "]]\n["))
                 self.data_update(data)
             if 37 not in gpio_control.button_emulating or self.root.timer_running:
                 self.root.weapon                 = 0

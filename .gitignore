@@ -6,3 +6,6 @@ kivy_test.py
 test_cam.py
 sun8i-h2-plus-bananapi-m2-zero.dtb.from_git
 V24m_test_logo.bmp
+V24m_test_logo.png
+bootsplash.armbian
+bootsplash.armbian.old
