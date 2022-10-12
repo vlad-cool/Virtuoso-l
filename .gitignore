@@ -9,3 +9,7 @@ V24m_test_logo.bmp
 V24m_test_logo.png
 bootsplash.armbian
 bootsplash.armbian.old
+/dtb
+/splash
+bpi-m2p-ov5640.dts
+bpi-m2z.dts

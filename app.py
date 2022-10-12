@@ -9,7 +9,6 @@ from kivy.core.window import Window
 from kivy.lang        import Builder
 from kivy.app         import App
 from kivy.core.text   import LabelBase
-from collections      import deque
 from platform         import machine
 
 read_interval = .2
@@ -41,7 +40,7 @@ class KivyApp(App):
             address_file.write(f"{rc5_address}\n")
 
     def send_handler(self, code):
-        self.send_queue.append(self.rc5_address * (2**6) + code)
+        gpio_control.ir_emu_blocking(self.rc5_address * (2**6) + code)
 
     def carousel_handler(self, a, old_index, new_index, commands):
         self.send_handler(commands[(2 + new_index - old_index) % 3])
@@ -63,16 +62,6 @@ class KivyApp(App):
     def hide_passive(self, dt):
         self.root.passive_yel_size = 0
         self.root.passive_red_size = 0
-
-    def send_data(self, dt):
-        if len(self.send_queue) > 0:
-            if machine() != "armv7l":
-                print(self.send_queue[0])
-                self.send_queue.popleft()
-                return
-            gpio_control.ir_emu_blocking(self.send_queue[0], self.toggle_bit)
-            self.toggle_bit = 1 - self.toggle_bit
-            self.send_queue.popleft()
 
     def byte_to_arr(self, byte):
         a = [0] * 8
@@ -159,8 +148,6 @@ class KivyApp(App):
         elif period >= 1 and period <= 9:
             root.priority = 0
             root.period = period
-
-        #app.root.ids["weapon_connection_type"].text = str(period)
             
         if root.passive_timer == -1 and root.timer_running == 1:
             root.passive_timer = time.time()
@@ -210,7 +197,6 @@ class KivyApp(App):
         
     def build(self):
         self.send_proc            = None
-        self.send_queue           = deque()
         self.toggle_bit           = 1
         self.rc5_address          = 0
         self.old_sec = "0"
@@ -235,7 +221,6 @@ class KivyApp(App):
 
     def on_start(self):
         Clock.schedule_interval(self.get_data, read_interval)
-        Clock.schedule_interval(self.send_data, send_interval)
         self.root.flash_timer  = time.time()
         self.root.current_time = time.time()
         with open("./rc5_address", "r") as address_file:

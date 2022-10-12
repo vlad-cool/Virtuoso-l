@@ -9,6 +9,7 @@ TIMING = 889
 
 button_emulating = []
 ir_emulating = 0
+ir_toggle_bit = 0
 
 if machine() == "armv7l":
     gpio = CDLL("/usr/lib/libwiringPi.so", mode = 1)
@@ -51,11 +52,13 @@ def run_in_thread(func):
         thread.start()
     return inner1
 
-def ir_emu_blocking(to_transmit, toggle_bit, pin=26):
+def ir_emu_blocking(to_transmit, pin=26):
+    global ir_toggle_bit
+    ir_toggle_bit = 1 - ir_toggle_bit
     print(to_transmit, pin)
     data = [0] * 14
     to_transmit += 12288
-    to_transmit += toggle_bit * 2048
+    to_transmit += ir_toggle_bit * 2048
 
     for i in range(14):
         data[13 - i] = to_transmit % 2
@@ -84,7 +87,7 @@ def ir_emu_blocking(to_transmit, toggle_bit, pin=26):
 def button_emu(pin, times):
     global button_emulating
     while pin in button_emulating:
-        sleep(1)
+        sleep(.3)
     button_emulating.append(pin)
     for i in range(times):
         gpio.digitalWrite(pin, 0)
