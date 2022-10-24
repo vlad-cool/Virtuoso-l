@@ -141,7 +141,7 @@ def get_address(data_rx):
         command = 2  #left +
 
     for k in range(32): ######!!!!!!!!!!replace to 32 later
-        ir_emu_blocking(k * 2**6 + command, toggle_bit)
+        ir_emu_blocking(k * 2**6 + command)
         toggle_bit = 1 - toggle_bit
         sleep(spacing_time + timer)
         
@@ -153,9 +153,9 @@ def get_address(data_rx):
         print(str(data).replace(']', ']\n'))
         if (val != data[4][7] or timer != data[2][3]):
             if timer:
-                ir_emu_blocking(k * 2**6 + command, toggle_bit)
+                ir_emu_blocking(k * 2**6 + command)
             else:
-                ir_emu_blocking(k * 2**6 + 5 - command, toggle_bit)
+                ir_emu_blocking(k * 2**6 + 5 - command)
 
             return k
     return -1
