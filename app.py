@@ -51,8 +51,9 @@ class KivyApp(App):
             return
 
         gpio_control.button_emu(37, (3 + new_weapon - self.root.weapon) % 3)
-        
-    def change_weapon_connection_type(self, a):
+        self.weapon = new_weapon
+
+    def change_weapon_connection_type(a):
         if machine() != "armv7l":
             print("weapon connection type changed")
             return
@@ -146,7 +147,6 @@ class KivyApp(App):
         elif period == 13:
             root.priority = 0
         elif period >= 1 and period <= 9:
-            root.priority = 0
             root.period = period
             
         if root.passive_timer == -1 and root.timer_running == 1:
