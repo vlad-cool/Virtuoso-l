@@ -13,3 +13,9 @@ bootsplash.armbian.old
 /splash
 bpi-m2p-ov5640.dts
 bpi-m2z.dts
+/linux-5.10.89
+ggg.hhh
+kernel-sunxi-current.patch
+linux-5.10.89.tar.gz
+output.mkv
+video.nv12
