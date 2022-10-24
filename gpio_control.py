@@ -1,7 +1,7 @@
-from threading import Thread
-from ctypes    import *
-from time      import sleep, time_ns
-from platform  import machine
+from multiprocessing import Process
+from ctypes          import *
+from time            import sleep, time_ns
+from platform        import machine
 
 off_time = 250
 on_time  = 250
@@ -48,7 +48,7 @@ if machine() == "armv7l":
 
 def run_in_thread(func):
     def inner1(*args, **kwargs):
-        thread = Thread(target=func, args=args, kwargs=kwargs)
+        thread = Process(target=func, args=args, kwargs=kwargs)
         thread.start()
     return inner1
 
@@ -97,13 +97,14 @@ def button_emu(pin, times):
     button_emulating.remove(pin)
 
 @run_in_thread
-def ir_emu(to_transmit, toggle_bit, pin=26):
+def ir_emu(to_transmit, pin=26):
     global ir_emulating
     while ir_emulating == 1:
         sleep(.3)
     ir_emulating = 1
-    ir_emu_blocking(to_transmit, toggle_bit, pin)
+    ir_emu_blocking(to_transmit, pin)
     ir_emulating = 0
+    sleep(100)
 
 def read_pin(pin):
     return gpio.digitalRead(pin)

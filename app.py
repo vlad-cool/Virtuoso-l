@@ -40,7 +40,7 @@ class KivyApp(App):
             address_file.write(f"{rc5_address}\n")
 
     def send_handler(self, code):
-        gpio_control.ir_emu_blocking(self.rc5_address * (2**6) + code)
+        gpio_control.ir_emu(self.rc5_address * (2**6) + code)
 
     def carousel_handler(self, a, old_index, new_index, commands):
         self.send_handler(commands[(2 + new_index - old_index) % 3])
