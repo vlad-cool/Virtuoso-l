@@ -389,41 +389,25 @@ Carousel:
             background_down: ""
             background_normal: ""
 
-        ToggleButton:
+        Label:
             id: priority_l
             text: "P"
-            disabled: True
             font_size: 100
             font_name:"agencyb"
             size: 100, 100
             size_hint: None, None
             pos: 460, 330
-            color: [0.2, 0, 0, 1] if self.state == 'normal' else app.color_left_score
-            background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
-            state: "down" if root.priority == -1 else "normal"
+            color: [0.2, 0, 0, 1] if root.priority != -1 else app.color_left_score
 
-            background_down: ""
-            background_normal: ""
-            background_disabled_down: ""
-            background_disabled_normal: ""
-
-        ToggleButton:
+        Label:
             id: priority_r
             text: "P"
-            disabled: True
             font_size: 100
             font_name:"agencyb"
             size: 100, 100
             size_hint: None, None
             pos: 1360, 330
-            color: [0, 0.2, 0, 1] if self.state == 'normal' else app.color_right_score
-            background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
-            state: "down" if root.priority == +1 else "normal"
-
-            background_down: ""
-            background_normal: ""
-            background_disabled_down: ""
-            background_disabled_normal: ""
+            color: [0, 0.2, 0, 1] if root.priority != +1 else app.color_right_score
 
     TabbedPanel:
         TabbedPanelItem:
