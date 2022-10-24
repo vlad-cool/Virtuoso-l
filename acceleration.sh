@@ -1,8 +1,11 @@
 #run this script with 'bash acceleration.sh'
+
+#sudo systemctl set-default multi-user.target
+
 cd
 
 sudo apt -y update
-sudo apt -y upgrade
+##sudo apt -y upgrade
 
 sudo apt -y install g++ zlib1g-dev libexpat1-dev flex bison libx11-dev libxext-dev libxdamage-dev \
 libxcb-glx0-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-dri3-dev libxcb-present-dev libxshmfence-dev \
@@ -36,14 +39,15 @@ cd
 
 wget https://gitlab.freedesktop.org/mesa/mesa/-/archive/mesa-22.1.6/mesa-mesa-22.1.6.tar.gz
 tar xf mesa-mesa-22.1.6.tar.gz
+rm mesa-mesa-22.1.6.tar.gz
 cd mesa-mesa-22.1.6
 
-meson build/ --optimization s --buildtype release --prefix=/usr/local --libdir=lib/arm-linux-gnueabihf \
+meson build/ --buildtype release --prefix=/usr/local --libdir=lib/arm-linux-gnueabihf \
 -Dgallium-drivers=lima -Dplatforms=x11 -Dvulkan-drivers= -Ddri-drivers= \
--Dllvm=false
+-Dllvm=disabled
 
 ninja -C build/
 
 sudo -E ninja -C build/ install
-
+cd
 #sudo adduser "$USER" render
