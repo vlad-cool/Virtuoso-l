@@ -13,10 +13,10 @@ Carousel:
     score_r_l: " "
     score_r_r: "0"
 
-    timer_0: "0"
+    timer_0: "C"
     timer_1: ":"
     timer_2: "0"
-    timer_3: "0"
+    timer_3: "6"
 
     timer_text: ""
 
@@ -33,63 +33,65 @@ Carousel:
 
     flash_timer: 0
     current_time: 0
+
+    epee5: 0
     
     FloatLayout:
         BoxLayout:
             id: weapon_selector
             orientation: "horizontal"
-            size: 800, 100
+            size: 1000, 100
             size_hint: None, None
-            pos: 560, 0
+            pos: 460, 0
 
             ToggleButton:
                 id: weapon_connection_type
                 text: "wls"
                 state: "down" if root.weapon_connection_type == 1 else "normal"
-                font_size: 60
+                font_size: 80
                 font_name:"agencyb"
-                color: [0.3, 0.3, 0.3, 1] if self.state == 'normal' else [0.7, 0.7, 0.7, 1]
-                background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
+                color: app.color_weapon_dis if self.state == 'normal' else app.color_weapon_ena
+                background_color: [0, 0, 0, 1]
                 on_press: app.change_weapon_connection_type()
 
             ToggleButton:
                 id: weapon_2
                 text: "fleuret"
                 state: "down" if root.weapon == 2 else "normal"
-                font_size: 60
+                font_size: 80
                 font_name:"agencyb"
                 group: "weapon"
-                color: [0.3, 0.3, 0.3, 1] if self.state == 'normal' else [0.7, 0.7, 0.7, 1]
-                background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
+                color: app.color_weapon_dis if self.state == 'normal' else app.color_weapon_ena
+                background_color: [0, 0, 0, 1]
                 on_press: app.set_weapon(2)
 
             ToggleButton:
                 id: weapon_0
-                text: "epee"
+                text: "epee" if root.epee5 == 0 else "epee 5"
                 state: "down" if root.weapon == 3 else "normal"
-                font_size: 60
+                font_size: 80
                 font_name:"agencyb"
                 group: "weapon"
-                color: [0.3, 0.3, 0.3, 1] if self.state == 'normal' else [0.7, 0.7, 0.7, 1]
-                background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
+                color: app.color_weapon_dis if self.state == 'normal' else app.color_weapon_ena
+                background_color: [0, 0, 0, 1]
                 on_press: app.set_weapon(0)
 
             ToggleButton:
                 id: weapon_1
                 text: "sabre"
                 state: "down" if root.weapon == 1 else "normal"
-                font_size: 60
+                font_size: 80
                 font_name:"agencyb"
                 group: "weapon"
-                color: [0.3, 0.3, 0.3, 1] if self.state == 'normal' else [0.7, 0.7, 0.7, 1]
-                background_color: [0, 0, 0, 1] if self.state == 'normal' else [0, 0, 0, 1]
+                color: app.color_weapon_dis if self.state == 'normal' else app.color_weapon_ena
+                background_color: [0, 0, 0, 1]
                 on_press: app.set_weapon(1)
 
         Carousel:
             id: left_score_carousel
             direction: "top"
             loop: True
-            size: 400, 480
+            size: 420, 480
             size_hint: None, None
             pos: 0, 0
             min_move: 0.05
@@ -118,7 +120,7 @@ Carousel:
         Label:
             id: score_l_l
             text: root.score_l_l
-            font_size: 380
+            font_size: 480
             font_name:"agencyb"
             size: 200, 480
             size_hint: None, None
@@ -128,20 +130,20 @@ Carousel:
         Label:
             id: score_l_r
             text: root.score_l_r
-            font_size: 380
+            font_size: 480
             font_name:"agencyb"
             size: 200, 480
             size_hint: None, None
-            pos: 200, 0
+            pos: 220, 0
             color: app.color_left_score
 
         Carousel:
             id: right_score_carousel
             direction: "top"
             loop: True
-            size: 400, 480
+            size: 420, 480
             size_hint: None, None
-            pos: 1520, 0
+            pos: 1500, 0
             min_move: 0.05
 
             old_index: 0
@@ -168,17 +170,17 @@ Carousel:
         Label:
             id: score_r_l
             text: root.score_r_l
-            font_size: 380
+            font_size: 480
             font_name:"agencyb"
             size: 200, 480
             size_hint: None, None
-            pos: 1520, 0
+            pos: 1500, 0
             color: app.color_right_score
 
         Label:
             id: score_r_r
             text: root.score_r_r
-            font_size: 380
+            font_size: 480
             font_name:"agencyb"
             size: 200, 480
             size_hint: None, None
@@ -189,9 +191,9 @@ Carousel:
             id: timer_carousel
             direction: "top"
             loop: True
-            size: 520, 300
+            size: 550, 300
             size_hint: None, None
-            pos: 530 + 200, 140
+            pos: 530 + 200 - 30, 140
             min_move: 0.05
 
             old_index: 0
@@ -218,41 +220,41 @@ Carousel:
         Label:
             id: timer_min
             text: root.timer_0
-            font_size: 300
+            font_size: 360
             font_name:"agencyb"
             size: 150, 300
             size_hint: None, None
-            pos: 730 + 150 * 0, 140
+            pos: 730 + 150 * 0 - 30, 140
             color: app.color_timer_enabled if root.timer_running else app.color_timer_disabled
 
         Label:
             id: timer_dot
             text: root.timer_1 if root.timer_running == 0 or root.current_time - root.flash_timer < 0.5 else " "
-            font_size: 300
+            font_size: 360
             font_name:"agencyb"
             size: 150, 300
             size_hint: None, None
-            pos: 730 + 150 * 1 - 40, 140
+            pos: 730 + 150 * 1 - 40 - 10, 140
             color: app.color_timer_enabled if root.timer_running else app.color_timer_disabled
         
         Label:
             id: timer_dec
             text: root.timer_2
-            font_size: 300
+            font_size: 360
             font_name:"agencyb"
             size: 150, 300
             size_hint: None, None
-            pos: 730 + 150 * 2 - 80, 140
+            pos: 730 + 150 * 2 - 80 + 10, 140
             color: app.color_timer_enabled if root.timer_running else app.color_timer_disabled
 
         Label:
             id: timer_sec
             text: root.timer_3
-            font_size: 300
+            font_size: 360
             font_name:"agencyb"
             size: 150, 300
             size_hint: None, None
-            pos: 730 + 150 * 3 - 80, 140
+            pos: 730 + 150 * 3 - 80 + 30, 140
             color: app.color_timer_enabled if root.timer_running else app.color_timer_disabled
 
         Label:
@@ -267,28 +269,26 @@ Carousel:
 
         Label:
             id: passive_yel
-            size: 0 if int(root.current_time - root.passive_timer) > 50 and int(root.current_time - root.passive_timer) < 60 and root.current_time - root.flash_timer > 0.5 else 33, root.passive_yel_size
+            size: 0 if int(root.current_time - root.passive_timer) > 50 and int(root.current_time - root.passive_timer) < 60 and root.current_time - root.flash_timer > 0.5 else 40, root.passive_yel_size
             size_hint: None, None
-            pos: 898, 203
-            disabled: True
+            pos: 885, 190
 
             canvas:
                 Color:
-                    rgba: 0.8, 0.8, 0, 1
+                    rgba: app.color_passive_yel
                 Rectangle:
                     pos: self.pos
                     size: self.size
 
         Label:
             id: passive_red
-            size: 0 if int(root.current_time - root.passive_timer) > 50 and int(root.current_time - root.passive_timer) < 60 and root.current_time - root.flash_timer > 0.5 else 33, root.passive_red_size
+            size: 0 if int(root.current_time - root.passive_timer) > 50 and int(root.current_time - root.passive_timer) < 60 and root.current_time - root.flash_timer > 0.5 else 40, root.passive_red_size
             size_hint: None, None
-            pos: 898, 203 + app.passive_yel_max_size
-            disabled: True
+            pos: 885, 190 + app.passive_yel_max_size
 
             canvas:
                 Color:
-                    rgba: 0.8, 0, 0, 1
+                    rgba: app.color_passive_red
                 Rectangle:
                     pos: self.pos
                     size: self.size
@@ -309,31 +309,45 @@ Carousel:
             background_down: ""
             background_normal: ""
 
-        ToggleButton:
+        Label:
             id: warning_top_l
             size: 100, 50
             size_hint: None, None
             pos: 460, 260
-            disabled: True if root.warning_l < 2 else False
 
-            background_color: [0.2, 0, 0, 1] if self.disabled else [0.8, 0, 0, 1]
+            background_color: [0, 0, 0, 0]
             background_down: ""
             background_normal: ""
             background_disabled_down: ""
             background_disabled_normal: ""
+            
+            canvas.before:
+                Color:
+                    rgba: app.color_warn_red_dis if root.warning_l < 2 else app.color_warn_red_ena
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [app.card_radius,]
 
-        ToggleButton:
+        Label:
             id: warning_bot_l
             size: 100, 50
             size_hint: None, None
             pos: 460, 190
-            disabled: True if root.warning_l < 1 else False
 
-            background_color: [0.2, 0.2, 0, 1] if self.disabled else [0.8, 0.8, 0, 1]
+            background_color: [0, 0, 0, 0]
             background_down: ""
             background_normal: ""
             background_disabled_down: ""
             background_disabled_normal: ""
+            
+            canvas.before:
+                Color:
+                    rgba: app.color_warn_yel_dis if root.warning_l < 1 else app.color_warn_yel_ena
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [app.card_radius,]
 
         Button:
             id: left_warning_button
@@ -347,32 +361,45 @@ Carousel:
             background_down: ""
             background_normal: ""
 
-        ToggleButton:
+        Label:
             id: warning_top_r
             size: 100, 50
             size_hint: None, None
             pos: 1360, 260
-            disabled: True if root.warning_r < 2 else False
 
-            background_color: [0.2, 0, 0, 1] if self.disabled else [0.8, 0, 0, 1]
+            background_color: [0, 0, 0, 0]
             background_down: ""
             background_normal: ""
             background_disabled_down: ""
             background_disabled_normal: ""
 
-        ToggleButton:
+            canvas.before:
+                Color:
+                    rgba: app.color_warn_red_dis if root.warning_r < 2 else app.color_warn_red_ena
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [app.card_radius,]
+
+        Label:
             id: warning_bot_r
             size: 100, 50
             size_hint: None, None
             pos: 1360, 190
-            disabled: True if root.warning_r < 1 else False
 
-            background_color: [0.2, 0.2, 0, 1] if self.disabled else [0.8, 0.8, 0, 1]
-
+            background_color: [0, 0, 0, 0]
             background_down: ""
             background_normal: ""
             background_disabled_down: ""
             background_disabled_normal: ""
+            
+            canvas.before:
+                Color:
+                    rgba: app.color_warn_yel_dis if root.warning_r < 1 else app.color_warn_yel_ena
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [app.card_radius,]
 
         Button:
             id: right_warning_button
@@ -394,7 +421,7 @@ Carousel:
             size: 100, 100
             size_hint: None, None
             pos: 460, 330
-            color: [0.2, 0, 0, 1] if root.priority != -1 else app.color_left_score
+            color: app.color_left_p_ena if root.priority == -1 else app.color_left_p_dis
 
         Label:
             id: priority_r
@@ -404,9 +431,10 @@ Carousel:
             size: 100, 100
             size_hint: None, None
             pos: 1360, 330
-            color: [0, 0.2, 0, 1] if root.priority != +1 else app.color_right_score
+            color: app.color_right_p_ena if root.priority == +1 else app.color_right_p_dis
 
     TabbedPanel:
+        do_default_tab: False
         TabbedPanelItem:
             text: "Hardware"
             BoxLayout:

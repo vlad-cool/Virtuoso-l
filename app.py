@@ -1,4 +1,5 @@
 #!venv/bin/python3
+from asyncio import new_event_loop
 import kivy
 import time
 import serial
@@ -52,6 +53,13 @@ class KivyApp(App):
 
         gpio_control.button_emu(37, (3 + new_weapon - self.root.weapon) % 3)
         self.weapon = new_weapon
+
+        if self.root.weapon == 3 and new_weapon == 0:
+            self.root.epee5 = 1 - self.root.epee5
+            gpio_control.gpio.digitalWrite(15, self.root.epee5)
+        else:
+            self.root.epee5 = 0
+            gpio_control.gpio.digitalWrite(15, self.root.epee5)
 
     def change_weapon_connection_type(a):
         if machine() != "armv7l":
@@ -164,8 +172,8 @@ class KivyApp(App):
         root.warning_r = data[7][6] * 2 + data[7][7]
 
     def get_data(self, dt):
-        self.root.current_time = time.time()
         if machine() == "armv7l":
+            self.root.current_time = time.time()
             data = [[0] * 8] * 8
             while self.data_rx.inWaiting() // 8 > 0:
                 for i in range(8):
@@ -201,14 +209,32 @@ class KivyApp(App):
         self.rc5_address          = 0
         self.old_sec = "0"
 
-        self.passive_yel_max_size = 98
-        self.passive_red_max_size = 98
+        self.passive_yel_max_size = 115
+        self.passive_red_max_size = 115
 
-        self.color_left_score     = [0.8, 0.0, 0.0, 1]
-        self.color_right_score    = [0.0, 0.8, 0.0, 1]
-        self.color_period         = [0.1, 0.1, 0.8, 1]
-        self.color_timer_enabled  = [1.0, 1.0, 1.0, 1]
-        self.color_timer_disabled = [0.8, 0.4, 0.0, 1]
+        self.color_left_score     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
+        self.color_right_score    = [  0 / 255, 152 / 255,  70 / 255, 1.0] # green
+        self.color_period         = [  0 / 255, 160 / 255, 227 / 255, 1.0] # blue
+        self.color_timer_enabled  = [255 / 255, 255 / 255, 255 / 255, 1.0] # white
+        self.color_timer_disabled = [239 / 255, 127 / 255,  26 / 255, 1.0] # orange
+
+        self.color_warn_red_ena   = [0.8, 0.0, 0.0, 1] # red
+        self.color_warn_red_dis   = [0.2, 0.0, 0.0, 1] # dark red
+        self.color_warn_yel_ena   = [0.8, 0.8, 0.0, 1] # yellow
+        self.color_warn_yel_dis   = [0.2, 0.2, 0.0, 1] # dark yellow
+
+        self.color_passive_yel    = [0.8, 0.8, 0.0, 1] # yellow
+        self.color_passive_red    = [0.8, 0.0, 0.0, 1] # red
+
+        self.color_left_p_ena     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
+        self.color_left_p_dis     = [227 / 255,  30 / 255,  36 / 255, 0.2] # dark red
+        self.color_right_p_ena    = [  0 / 255, 152 / 255,  70 / 255, 1.0] # green
+        self.color_right_p_dis    = [  0 / 255, 152 / 255,  70 / 255, 0.2] # dark green
+
+        self.color_weapon_ena     = [0.7, 0.7, 0.7, 1] # light gray
+        self.color_weapon_dis     = [0.3, 0.3, 0.3, 1] # dark gray
+
+        self.card_radius = 10
 
         self.proc = None
 

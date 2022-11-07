@@ -19,3 +19,5 @@ kernel-sunxi-current.patch
 linux-5.10.89.tar.gz
 output.mkv
 video.nv12
+.directory
+sun8i-h2-plus*

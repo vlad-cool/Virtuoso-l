@@ -46,6 +46,9 @@ if machine() == "armv7l":
     gpio.pinMode(36, 0)
     gpio.pinMode(7, 0)
 
+    gpio.pinMode(15, 1)
+    gpio.digitalWrite(15, 0)
+
 def run_in_thread(func):
     def inner1(*args, **kwargs):
         thread = Process(target=func, args=args, kwargs=kwargs)
