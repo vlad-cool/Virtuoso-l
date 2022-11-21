@@ -2,18 +2,18 @@
 #sudo update-alternatives --remove-all gcc 
 #sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 20
 #
-#sudo mkdir -p /var/lib/bananapi
-#sudo touch /var/lib/bananapi/board.sh
-#echo "BOARD=bpi-m2z"      | sudo tee    /var/lib/bananapi/board.sh
-#echo "BOARD_AUTO=bpi-m2z" | sudo tee -a /var/lib/bananapi/board.sh
-#echo "BOARD_OLD=bpi-m64"  | sudo tee -a /var/lib/bananapi/board.sh
+sudo mkdir -p /var/lib/bananapi
+sudo touch /var/lib/bananapi/board.sh
+echo "BOARD=bpi-m2z"      | sudo tee    /var/lib/bananapi/board.sh
+echo "BOARD_AUTO=bpi-m2z" | sudo tee -a /var/lib/bananapi/board.sh
+echo "BOARD_OLD=bpi-m64"  | sudo tee -a /var/lib/bananapi/board.sh
 #git clone https://github.com/BPI-SINOVOIP/BPI-WiringPi2.git
 #cd BPI-WiringPi2
 #sudo ./build
 #cd
 
 sudo apt -y update
-#sudo apt -y upgrade
+sudo apt -y upgrade
 sudo apt -y install libglfw3-dev libglu1-mesa-dev
 sudo apt -y install build-essential
 sudo apt -y install ffmpeg
@@ -68,8 +68,9 @@ venv/bin/python3 -m pip install Pillow
 venv/bin/python3 -m pip install setuptools
 venv/bin/python3 -m pip install cython
 venv/bin/python3 -m pip install clang
-venv/bin/python3 -m pip install kivy
+venv/bin/python3 -m pip install kivy[full]
 venv/bin/python3 -m pip install pyserial
+#venv/bin/python3 -m pip install opencv-python
 sudo chmod 4775 venv/bin/python3
 cd
 
