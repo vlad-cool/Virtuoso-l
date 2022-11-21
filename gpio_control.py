@@ -8,6 +8,8 @@ on_time  = 250
 TIMING = 889
 
 button_emulating = []
+it_send_queue = []
+it_get_queue = []
 ir_emulating = 0
 ir_toggle_bit = 0
 
@@ -108,6 +110,14 @@ def ir_emu(to_transmit, pin=26):
     ir_emu_blocking(to_transmit, pin)
     ir_emulating = 0
     sleep(100)
+
+@run_in_thread
+def ir_emu_manager():
+    global it_send_queue
+    global it_get_queue
+    #while True:
+    #    if 
+
 
 def read_pin(pin):
     return gpio.digitalRead(pin)
