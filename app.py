@@ -1,5 +1,4 @@
 #!venv/bin/python3
-from asyncio import new_event_loop
 import kivy
 import time
 import serial
@@ -24,10 +23,14 @@ class KivyApp(App):
     #Symbols = ["A", "B", "C", "D", "E", "F", "Sc", "On", "Off", " ", "1", "2", "3", "4", "5", "6"]
     Symbols = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
 
+    def start_camera(self):
+        if self.camera_proc is None:
+            self.camera_proc = subprocess.Popen("./run_cam.sh", shell=True)
+
     def run_app(self, s):
         print(s)
         if self.proc is None or self.proc.poll():
-            self.proc = subprocess.Popen("./kivy_test.py",shell=False)
+            self.proc = subprocess.Popen("./kivy_test.py", shell=False)
 
     def system_poweroff(a):
         subprocess.run(["sudo", "poweroff"])
@@ -156,22 +159,12 @@ class KivyApp(App):
             root.priority = 0
         elif period >= 1 and period <= 9:
             root.period = period
-            
-        if root.passive_timer == -1 and root.timer_running == 1:
-            root.passive_timer = time.time()
-        elif root.passive_timer != -1 and root.timer_running == 0:
-            root.passive_timer = -1
-            Clock.schedule_once(self.hide_passive, 2)
-
-        if root.passive_timer != -1:
-            current_time = int(time.time() - root.passive_timer)
-            root.passive_yel_size = min(self.passive_yel_max_size * current_time // 30, self.passive_yel_max_size)
-            root.passive_red_size = min(max(self.passive_red_max_size * (current_time - 30) // 20, 0), self.passive_red_max_size)
-
+        
         root.warning_l = data[7][4] * 2 + data[7][5]
         root.warning_r = data[7][6] * 2 + data[7][7]
 
     def get_data(self, dt):
+        root = self.root
         if machine() == "armv7l":
             self.root.current_time = time.time()
             data = [[0] * 8] * 8
@@ -203,14 +196,27 @@ class KivyApp(App):
                     [1, 1, 1, 0, 0, 1, 1, 0],]
             self.data_update(data)
         
+        if root.passive_timer == -1 and root.timer_running == 1:
+            root.passive_timer = time.time()
+        elif root.passive_timer != -1 and root.timer_running == 0:
+            root.passive_timer = -1
+            Clock.schedule_once(self.hide_passive, 2)
+
+        if root.passive_timer != -1:
+            current_time = time.time() - root.passive_timer
+            root.passive_yel_size = min(self.passive_yel_max_size * current_time // 30, self.passive_yel_max_size)
+            root.passive_red_size = min(max(self.passive_red_max_size * (current_time - 30) // 20, 0), self.passive_red_max_size)
+
+        
     def build(self):
         self.send_proc            = None
+        self.camera_proc          = None
         self.toggle_bit           = 1
         self.rc5_address          = 0
         self.old_sec = "0"
 
-        self.passive_yel_max_size = 115
-        self.passive_red_max_size = 115
+        self.passive_yel_max_size = 960
+        self.passive_red_max_size = 960
 
         self.color_left_score     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
         self.color_right_score    = [  0 / 255, 152 / 255,  70 / 255, 1.0] # green
@@ -218,13 +224,14 @@ class KivyApp(App):
         self.color_timer_enabled  = [255 / 255, 255 / 255, 255 / 255, 1.0] # white
         self.color_timer_disabled = [239 / 255, 127 / 255,  26 / 255, 1.0] # orange
 
-        self.color_warn_red_ena   = [0.8, 0.0, 0.0, 1] # red
-        self.color_warn_red_dis   = [0.2, 0.0, 0.0, 1] # dark red
+        self.color_warn_red_ena   = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
+        self.color_warn_red_dis   = [227 / 255,  30 / 255,  36 / 255, 0.2] # dark red
         self.color_warn_yel_ena   = [0.8, 0.8, 0.0, 1] # yellow
         self.color_warn_yel_dis   = [0.2, 0.2, 0.0, 1] # dark yellow
 
         self.color_passive_yel    = [0.8, 0.8, 0.0, 1] # yellow
-        self.color_passive_red    = [0.8, 0.0, 0.0, 1] # red
+        self.color_passive_red    = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
+        self.color_passive_white  = [255 / 255, 255 / 255, 255 / 255, 1.0] # white
 
         self.color_left_p_ena     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
         self.color_left_p_dis     = [227 / 255,  30 / 255,  36 / 255, 0.2] # dark red

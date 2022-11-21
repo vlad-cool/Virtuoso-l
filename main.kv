@@ -50,7 +50,7 @@ Carousel:
                 state: "down" if root.weapon_connection_type == 1 else "normal"
                 font_size: 80
                 font_name:"agencyb"
-                color: app.color_weapon_dis if self.state == 'normal' else app.color_weapon_ena
+                color: app.color_weapon_dis if root.weapon != 1 else app.color_weapon_ena
                 background_color: [0, 0, 0, 1]
                 on_press: app.change_weapon_connection_type()
 
@@ -61,18 +61,19 @@ Carousel:
                 font_size: 80
                 font_name:"agencyb"
                 group: "weapon"
-                color: app.color_weapon_dis if self.state == 'normal' else app.color_weapon_ena
+                color: app.color_weapon_dis if root.weapon != 2 else app.color_weapon_ena
                 background_color: [0, 0, 0, 1]
                 on_press: app.set_weapon(2)
 
             ToggleButton:
                 id: weapon_0
-                text: "epee" if root.epee5 == 0 else "epee 5"
+                markup: True
+                text: "epee [color=4c4c4c]5[/color]" if root.epee5 == 0 else "epee 5"
                 state: "down" if root.weapon == 3 else "normal"
                 font_size: 80
                 font_name:"agencyb"
                 group: "weapon"
-                color: app.color_weapon_dis if self.state == 'normal' else app.color_weapon_ena
+                color: app.color_weapon_dis if root.weapon != 3 else app.color_weapon_ena
                 background_color: [0, 0, 0, 1]
                 on_press: app.set_weapon(0)
 
@@ -93,7 +94,7 @@ Carousel:
             loop: True
             size: 420, 480
             size_hint: None, None
-            pos: 0, 0
+            pos: 20, 0
             min_move: 0.05
 
             old_index: 0
@@ -124,7 +125,7 @@ Carousel:
             font_name:"agencyb"
             size: 200, 480
             size_hint: None, None
-            pos: 0, 0
+            pos: 20, 0
             color: app.color_left_score
 
         Label:
@@ -132,7 +133,7 @@ Carousel:
             text: root.score_l_r
             font_size: 480
             font_name:"agencyb"
-            size: 200, 480
+            size: 220, 480
             size_hint: None, None
             pos: 220, 0
             color: app.color_left_score
@@ -143,7 +144,7 @@ Carousel:
             loop: True
             size: 420, 480
             size_hint: None, None
-            pos: 1500, 0
+            pos: 1480, 0
             min_move: 0.05
 
             old_index: 0
@@ -174,7 +175,7 @@ Carousel:
             font_name:"agencyb"
             size: 200, 480
             size_hint: None, None
-            pos: 1500, 0
+            pos: 1480, 0
             color: app.color_right_score
 
         Label:
@@ -184,7 +185,7 @@ Carousel:
             font_name:"agencyb"
             size: 200, 480
             size_hint: None, None
-            pos: 1720, 0
+            pos: 1700, 0
             color: app.color_right_score
 
         Carousel:
@@ -269,9 +270,9 @@ Carousel:
 
         Label:
             id: passive_yel
-            size: 0 if int(root.current_time - root.passive_timer) > 50 and int(root.current_time - root.passive_timer) < 60 and root.current_time - root.flash_timer > 0.5 else 40, root.passive_yel_size
+            size: root.passive_yel_size, 0 if int(root.current_time - root.passive_timer) > 50 and int(root.current_time - root.passive_timer) < 60 and root.current_time - root.flash_timer > 0.5 else -32
             size_hint: None, None
-            pos: 885, 190
+            pos: 960, 480
 
             canvas:
                 Color:
@@ -282,9 +283,9 @@ Carousel:
 
         Label:
             id: passive_red
-            size: 0 if int(root.current_time - root.passive_timer) > 50 and int(root.current_time - root.passive_timer) < 60 and root.current_time - root.flash_timer > 0.5 else 40, root.passive_red_size
+            size: -root.passive_red_size, 0 if int(root.current_time - root.passive_timer) > 50 and int(root.current_time - root.passive_timer) < 60 and root.current_time - root.flash_timer > 0.5 else -32
             size_hint: None, None
-            pos: 885, 190 + app.passive_yel_max_size
+            pos: 960, 480
 
             canvas:
                 Color:
@@ -300,10 +301,24 @@ Carousel:
             font_name:"agencyb"
             size: 120, 200
             size_hint: None, None
-            pos: 580, 140
+            pos: 580, 100
             color: app.color_period
 
             on_press: app.send_handler(8)
+
+            background_color: [0, 0, 0, 1]
+            background_down: ""
+            background_normal: ""
+        
+        Label:
+            id: passive_counter
+            text: str(max(0, int(60 - root.current_time + root.passive_timer))) if root.passive_timer != -1 else "60"
+            font_size: 100
+            font_name:"agencyb"
+            size: 120, 200
+            size_hint: None, None
+            pos: 580, 260
+            color: app.color_passive_white
 
             background_color: [0, 0, 0, 1]
             background_down: ""
@@ -415,32 +430,28 @@ Carousel:
 
         Label:
             id: priority_l
-            text: "P"
-            font_size: 100
+            markup: True
+            text: "P[size=20]riority[/size]"
+            font_size: 120
             font_name:"agencyb"
             size: 100, 100
             size_hint: None, None
-            pos: 460, 330
+            pos: 460, 80
             color: app.color_left_p_ena if root.priority == -1 else app.color_left_p_dis
 
         Label:
             id: priority_r
-            text: "P"
-            font_size: 100
+            markup: True
+            text: "P[size=20]riority[/size]"
+            font_size: 120
             font_name:"agencyb"
             size: 100, 100
             size_hint: None, None
-            pos: 1360, 330
+            pos: 1360, 80
             color: app.color_right_p_ena if root.priority == +1 else app.color_right_p_dis
 
     TabbedPanel:
         do_default_tab: False
-        TabbedPanelItem:
-            text: "Hardware"
-            BoxLayout:
-                Button:
-                    text: "sync hardware"
-                    on_press: app.write_address()
         TabbedPanelItem:
             text: "System"
             BoxLayout:
@@ -456,3 +467,12 @@ Carousel:
                 Button:
                     text: "TEST"
                     on_press: app.run_app("test")
+        TabbedPanelItem:
+            text: "Hardware"
+            BoxLayout:
+                Button:
+                    text: "sync hardware"
+                    on_press: app.write_address()
+    Button:
+        text: "Start camera"
+        on_press: app.start_camera()
