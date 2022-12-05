@@ -13,3 +13,5 @@ LiveCam.py
 ggg.hhh
 /linux
 /FFmpeg
+scripts/upload.sh
+uart_debug.py
