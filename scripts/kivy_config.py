@@ -2,7 +2,7 @@
 from kivy.config import Config
 Config.set('graphics', 'width', '1920')
 Config.set('graphics', 'height', '480')
-#Config.set('graphics', 'fullscreen', '1')
+Config.set('graphics', 'fullscreen', '1')
 Config.set('graphics', 'multisamples', '0')
 Config.set('kivy', 'exit_on_escape', '1')
 Config.set('modules', 'monitor', '')

@@ -19,6 +19,43 @@ if machine() == "armv7l": #for bananapi, it have much better performance when ru
 
 kivy.require('2.1.0')
 
+class PassiveTimer:
+    def stop(self):
+        self.running = False
+
+    def start(self):
+        if self.running == False:
+            self.prev_time = time.time()
+            self.running = True
+
+    def clear(self):
+        self.stop()
+        self.running   = False
+        self.size      = 0
+        self.time      = 0
+        self.prev_time = 0
+
+    def get_time(self):
+        return int(self.time)
+
+    def get_size(self):
+        return int(self.size)
+    
+    def update(self):
+        if self.running == False:
+            return
+        
+        cur_time = time.time()
+        delta = cur_time - self.prev_time
+        self.size += self.max_size * delta / 50
+        self.size = min(self.size, self.max_size)
+        self.time += delta
+        self.prev_time = cur_time
+    
+    def __init__(self, passive_max_size):
+        self.max_size = passive_max_size
+        self.clear()
+
 class KivyApp(App):
     #Symbols = ["A", "B", "C", "D", "E", "F", "Sc", "On", "Off", " ", "1", "2", "3", "4", "5", "6"]
     Symbols = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
@@ -28,7 +65,6 @@ class KivyApp(App):
             self.camera_proc = subprocess.Popen("./run_cam.sh", shell=True)
 
     def run_app(self, s):
-        print(s)
         if self.proc is None or self.proc.poll():
             self.proc = subprocess.Popen("./kivy_test.py", shell=False)
 
@@ -51,7 +87,6 @@ class KivyApp(App):
         
     def set_weapon(self, new_weapon):
         if machine() != "armv7l":
-            print(f"weapon: {new_weapon}")
             return
 
         gpio_control.button_emu(37, (3 + new_weapon - self.root.weapon) % 3)
@@ -66,14 +101,13 @@ class KivyApp(App):
 
     def change_weapon_connection_type(a):
         if machine() != "armv7l":
-            print("weapon connection type changed")
             return
 
         gpio_control.button_emu(27, 1)
 
-    def hide_passive(self, dt):
-        self.root.passive_yel_size = 0
-        self.root.passive_red_size = 0
+    def passive_stop_card(self):
+        if self.root.timer_running != 1:
+            self.passive_timer.clear(0)
 
     def byte_to_arr(self, byte):
         a = [0] * 8
@@ -159,12 +193,30 @@ class KivyApp(App):
             root.priority = 0
         elif period >= 1 and period <= 9:
             root.period = period
-        
+        if period in [12, 13] and self.raw_period not in [12, 13]:
+            self.passive_timer.clear()
+        print(f"period    : {period}")
+        print(f"raw_period: {self.raw_period}")
+        self.raw_period = period
+
         root.warning_l = data[7][4] * 2 + data[7][5]
         root.warning_r = data[7][6] * 2 + data[7][7]
 
+        if data[0][4] + data[0][5] + data[0][7] + data[1][3] > 0:
+            self.passive_timer.clear()
+
+        if root.timer_running == 1:
+            self.passive_timer.start()
+        #else:
+        #    self.passive_timer.stop()
+        self.passive_timer.update()
+
+        root.passive_size = self.passive_timer.get_size()
+        root.passive_time = self.passive_timer.get_time()
+        root.color_passive = self.color_passive_red if root.passive_time > 60 else self.color_passive_yel
+
+
     def get_data(self, dt):
-        root = self.root
         if machine() == "armv7l":
             self.root.current_time = time.time()
             data = [[0] * 8] * 8
@@ -173,17 +225,14 @@ class KivyApp(App):
                     byte = int.from_bytes(self.data_rx.read(), "big")
                     data[byte // 2 ** 5] = self.byte_to_arr(byte)
 
-                print("data_got!")
-                print(data[2][3])
-                print(str(data).replace("], ", "]]\n["))
                 self.data_update(data)
             if 37 not in gpio_control.button_emulating or self.root.timer_running:
-                self.root.weapon                 = 0
-                self.root.weapon                 = gpio_control.read_pin(32) * 2 + gpio_control.read_pin(36)
+                self.root.weapon = 0
+                self.root.weapon = gpio_control.read_pin(32) * 2 + gpio_control.read_pin(36)
             if 27 not in gpio_control.button_emulating or self.root.timer_running:
                 self.root.weapon_connection_type = 0
                 self.root.weapon_connection_type = gpio_control.read_pin(7)
-            self.root.video_timer            = gpio_control.read_pin(18)
+            self.root.video_timer = gpio_control.read_pin(18)
 
         else:
             data = [[0, 0, 0, 0, 0, 0, 0, 0],
@@ -196,27 +245,14 @@ class KivyApp(App):
                     [1, 1, 1, 0, 0, 1, 1, 0],]
             self.data_update(data)
         
-        if root.passive_timer == -1 and root.timer_running == 1:
-            root.passive_timer = time.time()
-        elif root.passive_timer != -1 and root.timer_running == 0:
-            root.passive_timer = -1
-            Clock.schedule_once(self.hide_passive, 2)
-
-        if root.passive_timer != -1:
-            current_time = time.time() - root.passive_timer
-            root.passive_yel_size = min(self.passive_yel_max_size * current_time // 30, self.passive_yel_max_size)
-            root.passive_red_size = min(max(self.passive_red_max_size * (current_time - 30) // 20, 0), self.passive_red_max_size)
-
-        
     def build(self):
         self.send_proc            = None
         self.camera_proc          = None
         self.toggle_bit           = 1
         self.rc5_address          = 0
-        self.old_sec = "0"
-
-        self.passive_yel_max_size = 960
-        self.passive_red_max_size = 960
+        self.raw_period           = 0
+        self.old_sec              = "0"
+        self.passive_timer        = PassiveTimer(960)
 
         self.color_left_score     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
         self.color_right_score    = [  0 / 255, 152 / 255,  70 / 255, 1.0] # green

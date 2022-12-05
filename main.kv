@@ -27,14 +27,15 @@ Carousel:
     warning_l: 0
     warning_r: 0
 
-    passive_timer: -1
-    passive_yel_size: 0
-    passive_red_size: 0
+    passive_time: 0
+    passive_size: 0
 
     flash_timer: 0
     current_time: 0
 
     epee5: 0
+
+    color_passive: [0.5, 0.5, 0.5, 1]
     
     FloatLayout:
         BoxLayout:
@@ -84,7 +85,7 @@ Carousel:
                 font_size: 80
                 font_name:"agencyb"
                 group: "weapon"
-                color: app.color_weapon_dis if self.state == 'normal' else app.color_weapon_ena
+                color: app.color_weapon_dis if root.weapon != 1 else app.color_weapon_ena
                 background_color: [0, 0, 0, 1]
                 on_press: app.set_weapon(1)
 
@@ -269,27 +270,14 @@ Carousel:
             color: app.color_timer_enabled if root.timer_running else app.color_timer_disabled
 
         Label:
-            id: passive_yel
-            size: root.passive_yel_size, 0 if int(root.current_time - root.passive_timer) > 50 and int(root.current_time - root.passive_timer) < 60 and root.current_time - root.flash_timer > 0.5 else -32
+            id: passive
+            size: root.passive_size * 2, 0 if root.passive_time > 50 and root.passive_time < 60 and root.current_time - root.flash_timer > 0.5 else -32
             size_hint: None, None
-            pos: 960, 480
+            pos: 960 - root.passive_size, 480
 
             canvas:
                 Color:
-                    rgba: app.color_passive_yel
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-
-        Label:
-            id: passive_red
-            size: -root.passive_red_size, 0 if int(root.current_time - root.passive_timer) > 50 and int(root.current_time - root.passive_timer) < 60 and root.current_time - root.flash_timer > 0.5 else -32
-            size_hint: None, None
-            pos: 960, 480
-
-            canvas:
-                Color:
-                    rgba: app.color_passive_red
+                    rgba: root.color_passive
                 Rectangle:
                     pos: self.pos
                     size: self.size
@@ -312,7 +300,7 @@ Carousel:
         
         Label:
             id: passive_counter
-            text: str(max(0, int(60 - root.current_time + root.passive_timer))) if root.passive_timer != -1 else "60"
+            text: str(max(0, 60 - root.passive_time))
             font_size: 100
             font_name:"agencyb"
             size: 120, 200
@@ -326,9 +314,9 @@ Carousel:
 
         Label:
             id: warning_top_l
-            size: 100, 50
+            size: 100, 30
             size_hint: None, None
-            pos: 460, 260
+            pos: 460, 240
 
             background_color: [0, 0, 0, 0]
             background_down: ""
@@ -346,7 +334,7 @@ Carousel:
 
         Label:
             id: warning_bot_l
-            size: 100, 50
+            size: 100, 30
             size_hint: None, None
             pos: 460, 190
 
@@ -378,9 +366,9 @@ Carousel:
 
         Label:
             id: warning_top_r
-            size: 100, 50
+            size: 100, 30
             size_hint: None, None
-            pos: 1360, 260
+            pos: 1360, 240
 
             background_color: [0, 0, 0, 0]
             background_down: ""
@@ -398,7 +386,7 @@ Carousel:
 
         Label:
             id: warning_bot_r
-            size: 100, 50
+            size: 100, 30
             size_hint: None, None
             pos: 1360, 190
 
@@ -449,6 +437,106 @@ Carousel:
             size_hint: None, None
             pos: 1360, 80
             color: app.color_right_p_ena if root.priority == +1 else app.color_right_p_dis
+        
+        ToggleButton:
+            id: passive_1
+            text: "activity"
+            font_size: 30
+            font_name:"agencyb"
+            color: [0.4, 0.4, 0.4, 1]
+            size: 100, 30
+            size_hint: None, None
+            pos: 460, 350
+            on_press: app.passive_stop_card()
+
+            background_color: [0, 0, 0, 0]
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+            
+            canvas.before:
+                Color:
+                    rgba: app.color_warn_red_dis if self.state == "normal" else app.color_warn_red_ena
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [app.card_radius,]
+
+        ToggleButton:
+            id: passive_2
+            text: "activity"
+            font_size: 30
+            font_name:"agencyb"
+            color: [0.4, 0.4, 0.4, 1]
+            size: 100, 30
+            size_hint: None, None
+            pos: 460, 300
+            on_press: app.passive_stop_card()
+
+            background_color: [0, 0, 0, 0]
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+            
+            canvas.before:
+                Color:
+                    rgba: app.color_warn_yel_dis if self.state == "normal" else app.color_warn_yel_ena
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [app.card_radius,]
+
+        ToggleButton:
+            id: passive_3
+            text: "activity"
+            font_size: 30
+            font_name:"agencyb"
+            color: [0.4, 0.4, 0.4, 1]
+            size: 100, 30
+            size_hint: None, None
+            pos: 1360, 350
+            on_press: app.passive_stop_card()
+
+            background_color: [0, 0, 0, 0]
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+            
+            canvas.before:
+                Color:
+                    rgba: app.color_warn_red_dis if self.state == "normal" else app.color_warn_red_ena
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [app.card_radius,]
+
+        ToggleButton:
+            id: passive_4
+            text: "activity"
+            font_size: 30
+            font_name:"agencyb"
+            color: [0.4, 0.4, 0.4, 1]
+            size: 100, 30
+            size_hint: None, None
+            pos: 1360, 300
+            on_press: app.passive_stop_card()
+
+            background_color: [0, 0, 0, 0]
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+            
+            canvas.before:
+                Color:
+                    rgba: app.color_warn_yel_dis if self.state == "normal" else app.color_warn_yel_ena
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [app.card_radius,]
 
     TabbedPanel:
         do_default_tab: False
