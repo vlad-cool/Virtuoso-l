@@ -107,7 +107,7 @@ class KivyApp(App):
 
     def passive_stop_card(self):
         if self.root.timer_running != 1:
-            self.passive_timer.clear(0)
+            self.passive_timer.clear()
 
     def byte_to_arr(self, byte):
         a = [0] * 8
@@ -207,14 +207,8 @@ class KivyApp(App):
 
         if root.timer_running == 1:
             self.passive_timer.start()
-        #else:
-        #    self.passive_timer.stop()
-        self.passive_timer.update()
-
-        root.passive_size = self.passive_timer.get_size()
-        root.passive_time = self.passive_timer.get_time()
-        root.color_passive = self.color_passive_red if root.passive_time > 60 else self.color_passive_yel
-
+        else:
+            self.passive_timer.stop()
 
     def get_data(self, dt):
         if machine() == "armv7l":
@@ -244,6 +238,13 @@ class KivyApp(App):
                     [1, 1, 0, 0, 0, 0, 0, 0],
                     [1, 1, 1, 0, 0, 1, 1, 0],]
             self.data_update(data)
+
+        root = self.root
+
+        self.passive_timer.update()
+        root.passive_size = self.passive_timer.get_size()
+        root.passive_time = self.passive_timer.get_time()
+        root.color_passive = self.color_passive_red if root.passive_time > 60 else self.color_passive_yel
         
     def build(self):
         self.send_proc            = None

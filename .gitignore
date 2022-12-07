@@ -1,7 +1,8 @@
 /__pycache__
 /.vscode
-/venv
 /prebuilt
+/linux
+/venv
 config
 kivy_test.py
 test_cam.py
@@ -11,7 +12,5 @@ bootsplash/bootsplash.armbian
 .directory
 LiveCam.py
 ggg.hhh
-/linux
-/FFmpeg
 scripts/upload.sh
 uart_debug.py
