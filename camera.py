@@ -48,7 +48,7 @@ def avail():
 def init():
     global vid
     if machine() == "armv7l":
-        vid = cv2.VideoCapture(1)
+        vid = cv2.VideoCapture(0)
     else:
         vid = cv2.VideoCapture(0)
     

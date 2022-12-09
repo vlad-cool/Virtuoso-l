@@ -271,7 +271,7 @@ Carousel:
 
         Label:
             id: passive
-            size: root.passive_size * 2, 0 if root.passive_time > 50 and root.passive_time < 60 and root.current_time - root.flash_timer > 0.5 else -32
+            size: root.passive_size * 2, 0 if root.passive_time > 50 and root.passive_time < 60 and root.current_time - root.flash_timer > 0.5 and root.timer_running == 1 else -32
             size_hint: None, None
             pos: 960 - root.passive_size, 480
 
@@ -305,7 +305,7 @@ Carousel:
             font_name:"agencyb"
             size: 120, 200
             size_hint: None, None
-            pos: 580, 260
+            pos: 580, 285
             color: app.color_passive_white
 
             background_color: [0, 0, 0, 1]
@@ -447,7 +447,8 @@ Carousel:
             size: 100, 40
             size_hint: None, None
             pos: 460, 380
-            on_press: app.passive_stop_card()
+            on_press: app.passive_stop_card(self.state)
+            disabled: root.timer_running == 1
 
             background_color: [0, 0, 0, 0]
             background_down: ""
@@ -471,8 +472,9 @@ Carousel:
             color: [0.4, 0.4, 0.4, 1]
             size: 100, 40
             size_hint: None, None
-            pos: 460, 330
-            on_press: app.passive_stop_card()
+            pos: 460, 320
+            on_press: app.passive_stop_card(self.state)
+            disabled: root.timer_running == 1
 
             background_color: [0, 0, 0, 0]
             background_down: ""
@@ -497,7 +499,8 @@ Carousel:
             size: 100, 40
             size_hint: None, None
             pos: 1360, 380
-            on_press: app.passive_stop_card()
+            on_press: app.passive_stop_card(self.state)
+            disabled: root.timer_running == 1
 
             background_color: [0, 0, 0, 0]
             background_down: ""
@@ -521,8 +524,9 @@ Carousel:
             color: [0.4, 0.4, 0.4, 1]
             size: 100, 40
             size_hint: None, None
-            pos: 1360, 330
-            on_press: app.passive_stop_card()
+            pos: 1360, 320
+            on_press: app.passive_stop_card(self.state)
+            disabled: root.timer_running == 1
 
             background_color: [0, 0, 0, 0]
             background_down: ""

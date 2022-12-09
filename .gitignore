@@ -14,3 +14,7 @@ LiveCam.py
 ggg.hhh
 scripts/upload.sh
 uart_debug.py
+config.ini
+data_test/1
+data_test/2
+data_test/3

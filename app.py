@@ -5,7 +5,6 @@ import serial
 import subprocess
 import gpio_control
 from kivy.clock       import Clock
-from kivy.core.window import Window
 from kivy.lang        import Builder
 from kivy.app         import App
 from kivy.core.text   import LabelBase
@@ -13,9 +12,6 @@ from platform         import machine
 
 read_interval = .2
 send_interval = .2
-
-if machine() == "armv7l": #for bananapi, it have much better performance when running vertically
-    Window.rotation = 90
 
 kivy.require('2.1.0')
 
@@ -105,8 +101,9 @@ class KivyApp(App):
 
         gpio_control.button_emu(27, 1)
 
-    def passive_stop_card(self):
-        if self.root.timer_running != 1:
+    def passive_stop_card(self, state):
+        print(state)
+        if self.root.timer_running != 1 and state == "down":
             self.passive_timer.clear()
 
     def byte_to_arr(self, byte):
@@ -118,6 +115,9 @@ class KivyApp(App):
 
     def data_update(self, data):
         root = self.root
+
+        if data[0][4] + data[0][5] + data[0][7] + data[1][3] > 0 and root.timer_running:
+            self.passive_timer.clear()
 
         score_r = data[7][3]
         for i in data[5][3:]:
@@ -159,6 +159,28 @@ class KivyApp(App):
             timer_s *= 2
             timer_s += i
         
+        period = 0
+        
+        for i in range(4):
+            period *= 2
+            period += data[6][4 + i]
+
+        if period == 15:
+            root.priority = 1
+        elif period == 14:
+            root.priority = -1
+        elif period == 13:
+            root.priority = 0
+        elif period >= 1 and period <= 9:
+            root.period = period
+        if period in [12, 13] and self.raw_period not in [12, 13]:
+            self.passive_timer.clear()
+        if period == 12 and timer_m == 0:
+            timer_m = 4
+        print(f"period    : {period}")
+        print(f"raw_period: {self.raw_period}")
+        self.raw_period = period
+        
         if data[1][5] == 0:
             
             if self.old_sec != str(timer_s):
@@ -179,31 +201,8 @@ class KivyApp(App):
             root.timer_3 = ""
             root.timer_text = KivyApp.Symbols[timer_d] + KivyApp.Symbols[timer_s]
 
-        period = 0
-        
-        for i in range(4):
-            period *= 2
-            period += data[6][4 + i]
-
-        if period == 15:
-            root.priority = 1
-        elif period == 14:
-            root.priority = -1
-        elif period == 13:
-            root.priority = 0
-        elif period >= 1 and period <= 9:
-            root.period = period
-        if period in [12, 13] and self.raw_period not in [12, 13]:
-            self.passive_timer.clear()
-        print(f"period    : {period}")
-        print(f"raw_period: {self.raw_period}")
-        self.raw_period = period
-
         root.warning_l = data[7][4] * 2 + data[7][5]
         root.warning_r = data[7][6] * 2 + data[7][7]
-
-        if data[0][4] + data[0][5] + data[0][7] + data[1][3] > 0:
-            self.passive_timer.clear()
 
         if root.timer_running == 1:
             self.passive_timer.start()
@@ -244,7 +243,7 @@ class KivyApp(App):
         self.passive_timer.update()
         root.passive_size = self.passive_timer.get_size()
         root.passive_time = self.passive_timer.get_time()
-        root.color_passive = self.color_passive_red if root.passive_time > 60 else self.color_passive_yel
+        root.color_passive = self.color_passive_red if root.passive_time > 50 else self.color_passive_yel
         
     def build(self):
         self.send_proc            = None
@@ -253,7 +252,7 @@ class KivyApp(App):
         self.rc5_address          = 0
         self.raw_period           = 0
         self.old_sec              = "0"
-        self.passive_timer        = PassiveTimer(960)
+        self.passive_timer        = PassiveTimer(500)
 
         self.color_left_score     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
         self.color_right_score    = [  0 / 255, 152 / 255,  70 / 255, 1.0] # green

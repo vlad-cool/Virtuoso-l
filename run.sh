@@ -1,17 +1,4 @@
-if [ -z "$SSH_TTY" ]
-then
-    startx ./app.py
-else
-    echo "Hello, remote SSH user!"
-fi
-
-
-ssh -R 2222:localhost:22 pi.local
-
-nU8fF4rA8hmC
-
-sudo firewall-cmd --state
-
-sudo iptables -A INPUT -p tcp --dport 2222 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
-
-sudo ufw allow ssh  
+xrandr -o left
+xinput set-prop "wch.cn USB2IIC_CTP_CONTROL" --type=float "Coordinate Transformation Matrix" 0 -1 1 1 0 0 0 0 1
+cd /home/pi/V24m
+sudo ./app.py
