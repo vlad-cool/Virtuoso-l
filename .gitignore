@@ -18,3 +18,5 @@ config.ini
 data_test/1
 data_test/2
 data_test/3
+/data_test
+/splash
