@@ -565,6 +565,12 @@ Carousel:
                 Button:
                     text: "sync hardware"
                     on_press: app.write_address()
+        TabbedPanelItem:
+            text: "test nootsplash"
+            BoxLayout:
+                Button:
+                    text: "sync hardware"
+                    #on_press: subprocess.run(["sudo", "plymouth", "show-splash"])
     Button:
         text: "Start camera"
         on_press: app.start_camera()

@@ -257,7 +257,7 @@ class KivyApp(App):
         self.color_left_score     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
         self.color_right_score    = [  0 / 255, 152 / 255,  70 / 255, 1.0] # green
         self.color_period         = [  0 / 255, 160 / 255, 227 / 255, 1.0] # blue
-        self.color_timer_enabled  = [255 / 255, 255 / 255, 255 / 255, 1.0] # white
+        self.color_timer_enabled  = [223 / 255, 223 / 255, 223 / 255, 1.0] # white
         self.color_timer_disabled = [239 / 255, 127 / 255,  26 / 255, 1.0] # orange
 
         self.color_warn_red_ena   = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
@@ -267,7 +267,7 @@ class KivyApp(App):
 
         self.color_passive_yel    = [0.8, 0.8, 0.0, 1] # yellow
         self.color_passive_red    = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
-        self.color_passive_white  = [255 / 255, 255 / 255, 255 / 255, 1.0] # white
+        self.color_passive_white  = [223 / 255, 223 / 255, 223 / 255, 1.0] # white
 
         self.color_left_p_ena     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
         self.color_left_p_dis     = [227 / 255,  30 / 255,  36 / 255, 0.2] # dark red
