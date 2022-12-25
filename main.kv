@@ -29,6 +29,7 @@ Carousel:
 
     passive_time: 0
     passive_size: 0
+    passive_coun: "60"
 
     flash_timer: 0
     current_time: 0
@@ -36,6 +37,7 @@ Carousel:
     epee5: 0
 
     color_passive: [0.5, 0.5, 0.5, 1]
+    color_timer: app.color_timer_orange
     
     FloatLayout:
         BoxLayout:
@@ -227,7 +229,7 @@ Carousel:
             size: 150, 300
             size_hint: None, None
             pos: 730 + 150 * 0 - 30, 140
-            color: app.color_timer_enabled if root.timer_running else app.color_timer_disabled
+            color: root.color_timer
 
         Label:
             id: timer_dot
@@ -237,7 +239,7 @@ Carousel:
             size: 150, 300
             size_hint: None, None
             pos: 730 + 150 * 1 - 40 - 10, 140
-            color: app.color_timer_enabled if root.timer_running else app.color_timer_disabled
+            color: root.color_timer
         
         Label:
             id: timer_dec
@@ -247,7 +249,7 @@ Carousel:
             size: 150, 300
             size_hint: None, None
             pos: 730 + 150 * 2 - 80 + 10, 140
-            color: app.color_timer_enabled if root.timer_running else app.color_timer_disabled
+            color: root.color_timer
 
         Label:
             id: timer_sec
@@ -257,7 +259,7 @@ Carousel:
             size: 150, 300
             size_hint: None, None
             pos: 730 + 150 * 3 - 80 + 30, 140
-            color: app.color_timer_enabled if root.timer_running else app.color_timer_disabled
+            color: root.color_timer
 
         Label:
             id: timer_text
@@ -267,7 +269,7 @@ Carousel:
             size: 600, 300
             size_hint: None, None
             pos: 730, 140
-            color: app.color_timer_enabled if root.timer_running else app.color_timer_disabled
+            color: root.color_timer
 
         Label:
             id: passive
@@ -299,13 +301,27 @@ Carousel:
             background_normal: ""
         
         Label:
-            id: passive_counter
-            text: str(max(0, 60 - root.passive_time))
+            id: passive_counter_2_1
+            text: root.passive_coun[0]
             font_size: 100
             font_name:"agencyb"
-            size: 120, 200
+            size: 60, 200
             size_hint: None, None
-            pos: 580, 285
+            pos: 585, 285
+            color: app.color_passive_white
+
+            background_color: [0, 0, 0, 1]
+            background_down: ""
+            background_normal: ""
+        
+        Label:
+            id: passive_counter_2_2
+            text: root.passive_coun[1]
+            font_size: 100
+            font_name:"agencyb"
+            size: 60, 200
+            size_hint: None, None
+            pos: 635, 285
             color: app.color_passive_white
 
             background_color: [0, 0, 0, 1]
@@ -314,6 +330,10 @@ Carousel:
 
         Label:
             id: warning_top_l
+            text: "penalty"
+            font_size: 30
+            font_name:"agencyb"
+            color: app.color_warn_text_up if root.warning_l >= 2 else app.color_warn_text_down
             size: 100, 40
             size_hint: None, None
             pos: 460, 250
@@ -334,6 +354,10 @@ Carousel:
 
         Label:
             id: warning_bot_l
+            text: "caution"
+            font_size: 30
+            font_name:"agencyb"
+            color: app.color_warn_text_up if root.warning_l >= 1 else app.color_warn_text_down
             size: 100, 40
             size_hint: None, None
             pos: 460, 190
@@ -366,6 +390,10 @@ Carousel:
 
         Label:
             id: warning_top_r
+            text: "penalty"
+            font_size: 30
+            font_name:"agencyb"
+            color: app.color_warn_text_up if root.warning_r >= 2 else app.color_warn_text_down
             size: 100, 40
             size_hint: None, None
             pos: 1360, 250
@@ -386,6 +414,10 @@ Carousel:
 
         Label:
             id: warning_bot_r
+            text: "caution"
+            font_size: 30
+            font_name:"agencyb"
+            color: app.color_warn_text_up if root.warning_r >= 1 else app.color_warn_text_down
             size: 100, 40
             size_hint: None, None
             pos: 1360, 190
@@ -417,33 +449,51 @@ Carousel:
             background_normal: ""
 
         Label:
-            id: priority_l
-            markup: True
-            text: "P[size=20]riority[/size]"
+            id: priority_l_cap
+            text: "P"
             font_size: 120
             font_name:"agencyb"
             size: 100, 100
             size_hint: None, None
-            pos: 460, 80
+            pos: 460 - 27 - 8, 80
             color: app.color_left_p_ena if root.priority == -1 else app.color_left_p_dis
+        
+        Label:
+            id: priority_l_word
+            text: "priority"
+            font_size: 36
+            font_name:"agencyb"
+            size: 100, 100
+            size_hint: None, None
+            pos: 460 + 27 - 16, 80 - 27
+            color: app.color_warn_text_up if root.priority == -1 else app.color_warn_text_down
 
         Label:
-            id: priority_r
-            markup: True
-            text: "P[size=20]riority[/size]"
+            id: priority_r_cap
+            text: "P"
             font_size: 120
             font_name:"agencyb"
             size: 100, 100
             size_hint: None, None
-            pos: 1360, 80
+            pos: 1360 - 27 - 8, 80
             color: app.color_right_p_ena if root.priority == +1 else app.color_right_p_dis
+
+        Label:
+            id: priority_r_word
+            text: "priority"
+            font_size: 36
+            font_name:"agencyb"
+            size: 100, 100
+            size_hint: None, None
+            pos: 1360 + 27 - 16, 80 - 27
+            color: app.color_warn_text_up if root.priority == +1 else app.color_warn_text_down
         
         ToggleButton:
             id: passive_1
-            text: "activity"
+            text: "Pcard"
             font_size: 30
             font_name:"agencyb"
-            color: [0.4, 0.4, 0.4, 1]
+            color: app.color_warn_text_up if self.state == "down" else app.color_warn_text_down
             size: 100, 40
             size_hint: None, None
             pos: 460, 380
@@ -466,10 +516,10 @@ Carousel:
 
         ToggleButton:
             id: passive_2
-            text: "activity"
+            text: "Pcard"
             font_size: 30
             font_name:"agencyb"
-            color: [0.4, 0.4, 0.4, 1]
+            color: app.color_warn_text_up if self.state == "down" else app.color_warn_text_down
             size: 100, 40
             size_hint: None, None
             pos: 460, 320
@@ -492,10 +542,10 @@ Carousel:
 
         ToggleButton:
             id: passive_3
-            text: "activity"
+            text: "Pcard"
             font_size: 30
             font_name:"agencyb"
-            color: [0.4, 0.4, 0.4, 1]
+            color: app.color_warn_text_up if self.state == "down" else app.color_warn_text_down
             size: 100, 40
             size_hint: None, None
             pos: 1360, 380
@@ -518,10 +568,10 @@ Carousel:
 
         ToggleButton:
             id: passive_4
-            text: "activity"
+            text: "Pcard"
             font_size: 30
             font_name:"agencyb"
-            color: [0.4, 0.4, 0.4, 1]
+            color: app.color_warn_text_up if self.state == "down" else app.color_warn_text_down
             size: 100, 40
             size_hint: None, None
             pos: 1360, 320
@@ -565,12 +615,7 @@ Carousel:
                 Button:
                     text: "sync hardware"
                     on_press: app.write_address()
-        TabbedPanelItem:
-            text: "test nootsplash"
-            BoxLayout:
-                Button:
-                    text: "sync hardware"
-                    #on_press: subprocess.run(["sudo", "plymouth", "show-splash"])
+
     Button:
         text: "Start camera"
         on_press: app.start_camera()

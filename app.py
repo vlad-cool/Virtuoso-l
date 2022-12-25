@@ -10,10 +10,38 @@ from kivy.app         import App
 from kivy.core.text   import LabelBase
 from platform         import machine
 
-read_interval = .2
-send_interval = .2
+read_interval = .05
 
 kivy.require('2.1.0')
+
+#class Timer:
+#    def __init__(self, app):
+#        self.m = 3 # Minutes
+#        self.d = 0 # Tens of seconds
+#        self.s = 0 # Seconds
+#        self.running      = 0
+#        self.updated_at   = time.time()
+#        self.color_orange = app.color_timer_orange
+#        self.color_white  = app.color_timer_white
+#        self.color_blue   = app.color_timer_blue
+#        self.color        = self.color_orange
+#
+#    def update(self, m, d, s, running):
+#        self.running = running
+#        if self.m != m or self.d != d or self.s != s:
+#            self.updated_at = time.time()
+#
+#        if m > 0 or d > 0:
+#            self.color = self.coloe
+#            self.m = m
+#            self.d = d
+#            self.s = s
+#        else:
+#
+#            t = int((time.time() - self.updated_at) * 100)
+#            self.m = s
+#            self.d = 9 - (t // 10) % 10
+#            self.s = 9 - t % 10
 
 class PassiveTimer:
     def stop(self):
@@ -29,6 +57,7 @@ class PassiveTimer:
         self.running   = False
         self.size      = 0
         self.time      = 0
+        self.coun      = "60"
         self.prev_time = 0
 
     def get_time(self):
@@ -36,6 +65,9 @@ class PassiveTimer:
 
     def get_size(self):
         return int(self.size)
+
+    def get_coun(self):
+        return self.coun
     
     def update(self):
         if self.running == False:
@@ -46,6 +78,12 @@ class PassiveTimer:
         self.size += self.max_size * delta / 50
         self.size = min(self.size, self.max_size)
         self.time += delta
+        if self.time < 60.0:
+            self.coun = str(60 - int(self.time))
+            if len(self.coun) == 1:
+                self.coun = " " + self.coun
+        else:
+            self.coun = " 0"
         self.prev_time = cur_time
     
     def __init__(self, passive_max_size):
@@ -55,6 +93,13 @@ class PassiveTimer:
 class KivyApp(App):
     #Symbols = ["A", "B", "C", "D", "E", "F", "Sc", "On", "Off", " ", "1", "2", "3", "4", "5", "6"]
     Symbols = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
+
+    def test_bootsplash(abobus):
+        subprocess.Popen("sudo plymouthd", shell=True)
+        time.sleep(10)
+        subprocess.Popen("sudo plymouth --show-splash", shell=True)
+        time.sleep(10)
+        subprocess.Popen("sudo plymouth quit", shell=True)
 
     def start_camera(self):
         if self.camera_proc is None:
@@ -102,7 +147,6 @@ class KivyApp(App):
         gpio_control.button_emu(27, 1)
 
     def passive_stop_card(self, state):
-        print(state)
         if self.root.timer_running != 1 and state == "down":
             self.passive_timer.clear()
 
@@ -112,6 +156,14 @@ class KivyApp(App):
                 a[i] = byte % 2
                 byte //= 2
         return a[::-1]
+
+    def update_millis(self, dt):
+        if self.root.timer_running == 0:
+            return
+        self.timer_millis += dt
+        t = 99 - int(self.timer_millis * 100) % 100
+        app.root.timer_2 = str(t // 10)
+        app.root.timer_3 = str(t %  10)
 
     def data_update(self, data):
         root = self.root
@@ -177,23 +229,40 @@ class KivyApp(App):
             self.passive_timer.clear()
         if period == 12 and timer_m == 0:
             timer_m = 4
-        print(f"period    : {period}")
-        print(f"raw_period: {self.raw_period}")
         self.raw_period = period
         
         if data[1][5] == 0:
-            
             if self.old_sec != str(timer_s):
                 root.flash_timer = time.time()
                 pass
 
-            self.old_sec = str(timer_s)
-            root.timer_0 = str(timer_m)
-            root.timer_1 = ":"
-            root.timer_2 = str(timer_d)
-            root.timer_3 = str(timer_s)
+            if data[2][3] == 0:
+                root.color_timer = app.color_timer_orange
+            elif timer_m == 0 and timer_d == 0:
+                root.color_timer = app.color_timer_blue
+                if self.timer_interval is None:
+                    self.timer_interval = Clock.schedule_interval(self.update_millis, 0.02)
+                    self.timer_millis = 0
+                    root.timer_1 = ":"
+                    root.timer_2 = "9"
+                    root.timer_0 = "9"
+                root.timer_0 = str(timer_s - 1)
+
+            elif timer_m > 0 or root.color_timer == app.color_timer_orange:
+                root.color_timer = app.color_timer_white            
+        
+            if (timer_m > 0 or timer_d > 0 or (timer_m == 0 and timer_d == 0 and timer_s == 0)) and self.timer_interval is not None:
+                self.timer_interval.cancel()
+                self.timer_interval = None
+            if self.timer_interval is None:
+                self.old_sec = str(timer_s)
+                root.timer_0 = str(timer_m)
+                root.timer_1 = ":"
+                root.timer_2 = str(timer_d)
+                root.timer_3 = str(timer_s)
+                root.timer_text = ""
             root.timer_running = data[2][3]
-            root.timer_text = ""
+
         else:
             root.timer_0 = ""
             root.timer_1 = ""
@@ -204,7 +273,7 @@ class KivyApp(App):
         root.warning_l = data[7][4] * 2 + data[7][5]
         root.warning_r = data[7][6] * 2 + data[7][7]
 
-        if root.timer_running == 1:
+        if root.timer_running == 1 and ((timer_m > 0 and timer_m + timer_d + timer_s > 1) or self.passive_timer.prev_time != 0):
             self.passive_timer.start()
         else:
             self.passive_timer.stop()
@@ -243,28 +312,24 @@ class KivyApp(App):
         self.passive_timer.update()
         root.passive_size = self.passive_timer.get_size()
         root.passive_time = self.passive_timer.get_time()
+        root.passive_coun = self.passive_timer.get_coun()
         root.color_passive = self.color_passive_red if root.passive_time > 50 else self.color_passive_yel
         
     def build(self):
-        self.send_proc            = None
-        self.camera_proc          = None
-        self.toggle_bit           = 1
-        self.rc5_address          = 0
-        self.raw_period           = 0
-        self.old_sec              = "0"
-        self.passive_timer        = PassiveTimer(500)
-
         self.color_left_score     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
         self.color_right_score    = [  0 / 255, 152 / 255,  70 / 255, 1.0] # green
         self.color_period         = [  0 / 255, 160 / 255, 227 / 255, 1.0] # blue
-        self.color_timer_enabled  = [223 / 255, 223 / 255, 223 / 255, 1.0] # white
-        self.color_timer_disabled = [239 / 255, 127 / 255,  26 / 255, 1.0] # orange
+        self.color_timer_white    = [223 / 255, 223 / 255, 223 / 255, 1.0] # white
+        self.color_timer_orange   = [239 / 255, 127 / 255,  26 / 255, 1.0] # orange
+        self.color_timer_blue     = [  0 / 255, 160 / 255, 227 / 255, 1.0] # blue
 
         self.color_warn_red_ena   = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
         self.color_warn_red_dis   = [227 / 255,  30 / 255,  36 / 255, 0.2] # dark red
         self.color_warn_yel_ena   = [0.8, 0.8, 0.0, 1] # yellow
         self.color_warn_yel_dis   = [0.2, 0.2, 0.0, 1] # dark yellow
-
+        self.color_warn_text_up   = [0.9, 0.9, 0.9, 1]
+        self.color_warn_text_down = [0.4, 0.4, 0.4, 1]
+        
         self.color_passive_yel    = [0.8, 0.8, 0.0, 1] # yellow
         self.color_passive_red    = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
         self.color_passive_white  = [223 / 255, 223 / 255, 223 / 255, 1.0] # white
@@ -279,7 +344,15 @@ class KivyApp(App):
 
         self.card_radius = 10
 
-        self.proc = None
+        self.proc                 = None
+        self.camera_proc          = None
+        self.toggle_bit           = 1
+        self.rc5_address          = 0
+        self.raw_period           = 0
+        self.old_sec              = "0"
+        self.passive_timer        = PassiveTimer(500)
+        self.timer_interval       = None
+        self.timer_millis         = 0
 
         if machine() == "armv7l":
             self.data_rx = serial.Serial("/dev/ttyS2", 38400)
