@@ -14,35 +14,6 @@ read_interval = .05
 
 kivy.require('2.1.0')
 
-#class Timer:
-#    def __init__(self, app):
-#        self.m = 3 # Minutes
-#        self.d = 0 # Tens of seconds
-#        self.s = 0 # Seconds
-#        self.running      = 0
-#        self.updated_at   = time.time()
-#        self.color_orange = app.color_timer_orange
-#        self.color_white  = app.color_timer_white
-#        self.color_blue   = app.color_timer_blue
-#        self.color        = self.color_orange
-#
-#    def update(self, m, d, s, running):
-#        self.running = running
-#        if self.m != m or self.d != d or self.s != s:
-#            self.updated_at = time.time()
-#
-#        if m > 0 or d > 0:
-#            self.color = self.coloe
-#            self.m = m
-#            self.d = d
-#            self.s = s
-#        else:
-#
-#            t = int((time.time() - self.updated_at) * 100)
-#            self.m = s
-#            self.d = 9 - (t // 10) % 10
-#            self.s = 9 - t % 10
-
 class PassiveTimer:
     def stop(self):
         self.running = False
