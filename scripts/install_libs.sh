@@ -1,6 +1,6 @@
-sudo apt -y install gcc-8
-sudo update-alternatives --remove-all gcc 
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 20
+#sudo apt -y install gcc-8
+#sudo update-alternatives --remove-all gcc 
+#sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 20
 
 sudo mkdir -p /var/lib/bananapi
 sudo touch /var/lib/bananapi/board.sh
@@ -13,7 +13,7 @@ sudo ./build
 cd
 
 sudo apt -y update
-#sudo apt -y upgrade
+sudo apt -y upgrade
 sudo apt -y install libglfw3-dev libglu1-mesa-dev
 sudo apt -y install build-essential
 sudo apt -y install ffmpeg
@@ -26,7 +26,7 @@ sudo apt -y install python3-setuptools python3-pip python3-dev python3-venv git-
 sudo apt -y install pkg-config libgstreamer1.0-dev gstreamer1.0-plugins-{bad,base,good,ugly} gstreamer1.0-{omx,alsa} libmtdev-dev xclip xsel
 sudo apt -y install libfreetype6-dev libgl1-mesa-dev libgles2-mesa-dev libdrm-dev libgbm-dev libudev-dev libasound2-dev liblzma-dev libjpeg-dev libtiff-dev libwebp-dev git build-essential
 sudo apt -y install gir1.2-ibus-1.0 libdbus-1-dev libegl1-mesa-dev libibus-1.0-5 libibus-1.0-dev libice-dev libsm-dev libsndio-dev libwayland-bin libwayland-dev libxi-dev libxinerama-dev libxkbcommon-dev libxrandr-dev libxss-dev libxt-dev libxv-dev x11proto-randr-dev x11proto-scrnsaver-dev x11proto-video-dev x11proto-xinerama-dev
-sudo apt -y install xinput
+sudo apt -y install xinput xorg
 
 wget https://libsdl.org/release/SDL2-2.0.10.tar.gz
 tar -zxvf SDL2-2.0.10.tar.gz
@@ -60,6 +60,8 @@ make -j$(nproc)
 sudo make install
 cd
 
+rm -rf SDL2*
+
 mkdir -p V24m
 cd V24m
 sudo mount -o remount,size=4G /tmp/
@@ -72,6 +74,4 @@ venv/bin/python3 -m pip install cython
 venv/bin/python3 -m pip install clang
 venv/bin/python3 -m pip install pyserial
 venv/bin/python3 -m pip install "kivy[full]"
-#venv/bin/python3 -m pip install opencv-python
-#sudo chmod 4775 venv/bin/python3
 cd

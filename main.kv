@@ -36,7 +36,7 @@ Carousel:
 
     epee5: 0
 
-    color_passive: [0.5, 0.5, 0.5, 1]
+    color_passive: [0, 0, 0, 1]
     color_timer: app.color_timer_orange
     
     FloatLayout:
@@ -333,7 +333,7 @@ Carousel:
             text: "penalty"
             font_size: 30
             font_name:"agencyb"
-            color: app.color_warn_text_up if root.warning_l >= 2 else app.color_warn_text_down
+            color: app.color_warn_text_ena if root.warning_l >= 2 else app.color_warn_text_dis
             size: 100, 40
             size_hint: None, None
             pos: 460, 250
@@ -357,7 +357,7 @@ Carousel:
             text: "caution"
             font_size: 30
             font_name:"agencyb"
-            color: app.color_warn_text_up if root.warning_l >= 1 else app.color_warn_text_down
+            color: app.color_warn_text_ena if root.warning_l >= 1 else app.color_warn_text_dis
             size: 100, 40
             size_hint: None, None
             pos: 460, 190
@@ -393,7 +393,7 @@ Carousel:
             text: "penalty"
             font_size: 30
             font_name:"agencyb"
-            color: app.color_warn_text_up if root.warning_r >= 2 else app.color_warn_text_down
+            color: app.color_warn_text_ena if root.warning_r >= 2 else app.color_warn_text_dis
             size: 100, 40
             size_hint: None, None
             pos: 1360, 250
@@ -417,7 +417,7 @@ Carousel:
             text: "caution"
             font_size: 30
             font_name:"agencyb"
-            color: app.color_warn_text_up if root.warning_r >= 1 else app.color_warn_text_down
+            color: app.color_warn_text_ena if root.warning_r >= 1 else app.color_warn_text_dis
             size: 100, 40
             size_hint: None, None
             pos: 1360, 190
@@ -466,7 +466,7 @@ Carousel:
             size: 100, 100
             size_hint: None, None
             pos: 460 + 27 - 16, 80 - 27
-            color: app.color_warn_text_up if root.priority == -1 else app.color_warn_text_down
+            color: app.color_warn_text_ena if root.priority == -1 else app.color_warn_text_dis
 
         Label:
             id: priority_r_cap
@@ -486,14 +486,14 @@ Carousel:
             size: 100, 100
             size_hint: None, None
             pos: 1360 + 27 - 16, 80 - 27
-            color: app.color_warn_text_up if root.priority == +1 else app.color_warn_text_down
+            color: app.color_warn_text_ena if root.priority == +1 else app.color_warn_text_dis
         
         ToggleButton:
             id: passive_1
             text: "Pcard"
             font_size: 30
             font_name:"agencyb"
-            color: app.color_warn_text_up if self.state == "down" else app.color_warn_text_down
+            color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
             size: 100, 40
             size_hint: None, None
             pos: 460, 380
@@ -519,7 +519,7 @@ Carousel:
             text: "Pcard"
             font_size: 30
             font_name:"agencyb"
-            color: app.color_warn_text_up if self.state == "down" else app.color_warn_text_down
+            color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
             size: 100, 40
             size_hint: None, None
             pos: 460, 320
@@ -545,7 +545,7 @@ Carousel:
             text: "Pcard"
             font_size: 30
             font_name:"agencyb"
-            color: app.color_warn_text_up if self.state == "down" else app.color_warn_text_down
+            color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
             size: 100, 40
             size_hint: None, None
             pos: 1360, 380
@@ -571,7 +571,7 @@ Carousel:
             text: "Pcard"
             font_size: 30
             font_name:"agencyb"
-            color: app.color_warn_text_up if self.state == "down" else app.color_warn_text_down
+            color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
             size: 100, 40
             size_hint: None, None
             pos: 1360, 320
@@ -594,6 +594,9 @@ Carousel:
 
     TabbedPanel:
         do_default_tab: False
+        border: [0, 0, 0, 0]
+        tab_pos: "top_mid"
+        tab_width: (1920 / 2)
         TabbedPanelItem:
             text: "System"
             BoxLayout:
@@ -604,18 +607,8 @@ Carousel:
                     text: "Poweroff"
                     on_press: app.system_poweroff()
         TabbedPanelItem:
-            text: "Apps"
-            BoxLayout:
-                Button:
-                    text: "TEST"
-                    on_press: app.run_app("test")
-        TabbedPanelItem:
             text: "Hardware"
             BoxLayout:
                 Button:
                     text: "sync hardware"
                     on_press: app.write_address()
-
-    Button:
-        text: "Start camera"
-        on_press: app.start_camera()

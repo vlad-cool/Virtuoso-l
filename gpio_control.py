@@ -8,13 +8,13 @@ on_time  = 250
 TIMING = 889
 
 button_emulating = []
-it_send_queue = []
-it_get_queue = []
-ir_emulating = 0
-ir_toggle_bit = 0
+it_send_queue    = []
+it_get_queue     = []
+ir_emulating     = 0
+ir_toggle_bit    = 0
 
 if machine() == "armv7l":
-    gpio = CDLL("/usr/lib/libwiringPi.so", mode = 1)
+    gpio = CDLL("/usr/lib/libwiringPi.so", mode=1)
 
     gpio.wiringPiSetupPhys()
 
@@ -102,22 +102,16 @@ def button_emu(pin, times):
     button_emulating.remove(pin)
 
 @run_in_thread
-def ir_emu(to_transmit, pin=26):
+def ir_emu_inner(to_transmit):
     global ir_emulating
     while ir_emulating == 1:
         sleep(.3)
     ir_emulating = 1
-    ir_emu_blocking(to_transmit, pin)
+    ir_emu_blocking(to_transmit, 26)
     ir_emulating = 0
-    sleep(100)
 
-@run_in_thread
-def ir_emu_manager():
-    global it_send_queue
-    global it_get_queue
-    #while True:
-    #    if 
-
+def ir_emu(address, to_transmit):
+    ir_emu_inner(address * (2**6) + to_transmit)
 
 def read_pin(pin):
     return gpio.digitalRead(pin)
@@ -130,20 +124,19 @@ def byte_to_arr(byte):
     return a[::-1]
 
 def get_address(data_rx):
-    spacing_time = .3 + 1
+    spacing_time = 1.3
     toggle_bit = 0
 
     button_emu(37, 3)
     sleep(2)
 
+    data = [[0] * 8] * 8
     while data_rx.inWaiting() // 8 > 0:
         data = [[0] * 8] * 8
         for i in range(8):
             byte = int.from_bytes(data_rx.read(), "big")
             data[byte // 2 ** 5] = byte_to_arr(byte)
     
-    print(str(data).replace(']', ']\n'))
-
     val = data[4][7]
     timer = data[2][3]
     if timer:
@@ -153,7 +146,7 @@ def get_address(data_rx):
     else:
         command = 2  #left +
 
-    for k in range(32): ######!!!!!!!!!!replace to 32 later
+    for k in range(32):
         ir_emu_blocking(k * 2**6 + command)
         toggle_bit = 1 - toggle_bit
         sleep(spacing_time + timer)

@@ -1,6 +1,7 @@
-#!venv/bin/python3
+#!/home/pi/V24m/venv/bin/python3
 import kivy
 import time
+import json
 import serial
 import subprocess
 import gpio_control
@@ -8,11 +9,12 @@ from kivy.clock       import Clock
 from kivy.lang        import Builder
 from kivy.app         import App
 from kivy.core.text   import LabelBase
+from pathlib          import Path
 from platform         import machine
 
 read_interval = .05
 
-kivy.require('2.1.0')
+kivy.require("2.1.0")
 
 class PassiveTimer:
     def stop(self):
@@ -62,23 +64,7 @@ class PassiveTimer:
         self.clear()
 
 class KivyApp(App):
-    #Symbols = ["A", "B", "C", "D", "E", "F", "Sc", "On", "Off", " ", "1", "2", "3", "4", "5", "6"]
     Symbols = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
-
-    def test_bootsplash(abobus):
-        subprocess.Popen("sudo plymouthd", shell=True)
-        time.sleep(10)
-        subprocess.Popen("sudo plymouth --show-splash", shell=True)
-        time.sleep(10)
-        subprocess.Popen("sudo plymouth quit", shell=True)
-
-    def start_camera(self):
-        if self.camera_proc is None:
-            self.camera_proc = subprocess.Popen("./run_cam.sh", shell=True)
-
-    def run_app(self, s):
-        if self.proc is None or self.proc.poll():
-            self.proc = subprocess.Popen("./kivy_test.py", shell=False)
 
     def system_poweroff(a):
         subprocess.run(["sudo", "poweroff"])
@@ -86,13 +72,16 @@ class KivyApp(App):
     def system_reboot(a):
         subprocess.run(["sudo", "reboot"])
 
+    def update_config(self):
+        with open("config.json", "w") as config_file:
+            json.dump(self.config, config_file)
+
     def write_address(self):
-        rc5_address = gpio_control.get_address(self.data_rx)
-        with open("rc5_address", "w") as address_file:
-            address_file.write(f"{rc5_address}\n")
+        self.config["rc5_address"] = gpio_control.get_address(self.data_rx)
+        self.update_config()
 
     def send_handler(self, code):
-        gpio_control.ir_emu(self.rc5_address * (2**6) + code)
+        gpio_control.ir_emu(self.config["rc5_address"], code)
 
     def carousel_handler(self, a, old_index, new_index, commands):
         self.send_handler(commands[(2 + new_index - old_index) % 3])
@@ -285,23 +274,25 @@ class KivyApp(App):
         root.passive_time = self.passive_timer.get_time()
         root.passive_coun = self.passive_timer.get_coun()
         root.color_passive = self.color_passive_red if root.passive_time > 50 else self.color_passive_yel
-        
+
     def build(self):
         self.color_left_score     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
         self.color_right_score    = [  0 / 255, 152 / 255,  70 / 255, 1.0] # green
+        
         self.color_period         = [  0 / 255, 160 / 255, 227 / 255, 1.0] # blue
+        
         self.color_timer_white    = [223 / 255, 223 / 255, 223 / 255, 1.0] # white
         self.color_timer_orange   = [239 / 255, 127 / 255,  26 / 255, 1.0] # orange
         self.color_timer_blue     = [  0 / 255, 160 / 255, 227 / 255, 1.0] # blue
 
         self.color_warn_red_ena   = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
         self.color_warn_red_dis   = [227 / 255,  30 / 255,  36 / 255, 0.2] # dark red
-        self.color_warn_yel_ena   = [0.8, 0.8, 0.0, 1] # yellow
-        self.color_warn_yel_dis   = [0.2, 0.2, 0.0, 1] # dark yellow
-        self.color_warn_text_up   = [0.9, 0.9, 0.9, 1]
-        self.color_warn_text_down = [0.4, 0.4, 0.4, 1]
+        self.color_warn_yel_ena   = [204 / 255, 204 / 255,   0 / 255, 1.0] # yellow
+        self.color_warn_yel_dis   = [ 51 / 255,  51 / 255,   0 / 255, 1.0] # dark yellow
+        self.color_warn_text_ena  = [230 / 255, 230 / 255, 230 / 255, 1.0] # white
+        self.color_warn_text_dis  = [102 / 255, 102 / 255, 102 / 255, 1.0] # grey
         
-        self.color_passive_yel    = [0.8, 0.8, 0.0, 1] # yellow
+        self.color_passive_yel    = [204 / 255, 204 / 255,   0 / 255, 1.0] # yellow
         self.color_passive_red    = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
         self.color_passive_white  = [223 / 255, 223 / 255, 223 / 255, 1.0] # white
 
@@ -310,25 +301,30 @@ class KivyApp(App):
         self.color_right_p_ena    = [  0 / 255, 152 / 255,  70 / 255, 1.0] # green
         self.color_right_p_dis    = [  0 / 255, 152 / 255,  70 / 255, 0.2] # dark green
 
-        self.color_weapon_ena     = [0.7, 0.7, 0.7, 1] # light gray
-        self.color_weapon_dis     = [0.3, 0.3, 0.3, 1] # dark gray
+        self.color_weapon_ena     = [179 / 255, 179 / 255, 179 / 255, 1.0] # light gray
+        self.color_weapon_dis     = [ 76 / 255,  76 / 255,  76 / 255, 1.0] # dark gray
 
         self.card_radius = 10
 
-        self.proc                 = None
-        self.camera_proc          = None
-        self.toggle_bit           = 1
-        self.rc5_address          = 0
         self.raw_period           = 0
         self.old_sec              = "0"
         self.passive_timer        = PassiveTimer(500)
         self.timer_interval       = None
         self.timer_millis         = 0
 
+        self.config = {"rc5_address": -1}
+
         if machine() == "armv7l":
             self.data_rx = serial.Serial("/dev/ttyS2", 38400)
         else:
             self.data_rx = None
+
+        if Path("config.json").is_file():
+            with open("config.json", "r") as config_file:
+                self.config = json.load(config_file)
+        else:
+            print("No config file, creating!")
+            self.update_config()
         
         return Builder.load_file("main.kv")
 
@@ -336,15 +332,13 @@ class KivyApp(App):
         Clock.schedule_interval(self.get_data, read_interval)
         self.root.flash_timer  = time.time()
         self.root.current_time = time.time()
-        with open("./rc5_address", "r") as address_file:
-            self.rc5_address = int(address_file.readline())
 
     def on_stop(self):
         if self.data_rx is not None:
             self.data_rx.close()
 
 if __name__ == "__main__":
-    LabelBase.register(name="agencyb", fn_regular='AGENCYB.TTF')
-    LabelBase.register(name="agencyr", fn_regular='AGENCYR.TTF')
+    LabelBase.register(name="agencyb", fn_regular="AGENCYB.TTF")
+    LabelBase.register(name="agencyr", fn_regular="AGENCYR.TTF")
     app = KivyApp()
     app.run()
