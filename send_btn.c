@@ -6,7 +6,13 @@
 
 #define TIMING 200000
 
-int *btns = {27, 37, -1}
+int btns[] = {26, 37, -1};
+
+void flush()
+{
+    while (getchar() != '\n');
+    printf("Not a number\n");
+}
 
 void setup()
 {
@@ -24,30 +30,34 @@ void send(int btn)
     {
         if (*i == btn)
         {
-            usleep(TIMING)
+            usleep(TIMING);
             digitalWrite(btn, 0);
-            usleep(TIMING)
+            usleep(TIMING);
             digitalWrite(btn, 1);
             return;
         }
     }
-    printf("Unregistered button! See source\n");
+    printf("Unregistered button! See source; ");
 }
-
 
 int main()
 {
-    int btn = 0;
+    setup();
+    int btn = 0, scanf_res = 0;
 
     while (btn != -1)
     {
-        FILE *f = fopen("send_btn_fifo", "r");
-        if (btn > 0)
+        while ((scanf_res = scanf("%d", &btn)) == 0)
+            flush();
+        if (scanf_res == EOF || btn == -1)
+            return 0;
+        
+        if (btn >= 0)
         {
             send(btn);
         }
+            
         printf("%d\n", btn);
-        fclose(f);
     }
     printf("Exiting!\n");
 }

@@ -3,16 +3,17 @@ import kivy
 import time
 import json
 import serial
+import pathlib
+import platform
 import subprocess
 import gpio_control
 from kivy.clock       import Clock
 from kivy.lang        import Builder
 from kivy.app         import App
 from kivy.core.text   import LabelBase
-from pathlib          import Path
-from platform         import machine
 
 read_interval = .05
+is_banana = platform.machine() == "armv7l"
 
 kivy.require("2.1.0")
 
@@ -67,10 +68,10 @@ class KivyApp(App):
     Symbols = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
 
     def system_poweroff(a):
-        subprocess.run(["sudo", "poweroff"])
+        subprocess.run("/usr/sbin/poweroff")
 
     def system_reboot(a):
-        subprocess.run(["sudo", "reboot"])
+        subprocess.run("/usr/sbin/reboot")
 
     def update_config(self):
         with open("config.json", "w") as config_file:
@@ -87,21 +88,21 @@ class KivyApp(App):
         self.send_handler(commands[(2 + new_index - old_index) % 3])
         
     def set_weapon(self, new_weapon):
-        if machine() != "armv7l":
+        if not is_banana:
             return
 
         gpio_control.button_emu(37, (3 + new_weapon - self.root.weapon) % 3)
         self.weapon = new_weapon
 
-        if self.root.weapon == 3 and new_weapon == 0:
-            self.root.epee5 = 1 - self.root.epee5
-            gpio_control.gpio.digitalWrite(15, self.root.epee5)
-        else:
-            self.root.epee5 = 0
-            gpio_control.gpio.digitalWrite(15, self.root.epee5)
+        ####if self.root.weapon == 3 and new_weapon == 0:
+        ####    self.root.epee5 = 1 - self.root.epee5
+        ####    gpio_control.gpio.digitalWrite(15, self.root.epee5)
+        ####else:
+        ####    self.root.epee5 = 0
+        ####    gpio_control.gpio.digitalWrite(15, self.root.epee5)
 
     def change_weapon_connection_type(a):
-        if machine() != "armv7l":
+        if not is_banana:
             return
 
         gpio_control.button_emu(27, 1)
@@ -239,22 +240,24 @@ class KivyApp(App):
             self.passive_timer.stop()
 
     def get_data(self, dt):
-        if machine() == "armv7l":
+        if is_banana:
             self.root.current_time = time.time()
             data = [[0] * 8] * 8
             while self.data_rx.inWaiting() // 8 > 0:
-                for i in range(8):
+                for _ in range(8):
                     byte = int.from_bytes(self.data_rx.read(), "big")
                     data[byte // 2 ** 5] = self.byte_to_arr(byte)
 
                 self.data_update(data)
+            
+            pins = gpio_control.read_pins()
             if 37 not in gpio_control.button_emulating or self.root.timer_running:
                 self.root.weapon = 0
-                self.root.weapon = gpio_control.read_pin(32) * 2 + gpio_control.read_pin(36)
+                self.root.weapon = pins[32] * 2 + pins[36]
             if 27 not in gpio_control.button_emulating or self.root.timer_running:
                 self.root.weapon_connection_type = 0
-                self.root.weapon_connection_type = gpio_control.read_pin(7)
-            self.root.video_timer = gpio_control.read_pin(18)
+                self.root.weapon_connection_type = pins[7]
+            self.root.video_timer = pins[18]
 
         else:
             data = [[0, 0, 0, 0, 0, 0, 0, 0],
@@ -314,12 +317,12 @@ class KivyApp(App):
 
         self.config = {"rc5_address": -1}
 
-        if machine() == "armv7l":
+        if is_banana:
             self.data_rx = serial.Serial("/dev/ttyS2", 38400)
         else:
             self.data_rx = None
 
-        if Path("config.json").is_file():
+        if pathlib.Path("config.json").is_file():
             with open("config.json", "r") as config_file:
                 self.config = json.load(config_file)
         else:
