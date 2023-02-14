@@ -7,6 +7,7 @@
 #define TIMING 200000
 
 int btns[] = {26, 37, -1};
+int toggle[] = {15, -1}
 
 void flush()
 {
@@ -24,40 +25,48 @@ void setup()
     }
 }
 
-void send(int btn)
+void send(int pin)
 {
     for (int *i = btns; *i != -1; i++)
     {
-        if (*i == btn)
+        if (*i == pin)
         {
             usleep(TIMING);
-            digitalWrite(btn, 0);
+            digitalWrite(pin, 0);
             usleep(TIMING);
-            digitalWrite(btn, 1);
+            digitalWrite(pin, 1);
             return;
         }
     }
-    printf("Unregistered button! See source; ");
+    for (int *i = toggle; *i != -1; i++)
+    {
+        if (*i == pin / 10)
+        {
+            digitalWrite(pin / 10, pin % 10);
+            return;
+        }
+    }
+    printf("Unregistered pin! See source; ");
 }
 
 int main()
 {
     setup();
-    int btn = 0, scanf_res = 0;
+    int pin = 0, scanf_res = 0;
 
-    while (btn != -1)
+    while (pin != -1)
     {
-        while ((scanf_res = scanf("%d", &btn)) == 0)
+        while ((scanf_res = scanf("%d", &pin)) == 0)
             flush();
         if (scanf_res == EOF || btn == -1)
             return 0;
         
-        if (btn >= 0)
+        if (pin >= 0)
         {
-            send(btn);
+            send(pin);
         }
             
-        printf("%d\n", btn);
+        printf("%d\n", pin);
     }
     printf("Exiting!\n");
 }

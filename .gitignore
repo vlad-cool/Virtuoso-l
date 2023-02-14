@@ -11,3 +11,6 @@ scripts/upload.sh
 a.out
 ir_send
 test
+/dts
+/benchmark
+main1920x360.kv

@@ -1,4 +1,5 @@
 #!/home/pi/V24m/venv/bin/python3
+import sys
 import kivy
 import time
 import json
@@ -9,6 +10,7 @@ import subprocess
 import gpio_control
 from kivy.clock       import Clock
 from kivy.lang        import Builder
+from kivy.core.window import Window
 from kivy.app         import App
 from kivy.core.text   import LabelBase
 
@@ -16,6 +18,9 @@ read_interval = .05
 is_banana = platform.machine() == "armv7l"
 
 kivy.require("2.1.0")
+
+if "--rotate" in sys.argv:
+    Window.rotation = 90
 
 class PassiveTimer:
     def stop(self):
