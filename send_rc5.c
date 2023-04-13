@@ -5,6 +5,7 @@
 #include <time.h>
 
 #define TIMING 889
+#define rc5_pin 26
 
 int ir_toggle_bit = 0;
 
@@ -19,14 +20,13 @@ int abs(int n)
 void flush()
 {
     while (getchar() != '\n');
-    printf("Not a number\n");
 }
 
 void setup()
 {
     wiringPiSetupPhys();
-    pinMode(26, 1);
-    digitalWrite(26, 1);
+    pinMode(rc5_pin, 1);
+    digitalWrite(rc5_pin, 1);
 }
 
 void send(int to_transmit)
@@ -50,7 +50,7 @@ void send(int to_transmit)
     for (int i = 0; i < 14; i++)
     {
         time = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
-        digitalWrite(26, 0 + data[i]);
+        digitalWrite(rc5_pin, 0 + data[i]);
 
         while (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time < TIMING)
         {
@@ -58,7 +58,7 @@ void send(int to_transmit)
         }
 
         time = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
-        digitalWrite(26, 1 - data[i]);
+        digitalWrite(rc5_pin, 1 - data[i]);
 
         while (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time < TIMING)
         {
@@ -66,7 +66,7 @@ void send(int to_transmit)
         }
     }
 
-    digitalWrite(26, 1);
+    digitalWrite(rc5_pin, 1);
     usleep(TIMING * 10);
 }
 
@@ -87,7 +87,10 @@ int main()
             send(to_send);
         }
         if (to_send < 0)
+        {
+            send(to_send);
             printf("%d\n", to_send);
+        }
     }
     printf("Exiting!\n");
 }

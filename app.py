@@ -4,6 +4,7 @@ import kivy
 import time
 import json
 import serial
+import shutil
 import pathlib
 import platform
 import subprocess
@@ -18,9 +19,6 @@ read_interval = .05
 is_banana = platform.machine() == "armv7l"
 
 kivy.require("2.1.0")
-
-if "--rotate" in sys.argv:
-    Window.rotation = 90
 
 class PassiveTimer:
     def stop(self):
@@ -327,10 +325,14 @@ class KivyApp(App):
         else:
             self.data_rx = None
 
-        if pathlib.Path("config.json").is_file():
+        config_path = pathlib.Path("config.json")
+        if config_path.is_file():
             with open("config.json", "r") as config_file:
                 self.config = json.load(config_file)
         else:
+            if config_path.is_dir:
+                print("Abobus   ")
+                shutil.rmtree(config_path)
             print("No config file, creating!")
             self.update_config()
         

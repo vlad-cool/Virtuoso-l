@@ -6,8 +6,9 @@
 
 #define TIMING 200000
 
-int btns[] = {26, 37, -1};
-int toggle[] = {15, -1}
+int active = {8, 10, 12, 16, 19, 21, 23, 24, -1};
+int out[] = {15, 26, 37, -1};
+int ini[] = { 0,  1,  1, -1}
 
 void flush()
 {
@@ -18,16 +19,16 @@ void flush()
 void setup()
 {
     wiringPiSetupPhys();
-    for (int *i = btns; *i != -1; i++)
+    for (int i = 0; out[i] != -1; i++)
     {
-        pinMode(*i, 1);
-        digitalWrite(*i, 1);
+        pinMode(out[i], 1);
+        digitalWrite(out[i], ini[i]);
     }
 }
 
-void send(int pin)
+void btn(int pin)
 {
-    for (int *i = btns; *i != -1; i++)
+    for (int *i = out; *i != -1; i++)
     {
         if (*i == pin)
         {
@@ -38,34 +39,50 @@ void send(int pin)
             return;
         }
     }
-    for (int *i = toggle; *i != -1; i++)
+    printf("Unknown pin!\n");
+}
+
+void set(int pin, int val)
+{
+    for (int *i = out; *i != -1; i++)
     {
-        if (*i == pin / 10)
+        if (*i == pin)
         {
-            digitalWrite(pin / 10, pin % 10);
+            digitalWrite(pin, val);
             return;
         }
     }
-    printf("Unregistered pin! See source; ");
+    printf("Unknown pin!\n");
 }
 
 int main()
 {
     setup();
-    int pin = 0, scanf_res = 0;
+    int pin = 0, scanf_res = 0, val = 0;
+    char com;
 
     while (pin != -1)
     {
-        while ((scanf_res = scanf("%d", &pin)) == 0)
+        while ((scanf_res = scanf("%c %d", &pin)) < 2)
             flush();
-        if (scanf_res == EOF || btn == -1)
+        if (scanf_res == EOF || c == 'e')
             return 0;
         
-        if (pin >= 0)
+        if (c == 'b')
         {
-            send(pin);
+            btn(pin);
         }
-            
+        else if (c == 's')
+        {
+            scanf_res = scanf("%d", &val);
+            if (scanf_res == -1)
+                return 0;
+            else if (scanf_res == 0)
+                continue;
+            else
+                set(pin, val);
+        }
+
         printf("%d\n", pin);
     }
     printf("Exiting!\n");

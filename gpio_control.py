@@ -12,9 +12,9 @@ it_get_queue     = []
 ir_emulating     = 0
 ir_toggle_bit    = 0
 
-send_btn_proc = subprocess.Popen("./send_btn", bufsize=1, text=True, stdin=subprocess.PIPE)
-send_rc5_proc = subprocess.Popen("./send_rc5", bufsize=1, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-get_pins_proc = subprocess.Popen("./get_pins", bufsize=1, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+#send_btn_proc = subprocess.Popen("./send_btn", bufsize=1, text=True, stdin=subprocess.PIPE)
+#send_rc5_proc = subprocess.Popen("./send_rc5", bufsize=1, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+#get_pins_proc = subprocess.Popen("./get_pins", bufsize=1, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
 def button_emu(pin, times):
     for _ in range(times):
