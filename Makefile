@@ -1,19 +1,12 @@
-EXECS := send_btn send_rc5 get_pins
+EXECS := send_pin send_rc5 get_pin get_rc5
 FLAGS := -lwiringPi -lm -lpthread -lcrypt -lrt
 
 all: $(EXECS)
 
-send_btn: send_btn.c
-	gcc send_btn.c -o send_btn $(FLAGS)
-	chmod 4711 send_btn
-
-send_rc5: send_rc5.c
-	gcc send_rc5.c -o send_rc5 $(FLAGS)
-	chmod 4711 send_rc5
-
-get_pins: get_pins.c
-	gcc get_pins.c -o get_pins $(FLAGS)
-	chmod 4711 get_pins
+%: %.c
+	gcc $^ -o $@ $(FLAGS)
+	chown root $@
+	chmod 4711 $@
 
 clean:
 	rm $(EXECS)

@@ -1,37 +1,47 @@
 from time import sleep
 from ast import literal_eval
 import subprocess
+import select
 
 off_time = 250
 on_time  = 250
 TIMING = 889
 
-button_emulating = []
-it_send_queue    = []
-it_get_queue     = []
-ir_emulating     = 0
-ir_toggle_bit    = 0
+ir_commands = []
 
-#send_btn_proc = subprocess.Popen("./send_btn", bufsize=1, text=True, stdin=subprocess.PIPE)
-#send_rc5_proc = subprocess.Popen("./send_rc5", bufsize=1, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-#get_pins_proc = subprocess.Popen("./get_pins", bufsize=1, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+button_emulating = []
+
+send_pin_proc = subprocess.Popen("./send_pin", bufsize=1, text=True, stdin=subprocess.PIPE)
+send_rc5_proc = subprocess.Popen("./send_rc5", bufsize=1, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+get_pin_proc = subprocess.Popen("./get_pin", bufsize=1, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+get_rc5_proc = subprocess.Popen("./get_rc5", bufsize=1, text=True, stdout=subprocess.PIPE)
+
+def toggle(pin):
+    send_pin_proc.stdin.write(f"toggle {pin}\n")
+
+def toggle(pin, value):
+    send_pin_proc.stdin.write(f"set {pin} {value}\n")
 
 def button_emu(pin, times):
     for _ in range(times):
-        send_btn_proc.stdin.write(f"{pin}\n")
+        send_pin_proc.stdin.write(f"button {pin}\n")
 
-def ir_emu(address, to_transmit):
-    print(address * (2**6) + to_transmit)
-    send_rc5_proc.stdin.write(f"{address * (2**6) + to_transmit}\n")
+def ir_emu(address, command):
+    send_rc5_proc.stdin.write(f"transmit {address} {command}\n")
 
-def ir_emu_blocking(address, to_transmit):
-    send_rc5_proc.stdin.write(f"{-(address * (2**6) + to_transmit)}\n")
-    # - tells the driver to echo entered number after transmition finishes
+def ir_emu_blocking(address, command):
+    send_rc5_proc.stdin.write(f"transmit {address} {command}\n")
+    send_rc5_proc.stdin.write(f"ping\n")
     send_rc5_proc.stdout.readline()
 
 def read_pins():
-    get_pins_proc.stdin.write("1\n")
-    return literal_eval(get_pins_proc.stdout.readline())
+    get_pin_proc.stdin.write("get\n")
+    return literal_eval(get_pin_proc.stdout.readline())
+
+def read_rc5():
+    global ir_commands
+    a = select.select([get_rc5_proc.stdout], [], [], 0)[0]
+    ir_commands += a
 
 def byte_to_arr(byte):
     a = [0] * 8

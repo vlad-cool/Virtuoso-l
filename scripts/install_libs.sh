@@ -73,5 +73,6 @@ venv/bin/python3 -m pip install setuptools
 venv/bin/python3 -m pip install cython
 venv/bin/python3 -m pip install clang
 venv/bin/python3 -m pip install pyserial
-venv/bin/python3 -m pip install "kivy[full]"
+#venv/bin/python3 -m pip install "kivy[full]"
+venv/bin/python3 -m pip install "kivy[full]==2.1.0"
 cd
