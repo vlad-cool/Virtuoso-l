@@ -1,4 +1,4 @@
-#!/home/pi/V24m/venv/bin/python3
+#!venv/bin/python3
 import sys
 import kivy
 import time
@@ -70,6 +70,9 @@ class PassiveTimer:
 class KivyApp(App):
     Symbols = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
 
+    def test_toggle(a, pin):
+        gpio_control.toggle(pin)
+
     def system_poweroff(a):
         subprocess.run("/usr/sbin/poweroff")
 
@@ -97,12 +100,12 @@ class KivyApp(App):
         gpio_control.button_emu(37, (3 + new_weapon - self.root.weapon) % 3)
         self.weapon = new_weapon
 
-        ####if self.root.weapon == 3 and new_weapon == 0:
-        ####    self.root.epee5 = 1 - self.root.epee5
-        ####    gpio_control.gpio.digitalWrite(15, self.root.epee5)
-        ####else:
-        ####    self.root.epee5 = 0
-        ####    gpio_control.gpio.digitalWrite(15, self.root.epee5)
+        if self.root.weapon == 3 and new_weapon == 0:
+            self.root.epee5 = 1 - self.root.epee5
+            gpio_control.set(15, self.root.epee5)
+        else:
+            self.root.epee5 = 0
+            gpio_control.set(15, self.root.epee5)
 
     def change_weapon_connection_type(a):
         if not is_banana:
@@ -242,6 +245,12 @@ class KivyApp(App):
         else:
             self.passive_timer.stop()
 
+        ### Debug
+
+        gpio_control.read_rc5()
+
+        root.debug_rc5_commands_text = str(gpio_control.ir_commands).replace("]", "]\n")
+
     def get_data(self, dt):
         if is_banana:
             self.root.current_time = time.time()
@@ -280,6 +289,9 @@ class KivyApp(App):
         root.passive_time = self.passive_timer.get_time()
         root.passive_coun = self.passive_timer.get_coun()
         root.color_passive = self.color_passive_red if root.passive_time > 50 else self.color_passive_yel
+
+        root.pin27_state = pins[27]
+
 
     def build(self):
         self.color_left_score     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
