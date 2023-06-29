@@ -19,7 +19,7 @@ get_rc5_proc = subprocess.Popen("./get_rc5", bufsize=1, text=True, stdout=subpro
 def toggle(pin):
     send_pin_proc.stdin.write(f"toggle {pin}\n")
 
-def toggle(pin, value):
+def set(pin, value):
     send_pin_proc.stdin.write(f"set {pin} {value}\n")
 
 def button_emu(pin, times):

@@ -12,6 +12,8 @@ cd BPI-WiringPi2
 sudo ./build
 cd
 
+################################################################
+
 sudo apt -y update
 sudo apt -y upgrade
 sudo apt -y install libglfw3-dev libglu1-mesa-dev
@@ -27,6 +29,26 @@ sudo apt -y install pkg-config libgstreamer1.0-dev gstreamer1.0-plugins-{bad,bas
 sudo apt -y install libfreetype6-dev libgl1-mesa-dev libgles2-mesa-dev libdrm-dev libgbm-dev libudev-dev libasound2-dev liblzma-dev libjpeg-dev libtiff-dev libwebp-dev git build-essential
 sudo apt -y install gir1.2-ibus-1.0 libdbus-1-dev libegl1-mesa-dev libibus-1.0-5 libibus-1.0-dev libice-dev libsm-dev libsndio-dev libwayland-bin libwayland-dev libxi-dev libxinerama-dev libxkbcommon-dev libxrandr-dev libxss-dev libxt-dev libxv-dev x11proto-randr-dev x11proto-scrnsaver-dev x11proto-video-dev x11proto-xinerama-dev
 sudo apt -y install xinput xorg
+
+################################################################
+
+apt -y update
+apt -y upgrade
+apt -y install libglfw3-dev libglu1-mesa-dev
+apt -y install build-essential
+apt -y install ffmpeg
+apt -y install libavcodec-dev
+apt -y install libavfilter-dev
+apt -y install libavdevice-dev
+apt -y install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+apt -y install mesa-utils
+apt -y install python3-setuptools python3-pip python3-dev python3-venv git-core python3-opencv
+apt -y install pkg-config libgstreamer1.0-dev gstreamer1.0-plugins-{bad,base,good,ugly} gstreamer1.0-{omx,alsa} libmtdev-dev xclip xsel
+apt -y install libfreetype6-dev libgl1-mesa-dev libgles2-mesa-dev libdrm-dev libgbm-dev libudev-dev libasound2-dev liblzma-dev libjpeg-dev libtiff-dev libwebp-dev git build-essential
+apt -y install gir1.2-ibus-1.0 libdbus-1-dev libegl1-mesa-dev libibus-1.0-5 libibus-1.0-dev libice-dev libsm-dev libsndio-dev libwayland-bin libwayland-dev libxi-dev libxinerama-dev libxkbcommon-dev libxrandr-dev libxss-dev libxt-dev libxv-dev x11proto-randr-dev x11proto-scrnsaver-dev x11proto-video-dev x11proto-xinerama-dev
+apt -y install xinput xorg
+
+################################################################
 
 wget https://libsdl.org/release/SDL2-2.0.10.tar.gz
 tar -zxvf SDL2-2.0.10.tar.gz
@@ -62,6 +84,62 @@ cd
 
 rm -rf SDL2*
 
+################################################################
+
+wget https://libsdl.org/release/SDL2-2.0.10.tar.gz
+tar -zxvf SDL2-2.0.10.tar.gz
+cd SDL2-2.0.10
+./configure --enable-video-kmsdrm --disable-video-opengl --disable-video-x11 --disable-video-rpi
+make -j$(nproc)
+#sudo make install
+cd
+
+wget https://libsdl.org/projects/SDL_image/release/SDL2_image-2.0.5.tar.gz
+tar -zxvf SDL2_image-2.0.5.tar.gz
+cd SDL2_image-2.0.5
+./configure
+make -j$(nproc)
+#sudo make install
+cd
+
+wget https://libsdl.org/projects/SDL_mixer/release/SDL2_mixer-2.0.4.tar.gz
+tar -zxvf SDL2_mixer-2.0.4.tar.gz
+cd SDL2_mixer-2.0.4
+./configure
+make -j$(nproc)
+#sudo make install
+cd
+
+wget https://libsdl.org/projects/SDL_ttf/release/SDL2_ttf-2.0.15.tar.gz
+tar -zxvf SDL2_ttf-2.0.15.tar.gz
+cd SDL2_ttf-2.0.15
+./configure
+make -j$(nproc)
+#sudo make install
+cd
+
+################################################################
+
+cd SDL2-2.0.10
+sudo make install
+cd
+
+cd SDL2_image-2.0.5
+sudo make install
+cd
+
+cd SDL2_mixer-2.0.4
+sudo make install
+cd
+
+cd SDL2_ttf-2.0.15
+sudo make install
+cd
+
+rm -rf SDL2*
+
+################################################################
+
 mkdir -p V24m
 cd V24m
 sudo mount -o remount,size=4G /tmp/
@@ -73,6 +151,5 @@ venv/bin/python3 -m pip install setuptools
 venv/bin/python3 -m pip install cython
 venv/bin/python3 -m pip install clang
 venv/bin/python3 -m pip install pyserial
-#venv/bin/python3 -m pip install "kivy[full]"
 venv/bin/python3 -m pip install "kivy[full]==2.1.0"
 cd

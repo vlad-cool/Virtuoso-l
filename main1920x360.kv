@@ -39,11 +39,13 @@ Carousel:
     color_passive: [0, 0, 0, 1]
     color_timer: app.color_timer_orange
     color_invis: [0, 0, 0, 0]
-    #color_invis: [1, 0, 0, 0.5]
 
     Scatter:
         id: scatter
-        #scale_x: 4
+        do_translation_x: False
+        do_translation_y: False
+        do_rotation: False
+        do_scale: False
 
         FloatLayout:
             BoxLayout:
@@ -246,7 +248,7 @@ Carousel:
                 size_hint: None, None
                 pos: 730 + 150 * 1 - 40 - 10, 60
                 color: root.color_timer
-        
+
             Label:
                 id: timer_dec
                 text: root.timer_2
@@ -302,10 +304,10 @@ Carousel:
 
                 on_press: app.send_handler(8)
 
-                background_color: [0, 0, 0, 0]
+                background_color: root.color_invis
                 background_down: ""
                 background_normal: ""
-        
+
             Label:
                 id: passive_counter_2_1
                 text: root.passive_coun[0]
@@ -316,10 +318,10 @@ Carousel:
                 pos: 585, 285 - 120
                 color: app.color_passive_white
 
-                background_color: [0, 0, 0, 1]
+                background_color: root.color_invis
                 background_down: ""
                 background_normal: ""
-        
+
             Label:
                 id: passive_counter_2_2
                 text: root.passive_coun[1]
@@ -330,7 +332,7 @@ Carousel:
                 pos: 635, 285 - 120
                 color: app.color_passive_white
 
-                background_color: [0, 0, 0, 1]
+                background_color: root.color_invis
                 background_down: ""
                 background_normal: ""
 
@@ -339,7 +341,7 @@ Carousel:
                 text: "penalty"
                 font_size: 24
                 font_name:"agencyb"
-                color: app.color_warn_text_up if root.warning_l >= 2 else app.color_warn_text_down
+                color: app.color_warn_text_ena if root.warning_l >= 2 else app.color_warn_text_dis
                 size: 100, 30
                 size_hint: None, None
                 pos: 460, 160
@@ -363,7 +365,7 @@ Carousel:
                 text: "caution"
                 font_size: 24
                 font_name:"agencyb"
-                color: app.color_warn_text_up if root.warning_l >= 1 else app.color_warn_text_down
+                color: app.color_warn_text_ena if root.warning_l >= 1 else app.color_warn_text_dis
                 size: 100, 30
                 size_hint: None, None
                 pos: 460, 120
@@ -399,7 +401,7 @@ Carousel:
                 text: "penalty"
                 font_size: 24
                 font_name:"agencyb"
-                color: app.color_warn_text_up if root.warning_r >= 2 else app.color_warn_text_down
+                color: app.color_warn_text_ena if root.warning_r >= 2 else app.color_warn_text_dis
                 size: 100, 30
                 size_hint: None, None
                 pos: 1360, 160
@@ -423,7 +425,7 @@ Carousel:
                 text: "caution"
                 font_size: 24
                 font_name:"agencyb"
-                color: app.color_warn_text_up if root.warning_r >= 1 else app.color_warn_text_down
+                color: app.color_warn_text_ena if root.warning_r >= 1 else app.color_warn_text_dis
                 size: 100, 30
                 size_hint: None, None
                 pos: 1360, 120
@@ -472,7 +474,7 @@ Carousel:
                 size: 100, 100
                 size_hint: None, None
                 pos: 460 + 27 - 16 - 8, 30 - 27 - 18
-                color: app.color_warn_text_up if root.priority == -1 else app.color_warn_text_down
+                color: app.color_warn_text_ena if root.priority == -1 else app.color_warn_text_dis
 
             Label:
                 id: priority_r_cap
@@ -492,14 +494,14 @@ Carousel:
                 size: 100, 100
                 size_hint: None, None
                 pos: 1360 + 27 - 16 - 8, 30 - 27 - 18
-                color: app.color_warn_text_up if root.priority == +1 else app.color_warn_text_down
+                color: app.color_warn_text_ena if root.priority == +1 else app.color_warn_text_dis
             
             ToggleButton:
                 id: passive_1
                 text: "Pcard"
                 font_size: 24
                 font_name:"agencyb"
-                color: app.color_warn_text_up if self.state == "down" else app.color_warn_text_down
+                color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
                 size: 100, 30
                 size_hint: None, None
                 pos: 460, 260
@@ -525,7 +527,7 @@ Carousel:
                 text: "Pcard"
                 font_size: 24
                 font_name:"agencyb"
-                color: app.color_warn_text_up if self.state == "down" else app.color_warn_text_down
+                color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
                 size: 100, 30
                 size_hint: None, None
                 pos: 460, 220
@@ -551,7 +553,7 @@ Carousel:
                 text: "Pcard"
                 font_size: 24
                 font_name:"agencyb"
-                color: app.color_warn_text_up if self.state == "down" else app.color_warn_text_down
+                color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
                 size: 100, 30
                 size_hint: None, None
                 pos: 1360, 260
@@ -577,7 +579,7 @@ Carousel:
                 text: "Pcard"
                 font_size: 24
                 font_name:"agencyb"
-                color: app.color_warn_text_up if self.state == "down" else app.color_warn_text_down
+                color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
                 size: 100, 30
                 size_hint: None, None
                 pos: 1360, 220

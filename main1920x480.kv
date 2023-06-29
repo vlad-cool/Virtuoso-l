@@ -38,562 +38,563 @@ Carousel:
 
     color_passive: [0, 0, 0, 1]
     color_timer: app.color_timer_orange
+    color_invis: [0, 0, 0, 0]
 
-    debug_rc5_commands_text: "No recieved commands yet!"
-    pin27_state: -1
-    
-    FloatLayout:
-        BoxLayout:
-            id: weapon_selector
-            orientation: "horizontal"
-            size: 1000, 100
-            size_hint: None, None
-            pos: 460, 0
+    Scatter:
+        id: scatter
+
+        FloatLayout:
+            BoxLayout:
+                id: weapon_selector
+                orientation: "horizontal"
+                size: 1000, 100
+                size_hint: None, None
+                pos: 460, 0
+
+                ToggleButton:
+                    id: weapon_connection_type
+                    text: "wls"
+                    state: "down" if root.weapon_connection_type == 1 else "normal"
+                    font_size: 80
+                    font_name:"agencyb"
+                    color: app.color_weapon_dis if root.weapon != 1 else app.color_weapon_ena
+                    background_color: [0, 0, 0, 1]
+                    on_press: app.change_weapon_connection_type()
+
+                ToggleButton:
+                    id: weapon_2
+                    text: "fleuret"
+                    state: "down" if root.weapon == 2 else "normal"
+                    font_size: 80
+                    font_name:"agencyb"
+                    group: "weapon"
+                    color: app.color_weapon_dis if root.weapon != 2 else app.color_weapon_ena
+                    background_color: [0, 0, 0, 1]
+                    on_press: app.set_weapon(2)
+
+                ToggleButton:
+                    id: weapon_0
+                    markup: True
+                    text: "epee [color=4c4c4c]5[/color]" if root.epee5 == 0 else "epee 5"
+                    state: "down" if root.weapon == 3 else "normal"
+                    font_size: 80
+                    font_name:"agencyb"
+                    group: "weapon"
+                    color: app.color_weapon_dis if root.weapon != 3 else app.color_weapon_ena
+                    background_color: [0, 0, 0, 1]
+                    on_press: app.set_weapon(0)
+
+                ToggleButton:
+                    id: weapon_1
+                    text: "sabre"
+                    state: "down" if root.weapon == 1 else "normal"
+                    font_size: 80
+                    font_name:"agencyb"
+                    group: "weapon"
+                    color: app.color_weapon_dis if root.weapon != 1 else app.color_weapon_ena
+                    background_color: [0, 0, 0, 1]
+                    on_press: app.set_weapon(1)
+
+            Carousel:
+                id: left_score_carousel
+                direction: "top"
+                loop: True
+                size: 420, 480
+                size_hint: None, None
+                pos: 20, 0
+                min_move: 0.05
+
+                old_index: 0
+                on_index: app.carousel_handler(0, self.old_index, self.index, [3, 2]); self.old_index = self.index
+
+                Button:
+                    on_press: app.send_handler(2)
+                    background_color: root.color_invis
+                    background_down: ""
+                    background_normal: ""
+
+                Button:
+                    on_press: app.send_handler(2)
+                    background_color: root.color_invis
+                    background_down: ""
+                    background_normal: ""
+
+                Button:
+                    on_press: app.send_handler(2)
+                    background_color: root.color_invis
+                    background_down: ""
+                    background_normal: ""
+
+            Label:
+                id: score_l_l
+                text: root.score_l_l
+                font_size: 480
+                font_name:"agencyb"
+                size: 200, 480
+                size_hint: None, None
+                pos: 20, 0
+                color: app.color_left_score
+
+            Label:
+                id: score_l_r
+                text: root.score_l_r
+                font_size: 480
+                font_name:"agencyb"
+                size: 220, 480
+                size_hint: None, None
+                pos: 220, 0
+                color: app.color_left_score
+
+            Carousel:
+                id: right_score_carousel
+                direction: "top"
+                loop: True
+                size: 420, 480
+                size_hint: None, None
+                pos: 1480, 0
+                min_move: 0.05
+
+                old_index: 0
+                on_index: app.carousel_handler(0, self.old_index, self.index, [15, 9]); self.old_index = self.index
+
+                Button:
+                    on_press: app.send_handler(9)
+                    background_color: root.color_invis
+                    background_down: ""
+                    background_normal: ""
+
+                Button:
+                    on_press: app.send_handler(9)
+                    background_color: root.color_invis
+                    background_down: ""
+                    background_normal: ""
+
+                Button:
+                    on_press: app.send_handler(9)
+                    background_color: root.color_invis
+                    background_down: ""
+                    background_normal: ""
+
+            Label:
+                id: score_r_l
+                text: root.score_r_l
+                font_size: 480
+                font_name:"agencyb"
+                size: 200, 480
+                size_hint: None, None
+                pos: 1480, 0
+                color: app.color_right_score
+
+            Label:
+                id: score_r_r
+                text: root.score_r_r
+                font_size: 480
+                font_name:"agencyb"
+                size: 200, 480
+                size_hint: None, None
+                pos: 1700, 0
+                color: app.color_right_score
+
+            Carousel:
+                id: timer_carousel
+                direction: "top"
+                loop: True
+                size: 550, 300
+                size_hint: None, None
+                pos: 530 + 200 - 30, 140
+                min_move: 0.05
+
+                old_index: 0
+                on_index: app.carousel_handler(0, self.old_index, self.index, [6, 14]); self.old_index = self.index
+
+                Button:
+                    on_press: app.send_handler(13)
+                    background_color: root.color_invis
+                    background_down: ""
+                    background_normal: ""
+
+                Button:
+                    on_press: app.send_handler(13)
+                    background_color: root.color_invis
+                    background_down: ""
+                    background_normal: ""
+
+                Button:
+                    on_press: app.send_handler(13)
+                    background_color: root.color_invis
+                    background_down: ""
+                    background_normal: ""
+
+            Label:
+                id: timer_min
+                text: root.timer_0
+                font_size: 360
+                font_name:"agencyb"
+                size: 150, 300
+                size_hint: None, None
+                pos: 730 + 150 * 0 - 30, 140
+                color: root.color_timer
+
+            Label:
+                id: timer_dot
+                text: root.timer_1 if root.timer_running == 0 or root.current_time - root.flash_timer < 0.5 else " "
+                font_size: 360
+                font_name:"agencyb"
+                size: 150, 300
+                size_hint: None, None
+                pos: 730 + 150 * 1 - 40 - 10, 140
+                color: root.color_timer
+
+            Label:
+                id: timer_dec
+                text: root.timer_2
+                font_size: 360
+                font_name:"agencyb"
+                size: 150, 300
+                size_hint: None, None
+                pos: 730 + 150 * 2 - 80 + 10, 140
+                color: root.color_timer
+
+            Label:
+                id: timer_sec
+                text: root.timer_3
+                font_size: 360
+                font_name:"agencyb"
+                size: 150, 300
+                size_hint: None, None
+                pos: 730 + 150 * 3 - 80 + 30, 140
+                color: root.color_timer
+
+            Label:
+                id: timer_text
+                text: root.timer_text
+                font_size: 300
+                font_name:"agencyb"
+                size: 600, 300
+                size_hint: None, None
+                pos: 730, 140
+                color: root.color_timer
+
+            Label:
+                id: passive
+                size: root.passive_size * 2, 0 if root.passive_time > 50 and root.passive_time < 60 and root.current_time - root.flash_timer > 0.5 and root.timer_running == 1 else -32
+                size_hint: None, None
+                pos: 960 - root.passive_size, 480
+
+                canvas:
+                    Color:
+                        rgba: root.color_passive
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Button:
+                id: period
+                text: str(root.period)
+                font_size: 200
+                font_name:"agencyb"
+                size: 120, 200
+                size_hint: None, None
+                pos: 580, 100
+                color: app.color_period
+
+                on_press: app.send_handler(8)
+
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+            
+            Label:
+                id: passive_counter_2_1
+                text: root.passive_coun[0]
+                font_size: 100
+                font_name:"agencyb"
+                size: 60, 200
+                size_hint: None, None
+                pos: 585, 285
+                color: app.color_passive_white
+
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+            Label:
+                id: passive_counter_2_2
+                text: root.passive_coun[1]
+                font_size: 100
+                font_name:"agencyb"
+                size: 60, 200
+                size_hint: None, None
+                pos: 635, 285
+                color: app.color_passive_white
+
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+            Label:
+                id: warning_top_l
+                text: "penalty"
+                font_size: 30
+                font_name:"agencyb"
+                color: app.color_warn_text_ena if root.warning_l >= 2 else app.color_warn_text_dis
+                size: 100, 40
+                size_hint: None, None
+                pos: 460, 250
+
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+                
+                canvas.before:
+                    Color:
+                        rgba: app.color_warn_red_dis if root.warning_l < 2 else app.color_warn_red_ena
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [app.card_radius,]
+
+            Label:
+                id: warning_bot_l
+                text: "caution"
+                font_size: 30
+                font_name:"agencyb"
+                color: app.color_warn_text_ena if root.warning_l >= 1 else app.color_warn_text_dis
+                size: 100, 40
+                size_hint: None, None
+                pos: 460, 190
+
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+                
+                canvas.before:
+                    Color:
+                        rgba: app.color_warn_yel_dis if root.warning_l < 1 else app.color_warn_yel_ena
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [app.card_radius,]
+
+            Button:
+                id: left_warning_button
+                size: 100, 120
+                size_hint: None, None
+                pos: 460, 190
+
+                on_press: app.send_handler(4)
+
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+            Label:
+                id: warning_top_r
+                text: "penalty"
+                font_size: 30
+                font_name:"agencyb"
+                color: app.color_warn_text_ena if root.warning_r >= 2 else app.color_warn_text_dis
+                size: 100, 40
+                size_hint: None, None
+                pos: 1360, 250
+
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+
+                canvas.before:
+                    Color:
+                        rgba: app.color_warn_red_dis if root.warning_r < 2 else app.color_warn_red_ena
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [app.card_radius,]
+
+            Label:
+                id: warning_bot_r
+                text: "caution"
+                font_size: 30
+                font_name:"agencyb"
+                color: app.color_warn_text_ena if root.warning_r >= 1 else app.color_warn_text_dis
+                size: 100, 40
+                size_hint: None, None
+                pos: 1360, 190
+
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+                
+                canvas.before:
+                    Color:
+                        rgba: app.color_warn_yel_dis if root.warning_r < 1 else app.color_warn_yel_ena
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [app.card_radius,]
+
+            Button:
+                id: right_warning_button
+                size: 100, 120
+                size_hint: None, None
+                pos: 1360, 190
+
+                on_press: app.send_handler(11)
+
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+            Label:
+                id: priority_l_cap
+                text: "P"
+                font_size: 120
+                font_name:"agencyb"
+                size: 100, 100
+                size_hint: None, None
+                pos: 460 - 27 - 8, 80
+                color: app.color_left_p_ena if root.priority == -1 else app.color_left_p_dis
+            
+            Label:
+                id: priority_l_word
+                text: "priority"
+                font_size: 36
+                font_name:"agencyb"
+                size: 100, 100
+                size_hint: None, None
+                pos: 460 + 27 - 16, 80 - 27
+                color: app.color_warn_text_ena if root.priority == -1 else app.color_warn_text_dis
+
+            Label:
+                id: priority_r_cap
+                text: "P"
+                font_size: 120
+                font_name:"agencyb"
+                size: 100, 100
+                size_hint: None, None
+                pos: 1360 - 27 - 8, 80
+                color: app.color_right_p_ena if root.priority == +1 else app.color_right_p_dis
+
+            Label:
+                id: priority_r_word
+                text: "priority"
+                font_size: 36
+                font_name:"agencyb"
+                size: 100, 100
+                size_hint: None, None
+                pos: 1360 + 27 - 16, 80 - 27
+                color: app.color_warn_text_ena if root.priority == +1 else app.color_warn_text_dis
+            
+            ToggleButton:
+                id: passive_1
+                text: "Pcard"
+                font_size: 30
+                font_name:"agencyb"
+                color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
+                size: 100, 40
+                size_hint: None, None
+                pos: 460, 380
+                on_press: app.passive_stop_card(self.state)
+                disabled: root.timer_running == 1
+
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+                
+                canvas.before:
+                    Color:
+                        rgba: app.color_warn_red_dis if self.state == "normal" else app.color_warn_red_ena
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [app.card_radius,]
 
             ToggleButton:
-                id: weapon_connection_type
-                text: "wls"
-                state: "down" if root.weapon_connection_type == 1 else "normal"
-                font_size: 80
+                id: passive_2
+                text: "Pcard"
+                font_size: 30
                 font_name:"agencyb"
-                color: app.color_weapon_dis if root.weapon != 1 else app.color_weapon_ena
-                background_color: [0, 0, 0, 1]
-                on_press: app.change_weapon_connection_type()
+                color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
+                size: 100, 40
+                size_hint: None, None
+                pos: 460, 320
+                on_press: app.passive_stop_card(self.state)
+                disabled: root.timer_running == 1
+
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+                
+                canvas.before:
+                    Color:
+                        rgba: app.color_warn_yel_dis if self.state == "normal" else app.color_warn_yel_ena
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [app.card_radius,]
 
             ToggleButton:
-                id: weapon_2
-                text: "fleuret"
-                state: "down" if root.weapon == 2 else "normal"
-                font_size: 80
+                id: passive_3
+                text: "Pcard"
+                font_size: 30
                 font_name:"agencyb"
-                group: "weapon"
-                color: app.color_weapon_dis if root.weapon != 2 else app.color_weapon_ena
-                background_color: [0, 0, 0, 1]
-                on_press: app.set_weapon(2)
+                color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
+                size: 100, 40
+                size_hint: None, None
+                pos: 1360, 380
+                on_press: app.passive_stop_card(self.state)
+                disabled: root.timer_running == 1
+
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+                
+                canvas.before:
+                    Color:
+                        rgba: app.color_warn_red_dis if self.state == "normal" else app.color_warn_red_ena
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [app.card_radius,]
 
             ToggleButton:
-                id: weapon_0
-                markup: True
-                text: "epee [color=4c4c4c]5[/color]" if root.epee5 == 0 else "epee 5"
-                state: "down" if root.weapon == 3 else "normal"
-                font_size: 80
+                id: passive_4
+                text: "Pcard"
+                font_size: 30
                 font_name:"agencyb"
-                group: "weapon"
-                color: app.color_weapon_dis if root.weapon != 3 else app.color_weapon_ena
-                background_color: [0, 0, 0, 1]
-                on_press: app.set_weapon(0)
+                color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
+                size: 100, 40
+                size_hint: None, None
+                pos: 1360, 320
+                on_press: app.passive_stop_card(self.state)
+                disabled: root.timer_running == 1
 
-            ToggleButton:
-                id: weapon_1
-                text: "sabre"
-                state: "down" if root.weapon == 1 else "normal"
-                font_size: 80
-                font_name:"agencyb"
-                group: "weapon"
-                color: app.color_weapon_dis if root.weapon != 1 else app.color_weapon_ena
-                background_color: [0, 0, 0, 1]
-                on_press: app.set_weapon(1)
-
-        Carousel:
-            id: left_score_carousel
-            direction: "top"
-            loop: True
-            size: 420, 480
-            size_hint: None, None
-            pos: 20, 0
-            min_move: 0.05
-
-            old_index: 0
-            on_index: app.carousel_handler(0, self.old_index, self.index, [3, 2]); self.old_index = self.index
-
-            Button:
-                on_press: app.send_handler(2)
-                background_color: [0, 0, 0, 1]
+                background_color: root.color_invis
                 background_down: ""
                 background_normal: ""
-
-            Button:
-                on_press: app.send_handler(2)
-                background_color: [0, 0, 0, 1]
-                background_down: ""
-                background_normal: ""
-
-            Button:
-                on_press: app.send_handler(2)
-                background_color: [0, 0, 0, 1]
-                background_down: ""
-                background_normal: ""
-
-        Label:
-            id: score_l_l
-            text: root.score_l_l
-            font_size: 480
-            font_name:"agencyb"
-            size: 200, 480
-            size_hint: None, None
-            pos: 20, 0
-            color: app.color_left_score
-
-        Label:
-            id: score_l_r
-            text: root.score_l_r
-            font_size: 480
-            font_name:"agencyb"
-            size: 220, 480
-            size_hint: None, None
-            pos: 220, 0
-            color: app.color_left_score
-
-        Carousel:
-            id: right_score_carousel
-            direction: "top"
-            loop: True
-            size: 420, 480
-            size_hint: None, None
-            pos: 1480, 0
-            min_move: 0.05
-
-            old_index: 0
-            on_index: app.carousel_handler(0, self.old_index, self.index, [15, 9]); self.old_index = self.index
-
-            Button:
-                on_press: app.send_handler(9)
-                background_color: [0, 0, 0, 0]
-                background_down: ""
-                background_normal: ""
-
-            Button:
-                on_press: app.send_handler(9)
-                background_color: [0, 0, 0, 0]
-                background_down: ""
-                background_normal: ""
-
-            Button:
-                on_press: app.send_handler(9)
-                background_color: [0, 0, 0, 0]
-                background_down: ""
-                background_normal: ""
-
-        Label:
-            id: score_r_l
-            text: root.score_r_l
-            font_size: 480
-            font_name:"agencyb"
-            size: 200, 480
-            size_hint: None, None
-            pos: 1480, 0
-            color: app.color_right_score
-
-        Label:
-            id: score_r_r
-            text: root.score_r_r
-            font_size: 480
-            font_name:"agencyb"
-            size: 200, 480
-            size_hint: None, None
-            pos: 1700, 0
-            color: app.color_right_score
-
-        Carousel:
-            id: timer_carousel
-            direction: "top"
-            loop: True
-            size: 550, 300
-            size_hint: None, None
-            pos: 530 + 200 - 30, 140
-            min_move: 0.05
-
-            old_index: 0
-            on_index: app.carousel_handler(0, self.old_index, self.index, [6, 14]); self.old_index = self.index
-
-            Button:
-                on_press: app.send_handler(13)
-                background_color: [0, 0, 0, 0]
-                background_down: ""
-                background_normal: ""
-
-            Button:
-                on_press: app.send_handler(13)
-                background_color: [0, 0, 0, 0]
-                background_down: ""
-                background_normal: ""
-
-            Button:
-                on_press: app.send_handler(13)
-                background_color: [0, 0, 0, 0]
-                background_down: ""
-                background_normal: ""
-
-        Label:
-            id: timer_min
-            text: root.timer_0
-            font_size: 360
-            font_name:"agencyb"
-            size: 150, 300
-            size_hint: None, None
-            pos: 730 + 150 * 0 - 30, 140
-            color: root.color_timer
-
-        Label:
-            id: timer_dot
-            text: root.timer_1 if root.timer_running == 0 or root.current_time - root.flash_timer < 0.5 else " "
-            font_size: 360
-            font_name:"agencyb"
-            size: 150, 300
-            size_hint: None, None
-            pos: 730 + 150 * 1 - 40 - 10, 140
-            color: root.color_timer
-        
-        Label:
-            id: timer_dec
-            text: root.timer_2
-            font_size: 360
-            font_name:"agencyb"
-            size: 150, 300
-            size_hint: None, None
-            pos: 730 + 150 * 2 - 80 + 10, 140
-            color: root.color_timer
-
-        Label:
-            id: timer_sec
-            text: root.timer_3
-            font_size: 360
-            font_name:"agencyb"
-            size: 150, 300
-            size_hint: None, None
-            pos: 730 + 150 * 3 - 80 + 30, 140
-            color: root.color_timer
-
-        Label:
-            id: timer_text
-            text: root.timer_text
-            font_size: 300
-            font_name:"agencyb"
-            size: 600, 300
-            size_hint: None, None
-            pos: 730, 140
-            color: root.color_timer
-
-        Label:
-            id: passive
-            size: root.passive_size * 2, 0 if root.passive_time > 50 and root.passive_time < 60 and root.current_time - root.flash_timer > 0.5 and root.timer_running == 1 else -32
-            size_hint: None, None
-            pos: 960 - root.passive_size, 480
-
-            canvas:
-                Color:
-                    rgba: root.color_passive
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-
-        Button:
-            id: period
-            text: str(root.period)
-            font_size: 200
-            font_name:"agencyb"
-            size: 120, 200
-            size_hint: None, None
-            pos: 580, 100
-            color: app.color_period
-
-            on_press: app.send_handler(8)
-
-            background_color: [0, 0, 0, 1]
-            background_down: ""
-            background_normal: ""
-        
-        Label:
-            id: passive_counter_2_1
-            text: root.passive_coun[0]
-            font_size: 100
-            font_name:"agencyb"
-            size: 60, 200
-            size_hint: None, None
-            pos: 585, 285
-            color: app.color_passive_white
-
-            background_color: [0, 0, 0, 1]
-            background_down: ""
-            background_normal: ""
-        
-        Label:
-            id: passive_counter_2_2
-            text: root.passive_coun[1]
-            font_size: 100
-            font_name:"agencyb"
-            size: 60, 200
-            size_hint: None, None
-            pos: 635, 285
-            color: app.color_passive_white
-
-            background_color: [0, 0, 0, 1]
-            background_down: ""
-            background_normal: ""
-
-        Label:
-            id: warning_top_l
-            text: "penalty"
-            font_size: 30
-            font_name:"agencyb"
-            color: app.color_warn_text_ena if root.warning_l >= 2 else app.color_warn_text_dis
-            size: 100, 40
-            size_hint: None, None
-            pos: 460, 250
-
-            background_color: [0, 0, 0, 0]
-            background_down: ""
-            background_normal: ""
-            background_disabled_down: ""
-            background_disabled_normal: ""
-            
-            canvas.before:
-                Color:
-                    rgba: app.color_warn_red_dis if root.warning_l < 2 else app.color_warn_red_ena
-                RoundedRectangle:
-                    pos: self.pos
-                    size: self.size
-                    radius: [app.card_radius,]
-
-        Label:
-            id: warning_bot_l
-            text: "caution"
-            font_size: 30
-            font_name:"agencyb"
-            color: app.color_warn_text_ena if root.warning_l >= 1 else app.color_warn_text_dis
-            size: 100, 40
-            size_hint: None, None
-            pos: 460, 190
-
-            background_color: [0, 0, 0, 0]
-            background_down: ""
-            background_normal: ""
-            background_disabled_down: ""
-            background_disabled_normal: ""
-            
-            canvas.before:
-                Color:
-                    rgba: app.color_warn_yel_dis if root.warning_l < 1 else app.color_warn_yel_ena
-                RoundedRectangle:
-                    pos: self.pos
-                    size: self.size
-                    radius: [app.card_radius,]
-
-        Button:
-            id: left_warning_button
-            size: 100, 120
-            size_hint: None, None
-            pos: 460, 190
-
-            on_press: app.send_handler(4)
-
-            background_color: [0, 0, 0, 0]
-            background_down: ""
-            background_normal: ""
-
-        Label:
-            id: warning_top_r
-            text: "penalty"
-            font_size: 30
-            font_name:"agencyb"
-            color: app.color_warn_text_ena if root.warning_r >= 2 else app.color_warn_text_dis
-            size: 100, 40
-            size_hint: None, None
-            pos: 1360, 250
-
-            background_color: [0, 0, 0, 0]
-            background_down: ""
-            background_normal: ""
-            background_disabled_down: ""
-            background_disabled_normal: ""
-
-            canvas.before:
-                Color:
-                    rgba: app.color_warn_red_dis if root.warning_r < 2 else app.color_warn_red_ena
-                RoundedRectangle:
-                    pos: self.pos
-                    size: self.size
-                    radius: [app.card_radius,]
-
-        Label:
-            id: warning_bot_r
-            text: "caution"
-            font_size: 30
-            font_name:"agencyb"
-            color: app.color_warn_text_ena if root.warning_r >= 1 else app.color_warn_text_dis
-            size: 100, 40
-            size_hint: None, None
-            pos: 1360, 190
-
-            background_color: [0, 0, 0, 0]
-            background_down: ""
-            background_normal: ""
-            background_disabled_down: ""
-            background_disabled_normal: ""
-            
-            canvas.before:
-                Color:
-                    rgba: app.color_warn_yel_dis if root.warning_r < 1 else app.color_warn_yel_ena
-                RoundedRectangle:
-                    pos: self.pos
-                    size: self.size
-                    radius: [app.card_radius,]
-
-        Button:
-            id: right_warning_button
-            size: 100, 120
-            size_hint: None, None
-            pos: 1360, 190
-
-            on_press: app.send_handler(11)
-
-            background_color: [0, 0, 0, 0]
-            background_down: ""
-            background_normal: ""
-
-        Label:
-            id: priority_l_cap
-            text: "P"
-            font_size: 120
-            font_name:"agencyb"
-            size: 100, 100
-            size_hint: None, None
-            pos: 460 - 27 - 8, 80
-            color: app.color_left_p_ena if root.priority == -1 else app.color_left_p_dis
-        
-        Label:
-            id: priority_l_word
-            text: "priority"
-            font_size: 36
-            font_name:"agencyb"
-            size: 100, 100
-            size_hint: None, None
-            pos: 460 + 27 - 16, 80 - 27
-            color: app.color_warn_text_ena if root.priority == -1 else app.color_warn_text_dis
-
-        Label:
-            id: priority_r_cap
-            text: "P"
-            font_size: 120
-            font_name:"agencyb"
-            size: 100, 100
-            size_hint: None, None
-            pos: 1360 - 27 - 8, 80
-            color: app.color_right_p_ena if root.priority == +1 else app.color_right_p_dis
-
-        Label:
-            id: priority_r_word
-            text: "priority"
-            font_size: 36
-            font_name:"agencyb"
-            size: 100, 100
-            size_hint: None, None
-            pos: 1360 + 27 - 16, 80 - 27
-            color: app.color_warn_text_ena if root.priority == +1 else app.color_warn_text_dis
-        
-        ToggleButton:
-            id: passive_1
-            text: "Pcard"
-            font_size: 30
-            font_name:"agencyb"
-            color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
-            size: 100, 40
-            size_hint: None, None
-            pos: 460, 380
-            on_press: app.passive_stop_card(self.state)
-            disabled: root.timer_running == 1
-
-            background_color: [0, 0, 0, 0]
-            background_down: ""
-            background_normal: ""
-            background_disabled_down: ""
-            background_disabled_normal: ""
-            
-            canvas.before:
-                Color:
-                    rgba: app.color_warn_red_dis if self.state == "normal" else app.color_warn_red_ena
-                RoundedRectangle:
-                    pos: self.pos
-                    size: self.size
-                    radius: [app.card_radius,]
-
-        ToggleButton:
-            id: passive_2
-            text: "Pcard"
-            font_size: 30
-            font_name:"agencyb"
-            color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
-            size: 100, 40
-            size_hint: None, None
-            pos: 460, 320
-            on_press: app.passive_stop_card(self.state)
-            disabled: root.timer_running == 1
-
-            background_color: [0, 0, 0, 0]
-            background_down: ""
-            background_normal: ""
-            background_disabled_down: ""
-            background_disabled_normal: ""
-            
-            canvas.before:
-                Color:
-                    rgba: app.color_warn_yel_dis if self.state == "normal" else app.color_warn_yel_ena
-                RoundedRectangle:
-                    pos: self.pos
-                    size: self.size
-                    radius: [app.card_radius,]
-
-        ToggleButton:
-            id: passive_3
-            text: "Pcard"
-            font_size: 30
-            font_name:"agencyb"
-            color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
-            size: 100, 40
-            size_hint: None, None
-            pos: 1360, 380
-            on_press: app.passive_stop_card(self.state)
-            disabled: root.timer_running == 1
-
-            background_color: [0, 0, 0, 0]
-            background_down: ""
-            background_normal: ""
-            background_disabled_down: ""
-            background_disabled_normal: ""
-            
-            canvas.before:
-                Color:
-                    rgba: app.color_warn_red_dis if self.state == "normal" else app.color_warn_red_ena
-                RoundedRectangle:
-                    pos: self.pos
-                    size: self.size
-                    radius: [app.card_radius,]
-
-        ToggleButton:
-            id: passive_4
-            text: "Pcard"
-            font_size: 30
-            font_name:"agencyb"
-            color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
-            size: 100, 40
-            size_hint: None, None
-            pos: 1360, 320
-            on_press: app.passive_stop_card(self.state)
-            disabled: root.timer_running == 1
-
-            background_color: [0, 0, 0, 0]
-            background_down: ""
-            background_normal: ""
-            background_disabled_down: ""
-            background_disabled_normal: ""
-            
-            canvas.before:
-                Color:
-                    rgba: app.color_warn_yel_dis if self.state == "normal" else app.color_warn_yel_ena
-                RoundedRectangle:
-                    pos: self.pos
-                    size: self.size
-                    radius: [app.card_radius,]
+                background_disabled_down: ""
+                background_disabled_normal: ""
+                
+                canvas.before:
+                    Color:
+                        rgba: app.color_warn_yel_dis if self.state == "normal" else app.color_warn_yel_ena
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [app.card_radius,]
 
     TabbedPanel:
         do_default_tab: False
@@ -615,22 +616,3 @@ Carousel:
                 Button:
                     text: "sync hardware"
                     on_press: app.write_address()
-    Label:
-        id: debug_rc5_commands
-        text: "debug_rc5_commands_text"
-    BoxLayout:
-        Button:
-            text: "test_green_leds"
-            on_press: app.test_toggle(35)
-        Button:
-            text: "test_red_leds"
-            on_press: app.test_toggle(29)
-        Button:
-            text: "toggle_5_output"
-            on_press: app.test_toggle(5)
-        Button:
-            text: "toggle_15_output"
-            on_press: app.test_toggle(15)
-        Label:
-            text: f"27 pin state {root.pin27_state}"
-

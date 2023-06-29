@@ -1,0 +1,15 @@
+if [ -z "$SSH_TTY" ] && [ -z "$TMUX" ]
+then
+    export DISPLAY_TYPE=8.9inch
+    cd V24m
+
+    case $DISPLAY_TYPE in
+
+    28inch)
+        ./app.py
+        ;;
+    8.9inch | *)
+        ./app.py -r 90
+        ;;
+    esac
+fi

@@ -1,5 +1,5 @@
 #!venv/bin/python3
-import sys
+import os
 import kivy
 import time
 import json
@@ -17,6 +17,12 @@ from kivy.core.text   import LabelBase
 
 read_interval = .05
 is_banana = platform.machine() == "armv7l"
+
+frontend = "main1920x480.kv"
+if os.environ.get("TYPE") == "8.9inch":
+    frontend = "main1920x480.kv"
+if os.environ.get("TYPE") == "28inch":
+    frontend = "main1920x360.kv"
 
 kivy.require("2.1.0")
 
@@ -263,6 +269,8 @@ class KivyApp(App):
                 self.data_update(data)
             
             pins = gpio_control.read_pins()
+            if pins[27] == 0:
+                self.system_poweroff()
             if 37 not in gpio_control.button_emulating or self.root.timer_running:
                 self.root.weapon = 0
                 self.root.weapon = pins[32] * 2 + pins[36]
@@ -342,13 +350,13 @@ class KivyApp(App):
             with open("config.json", "r") as config_file:
                 self.config = json.load(config_file)
         else:
-            if config_path.is_dir:
-                print("Abobus   ")
+            if config_path.is_dir():
+                print("Config file is directory, removing")
                 shutil.rmtree(config_path)
             print("No config file, creating!")
             self.update_config()
         
-        return Builder.load_file("main.kv")
+        return Builder.load_file(frontend)
 
     def on_start(self):
         Clock.schedule_interval(self.get_data, read_interval)

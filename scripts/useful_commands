@@ -36,3 +36,10 @@ meson build/ --prefix=$WLD
 ninja -C build/ install
 cd
 
+
+
+setenv video-mode   
+
+./compile.sh uboot-patch BOARD=bananapim2zero BRANCH=current BUILD_DESKTOP=yes BUILD_MINIMAL=no DESKTOP_APPGROUPS_SELECTED=3dsupport DESKTOP_ENVIRONMENT=xfce DESKTOP_ENVIRONMENT_CONFIG_NAME=config_base KERNEL_CONFIGURE=yes RELEASE=jammy
+./compile.sh kernel-patch BOARD=bananapim2zero BRANCH=current BUILD_DESKTOP=yes BUILD_MINIMAL=no DESKTOP_APPGROUPS_SELECTED=3dsupport DESKTOP_ENVIRONMENT=xfce DESKTOP_ENVIRONMENT_CONFIG_NAME=config_base KERNEL_CONFIGURE=yes RELEASE=jammy
+./compile.sh build BOARD=bananapim2zero BRANCH=current BUILD_DESKTOP=yes BUILD_MINIMAL=no DESKTOP_APPGROUPS_SELECTED=3dsupport DESKTOP_ENVIRONMENT=xfce DESKTOP_ENVIRONMENT_CONFIG_NAME=config_base KERNEL_CONFIGURE=yes RELEASE=jammy
