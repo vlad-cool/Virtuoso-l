@@ -8,7 +8,7 @@ import shutil
 import pathlib
 import platform
 import subprocess
-import gpio_control
+from functools import partial
 from kivy.clock       import Clock
 from kivy.lang        import Builder
 from kivy.core.window import Window
@@ -18,11 +18,10 @@ from kivy.core.text   import LabelBase
 read_interval = .05
 is_banana = platform.machine() == "armv7l"
 
-frontend = "main1920x480.kv"
-if os.environ.get("TYPE") == "8.9inch":
-    frontend = "main1920x480.kv"
-if os.environ.get("TYPE") == "28inch":
-    frontend = "main1920x360.kv"
+if is_banana:
+    import gpio_control
+else:
+    import gpio_control_emu as gpio_control
 
 kivy.require("2.1.0")
 
@@ -62,7 +61,7 @@ class PassiveTimer:
         self.size = min(self.size, self.max_size)
         self.time += delta
         if self.time < 60.0:
-            self.coun = str(60 - int(self.time))
+            self.coun = str(60 - int(self.time) - 0.0001)
             if len(self.coun) == 1:
                 self.coun = " " + self.coun
         else:
@@ -190,12 +189,35 @@ class KivyApp(App):
             period *= 2
             period += data[6][4 + i]
 
+        #data[0][4] # RED
+        #data[0][7] # GREEN
+
         if period == 15:
-            root.priority = 1
+            if root.priority != 1:
+                root.priority = 1 # GREEN
+                gpio_control.set(29, 0)
+                gpio_control.set(35, 1)
+                if self.led_schedule is not None:
+                    self.led_schedule.cancel()
+                    self.led_schedule = None
+                self.led_schedule = Clock.schedule_once(lambda dt: partial(gpio_control.set, 35, 0)(), 2)
         elif period == 14:
-            root.priority = -1
+            if root.priority != -1:
+                root.priority = -1 # RED
+                gpio_control.set(35, 0)
+                gpio_control.set(29, 1)
+                if self.led_schedule is not None:
+                    self.led_schedule.cancel()
+                    self.led_schedule = None
+                self.led_schedule = Clock.schedule_once(lambda dt: partial(gpio_control.set, 29, 0)(), 2)
         elif period == 13:
-            root.priority = 0
+            if root.priority != 0:
+                root.priority = 0
+                gpio_control.set(35, 0)
+                gpio_control.set(29, 0)
+                if self.led_schedule is not None:
+                    self.led_schedule.cancel()
+                    self.led_schedule = None
         elif period >= 1 and period <= 9:
             root.period = period
         if period in [12, 13] and self.raw_period not in [12, 13]:
@@ -206,8 +228,10 @@ class KivyApp(App):
         
         if data[1][5] == 0:
             if self.old_sec != str(timer_s):
+                root.time_updated = True
                 root.flash_timer = time.time()
-                pass
+            else:
+                root.time_updated = False
 
             if data[2][3] == 0:
                 root.color_timer = app.color_timer_orange
@@ -246,7 +270,7 @@ class KivyApp(App):
         root.warning_l = data[7][4] * 2 + data[7][5]
         root.warning_r = data[7][6] * 2 + data[7][7]
 
-        if root.timer_running == 1 and ((timer_m > 0 and timer_m + timer_d + timer_s > 1) or self.passive_timer.prev_time != 0):
+        if root.timer_running == 1 and ((timer_m > 0 and timer_m + timer_d + timer_s > 1) or self.passive_timer.prev_time != 0) and not self.root.weapon == 1:
             self.passive_timer.start()
         else:
             self.passive_timer.stop()
@@ -258,8 +282,9 @@ class KivyApp(App):
         root.debug_rc5_commands_text = str(gpio_control.ir_commands).replace("]", "]\n")
 
     def get_data(self, dt):
+        root = self.root
+        root.current_time = time.time()
         if is_banana:
-            self.root.current_time = time.time()
             data = [[0] * 8] * 8
             while self.data_rx.inWaiting() // 8 > 0:
                 for _ in range(8):
@@ -267,18 +292,6 @@ class KivyApp(App):
                     data[byte // 2 ** 5] = self.byte_to_arr(byte)
 
                 self.data_update(data)
-            
-            pins = gpio_control.read_pins()
-            if pins[27] == 0:
-                self.system_poweroff()
-            if 37 not in gpio_control.button_emulating or self.root.timer_running:
-                self.root.weapon = 0
-                self.root.weapon = pins[32] * 2 + pins[36]
-            if 27 not in gpio_control.button_emulating or self.root.timer_running:
-                self.root.weapon_connection_type = 0
-                self.root.weapon_connection_type = pins[7]
-            self.root.video_timer = pins[18]
-
         else:
             data = [[0, 0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 1, 0, 0, 0, 0, 0],
@@ -290,7 +303,19 @@ class KivyApp(App):
                     [1, 1, 1, 0, 0, 1, 1, 0],]
             self.data_update(data)
 
-        root = self.root
+        pins = gpio_control.read_pins()
+        if pins[27] == 0:
+            self.system_poweroff()
+        if 37 not in gpio_control.button_emulating or root.timer_running:
+            root.weapon = 0
+            root.weapon = pins[32] * 2 + pins[36]
+            if root.weapon == 1:
+                self.passive_timer.clear()
+        if 27 not in gpio_control.button_emulating or root.timer_running:
+            root.weapon_connection_type = 0
+            root.weapon_connection_type = pins[7]
+        root.video_timer = pins[18]
+
 
         self.passive_timer.update()
         root.passive_size = self.passive_timer.get_size()
@@ -321,6 +346,7 @@ class KivyApp(App):
         self.color_passive_yel    = [204 / 255, 204 / 255,   0 / 255, 1.0] # yellow
         self.color_passive_red    = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
         self.color_passive_white  = [223 / 255, 223 / 255, 223 / 255, 1.0] # white
+        self.color_passive_inact  = [ 76 / 255,  76 / 255,  76 / 255, 1.0] # gray
 
         self.color_left_p_ena     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
         self.color_left_p_dis     = [227 / 255,  30 / 255,  36 / 255, 0.2] # dark red
@@ -337,6 +363,7 @@ class KivyApp(App):
         self.passive_timer        = PassiveTimer(500)
         self.timer_interval       = None
         self.timer_millis         = 0
+        self.led_schedule = None
 
         self.config = {"rc5_address": -1}
 
@@ -356,7 +383,7 @@ class KivyApp(App):
             print("No config file, creating!")
             self.update_config()
         
-        return Builder.load_file(frontend)
+        return Builder.load_file("main.kv")
 
     def on_start(self):
         Clock.schedule_interval(self.get_data, read_interval)

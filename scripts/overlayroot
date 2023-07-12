@@ -1,0 +1,10 @@
+sudo apt install overlayroot
+#echo 'overlayroot="tmpfs"' | sudo tee -a /etc/overlayroot.conf
+
+
+### Replace /etc/rc.local with this, Don't execute this script
+echo 'overlayroot="tmpfs"' | tee -a /etc/overlayroot.conf
+echo '#!/bin/sh -e' | tee /etc/rc.local
+echo 'exit 0' | tee -a  /etc/rc.local
+reboot
+exit 0

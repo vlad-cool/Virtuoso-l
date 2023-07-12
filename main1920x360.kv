@@ -36,6 +36,8 @@ Carousel:
 
     epee5: 0
 
+    time_updated: True
+
     color_passive: [0, 0, 0, 1]
     color_timer: app.color_timer_orange
     color_invis: [0, 0, 0, 0]
@@ -44,19 +46,19 @@ Carousel:
         BoxLayout:
             id: weapon_selector
             orientation: "horizontal"
-            size: 800, 70
+            size: 600, 70
             size_hint: None, None
             pos: (1920 - self.size[0]) // 2, 0
 
-            ToggleButton:
-                id: weapon_connection_type
-                text: "wls"
-                state: "down" if root.weapon_connection_type == 1 else "normal"
-                font_size: 60
-                font_name:"agencyb"
-                color: app.color_weapon_dis if root.weapon != 1 else app.color_weapon_ena
-                background_color: [0, 0, 0, 1]
-                on_press: app.change_weapon_connection_type()
+            #ToggleButton:
+            #    id: weapon_connection_type
+            #    text: "wls"
+            #    state: "down" if root.weapon_connection_type == 1 else "normal"
+            #    font_size: 60
+            #    font_name:"agencyb"
+            #    color: app.color_weapon_dis if root.weapon != 1 else app.color_weapon_ena
+            #    background_color: [0, 0, 0, 1]
+            #    on_press: app.change_weapon_connection_type()
 
             ToggleButton:
                 id: weapon_2
@@ -72,7 +74,8 @@ Carousel:
             ToggleButton:
                 id: weapon_0
                 markup: True
-                text: "epee [color=4c4c4c]5[/color]" if root.epee5 == 0 else "epee 5"
+                #text: "epee [color=4c4c4c]5[/color]" if root.epee5 == 0 else "epee 5"
+                text: "epee"
                 state: "down" if root.weapon == 3 else "normal"
                 font_size: 60
                 font_name:"agencyb"
@@ -303,13 +306,13 @@ Carousel:
 
         Label:
             id: passive_counter_2_1
-            text: root.passive_coun[0]
+            text: root.passive_coun[0] if root.time_updated or root.timer_running == 0 else self.text
             font_size: 100
             font_name:"agencyb"
             size: 60, 200
             size_hint: None, None
             pos: 585, 285 - 120
-            color: app.color_passive_white
+            color: app.color_passive_white if root.weapon != 1 else app.color_passive_inact
 
             background_color: root.color_invis
             background_down: ""
@@ -317,13 +320,13 @@ Carousel:
 
         Label:
             id: passive_counter_2_2
-            text: root.passive_coun[1]
+            text: root.passive_coun[1] if root.time_updated or root.timer_running == 0 else self.text
             font_size: 100
             font_name:"agencyb"
             size: 60, 200
             size_hint: None, None
             pos: 635, 285 - 120
-            color: app.color_passive_white
+            color: app.color_passive_white if root.weapon != 1 else app.color_passive_inact
 
             background_color: root.color_invis
             background_down: ""
@@ -593,23 +596,3 @@ Carousel:
                     size: self.size
                     radius: [app.card_radius,]
 
-    TabbedPanel:
-        do_default_tab: False
-        border: [0, 0, 0, 0]
-        tab_pos: "top_mid"
-        tab_width: (1920 / 2 - 10)
-        TabbedPanelItem:
-            text: "System"
-            BoxLayout:
-                Button:
-                    text: "Reboot"
-                    on_press: app.system_reboot()
-                Button:
-                    text: "Poweroff"
-                    on_press: app.system_poweroff()
-        TabbedPanelItem:
-            text: "Hardware"
-            BoxLayout:
-                Button:
-                    text: "sync hardware"
-                    on_press: app.write_address()
