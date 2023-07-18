@@ -36,6 +36,8 @@ Carousel:
 
     epee5: 0
 
+    time_updated: True
+
     color_passive: [0, 0, 0, 1]
     color_timer: app.color_timer_orange
     color_invis: [0, 0, 0, 0]
@@ -303,13 +305,13 @@ Carousel:
 
         Label:
             id: passive_counter_2_1
-            text: root.passive_coun[0]
+            text: root.passive_coun[0] if root.time_updated or root.timer_running == 0 else self.text
             font_size: 100
             font_name:"agencyb"
             size: 60, 200
             size_hint: None, None
             pos: 585, 285
-            color: app.color_passive_white
+            color: app.color_passive_white if root.weapon != 1 else app.color_passive_inact
 
             background_color: root.color_invis
             background_down: ""
@@ -317,13 +319,13 @@ Carousel:
 
         Label:
             id: passive_counter_2_2
-            text: root.passive_coun[1]
+            text: root.passive_coun[1] if root.time_updated or root.timer_running == 0 else self.text
             font_size: 100
             font_name:"agencyb"
             size: 60, 200
             size_hint: None, None
             pos: 635, 285
-            color: app.color_passive_white
+            color: app.color_passive_white if root.weapon != 1 else app.color_passive_inact
 
             background_color: root.color_invis
             background_down: ""

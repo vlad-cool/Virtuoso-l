@@ -189,9 +189,6 @@ class KivyApp(App):
             period *= 2
             period += data[6][4 + i]
 
-        #data[0][4] # RED
-        #data[0][7] # GREEN
-
         if period == 15:
             if root.priority != 1:
                 root.priority = 1 # GREEN

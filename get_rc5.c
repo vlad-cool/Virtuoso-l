@@ -33,9 +33,6 @@ int main()
         }
         buffer[27] = digitalRead(rc5_pin);
 
-        //printf("%d ", buffer[27]);
-
-        //if (buffer[0] == 1 && buffer[1] == 0 && buffer[2] == 1 && buffer[3] == 0 && buffer[28] == 1 && buffer[29] == 1)
         if (buffer[0] == 1 && buffer[1] == 0 && buffer[2] == 1 && buffer[3] == 0)
         {
             printf("+");
@@ -45,7 +42,6 @@ int main()
             }
             printf("\n");
         }
-        //if (buffer[0] == 0 && buffer[1] == 1 && buffer[2] == 0 && buffer[3] == 1 && buffer[28] == 1 && buffer[29] == 1)
         if (buffer[0] == 0 && buffer[1] == 1 && buffer[2] == 0 && buffer[3] == 1)
         {
             printf("-");
