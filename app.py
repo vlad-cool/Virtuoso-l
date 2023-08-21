@@ -322,7 +322,6 @@ class KivyApp(App):
 
         root.pin27_state = pins[27]
 
-
     def build(self):
         self.color_left_score     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
         self.color_right_score    = [  0 / 255, 152 / 255,  70 / 255, 1.0] # green

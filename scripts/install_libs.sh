@@ -1,4 +1,5 @@
 #sudo apt -y install gcc-8
+#sudo update-alternatives --show gcc 
 #sudo update-alternatives --remove-all gcc 
 #sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 20
 
