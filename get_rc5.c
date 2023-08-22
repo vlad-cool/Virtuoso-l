@@ -5,15 +5,10 @@
 #include <stdio.h>
 #include <time.h>
 
-#define TIMING 889
+#define TIMING 444
 #define rc5_pin 3
 
-int buffer[30] = {0};
-
-void flush()
-{
-    while (getchar() != '\n');
-}
+int buffer[64] = {0};
 
 void setup()
 {
@@ -24,34 +19,35 @@ void setup()
 int main()
 {
     setup();
-    
+    struct timespec t;
+    unsigned long time;
+
     while (1)
     {
-        for (int i = 0; i < 27; i++)
+        for (int i = 0; i < 64; i++)
         {
             buffer[i] = buffer[i + 1];
         }
-        buffer[27] = digitalRead(rc5_pin);
+        buffer[63] = digitalRead(rc5_pin);
 
-        if (buffer[0] == 1 && buffer[1] == 0 && buffer[2] == 1 && buffer[3] == 0)
+
+
+        if (buffer[0] == 1 && buffer[1] == 1 && buffer[2] == 0 && buffer[3] == 0)
         {
-            printf("+");
-            for (int i = 0; i < 30; i++)
-            {
-                printf(" %d", buffer[i]);
-            }
-            printf("\n");
-        }
-        if (buffer[0] == 0 && buffer[1] == 1 && buffer[2] == 0 && buffer[3] == 1)
-        {
-            printf("-");
-            for (int i = 0; i < 30; i++)
+            printf("a ");
+            for (int i = 0; i < 60; i++)
             {
                 printf(" %d", buffer[i]);
             }
             printf("\n");
         }
 
-        usleep(TIMING);
+        clock_gettime(CLOCK_BOOTTIME, &t);
+        time = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
+
+        while (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time < TIMING)
+        {
+            clock_gettime(CLOCK_BOOTTIME, &t);
+        }
     }
 }

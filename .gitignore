@@ -5,8 +5,6 @@
 /venv
 .directory
 config.json
-ggg.hhh
-
 scripts/upload.sh
 a.out
 ir_send

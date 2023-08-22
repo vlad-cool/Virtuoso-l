@@ -19,10 +19,10 @@ sudo apt -y update
 sudo apt -y upgrade
 sudo apt -y install libglfw3-dev libglu1-mesa-dev
 sudo apt -y install build-essential
-sudo apt -y install ffmpeg
-sudo apt -y install libavcodec-dev
-sudo apt -y install libavfilter-dev
-sudo apt -y install libavdevice-dev
+#sudo apt -y install ffmpeg
+#sudo apt -y install libavcodec-dev
+#sudo apt -y install libavfilter-dev
+#sudo apt -y install libavdevice-dev
 sudo apt -y install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
 sudo apt -y install mesa-utils
 sudo apt -y install python3-setuptools python3-pip python3-dev python3-venv git-core python3-opencv

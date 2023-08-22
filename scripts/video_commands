@@ -1,64 +1,13 @@
 sudo media-ctl --device /dev/media0 --set-v4l2 '"ov5640 0-003c":0[fmt:YUYV8_2X8/640x480@1/30]'
 
-sudo apt install libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-alsa gstreamer1.0-gl gstreamer1.0-gtk3 gstreamer1.0-qt5 gstreamer1.0-pulseaudio  libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
-
-sudo gst-launch-1.0 -ve v4l2src device=/dev/video0 ! video/x-raw,format=UYVY,width=1280,height=720,framerate=15/1,bitrate=2500k ! videoconvert ! cedar_h264enc ! h264parse ! mux. audiotestsrc wave=silence freq=200 ! voaacenc ! aacparse ! queue ! mux. flvmux streamable=true name=mux ! rtmpsink location="rtmp://a.rtmp.youtube.com/live2/<your-youtube-key>"
-sudo gst-launch-1.0 -ve v4l2src device=/dev/video1 ! video/x-raw,format=UYVY,width=640,height=480,framerate=60/1,bitrate=2500k ! videoconvert ! cedar_h264enc ! h264parse ! mux. audiotestsrc wave=silence freq=200 ! voaacenc ! aacparse ! queue ! mux. flvmux streamable=true name=mux
-
-
-#GPT
-gst-launch-1.0 -e v4l2src device=/dev/video0 ! video/x-raw,width=640,height=480,framerate=30/1 ! queue ! videoconvert ! x264enc ! mp4mux ! filesink location=output.mp4
-gst-launch-1.0 -e v4l2src device=/dev/media0 ! video/x-raw,width=640,height=480,framerate=30/1 ! queue ! videoconvert ! x264enc ! mp4mux ! filesink location=output.mp4
-
-gst-launch-1.0 -e v4l2src device=/dev/video0 ! video/x-raw, format=(string)NV12, width=640, height=480, framerate=30/1 ! queue ! videoconvert ! x264enc ! mp4mux ! filesink location=output.mp4
-gst-launch-1.0 -e v4l2src device=/dev/video0 ! video/x-raw ! queue ! videoconvert ! x264enc ! mp4mux ! filesink location=output.mp4
-
-sudo gst-launch-1.0 -ve v4l2src device=/dev/video0 ! video/x-raw,format=UYVY,width=1280,height=720,framerate=15/1,bitrate=2500k ! videoconvert ! cedar_h264enc ! h264parse ! mux. audiotestsrc wave=silence freq=200 ! voaacenc ! aacparse ! queue ! mux. flvmux streamable=true name=mux ! rtmpsink location="rtmp://a.rtmp.youtube.com/live2/<your-youtube-key>"
-sudo gst-launch-1.0 -ve v4l2src device=/dev/video0 ! video/x-raw,format=NV12,width=640,height=480,framerate=15/1,bitrate=2500k ! videoconvert ! x264enc ! mp4mux ! filesink location=output.mp4
-sudo gst-launch-1.0 -ve v4l2src device=/dev/video0 ! video/x-raw ! videoconvert ! x264enc ! mp4mux ! filesink location=output.mp4
-
-
-gst-launch-1.0 -ve v4l2src device=/dev/video0 \
-! video/x-raw,format=NV12,width=640,height=480,framerate=15/1  \
-! cedar_h264enc ! h264parse ! queue \
-!  matroskamux ! filesink location=test.mkv --gst-plugin-path=/usr/local/lib/gstreamer-1.0
-
-
-gst-launch-1.0 -v v4l2src device=/dev/video0 ! video/x-raw,framerate=60/1,width=640,height=480 ! xvimagesink
-
-sudo gst-launch-1.0 -ve filesrc location=aboba ! cedar_h264enc ! h264parse ! matroskamux ! filesink location="cedar.mkv" --gst-plugin-path=/usr/local/lib/gstreamer-1.0
-
-sudo gst-launch-1.0 -ve videotestsrc pattern=snow num-buffers=1000  ! cedar_h264enc ! h264parse ! matroskamux ! filesink location="snow.mkv" --gst-plugin-path=/usr/local/lib/gstreamer-1.0
-
-
-sudo gst-launch-1.0 -ve videotestsrc pattern=ball num-buffers=600 ! video/x-raw,width=640,height=480,framerate=60/1 ! cedar_h264enc ! h264parse ! matroskamux ! filesink location="ball_h_l.mkv"  --gst-plugin-path=/usr/local/lib/gstreamer-1.0 | tee ball_h_l
-sudo gst-launch-1.0 -ve videotestsrc pattern=ball num-buffers=600 ! video/x-raw,width=640,height=480,framerate=60/1 !       x264enc ! h264parse ! matroskamux ! filesink location="ball_s_l.mkv"  --gst-plugin-path=/usr/local/lib/gstreamer-1.0 | tee ball_s_l
-
-sudo gst-launch-1.0 -ve videotestsrc pattern=snow num-buffers=600 ! video/x-raw,width=640,height=480,framerate=60/1 ! cedar_h264enc ! h264parse ! matroskamux ! filesink location="noize_h_l.mkv" --gst-plugin-path=/usr/local/lib/gstreamer-1.0 | tee noize_h_l
-sudo gst-launch-1.0 -ve videotestsrc pattern=snow num-buffers=600 ! video/x-raw,width=640,height=480,framerate=60/1 !       x264enc ! h264parse ! matroskamux ! filesink location="noize_s_l.mkv" --gst-plugin-path=/usr/local/lib/gstreamer-1.0 | tee noize_s_l
-
-sudo gst-launch-1.0 -ve videotestsrc pattern=ball num-buffers=600 ! cedar_h264enc ! h264parse ! matroskamux ! filesink location="ball_h_s.mkv"  --gst-plugin-path=/usr/local/lib/gstreamer-1.0 | tee ball_h_s
-sudo gst-launch-1.0 -ve videotestsrc pattern=ball num-buffers=600 !       x264enc ! h264parse ! matroskamux ! filesink location="ball_s_s.mkv"  --gst-plugin-path=/usr/local/lib/gstreamer-1.0 | tee ball_s_s
-
-sudo gst-launch-1.0 -ve videotestsrc pattern=snow num-buffers=600 ! cedar_h264enc ! h264parse ! matroskamux ! filesink location="noize_h_s.mkv" --gst-plugin-path=/usr/local/lib/gstreamer-1.0 | tee noize_h_s
-sudo gst-launch-1.0 -ve videotestsrc pattern=snow num-buffers=600 !       x264enc ! h264parse ! matroskamux ! filesink location="noize_s_s.mkv" --gst-plugin-path=/usr/local/lib/gstreamer-1.0 | tee noize_s_s
-
-sudo gst-launch-1.0 -ve videotestsrc ! cedar_h264enc ! ffmux_mp4 ! filesink location="cedar.mp4" --gst-plugin-path=/usr/local/lib/gstreamer-1.0
-sudo gst-launch-1.0 -ve videotestsrc !      x264_enc ! ffmux_mp4 ! filesink location="cedar.mp4" --gst-plugin-path=/usr/local/lib/gstreamer-1.0
-
-
-sudo apt-get install gstreamer1-ffmpeg
-
-
 sudo ffmpeg -f v4l2 -video_size 640x480 -i /dev/video0 -c:v cedrus264 -pix_fmt nv12 test3.mp4
 
 sudo ffmpeg -f v4l2 -video_size 640x480 -i /dev/video0 -c:v cedrus264 -pix_fmt nv12 -segment_time 10 -f segment -reset_timestamps 1 output_%03d.mp4
 
+sudo media-ctl --device /dev/media0 --set-v4l2 '"ov5640 0-003c":0[fmt:YUYV8_2X8/640x480@1/30]'
 
-sudo media-ctl --device /dev/media0 --set-v4l2 '"ov5640 0-003c":0[fmt:YUYV8_2X8/640x480@1/10]'
 
-
-sudo ffmpeg -f v4l2 -video_size 640x480 -i /dev/video0 -r 30 -t 30 -c:v cedrus264 -pix_fmt nv12 test_30fps.mp4
+sudo ffmpeg -f v4l2 -video_size 640x480 -i /dev/video0 -vf "transpose=2,transpose=2"  -r 30 -t 30 -c:v cedrus264 -pix_fmt nv12 rotated.mp4
 
 #sudo media-ctl --device /dev/media0 --set-v4l2 '"ov5640 0-003c":0[fmt:YUYV8_2X8/640x480@1/60]'
 sudo ffmpeg -f v4l2 -video_size 640x480 -i /dev/video0 -r 60 -t 30 -c:v cedrus264 -pix_fmt nv12 test_60fps.mp4
@@ -67,8 +16,5 @@ sudo ffmpeg -f v4l2 -video_size 640x480 -i /dev/video0 -r 60 -t 30 -c:v cedrus26
 sudo ffmpeg -f v4l2 -video_size 640x480 -i /dev/video0 -r 90 -t 30 -c:v cedrus264 -pix_fmt nv12 test_90fps.mp4
 
 
-#sudo media-ctl --device /dev/media0 --set-v4l2 '"ov5640 0-003c":0[fmt:YUYV8_2X8/1280x720@1/15]'
+sudo media-ctl --device /dev/media0 --set-v4l2 '"ov5640 0-003c":0[fmt:YUYV8_2X8/1280x720@1/15]'
 sudo ffmpeg -f v4l2 -video_size 1280x720 -i /dev/video0 -t 30 -c:v cedrus264 -pix_fmt nv12 test_large.mp4
-
-
-
