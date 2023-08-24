@@ -42,3 +42,8 @@ cd
 ./compile.sh build BOARD=bananapim2zero BRANCH=current BUILD_DESKTOP=yes BUILD_MINIMAL=no DESKTOP_APPGROUPS_SELECTED=3dsupport DESKTOP_ENVIRONMENT=xfce DESKTOP_ENVIRONMENT_CONFIG_NAME=config_base KERNEL_CONFIGURE=yes RELEASE=jammy
 
 ln -sf main1920x360.kv main.kv
+
+sudo systemctl mask plymouth-quit-wait.service
+sudo systemctl mask plymouth-quit.service
+
+###   pi ALL=(ALL) NOPASSWD: /usr/bin/plymouth

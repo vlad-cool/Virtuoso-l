@@ -40,8 +40,13 @@ def read_pins():
 
 def read_rc5():
     global ir_commands
-    a = select.select([get_rc5_proc.stdout], [], [], 0)[0]
-    ir_commands += a
+    while select.select([get_rc5_proc.stdout], [], [], 0)[0]:
+        ir_command = get_rc5_proc.stdout.readline()
+        if ir_command == "":
+            break
+        print(ir_command)
+        ir_commands.append(ir_command)
+
 
 def byte_to_arr(byte):
     a = [0] * 8

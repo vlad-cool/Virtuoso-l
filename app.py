@@ -11,7 +11,6 @@ import subprocess
 from functools import partial
 from kivy.clock       import Clock
 from kivy.lang        import Builder
-from kivy.core.window import Window
 from kivy.app         import App
 from kivy.core.text   import LabelBase
 
@@ -197,7 +196,7 @@ class KivyApp(App):
                 if self.led_schedule is not None:
                     self.led_schedule.cancel()
                     self.led_schedule = None
-                self.led_schedule = Clock.schedule_once(lambda dt: partial(gpio_control.set, 35, 0)(), 2)
+                self.led_schedule = Clock.schedule_once(lambda dt: gpio_control.set(35, 0), 2)
         elif period == 14:
             if root.priority != -1:
                 root.priority = -1 # RED
@@ -206,7 +205,7 @@ class KivyApp(App):
                 if self.led_schedule is not None:
                     self.led_schedule.cancel()
                     self.led_schedule = None
-                self.led_schedule = Clock.schedule_once(lambda dt: partial(gpio_control.set, 29, 0)(), 2)
+                self.led_schedule = Clock.schedule_once(lambda dt: gpio_control.set(29, 0), 2)
         elif period == 13:
             if root.priority != 0:
                 root.priority = 0

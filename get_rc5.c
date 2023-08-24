@@ -8,7 +8,7 @@
 #define TIMING 444
 #define rc5_pin 3
 
-int buffer[64] = {0};
+int buffer[56] = {0};
 
 void setup()
 {
@@ -21,29 +21,44 @@ int main()
     setup();
     struct timespec t;
     unsigned long time;
+    int toggle = -1;
 
     while (1)
     {
-        for (int i = 0; i < 64; i++)
+        clock_gettime(CLOCK_BOOTTIME, &t);
+        time = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
+
+        for (int i = 0; i < 56; i++)
         {
             buffer[i] = buffer[i + 1];
         }
-        buffer[63] = digitalRead(rc5_pin);
+        buffer[55] = digitalRead(rc5_pin);
 
 
 
-        if (buffer[0] == 1 && buffer[1] == 1 && buffer[2] == 0 && buffer[3] == 0)
+        if (buffer[1] == 1 && buffer[3] == 0 && buffer[5] == 1 && buffer[7] == 0 && buffer[9] != toggle)
         {
-            printf("a ");
-            for (int i = 0; i < 60; i++)
+            int valid = 1;
+            for (int i = 0; i < 14; i++)
             {
-                printf(" %d", buffer[i]);
+                if (buffer[i * 4 + 1] + buffer[i * 4 + 3] != 1)
+                {
+                    valid = 0;
+                }
             }
-            printf("\n");
-        }
 
-        clock_gettime(CLOCK_BOOTTIME, &t);
-        time = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
+            if (valid)
+            {
+                toggle = buffer[9];
+                printf("b ");
+                for (int i = 0; i < 28; i++)
+                {
+                    printf(" %d", buffer[i * 2 + 1]);
+                }
+                printf("\n");
+                fflush(stdout);
+            }
+        }
 
         while (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time < TIMING)
         {
