@@ -3,16 +3,18 @@ import os
 import kivy
 import time
 import json
+import glob
 import serial
 import shutil
 import pathlib
 import platform
 import subprocess
-from functools import partial
 from kivy.clock       import Clock
 from kivy.lang        import Builder
 from kivy.app         import App
 from kivy.core.text   import LabelBase
+from kivy.uix.button  import Button
+import video_control
 
 read_interval = .05
 is_banana = platform.machine() == "armv7l"
@@ -74,13 +76,35 @@ class PassiveTimer:
 class KivyApp(App):
     Symbols = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
 
-    def test_toggle(a, pin):
-        gpio_control.toggle(pin)
+    def play_video(self, vid):
+        self.root.ids["video_player"].source = vid
+        self.root.ids["video_player"].state = "play"
 
-    def system_poweroff(a):
+    def load_video_list(self):
+        videos = glob.glob(os.environ["HOME"] + "/Videos/V24m/*.mp4")
+
+        while len(self.root.ids["video_list"].children) > 0:
+            self.root.ids["video_list"].remove_widget(self.root.ids["video_list"].children[0])
+
+        for video in videos:
+            self.root.ids["video_list"].add_widget(Button(text=video, on_press=lambda _, video=video: app.play_video(video), size=(400, 120), size_hint=(None, None)))
+
+    def start_recording(_):
+        video_control.start_recording()
+
+    def stop_recording(_):
+        video_control.stop_recording()
+    
+    def save_clip(_):
+        video_control.save_clip()
+
+    def play_pause_video(self):
+        self.root.video_playing = not self.root.video_playing
+
+    def system_poweroff(_):
         subprocess.run("/usr/sbin/poweroff")
 
-    def system_reboot(a):
+    def system_reboot(_):
         subprocess.run("/usr/sbin/reboot")
 
     def update_config(self):
@@ -94,13 +118,10 @@ class KivyApp(App):
     def send_handler(self, code):
         gpio_control.ir_emu(self.config["rc5_address"], code)
 
-    def carousel_handler(self, a, old_index, new_index, commands):
+    def carousel_handler(self, _, old_index, new_index, commands):
         self.send_handler(commands[(2 + new_index - old_index) % 3])
         
     def set_weapon(self, new_weapon):
-        if not is_banana:
-            return
-
         gpio_control.button_emu(37, (3 + new_weapon - self.root.weapon) % 3)
         self.weapon = new_weapon
 
@@ -111,10 +132,7 @@ class KivyApp(App):
             self.root.epee5 = 0
             gpio_control.set(15, self.root.epee5)
 
-    def change_weapon_connection_type(a):
-        if not is_banana:
-            return
-
+    def change_weapon_connection_type(_):
         gpio_control.button_emu(27, 1)
 
     def passive_stop_card(self, state):
@@ -271,11 +289,16 @@ class KivyApp(App):
         else:
             self.passive_timer.stop()
 
+        if root.timer_running == 1:
+            video_control.start_recording()
+        else:
+            video_control.stop_recording()
+
         ### Debug
 
-        gpio_control.read_rc5()
+        #gpio_control.read_rc5()
 
-        root.debug_rc5_commands_text = str(gpio_control.ir_commands).replace("]", "]\n")
+        #root.debug_rc5_commands_text = str(gpio_control.ir_commands).replace("]", "]\n")
 
     def get_data(self, dt):
         root = self.root
@@ -302,6 +325,8 @@ class KivyApp(App):
         pins = gpio_control.read_pins()
         if pins[27] == 0:
             self.system_poweroff()
+        if pins[18] == 1:
+            video_control.save_clip()
         if 37 not in gpio_control.button_emulating or root.timer_running:
             root.weapon = 0
             root.weapon = pins[32] * 2 + pins[36]
@@ -384,6 +409,8 @@ class KivyApp(App):
         Clock.schedule_interval(self.get_data, read_interval)
         self.root.flash_timer  = time.time()
         self.root.current_time = time.time()
+        self.load_video_list()
+
 
     def on_stop(self):
         if self.data_rx is not None:

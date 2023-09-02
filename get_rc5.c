@@ -20,7 +20,7 @@ int main()
 {
     setup();
     struct timespec t;
-    unsigned long time;
+    unsigned long time, timer;
     int toggle = -1;
 
     while (1)
@@ -50,7 +50,6 @@ int main()
             if (valid)
             {
                 toggle = buffer[9];
-                printf("b ");
                 for (int i = 0; i < 28; i++)
                 {
                     printf(" %d", buffer[i * 2 + 1]);
@@ -58,6 +57,13 @@ int main()
                 printf("\n");
                 fflush(stdout);
             }
+        }
+
+        if (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - timer > 100000)
+        {
+            printf("AAA\n");
+            fflush(stdout);
+            timer = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
         }
 
         while (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time < TIMING)

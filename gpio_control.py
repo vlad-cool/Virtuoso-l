@@ -11,10 +11,10 @@ ir_commands = []
 
 button_emulating = []
 
-send_pin_proc = subprocess.Popen("./send_pin", bufsize=1, text=True, stdin=subprocess.PIPE)
-send_rc5_proc = subprocess.Popen("./send_rc5", bufsize=1, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-get_pin_proc = subprocess.Popen("./get_pin", bufsize=1, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-get_rc5_proc = subprocess.Popen("./get_rc5", bufsize=1, text=True, stdout=subprocess.PIPE)
+send_pin_proc = subprocess.Popen("./send_pin", bufsize=0, text=True, stdin=subprocess.PIPE)
+send_rc5_proc = subprocess.Popen("./send_rc5", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+get_pin_proc = subprocess.Popen("./get_pin", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+get_rc5_proc = subprocess.Popen("./get_rc5", bufsize=0, text=True, stdout=subprocess.PIPE)
 
 def toggle(pin):
     send_pin_proc.stdin.write(f"toggle {pin}\n")
@@ -44,7 +44,12 @@ def read_rc5():
         ir_command = get_rc5_proc.stdout.readline()
         if ir_command == "":
             break
-        print(ir_command)
+        
+        if ir_command[0] != "A":
+            print(ir_command, end="")
+
+
+
         ir_commands.append(ir_command)
 
 

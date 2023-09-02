@@ -10,8 +10,9 @@ a.out
 ir_send
 test
 /dts
-/benchmark
 /Docs
 scripts/useful_commands
 .bash_login
 main.kv
+scripts/video_commands
+scripts/video_commands

@@ -42,6 +42,10 @@ Carousel:
     color_timer: app.color_timer_orange
     color_invis: [0, 0, 0, 0]
 
+    video_playing: False
+
+    on_index: app.load_video_list()
+
     FloatLayout:
         BoxLayout:
             id: weapon_selector
@@ -618,3 +622,83 @@ Carousel:
     #Camera:
     #    id: camera
     #    resolution: 640, 480
+    FloatLayout:
+        Video:
+            id: video_player
+            size: 640, 480
+            size_hint: None, None
+            pos: 1920 - 640, 0
+            state: "play" if root.video_playing else "pause"
+
+        BoxLayout:
+            id: player_controls
+            orientation: "vertical"
+            size: 120, 480
+            size_hint: None, None
+            pos: 1920 - 640 - 120, 0
+
+            #Button:
+            #    id: next_video
+            #    size: 120, 120
+            #    text: "next"
+            #    font_size: 80
+            #    font_name:"agencyb"
+            #    background_color: [1, 0, 0, 1]
+            #    on_press: app.next_video()
+
+            Button:
+                id: play_pause_video
+                size: 120, 120
+                size_hint: None, None
+                text: "play/pause"
+                font_size: 80
+                font_name:"agencyb"
+                background_color: [0, 1, 0, 1]
+                on_press: app.play_pause_video()
+            
+            #Button:
+            #    id: previous_video
+            #    text: "previous"
+            #    font_size: 80
+            #    font_name:"agencyb"
+            #    background_color: [0, 0, 1, 1]
+            #    on_press: app.previous_video()
+
+            #Button:
+            #    id: delete_video
+            #    text: "delete"
+            #    font_size: 80
+            #    font_name:"agencyb"
+            #    background_color: [0, 1, 1, 1]
+            #    on_press: app.delete_video()
+
+        ScrollView:
+            size: 400, 480
+            size_hint: None, None
+            pos: 0, 0
+            do_scroll_x: False
+            do_scroll_y: True
+
+            GridLayout:
+                id: video_list
+                size_hint: None, None
+                height: self.minimum_height
+                cols: 1
+    BoxLayout:
+        Button:
+            text: "start_recording"
+            on_press: app.start_recording()
+       
+        Button:
+            text: "save_clip"
+            on_press: app.save_clip()
+
+        Button:
+            text: "stop_recording"
+            on_press: app.stop_recording()
+    #Video:
+    #    source: "/dev/video0"
+    #    state: "play"
+    #Button:
+    #    text: "test mpv"
+    #    on_press: app.open_player()
