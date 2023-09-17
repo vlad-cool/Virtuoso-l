@@ -7,14 +7,18 @@ off_time = 250
 on_time  = 250
 TIMING = 889
 
-ir_commands = []
-
 button_emulating = []
 
 send_pin_proc = subprocess.Popen("./send_pin", bufsize=0, text=True, stdin=subprocess.PIPE)
 send_rc5_proc = subprocess.Popen("./send_rc5", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 get_pin_proc = subprocess.Popen("./get_pin", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-get_rc5_proc = subprocess.Popen("./get_rc5", bufsize=0, text=True, stdout=subprocess.PIPE)
+get_rc5_proc = subprocess.Popen("./get_rc5", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+class ir_command:
+    def __init__(self, data):
+        self.toggle = 0
+        self.address = 0
+        self.command = 0
 
 def toggle(pin):
     send_pin_proc.stdin.write(f"toggle {pin}\n")
@@ -30,27 +34,35 @@ def ir_emu(address, command):
     send_rc5_proc.stdin.write(f"transmit {address} {command}\n")
 
 def ir_emu_blocking(address, command):
-    send_rc5_proc.stdin.write(f"transmit {address} {command}\n")
-    send_rc5_proc.stdin.write(f"ping\n")
+    send_rc5_proc.stdin.write(f"transmit {address} {command}\nping\n")
     send_rc5_proc.stdout.readline()
 
 def read_pins():
     get_pin_proc.stdin.write("get\n")
     return literal_eval(get_pin_proc.stdout.readline())
 
-def read_rc5():
-    global ir_commands
+def read_rc5(address):
+    get_pin_proc.stdin.write("get\n")
+    ir_commands = []
+    raw_rc5 = get_pin_proc.stdout.readline()
+    while raw_rc5 != "end":
+        raw_rc5 = get_pin_proc.stdout.readline()
+        
+
+    return ir_commands
+
     while select.select([get_rc5_proc.stdout], [], [], 0)[0]:
         ir_command = get_rc5_proc.stdout.readline()
         if ir_command == "":
             break
-        
+
         if ir_command[0] != "A":
-            print(ir_command, end="")
-
-
-
-        ir_commands.append(ir_command)
+            ir_command
+            addr = 0
+            for i in range(1, 6):
+                addr += ir_command[i]
+            ir_commands.append(ir_command)
+    return ir_commands
 
 
 def byte_to_arr(byte):

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <sys/poll.h>
 
 #define TIMING 444
 #define rc5_pin 3
@@ -25,6 +26,28 @@ int main()
 
     while (1)
     {
+        struct pollfd fds;
+        int ret;
+        fds.fd = 0;
+        fds.events = POLLIN;
+        ret = poll(&fds, 1, 0);
+        if(ret == 1)
+        {
+            if (scanf("%128s", s) < 1)
+            {
+                break;
+            }
+            if (strcmp(s, "get") == 0)
+            {
+                printf("end");
+                fflush(stdout);
+            }
+            if (strcmp(s, "exit") == 0)
+            {
+                break;
+            }
+        }
+
         clock_gettime(CLOCK_BOOTTIME, &t);
         time = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
 
@@ -33,8 +56,6 @@ int main()
             buffer[i] = buffer[i + 1];
         }
         buffer[55] = digitalRead(rc5_pin);
-
-
 
         if (buffer[1] == 1 && buffer[3] == 0 && buffer[5] == 1 && buffer[7] == 0 && buffer[9] != toggle)
         {
@@ -57,13 +78,6 @@ int main()
                 printf("\n");
                 fflush(stdout);
             }
-        }
-
-        if (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - timer > 100000)
-        {
-            printf("AAA\n");
-            fflush(stdout);
-            timer = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
         }
 
         while (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time < TIMING)

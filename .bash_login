@@ -1,14 +1,12 @@
+export MAIN_LOG=main.log
+export FFMPEG_LOG=ffmpeg.log
+export CUTTER_LOG=cutter.log
 if [ -z "$SSH_TTY" ] && [ -z "$TMUX" ]
 then
     cd V24m
-
-    case $DISPLAY_TYPE in
-
-    28inch)
-        ./app.py
-        ;;
-    8.9inch | *)
-        ./app.py -r 90
-        ;;
-    esac
+    clear
+    sudo plymouth quit
+    startx ./start_x.sh &> $MAIN_LOG
+    #/usr/sbin/reboot
 fi
+

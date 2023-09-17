@@ -7,8 +7,8 @@
 
 #define TIMING 200000
 
-int pins[]  = { 8, 10, 12, 16, 19, 21, 23, 24,  5, 15, 26, 29, 35, 37, -1};
-int state[] = { 1,  1,  1,  1,  1,  1,  1,  1,  0,  0,  1,  0,  0,  1, -1};
+int pins[]  = { 8, 10, 12, 16, 19, 21, 23, 24,  5, 15, 26, 29, 35, 37};
+int state[] = { 1,  1,  1,  1,  1,  1,  1,  1,  0,  0,  1,  0,  0,  1};
 
 void flush()
 {
@@ -18,15 +18,23 @@ void flush()
 
 int pin_index(int pin)
 {
-    int *i;
-    for (i = pins; *i != -1 && *i != pin; i++) { }
-    return *i == -1 ? -1 : i - pins;
+    int i;
+    for (i = 0; i < sizeof(pins) / sizeof(int) && pins[i] != pin; i++) { }
+    if (i == sizeof(pins) / sizeof(int))
+    {
+        return -1;
+    }    
+    else
+    {
+        return i;
+    }
+
 }
 
 void setup()
 {
     wiringPiSetupPhys();
-    for (int i = 0; pins[i] != -1; i++)
+    for (int i = 0; i < sizeof(pins) / sizeof(int); i++)
     {
         pinMode(pins[i], 1);
         digitalWrite(pins[i], state[i]);

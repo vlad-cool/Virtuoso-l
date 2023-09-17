@@ -17,4 +17,4 @@ do
     j=$(($j+1))
 done
 
-sudo ./remove_tmp_video.sh $VIDEO_NAME.mp4
+rm $HOME/Videos/V24m/tmp/$VIDEO_NAME.mp4

@@ -14,17 +14,71 @@ from kivy.lang        import Builder
 from kivy.app         import App
 from kivy.core.text   import LabelBase
 from kivy.uix.button  import Button
-import video_control
 
 read_interval = .05
 is_banana = platform.machine() == "armv7l"
 
 if is_banana:
     import gpio_control
+    import video_control
 else:
     import gpio_control_emu as gpio_control
+    import video_control_emu as video_control
 
 kivy.require("2.1.0")
+
+class UartData:
+    def __init__(self, data):
+        self.yellow_white  = data[0][4]
+        self.red           = data[0][3]
+        self.white_green   = data[0][2]
+        self.yellow_green  = data[0][1]
+        self.green         = data[0][0]
+        self.white_red     = data[1][4]
+        self.apparel_sound = data[1][3]
+        self.symbol        = data[1][2]
+        self.on_timer      = data[2][4]
+        self.timer_sound   = data[3][4]
+
+        self.score_r = data[7][4]
+        for i in data[5][4::-1]:
+            self.score_r *= 2
+            self.score_r += i
+
+        self.score_l = data[6][4]
+        for i in data[4][4::-1]:
+            self.score_l *= 2
+            self.score_l += i
+
+        self.timer_m = 0
+        for i in data[1][2::-1]:
+            self.timer_m *= 2
+            self.timer_m += i
+
+        self.timer_d = 0
+        for i in data[2][3::-1]:
+            self.timer_d *= 2
+            self.timer_d += i
+
+        self.timer_s = 0
+        for i in data[3][3::-1]:
+            self.timer_s *= 2
+            self.timer_s += i
+
+        self.period = 0
+        for i in data[6][3::-1]:
+            self.period *= 2
+            self.period += i
+
+        self.warning_l = data[7][3] * 2 + data[7][2]
+        self.warning_r = data[7][1] * 2 + data[7][0]
+
+class PinsData:
+    def __init__(self, pins):
+        self.wireless  = pins[7]
+        self.recording = pins[18]
+        self.poweroff  = pins[27]
+        self.weapon    = pins[32] * 2 + pins[36]
 
 class PassiveTimer:
     def stop(self):
@@ -51,11 +105,11 @@ class PassiveTimer:
 
     def get_coun(self):
         return self.coun
-    
+
     def update(self):
         if self.running == False:
             return
-        
+
         cur_time = time.time()
         delta = cur_time - self.prev_time
         self.size += self.max_size * delta / 50
@@ -68,7 +122,7 @@ class PassiveTimer:
         else:
             self.coun = " 0"
         self.prev_time = cur_time
-    
+
     def __init__(self, passive_max_size):
         self.max_size = passive_max_size
         self.clear()
@@ -82,6 +136,7 @@ class KivyApp(App):
 
     def load_video_list(self):
         videos = glob.glob(os.environ["HOME"] + "/Videos/V24m/*.mp4")
+        videos.sort()
 
         while len(self.root.ids["video_list"].children) > 0:
             self.root.ids["video_list"].remove_widget(self.root.ids["video_list"].children[0])
@@ -89,14 +144,7 @@ class KivyApp(App):
         for video in videos:
             self.root.ids["video_list"].add_widget(Button(text=video, on_press=lambda _, video=video: app.play_video(video), size=(400, 120), size_hint=(None, None)))
 
-    def start_recording(_):
-        video_control.start_recording()
-
-    def stop_recording(_):
-        video_control.stop_recording()
-    
-    def save_clip(_):
-        video_control.save_clip()
+        self.root.ids["video_player"].state = "pause"
 
     def play_pause_video(self):
         self.root.video_playing = not self.root.video_playing
@@ -120,7 +168,7 @@ class KivyApp(App):
 
     def carousel_handler(self, _, old_index, new_index, commands):
         self.send_handler(commands[(2 + new_index - old_index) % 3])
-        
+
     def set_weapon(self, new_weapon):
         gpio_control.button_emu(37, (3 + new_weapon - self.root.weapon) % 3)
         self.weapon = new_weapon
@@ -144,7 +192,7 @@ class KivyApp(App):
         for i in range(8):
                 a[i] = byte % 2
                 byte //= 2
-        return a[::-1]
+        return a
 
     def update_millis(self, dt):
         if self.root.timer_running == 0:
@@ -156,57 +204,30 @@ class KivyApp(App):
 
     def data_update(self, data):
         root = self.root
+        uart_data = UartData(data)
 
-        if data[0][4] + data[0][5] + data[0][7] + data[1][3] > 0 and root.timer_running:
+        if uart_data.red + uart_data.green + uart_data.white_red + uart_data.white_green > 0 and root.timer_running:
             self.passive_timer.clear()
 
-        score_r = data[7][3]
-        for i in data[5][3:]:
-            score_r *= 2
-            score_r += i
-
-        score_l = data[6][3]
-        for i in data[4][3:]:
-            score_l *= 2
-            score_l += i
-
-        if score_l < 10:
-            root.score_l_l = str(score_l)
+        if uart_data.score_l < 10:
+            root.score_l_l = str(uart_data.score_l)
             root.score_l_r = " "
         else:
-            root.score_l_l = str(score_l // 10)
-            root.score_l_r = str(score_l % 10)
+            root.score_l_l = str(uart_data.score_l // 10)
+            root.score_l_r = str(uart_data.score_l % 10)
 
-        if score_r < 10:
+        if uart_data.score_r < 10:
             root.score_r_l = " "
-            root.score_r_r = str(score_r)
+            root.score_r_r = str(uart_data.score_r)
         else:
-            root.score_r_l = str(score_r // 10)
-            root.score_r_r = str(score_r % 10)
+            root.score_r_l = str(uart_data.score_r // 10)
+            root.score_r_r = str(uart_data.score_r % 10)
 
-        timer_m = 0
-        timer_d = 0
-        timer_s = 0
+        timer_m = uart_data.timer_m
+        timer_d = uart_data.timer_d
+        timer_s = uart_data.timer_s
 
-        for i in data[1][6:]:
-            timer_m *= 2
-            timer_m += i
-
-        for i in data[2][4:]:
-            timer_d *= 2
-            timer_d += i
-
-        for i in data[3][4:]:
-            timer_s *= 2
-            timer_s += i
-        
-        period = 0
-        
-        for i in range(4):
-            period *= 2
-            period += data[6][4 + i]
-
-        if period == 15:
+        if uart_data.period == 15:
             if root.priority != 1:
                 root.priority = 1 # GREEN
                 gpio_control.set(29, 0)
@@ -215,7 +236,7 @@ class KivyApp(App):
                     self.led_schedule.cancel()
                     self.led_schedule = None
                 self.led_schedule = Clock.schedule_once(lambda dt: gpio_control.set(35, 0), 2)
-        elif period == 14:
+        elif uart_data.period == 14:
             if root.priority != -1:
                 root.priority = -1 # RED
                 gpio_control.set(35, 0)
@@ -224,7 +245,7 @@ class KivyApp(App):
                     self.led_schedule.cancel()
                     self.led_schedule = None
                 self.led_schedule = Clock.schedule_once(lambda dt: gpio_control.set(29, 0), 2)
-        elif period == 13:
+        elif uart_data.period == 13:
             if root.priority != 0:
                 root.priority = 0
                 gpio_control.set(35, 0)
@@ -232,22 +253,21 @@ class KivyApp(App):
                 if self.led_schedule is not None:
                     self.led_schedule.cancel()
                     self.led_schedule = None
-        elif period >= 1 and period <= 9:
-            root.period = period
-        if period in [12, 13] and self.raw_period not in [12, 13]:
+        elif uart_data.period >= 1 and uart_data.period <= 9:
+            root.period = uart_data.period
+        if uart_data.period in [12, 13] and self.prev_uart_data is not None and self.prev_uart_data.period not in [12, 13]:
             self.passive_timer.clear()
-        if period == 12 and timer_m == 0:
+        if uart_data.period == 12 and timer_m == 0:
             timer_m = 4
-        self.raw_period = period
-        
-        if data[1][5] == 0:
+
+        if uart_data.symbol == 0:
             if self.old_sec != str(timer_s):
                 root.time_updated = True
                 root.flash_timer = time.time()
             else:
                 root.time_updated = False
 
-            if data[2][3] == 0:
+            if uart_data.on_timer == 0:
                 root.color_timer = app.color_timer_orange
             elif timer_m == 0 and timer_d == 0:
                 root.color_timer = app.color_timer_blue
@@ -260,8 +280,8 @@ class KivyApp(App):
                 root.timer_0 = str(timer_s - 1)
 
             elif timer_m > 0 or root.color_timer == app.color_timer_orange:
-                root.color_timer = app.color_timer_white            
-        
+                root.color_timer = app.color_timer_white
+
             if (timer_m > 0 or timer_d > 0 or (timer_m == 0 and timer_d == 0 and timer_s == 0)) and self.timer_interval is not None:
                 self.timer_interval.cancel()
                 self.timer_interval = None
@@ -272,7 +292,7 @@ class KivyApp(App):
                 root.timer_2 = str(timer_d)
                 root.timer_3 = str(timer_s)
                 root.timer_text = ""
-            root.timer_running = data[2][3]
+            root.timer_running = uart_data.on_timer
 
         else:
             root.timer_0 = ""
@@ -281,26 +301,17 @@ class KivyApp(App):
             root.timer_3 = ""
             root.timer_text = KivyApp.Symbols[timer_d] + KivyApp.Symbols[timer_s]
 
-        root.warning_l = data[7][4] * 2 + data[7][5]
-        root.warning_r = data[7][6] * 2 + data[7][7]
+        root.warning_l = uart_data.warning_l
+        root.warning_r = uart_data.warning_r
 
         if root.timer_running == 1 and ((timer_m > 0 and timer_m + timer_d + timer_s > 1) or self.passive_timer.prev_time != 0) and not self.root.weapon == 1:
             self.passive_timer.start()
         else:
             self.passive_timer.stop()
 
-        if root.timer_running == 1:
-            video_control.start_recording()
-        else:
-            video_control.stop_recording()
+        self.prev_uart_data = uart_data
 
-        ### Debug
-
-        #gpio_control.read_rc5()
-
-        #root.debug_rc5_commands_text = str(gpio_control.ir_commands).replace("]", "]\n")
-
-    def get_data(self, dt):
+    def get_data(self, _):
         root = self.root
         root.current_time = time.time()
         if is_banana:
@@ -312,31 +323,35 @@ class KivyApp(App):
 
                 self.data_update(data)
         else:
-            data = [[0, 0, 0, 0, 0, 0, 0, 0],
-                    [0, 0, 1, 0, 0, 0, 0, 0],
-                    [0, 1, 0, 1, 0, 0, 0, 0],
-                    [0, 1, 1, 0, 0, 0, 0, 0],
-                    [1, 0, 0, 0, 0, 0, 0, 0],
-                    [1, 0, 1, 0, 0, 0, 1, 1],
-                    [1, 1, 0, 0, 0, 0, 0, 0],
-                    [1, 1, 1, 0, 0, 1, 1, 0],]
+            data = [[0, 0, 0, 0, 0, 0, 0, 0][::-1],
+                    [0, 0, 1, 0, 0, 0, 0, 0][::-1],
+                    [0, 1, 0, 1, 0, 0, 0, 0][::-1],
+                    [0, 1, 1, 0, 0, 0, 0, 0][::-1],
+                    [1, 0, 0, 0, 0, 0, 0, 0][::-1],
+                    [1, 0, 1, 0, 0, 0, 1, 1][::-1],
+                    [1, 1, 0, 0, 0, 0, 0, 0][::-1],
+                    [1, 1, 1, 0, 0, 1, 1, 0][::-1],]
             self.data_update(data)
 
-        pins = gpio_control.read_pins()
-        if pins[27] == 0:
-            self.system_poweroff()
-        if pins[18] == 1:
-            video_control.save_clip()
-        if 37 not in gpio_control.button_emulating or root.timer_running:
-            root.weapon = 0
-            root.weapon = pins[32] * 2 + pins[36]
-            if root.weapon == 1:
-                self.passive_timer.clear()
-        if 27 not in gpio_control.button_emulating or root.timer_running:
-            root.weapon_connection_type = 0
-            root.weapon_connection_type = pins[7]
-        root.video_timer = pins[18]
+        pins_data = PinsData(gpio_control.read_pins())
+        
 
+        if pins_data.poweroff == 0:
+            self.system_poweroff()
+
+        # Recording section
+        # -----------------
+        if ((self.prev_pins_data is None or self.prev_pins_data.recording == 0) and pins_data.recording == 1) or (pins_data.recording == 1 and not (video_control.ffmpeg_proc is not None) and (video_control.ffmpeg_proc.poll() is None)):
+            video_control.start_recording()
+        elif self.prev_pins_data is not None and self.prev_pins_data.recording == 1 and pins_data.recording == 0:
+            video_control.save_clip()
+            Clock.schedule_once(lambda _: video_control.stop_recording(), 3)
+        # -----------------
+
+        root.weapon = pins_data.weapon
+        if root.weapon == 1:
+            self.passive_timer.clear()
+        root.weapon_connection_type = pins_data.wireless
 
         self.passive_timer.update()
         root.passive_size = self.passive_timer.get_size()
@@ -344,14 +359,18 @@ class KivyApp(App):
         root.passive_coun = self.passive_timer.get_coun()
         root.color_passive = self.color_passive_red if root.passive_time > 50 else self.color_passive_yel
 
-        root.pin27_state = pins[27]
+        if video_control.ffmpeg_proc is not None and video_control.ffmpeg_proc.poll() is not None:
+            video_control.ffmpeg_proc = None
+        root.recording = (video_control.ffmpeg_proc is not None) and (video_control.ffmpeg_proc.poll() is None)
+
+        self.prev_pins_data = pins_data
 
     def build(self):
         self.color_left_score     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
         self.color_right_score    = [  0 / 255, 152 / 255,  70 / 255, 1.0] # green
-        
+
         self.color_period         = [  0 / 255, 160 / 255, 227 / 255, 1.0] # blue
-        
+
         self.color_timer_white    = [223 / 255, 223 / 255, 223 / 255, 1.0] # white
         self.color_timer_orange   = [239 / 255, 127 / 255,  26 / 255, 1.0] # orange
         self.color_timer_blue     = [  0 / 255, 160 / 255, 227 / 255, 1.0] # blue
@@ -362,7 +381,7 @@ class KivyApp(App):
         self.color_warn_yel_dis   = [ 51 / 255,  51 / 255,   0 / 255, 1.0] # dark yellow
         self.color_warn_text_ena  = [230 / 255, 230 / 255, 230 / 255, 1.0] # white
         self.color_warn_text_dis  = [102 / 255, 102 / 255, 102 / 255, 1.0] # grey
-        
+
         self.color_passive_yel    = [204 / 255, 204 / 255,   0 / 255, 1.0] # yellow
         self.color_passive_red    = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
         self.color_passive_white  = [223 / 255, 223 / 255, 223 / 255, 1.0] # white
@@ -375,15 +394,19 @@ class KivyApp(App):
 
         self.color_weapon_ena     = [179 / 255, 179 / 255, 179 / 255, 1.0] # light gray
         self.color_weapon_dis     = [ 76 / 255,  76 / 255,  76 / 255, 1.0] # dark gray
+        self.color_rec            = [255 / 255,   0 / 255,   0 / 255, 1.0] # red
+        self.color_black          = [  0 / 255,   0 / 255,   0 / 255, 1.0] # black
 
         self.card_radius = 10
 
-        self.raw_period           = 0
         self.old_sec              = "0"
         self.passive_timer        = PassiveTimer(500)
         self.timer_interval       = None
         self.timer_millis         = 0
-        self.led_schedule = None
+
+        self.led_schedule   = None
+        self.prev_uart_data = None
+        self.prev_pins_data = None
 
         self.config = {"rc5_address": -1}
 
@@ -402,7 +425,7 @@ class KivyApp(App):
                 shutil.rmtree(config_path)
             print("No config file, creating!")
             self.update_config()
-        
+
         return Builder.load_file("main.kv")
 
     def on_start(self):
@@ -410,7 +433,6 @@ class KivyApp(App):
         self.root.flash_timer  = time.time()
         self.root.current_time = time.time()
         self.load_video_list()
-
 
     def on_stop(self):
         if self.data_rx is not None:
