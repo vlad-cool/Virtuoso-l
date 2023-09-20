@@ -410,6 +410,12 @@ class KivyApp(App):
 
         self.config = {"rc5_address": -1}
 
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        self.ip = s.getsockname()[0]
+        s.close()
+
         if is_banana:
             self.data_rx = serial.Serial("/dev/ttyS2", 38400)
         else:

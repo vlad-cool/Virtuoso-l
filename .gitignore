@@ -4,3 +4,4 @@
 .directory
 config.json
 scripts/upload.sh
+main.kv

@@ -4,8 +4,6 @@
 Carousel:
     loop: True
 
-    debug: "No debug info"
-
     weapon: 0
     weapon_connection_type: 0
 
@@ -620,7 +618,7 @@ Carousel:
         do_default_tab: False
         border: [0, 0, 0, 0]
         tab_pos: "top_mid"
-        tab_width: (1920 / 2 - 10)
+        tab_width: (1920 / 3 - 10)
         TabbedPanelItem:
             text: "System"
             BoxLayout:
@@ -636,13 +634,11 @@ Carousel:
                 Button:
                     text: "sync hardware"
                     on_press: app.write_address()
-    Label:
-        id: debug_output
-        font_size: 40
-        text: root.debug
-    #Camera:
-    #    id: camera
-    #    resolution: 640, 480
+        TabbedPanelItem:
+            text: "IP"
+            Label:
+                text: app.ip
+
     FloatLayout:
         Video:
             id: video_player

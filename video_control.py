@@ -1,12 +1,12 @@
 import subprocess
 import platform
 import time
+import sys
 import os
 
 clip_duration = 10 #seconds
 post_record = 2 #seconds
 segment_duration = 30 #seconds
-gap = 1 #seconds, gap between clips
 
 os.environ["LOG"] = "/dev/null"
 
@@ -43,11 +43,16 @@ def start_recording():
     global start_time
     if recording:
         return
-    recording = True
-    start_time = time.clock_gettime(time.CLOCK_BOOTTIME)
-    os.environ["VIDEO_NAME"] = str(name)
+    try:
+        start_time = time.clock_gettime(time.CLOCK_BOOTTIME)
+        os.environ["VIDEO_NAME"] = str(name)
+        ffmpeg_proc = subprocess.Popen(["./start_ffmpeg.sh"], bufsize=0, text=True, stdin=subprocess.PIPE)
+        recording = True
+    except:
+        exc_type, exc_value = sys.exc_info()
+        with open("errors.txt", "a") as f:
+            f.write(f"Произошла ошибка: {exc_type} - {exc_value}\n")
 
-    ffmpeg_proc = subprocess.Popen(["./start_ffmpeg.sh"], bufsize=0, text=True, stdin=subprocess.PIPE)
 
 def stop_recording():
     global recording
@@ -56,16 +61,22 @@ def stop_recording():
     global name
     if not recording:
         return
-    recording = False
+    try:
+        ffmpeg_proc.stdin.write("q\n")
+        recording = False
 
-    ffmpeg_proc.stdin.write("q\n")
-
-    split_video()
-    start_time = 0
-    name += 1
+        split_video()
+        start_time = 0
+        name += 1
+    except:
+        exc_type, exc_value = sys.exc_info()
+        with open("errors.txt", "a") as f:
+            f.write(f"Произошла ошибка: {exc_type} - {exc_value}\n")
 
 def save_clip():
-    clips.append(time.clock_gettime(time.CLOCK_BOOTTIME))
+    global recording
+    if recording:
+        clips.append(time.clock_gettime(time.CLOCK_BOOTTIME))
 
 def split_video():
     split_proc = subprocess.Popen(["./video_cutter.sh"], bufsize=0, text=True, stdin=subprocess.PIPE)
