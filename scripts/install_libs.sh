@@ -106,8 +106,10 @@ rm -rf SDL2*
 mkdir -p V24m
 cd V24m
 sudo mount -o remount,size=4G /tmp/
-python3 -m pip install --upgrade pip setuptools virtualenv
-python3 -m venv venv
+#python3 -m pip install --upgrade pip setuptools virtualenv
+#python3 -m venv venv
+sudo apt -y install pypy3
+pypy3 -m venv venv
 venv/bin/python3 -m pip install --upgrade pip setuptools virtualenv
 venv/bin/python3 -m pip install Pillow
 venv/bin/python3 -m pip install setuptools
