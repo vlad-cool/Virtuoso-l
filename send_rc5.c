@@ -44,6 +44,8 @@ void send(int address, int command)
         time = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
         digitalWrite(rc5_pin, 0 + data[i]);
 
+        usleep(TIMING * 9 / 10);
+
         while (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time < TIMING)
         {
             clock_gettime(CLOCK_BOOTTIME, &t);
@@ -51,6 +53,8 @@ void send(int address, int command)
 
         time = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
         digitalWrite(rc5_pin, 1 - data[i]);
+
+        usleep(TIMING * 9 / 10);
 
         while (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time < TIMING)
         {

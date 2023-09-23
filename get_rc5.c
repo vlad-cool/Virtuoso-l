@@ -20,6 +20,7 @@ void setup()
 int main()
 {
     setup();
+    char *s = calloc(sizeof(char), 256);
     struct timespec t;
     unsigned long time, timer;
     int toggle = -1;
@@ -79,6 +80,8 @@ int main()
                 fflush(stdout);
             }
         }
+
+        usleep(TIMING * 9 / 10);
 
         while (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time < TIMING)
         {
