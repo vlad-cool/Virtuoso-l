@@ -38,7 +38,7 @@ int main()
         int ret;
         fds.fd = 0;
         fds.events = POLLIN;
-        ret = poll(&fds, 1, 3);
+        ret = poll(&fds, 1, 5);
         if(ret == 1)
         {
             if (scanf("%128s", s) < 1)
@@ -68,19 +68,13 @@ int main()
                 break;
             }
         }
-        //clock_gettime(CLOCK_BOOTTIME, &t);
-//
-        //if (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time > 5000)
-        //{
-        //    time = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
-//
-            int i;
 
-            for (i = 0; i + 1 < sizeof(pin_18_state_buf) / sizeof(int); i++)
-            {
-                pin_18_state_buf[i] = pin_18_state_buf[i + 1];
-            }
-            pin_18_state_buf[i] = digitalRead(18);
-        //}
+        int i;
+
+        for (i = 0; i + 1 < sizeof(pin_18_state_buf) / sizeof(int); i++)
+        {
+            pin_18_state_buf[i] = pin_18_state_buf[i + 1];
+        }
+        pin_18_state_buf[i] = digitalRead(18);
     }
 }
