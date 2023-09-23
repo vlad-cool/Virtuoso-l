@@ -80,6 +80,7 @@ def save_clip():
         clips.append(time.clock_gettime(time.CLOCK_BOOTTIME))
 
 def split_video():
+    global clips
     split_proc = subprocess.Popen(["./video_cutter.sh"], bufsize=0, text=True, stdin=subprocess.PIPE)
     split_proc.stdin.write(f"{name}\n")
     split_proc.stdin.write(f"{len(clips)}\n")
@@ -87,3 +88,4 @@ def split_video():
     for clip in clips:
         split_proc.stdin.write(f"{format_time(clip + post_record - clip_duration - start_time)}\n")
         split_proc.stdin.write(f"{format_time(clip + post_record - start_time)}\n")
+    clips = []
