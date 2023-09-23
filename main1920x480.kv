@@ -47,6 +47,8 @@ Carousel:
 
     recording: False
 
+    ip: "Unknown IP address"
+
     FloatLayout:
         BoxLayout:
             id: weapon_selector
@@ -637,7 +639,7 @@ Carousel:
         TabbedPanelItem:
             text: "IP"
             Label:
-                text: app.ip
+                text: root.ip
 
     FloatLayout:
         Video:

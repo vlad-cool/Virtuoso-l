@@ -6,6 +6,7 @@ import json
 import glob
 import serial
 import shutil
+import socket
 import pathlib
 import platform
 import subprocess
@@ -136,7 +137,7 @@ class KivyApp(App):
 
     def load_video_list(self):
         videos = glob.glob(os.environ["HOME"] + "/Videos/V24m/*.mp4")
-        videos.sort()
+        videos.sort(key=lambda x: int(x[21:-4]))
 
         while len(self.root.ids["video_list"].children) > 0:
             self.root.ids["video_list"].remove_widget(self.root.ids["video_list"].children[0])
@@ -341,7 +342,7 @@ class KivyApp(App):
 
         # Recording section
         # -----------------
-        if ((self.prev_pins_data is None or self.prev_pins_data.recording == 0) and pins_data.recording == 1) or (pins_data.recording == 1 and not (video_control.ffmpeg_proc is not None) and (video_control.ffmpeg_proc.poll() is None)):
+        if ((self.prev_pins_data is None or self.prev_pins_data.recording == 0) and pins_data.recording == 1) or (pins_data.recording == 1 and not (video_control.ffmpeg_proc is not None and video_control.ffmpeg_proc.poll() is None)):
             video_control.start_recording()
         elif self.prev_pins_data is not None and self.prev_pins_data.recording == 1 and pins_data.recording == 0:
             video_control.save_clip()
@@ -364,6 +365,14 @@ class KivyApp(App):
         root.recording = (video_control.ffmpeg_proc is not None) and (video_control.ffmpeg_proc.poll() is None)
 
         self.prev_pins_data = pins_data
+
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            root.ip = s.getsockname()[0]
+            s.close()
+        except:
+            root.ip = "Unlnown IP address"
 
     def build(self):
         self.color_left_score     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
@@ -409,12 +418,6 @@ class KivyApp(App):
         self.prev_pins_data = None
 
         self.config = {"rc5_address": -1}
-
-        import socket
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        self.ip = s.getsockname()[0]
-        s.close()
 
         if is_banana:
             self.data_rx = serial.Serial("/dev/ttyS2", 38400)
