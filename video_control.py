@@ -15,7 +15,7 @@ if platform.machine() == "armv7l":
     os.environ["TMP_DIR"] = os.environ["HOME"] + "/Videos/V24m/tmp"
     os.environ["ENCODER"] = "cedrus264"
 else:
-    output_dir = "$."
+    output_dir = "."
     os.environ["TMP_DIR"] = "./tmp"
     os.environ["ENCODER"] = "libx264"
 
@@ -43,15 +43,11 @@ def start_recording():
     global start_time
     if recording:
         return
-    try:
-        start_time = time.clock_gettime(time.CLOCK_BOOTTIME)
-        os.environ["VIDEO_NAME"] = str(name)
-        ffmpeg_proc = subprocess.Popen(["./start_ffmpeg.sh"], bufsize=0, text=True, stdin=subprocess.PIPE)
-        recording = True
-    except:
-        exc_type, exc_value = sys.exc_info()
-        with open("errors.txt", "a") as f:
-            f.write(f"Произошла ошибка: {exc_type} - {exc_value}\n")
+    start_time = time.clock_gettime(time.CLOCK_BOOTTIME)
+    os.environ["VIDEO_NAME"] = str(name)
+    ffmpeg_proc = subprocess.Popen(["./start_ffmpeg.sh"], bufsize=0, text=True, stdin=subprocess.PIPE)
+    recording = True
+
 
 
 def stop_recording():
@@ -59,19 +55,14 @@ def stop_recording():
     global ffmpeg_proc
     global start_time
     global name
-    if not recording:
+    if not recording or ffmpeg_proc is None:
         return
-    try:
-        ffmpeg_proc.stdin.write("q\n")
-        recording = False
+    ffmpeg_proc.stdin.write("q\n")
+    recording = False
 
-        split_video()
-        start_time = 0
-        name += 1
-    except:
-        exc_type, exc_value = sys.exc_info()
-        with open("errors.txt", "a") as f:
-            f.write(f"Произошла ошибка: {exc_type} - {exc_value}\n")
+    split_video()
+    start_time = 0
+    name += 1
 
 def save_clip():
     global recording

@@ -1,8 +1,9 @@
 #:kivy 2.1.0
-#:import time time
 
 Carousel:
     loop: True
+
+    debug: "No debug data"
 
     weapon: 0
     weapon_connection_type: 0
@@ -47,7 +48,8 @@ Carousel:
 
     recording: False
 
-    ip: "Unknown IP address"
+    wired_ip: "No connection"
+    wireless_ip: "No connection"
 
     FloatLayout:
         BoxLayout:
@@ -616,30 +618,150 @@ Carousel:
                     size: self.size
                     radius: self.size
 
-    TabbedPanel:
-        do_default_tab: False
-        border: [0, 0, 0, 0]
-        tab_pos: "top_mid"
-        tab_width: (1920 / 3 - 10)
-        TabbedPanelItem:
-            text: "System"
-            BoxLayout:
-                Button:
-                    text: "Reboot"
-                    on_press: app.system_reboot()
-                Button:
-                    text: "Poweroff"
-                    on_press: app.system_poweroff()
-        TabbedPanelItem:
-            text: "Hardware"
-            BoxLayout:
-                Button:
-                    text: "sync hardware"
-                    on_press: app.write_address()
-        TabbedPanelItem:
-            text: "IP"
+    FloatLayout:
+        BoxLayout:
+            orientation: "vertical"
+            size: 480, 480
+            size_hint: None, None
+
+            ToggleButton:
+                id: settings_system
+                group: "settings"
+                text: "System"
+                font_size: 60
+                font_name:"agencyb"
+
+            ToggleButton:
+                id: settings_network
+                group: "settings"
+                text: "Network"
+                font_size: 60
+                font_name:"agencyb"
+
+            ToggleButton:
+                id: settings_remote
+                group: "settings"
+                text: "Remote"
+                font_size: 60
+                font_name:"agencyb"
+
+        RelativeLayout:
+            pos: (480, 0) if settings_system.state == "down" else (480, 480)
+            background: ""
+            background_color: app.color_black
+            
+            Button:
+                size: 360, 360
+                size_hint: None, None
+                pos: (1940 - 480) / 2 - 180, 60
+                background_normal: "assets/poweroff_button.png"
+                background_down: "assets/poweroff_button.png"
+                on_press: app.system_poweroff()
+            
+            #Button:
+            #    text: "Reboot"
+            #    on_press: app.system_reboot()
+        
+        RelativeLayout:
+            pos: (480, 0) if settings_network.state == "down" else (480, 480)
+            
             Label:
-                text: root.ip
+                pos: 0, 360
+                size: 720, 120
+                size_hint: None, None
+                text: "Wired"
+                font_size: 60
+                font_name:"agencyb"
+            
+            Label:
+                pos: 0, 240
+                size: 720, 120
+                size_hint: None, None
+                text: root.wired_ip
+                font_size: 40
+                font_name:"agencyb"
+            
+            Label:
+                pos: 720, 360
+                size: 720, 120
+                size_hint: None, None
+                text: "Wireless"
+                font_size: 60
+                font_name:"agencyb"
+            
+            Label:
+                pos: 720, 240
+                size: 720, 120
+                size_hint: None, None
+                text: root.wireless_ip
+                font_size: 40
+                font_name:"agencyb"
+        
+        RelativeLayout:
+            pos: (480, 0) if settings_remote.state == "down" else (480, 480)
+            Button:
+                id: sync_remote
+                pos: 480, 0
+                size: 480, 480
+                size_hint: None, None
+                font_size: 40
+                font_name:"agencyb"
+                text: "Sync new remote"
+                sync_state: "no_sync"
+                on_press: app.sync_new_remote(self)
+        #    
+        #    Label:
+        #        pos: 480, 360
+        #        size: 720, 120
+        #        size_hint: None, None
+        #        text: "Wired"
+        #        font_size: 60
+        #        font_name:"agencyb"
+        #    
+        #    Label:
+        #        pos: 480, 240
+        #        size: 720, 120
+        #        size_hint: None, None
+        #        text: root.wired_ip
+        #        font_size: 40
+        #        font_name:"agencyb"
+        #    
+        #    Label:
+        #        pos: 1200, 360
+        #        size: 720, 120
+        #        size_hint: None, None
+        #        text: "Wireless"
+        #        font_size: 60
+        #        font_name:"agencyb"
+        #    
+        #    Label:
+        #        pos: 1200, 240
+        #        size: 720, 120
+        #        size_hint: None, None
+        #        text: root.wireless_ip
+        #        font_size: 40
+        #        font_name:"agencyb"
+        
+        #FloatLayout:
+        #    pos: (480, 0) if settings_remote.state == "down" else (480, 480)
+        #
+        #    Button:
+        #        pos: 480, 360
+        #        size: 720, 120
+        #        size_hint: None, None
+        #        font_size: 60
+        #        font_name:"agencyb"
+        #        text: "Reboot"
+            #    on_press: app.system_reboot()
+
+            #Label:
+            #    id: tab_2_content
+            #    text: root.ip
+            #BoxLayout:
+            #    id: tab_3_content
+            #    Button:
+            #        text: "sync hardware"
+            #        on_press: app.write_address()
 
     FloatLayout:
         Video:
@@ -703,3 +825,7 @@ Carousel:
                 size_hint: None, None
                 height: self.minimum_height
                 cols: 1
+    Label:
+        id: debug_info
+        text: root.debug
+        font_size: 80

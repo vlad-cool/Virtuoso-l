@@ -4,9 +4,9 @@ import kivy
 import time
 import json
 import glob
+import ifcfg
 import serial
 import shutil
-import socket
 import pathlib
 import platform
 import subprocess
@@ -15,6 +15,7 @@ from kivy.lang        import Builder
 from kivy.app         import App
 from kivy.core.text   import LabelBase
 from kivy.uix.button  import Button
+
 
 read_interval = .05
 is_banana = platform.machine() == "armv7l"
@@ -135,34 +136,63 @@ class KivyApp(App):
         self.root.ids["video_player"].source = vid
         self.root.ids["video_player"].state = "play"
 
+    def sync_new_remote(self, btn):
+        if btn.sync_state == "no_sync":
+            btn.sync_state = "waiting"
+            btn.text = "hold 3:00/1:00 button on remote"
+            self.read_timer.cancel()
+            self.ir_timer = Clock.schedule_interval(lambda _: self.wait_rc5(btn), read_interval)
+
+    def update_sync_btn_text(self, btn):
+        btn.text = f"Syncing ended, address is {self.config['rc5_address']}"
+
+    def end_sync_remote(self, btn, addr):
+        gpio_control.button_emu(37, 1)
+        btn.sync_state = "no_sync"
+        Clock.schedule_once(lambda _: self.update_sync_btn_text(btn), 0.5)
+        self.ir_timer.cancel()
+        self.read_timer = Clock.schedule_interval(self.get_data, read_interval)
+
+    def wait_rc5(self, btn):
+        cmds = gpio_control.read_all_rc5()
+        for cmd in cmds:
+            if cmd[1] == 7:
+                self.config["rc5_address"] = cmd[0]
+                self.update_config()
+                Clock.schedule_once(lambda _: self.end_sync_remote(btn, cmd[0]), 1.5)
+
+
     def load_video_list(self):
-        videos = glob.glob(os.environ["HOME"] + "/Videos/V24m/*.mp4")
-        videos.sort(key=lambda x: int(x[21:-4]))
+        if is_banana:
+            videos = glob.glob(os.environ["HOME"] + "/Videos/V24m/*.mp4")
+            videos.sort(key=lambda x: int(x[21:-4]))
 
-        while len(self.root.ids["video_list"].children) > 0:
-            self.root.ids["video_list"].remove_widget(self.root.ids["video_list"].children[0])
+            while len(self.root.ids["video_list"].children) > 0:
+                self.root.ids["video_list"].remove_widget(self.root.ids["video_list"].children[0])
 
-        for video in videos:
-            self.root.ids["video_list"].add_widget(Button(text=video, on_press=lambda _, video=video: app.play_video(video), size=(400, 120), size_hint=(None, None)))
+            for video in videos:
+                self.root.ids["video_list"].add_widget(Button(text=video, on_press=lambda _, video=video: app.play_video(video), size=(400, 120), size_hint=(None, None)))
 
-        self.root.ids["video_player"].state = "pause"
+            self.root.ids["video_player"].state = "pause"
 
     def play_pause_video(self):
         self.root.video_playing = not self.root.video_playing
 
     def system_poweroff(_):
-        subprocess.run("/usr/sbin/poweroff")
+        if is_banana:
+            subprocess.run("/usr/sbin/poweroff")
 
     def system_reboot(_):
-        subprocess.run("/usr/sbin/reboot")
+        if is_banana:
+            subprocess.run("/usr/sbin/reboot")
 
     def update_config(self):
         with open("config.json", "w") as config_file:
             json.dump(self.config, config_file)
 
-    def write_address(self):
-        self.config["rc5_address"] = gpio_control.get_address(self.data_rx)
-        self.update_config()
+    #def write_address(self):
+    #    self.config["rc5_address"] = gpio_control.get_address(self.data_rx)
+    #    self.update_config()
 
     def send_handler(self, code):
         gpio_control.ir_emu(self.config["rc5_address"], code)
@@ -366,13 +396,47 @@ class KivyApp(App):
 
         self.prev_pins_data = pins_data
 
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            root.ip = s.getsockname()[0]
-            s.close()
-        except:
-            root.ip = "Unlnown IP address"
+        cmds = gpio_control.read_rc5(self.config["rc5_address"])
+        if len(cmds) > 0:
+            self.root.debug = str(cmds)
+        
+        if 7 in cmds:
+            if self.root.timer_running != 1:
+                self.passive_timer.clear()
+        if 17 in cmds: # Left passive
+            if self.root.timer_running != 1:
+                self.passive_timer.clear()
+                if root.ids["passive_2"].state == "normal":
+                    root.ids["passive_2"].state = "down"
+                elif root.ids["passive_1"].state == "normal":
+                    root.ids["passive_1"].state = "down"
+                else:
+                    root.ids["passive_2"].state = "normal"
+                    root.ids["passive_1"].state = "normal"
+
+        if 18 in cmds: # Right passive
+            if self.root.timer_running != 1:
+                self.passive_timer.clear()
+                if root.ids["passive_4"].state == "normal":
+                    root.ids["passive_4"].state = "down"
+                elif root.ids["passive_3"].state == "normal":
+                    root.ids["passive_3"].state = "down"
+                else:
+                    root.ids["passive_4"].state = "normal"
+                    root.ids["passive_3"].state = "normal"
+
+    def update_network_data(self, _):
+        for name, interface in ifcfg.interfaces().items():
+            if name == "wlan0":
+                if interface["inet"] is None:
+                    self.root.wireless_ip = "No connection"
+                else:
+                    self.root.wireless_ip = f"IP address is {interface['inet']}"
+            if name == "eth0":
+                if interface["inet"] is None:
+                    self.root.wired_ip = "No connection"
+                else:
+                    self.root.wired_ip = f"IP address is {interface['inet']}"
 
     def build(self):
         self.color_left_score     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
@@ -417,6 +481,8 @@ class KivyApp(App):
         self.prev_uart_data = None
         self.prev_pins_data = None
 
+        self.read_timer = None
+
         self.config = {"rc5_address": -1}
 
         if is_banana:
@@ -438,7 +504,8 @@ class KivyApp(App):
         return Builder.load_file("main.kv")
 
     def on_start(self):
-        Clock.schedule_interval(self.get_data, read_interval)
+        self.read_timer = Clock.schedule_interval(self.get_data, read_interval)
+        Clock.schedule_interval(self.update_network_data, 2)
         self.root.flash_timer  = time.time()
         self.root.current_time = time.time()
         self.load_video_list()

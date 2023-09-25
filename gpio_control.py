@@ -1,11 +1,9 @@
 from time import sleep
 from ast import literal_eval
 import subprocess
-import select
 
 off_time = 250
 on_time  = 250
-TIMING = 889
 
 button_emulating = []
 
@@ -42,28 +40,43 @@ def read_pins():
     return literal_eval(get_pin_proc.stdout.readline())
 
 def read_rc5(address):
-    get_pin_proc.stdin.write("get\n")
+    get_rc5_proc.stdin.write("get\n")
     ir_commands = []
-    raw_rc5 = get_pin_proc.stdout.readline()
-    while raw_rc5 != "end":
-        raw_rc5 = get_pin_proc.stdout.readline()
-        
+    raw_rc5 = get_rc5_proc.stdout.readline()
+    while raw_rc5 != "end\n":
+        raw_rc5 = list(map(int, raw_rc5.split()[::2]))
+        addr = 0
+        cmd = 0
+        for bit in raw_rc5[3:8]:
+            addr *= 2
+            addr += bit
+        for bit in raw_rc5[8:14]:
+            cmd *= 2
+            cmd += bit
 
+        if addr == address:
+            ir_commands.append(cmd)
+        raw_rc5 = get_rc5_proc.stdout.readline()
     return ir_commands
 
-    while select.select([get_rc5_proc.stdout], [], [], 0)[0]:
-        ir_command = get_rc5_proc.stdout.readline()
-        if ir_command == "":
-            break
+def read_all_rc5():
+    get_rc5_proc.stdin.write("get\n")
+    ir_commands = []
+    raw_rc5 = get_rc5_proc.stdout.readline()
+    while raw_rc5 != "end\n":
+        raw_rc5 = list(map(int, raw_rc5.split()[::2]))
+        addr = 0
+        cmd = 0
+        for bit in raw_rc5[3:8]:
+            addr *= 2
+            addr += bit
+        for bit in raw_rc5[8:14]:
+            cmd *= 2
+            cmd += bit
 
-        if ir_command[0] != "A":
-            ir_command
-            addr = 0
-            for i in range(1, 6):
-                addr += ir_command[i]
-            ir_commands.append(ir_command)
+        ir_commands.append((addr, cmd))
+        raw_rc5 = get_rc5_proc.stdout.readline()
     return ir_commands
-
 
 def byte_to_arr(byte):
     a = [0] * 8

@@ -40,7 +40,7 @@ int main()
             }
             if (strcmp(s, "get") == 0)
             {
-                printf("end");
+                printf("end\n");
                 fflush(stdout);
             }
             if (strcmp(s, "exit") == 0)
@@ -81,7 +81,7 @@ int main()
             }
         }
 
-        usleep(TIMING * 9 / 10);
+        usleep(TIMING - 100);
 
         while (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time < TIMING)
         {
