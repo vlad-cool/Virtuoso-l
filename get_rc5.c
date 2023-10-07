@@ -20,7 +20,7 @@ void setup()
 int main()
 {
     setup();
-    char *s = calloc(sizeof(char), 256);
+    char s[128];
     struct timespec t;
     unsigned long time, timer;
     int toggle = -1;
@@ -34,7 +34,7 @@ int main()
         ret = poll(&fds, 1, 0);
         if(ret == 1)
         {
-            if (scanf("%128s", s) < 1)
+            if (scanf("%127s", s) < 1)
             {
                 break;
             }

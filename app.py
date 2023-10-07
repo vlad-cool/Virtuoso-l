@@ -10,12 +10,13 @@ import shutil
 import pathlib
 import platform
 import subprocess
-from kivy.clock       import Clock
-from kivy.lang        import Builder
-from kivy.app         import App
-from kivy.core.text   import LabelBase
-from kivy.uix.button  import Button
-
+from kivy.clock import Clock
+from kivy.lang import Builder
+from kivy.app import App
+from kivy.core.text import LabelBase
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.network.urlrequest import UrlRequest
 
 read_interval = .05
 is_banana = platform.machine() == "armv7l"
@@ -132,6 +133,56 @@ class PassiveTimer:
 class KivyApp(App):
     Symbols = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
 
+    def check_version(self, btn, req, result):
+        if btn.update_state != "waiting":
+            return
+
+        version_path = pathlib.Path("VERSION")
+        old_version = ""
+        if version_path.is_file():
+            with open("VERSION", "r") as version_file:
+                old_version = version_file.readline()
+        else:
+            if version_path.is_dir():
+                shutil.rmtree(version_path)
+            old_version = "v0.0.0"
+
+
+        print(req, result, flush=True)
+        
+        old_version_lst = list(map(int, old_version[1:].split(".")))
+
+        new_version = result["tag_name"]
+        new_version_lst = [1, 7, 9]
+
+        old_major = old_version_lst[0]
+        old_minor = old_version_lst[1]
+        old_patch = old_version_lst[2]
+        
+        new_major = new_version_lst[0]
+        new_minor = new_version_lst[1]
+        new_patch = new_version_lst[2]
+
+        if (old_major < new_major) or (old_major == new_major and old_minor < new_minor) or (old_major == old_minor and old_minor == new_minor and old_patch < new_patch):
+            btn.text = f"New version found\n{old_version}->{new_version}"
+            btn.update_state = "wait_for_update"
+    
+    def update_failed(self, btn, req, result):
+        print(req, result)
+        btn.text = "Couldn't get version information"
+        Clock.schedule_once(lambda _: self.update_sync_btn_text(btn, "Check for updates"), 10)
+        btn.update_state = "no_update"
+
+    def update(self, btn):
+        if btn.update_state == "no_update":
+            self.update_request = UrlRequest("https://api.github.com/repos/idorecall/selection-menu/releases/latest", req_headers={"User-Agent": "V24m"}, on_success=lambda req, result: self.check_version(btn, req, result), on_failure=lambda req, result: self.update_failed(btn, req, result), on_error=lambda req, result: self.update_failed(btn, req, result))
+            btn.text = "Checking for updates..."
+            btn.update_state = "waiting"
+        
+        if btn.update_state == "wait_for_update":
+            self.root.clear_widgets()
+            self.root.add_widget(Label(text="Updating, please wait", font_size=360, font_name="agencyb"))
+
     def play_video(self, vid):
         self.root.ids["video_player"].source = vid
         self.root.ids["video_player"].state = "play"
@@ -139,17 +190,18 @@ class KivyApp(App):
     def sync_new_remote(self, btn):
         if btn.sync_state == "no_sync":
             btn.sync_state = "waiting"
-            btn.text = "hold 3:00/1:00 button on remote"
+            btn.text = "press and hold 3:00/1:00 button on remote"
             self.read_timer.cancel()
             self.ir_timer = Clock.schedule_interval(lambda _: self.wait_rc5(btn), read_interval)
 
-    def update_sync_btn_text(self, btn):
-        btn.text = f"Syncing ended, address is {self.config['rc5_address']}"
+    def update_sync_btn_text(self, btn, text):
+        btn.text = text
 
     def end_sync_remote(self, btn, addr):
         gpio_control.button_emu(37, 1)
         btn.sync_state = "no_sync"
-        Clock.schedule_once(lambda _: self.update_sync_btn_text(btn), 0.5)
+        Clock.schedule_once(lambda _: self.update_sync_btn_text(btn, f"Syncing ended, address is {self.config['rc5_address']}"), 0.5)
+        Clock.schedule_once(lambda _: self.update_sync_btn_text(btn, "Sync new remote"), 10.5)
         self.ir_timer.cancel()
         self.read_timer = Clock.schedule_interval(self.get_data, read_interval)
 
@@ -160,7 +212,6 @@ class KivyApp(App):
                 self.config["rc5_address"] = cmd[0]
                 self.update_config()
                 Clock.schedule_once(lambda _: self.end_sync_remote(btn, cmd[0]), 1.5)
-
 
     def load_video_list(self):
         if is_banana:
@@ -189,10 +240,6 @@ class KivyApp(App):
     def update_config(self):
         with open("config.json", "w") as config_file:
             json.dump(self.config, config_file)
-
-    #def write_address(self):
-    #    self.config["rc5_address"] = gpio_control.get_address(self.data_rx)
-    #    self.update_config()
 
     def send_handler(self, code):
         gpio_control.ir_emu(self.config["rc5_address"], code)
@@ -515,7 +562,7 @@ class KivyApp(App):
             self.data_rx.close()
 
 if __name__ == "__main__":
-    LabelBase.register(name="agencyb", fn_regular="AGENCYB.TTF")
-    LabelBase.register(name="agencyr", fn_regular="AGENCYR.TTF")
+    LabelBase.register(name="agencyb", fn_regular="assets/AGENCYB.TTF")
+    LabelBase.register(name="agencyr", fn_regular="assets/AGENCYR.TTF")
     app = KivyApp()
     app.run()

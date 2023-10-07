@@ -77,11 +77,11 @@ int main()
 {
     setup();
     int pin = 0, value = 0;
-    char *s = calloc(sizeof(char), 256);
+    char s[128];
     
     while (1)
     {
-        if (scanf("%128s", s) < 1)
+        if (scanf("%127s", s) < 1)
         {
             break;
         }

@@ -28,7 +28,7 @@ void setup()
 int main()
 {
     setup();
-    char *s = calloc(sizeof(char), 256);
+    char s[128];
     struct timespec t;
     long long time = 0;
 
@@ -41,7 +41,7 @@ int main()
         ret = poll(&fds, 1, 5);
         if(ret == 1)
         {
-            if (scanf("%128s", s) < 1)
+            if (scanf("%127s", s) < 1)
             {
                 break;
             }
