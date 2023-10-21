@@ -83,3 +83,6 @@ def get_address(data_rx):
 
             return k
     return -1
+
+def update_addr(data_rx, address):
+    return address

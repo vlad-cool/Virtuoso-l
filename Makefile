@@ -6,7 +6,7 @@ all: $(EXECS)
 %: %.c
 	gcc $^ -o $@ $(FLAGS)
 	chown root $@
-	chmod 4711 $@
+	chmod 4755 $@
 
 clean:
 	rm $(EXECS)

@@ -76,5 +76,8 @@ def main():
 def clean():
     pass
 
+def split_video():
+    pass
+
 if __name__ == "__main__":
     main()

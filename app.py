@@ -21,9 +21,15 @@ from kivy.network.urlrequest import UrlRequest
 read_interval = .05
 is_banana = platform.machine() == "armv7l"
 
+video_support = False
+input_support = False
+
 if is_banana:
     import gpio_control
-    import video_control
+    if video_support:
+        import video_control
+    else:
+        import video_control_emu as video_control
 else:
     import gpio_control_emu as gpio_control
     import video_control_emu as video_control
@@ -190,14 +196,14 @@ class KivyApp(App):
     def sync_new_remote(self, btn):
         if btn.sync_state == "no_sync":
             btn.sync_state = "waiting"
-            btn.text = "press and hold 3:00/1:00 button on remote"
+            btn.text = "press and hold\n3:00/1:00 button on remote"
             self.read_timer.cancel()
             self.ir_timer = Clock.schedule_interval(lambda _: self.wait_rc5(btn), read_interval)
 
     def update_sync_btn_text(self, btn, text):
         btn.text = text
 
-    def end_sync_remote(self, btn, addr):
+    def end_sync_remote(self, btn):
         gpio_control.button_emu(37, 1)
         btn.sync_state = "no_sync"
         Clock.schedule_once(lambda _: self.update_sync_btn_text(btn, f"Syncing ended, address is {self.config['rc5_address']}"), 0.5)
@@ -211,10 +217,10 @@ class KivyApp(App):
             if cmd[1] == 7:
                 self.config["rc5_address"] = cmd[0]
                 self.update_config()
-                Clock.schedule_once(lambda _: self.end_sync_remote(btn, cmd[0]), 1.5)
+                Clock.schedule_once(lambda _: self.end_sync_remote(btn), 1.5)
 
     def load_video_list(self):
-        if is_banana:
+        if is_banana and input_support:
             videos = glob.glob(os.environ["HOME"] + "/Videos/V24m/*.mp4")
             videos.sort(key=lambda x: int(x[21:-4]))
 
@@ -227,7 +233,8 @@ class KivyApp(App):
             self.root.ids["video_player"].state = "pause"
 
     def play_pause_video(self):
-        self.root.video_playing = not self.root.video_playing
+        if video_support:
+            self.root.video_playing = not self.root.video_playing
 
     def system_poweroff(_):
         if is_banana:
@@ -238,7 +245,7 @@ class KivyApp(App):
             subprocess.run("/usr/sbin/reboot")
 
     def update_config(self):
-        with open("config.json", "w") as config_file:
+        with open("config/config.json", "w") as config_file:
             json.dump(self.config, config_file)
 
     def send_handler(self, code):
@@ -537,9 +544,9 @@ class KivyApp(App):
         else:
             self.data_rx = None
 
-        config_path = pathlib.Path("config.json")
+        config_path = pathlib.Path("config/config.json")
         if config_path.is_file():
-            with open("config.json", "r") as config_file:
+            with open("config/config.json", "r") as config_file:
                 self.config = json.load(config_file)
         else:
             if config_path.is_dir():
@@ -548,6 +555,9 @@ class KivyApp(App):
             print("No config file, creating!")
             self.update_config()
 
+        if not input_support:
+            self.config["rc5_address"] = gpio_control.update_addr(self.data_rx, self.config["rc5_address"])
+            self.update_config()
         return Builder.load_file("main.kv")
 
     def on_start(self):
