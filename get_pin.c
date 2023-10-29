@@ -6,7 +6,7 @@
 #include <time.h>
 #include <sys/poll.h>
 
-int pins[] = {3, 7, 27, 32, 36};
+int pins[] = {3, 7, 27, 32, 36, 37};
 
 int pin_18_state_buf[8] = {0};
 

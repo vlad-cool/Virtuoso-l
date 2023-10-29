@@ -12,11 +12,12 @@ send_rc5_proc = subprocess.Popen("./send_rc5", bufsize=0, text=True, stdin=subpr
 get_pin_proc = subprocess.Popen("./get_pin", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 get_rc5_proc = subprocess.Popen("./get_rc5", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
-class ir_command:
-    def __init__(self, data):
-        self.toggle = 0
-        self.address = 0
-        self.command = 0
+def static_vars(**kwargs):
+    def decorate(func):
+        for k in kwargs:
+            setattr(func, k, kwargs[k])
+        return func
+    return decorate
 
 def toggle(pin):
     send_pin_proc.stdin.write(f"toggle {pin}\n")
@@ -39,12 +40,15 @@ def read_pins():
     get_pin_proc.stdin.write("get\n")
     return literal_eval(get_pin_proc.stdout.readline())
 
+@static_vars(toggle=-1)
 def read_rc5(address):
     get_rc5_proc.stdin.write("get\n")
     ir_commands = []
     raw_rc5 = get_rc5_proc.stdout.readline()
     while raw_rc5 != "end\n":
         raw_rc5 = list(map(int, raw_rc5.split()[::2]))
+        new = raw_rc5[2] != read_rc5.toggle
+        read_rc5.toggle = raw_rc5[2]
         addr = 0
         cmd = 0
         for bit in raw_rc5[3:8]:
@@ -55,16 +59,19 @@ def read_rc5(address):
             cmd += bit
 
         if addr == address:
-            ir_commands.append(cmd)
+            ir_commands.append((addr, cmd, new))
         raw_rc5 = get_rc5_proc.stdout.readline()
     return ir_commands
 
+@static_vars(toggle=-1)
 def read_all_rc5():
     get_rc5_proc.stdin.write("get\n")
     ir_commands = []
     raw_rc5 = get_rc5_proc.stdout.readline()
     while raw_rc5 != "end\n":
         raw_rc5 = list(map(int, raw_rc5.split()[::2]))
+        new = raw_rc5[2] != read_all_rc5.toggle
+        read_all_rc5.toggle = raw_rc5[2]
         addr = 0
         cmd = 0
         for bit in raw_rc5[3:8]:
@@ -74,7 +81,7 @@ def read_all_rc5():
             cmd *= 2
             cmd += bit
 
-        ir_commands.append((addr, cmd))
+        ir_commands.append((addr, cmd, new))
         raw_rc5 = get_rc5_proc.stdout.readline()
     return ir_commands
 

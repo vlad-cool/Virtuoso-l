@@ -34,8 +34,6 @@ Carousel:
     flash_timer: 0
     current_time: 0
 
-    epee5: 0
-
     time_updated: True
 
     color_passive: [0, 0, 0, 1]
@@ -74,7 +72,6 @@ Carousel:
             ToggleButton:
                 id: weapon_0
                 markup: True
-                #text: "epee [color=4c4c4c]5[/color]" if root.epee5 == 0 else "epee 5"
                 text: "epee"
                 state: "down" if root.weapon == 3 else "normal"
                 font_size: 60
@@ -128,7 +125,7 @@ Carousel:
         Label:
             id: score_l_l
             text: root.score_l_l
-            font_size: 440
+            font_size: 430
             font_name:"agencyb"
             size: 200, 360
             size_hint: None, None
@@ -138,7 +135,7 @@ Carousel:
         Label:
             id: score_l_r
             text: root.score_l_r
-            font_size: 440
+            font_size: 430
             font_name:"agencyb"
             size: 220, 360
             size_hint: None, None
@@ -178,7 +175,7 @@ Carousel:
         Label:
             id: score_r_l
             text: root.score_r_l
-            font_size: 440
+            font_size: 430
             font_name:"agencyb"
             size: 200, 360
             size_hint: None, None
@@ -188,7 +185,7 @@ Carousel:
         Label:
             id: score_r_r
             text: root.score_r_r
-            font_size: 440
+            font_size: 430
             font_name:"agencyb"
             size: 200, 360
             size_hint: None, None

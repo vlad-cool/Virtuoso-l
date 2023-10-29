@@ -84,10 +84,11 @@ class UartData:
 
 class PinsData:
     def __init__(self, pins):
-        self.wireless  = pins[7]
-        self.recording = pins[18]
-        self.poweroff  = pins[27]
-        self.weapon    = pins[32] * 2 + pins[36]
+        self.wireless   = pins[7]
+        self.recording  = pins[18]
+        self.poweroff   = pins[27]
+        self.weapon     = pins[32] * 2 + pins[36]
+        self.weapon_btn = pins[37]
 
 class PassiveTimer:
     def stop(self):
@@ -189,10 +190,6 @@ class KivyApp(App):
             self.root.clear_widgets()
             self.root.add_widget(Label(text="Updating, please wait", font_size=360, font_name="agencyb"))
 
-    def play_video(self, vid):
-        self.root.ids["video_player"].source = vid
-        self.root.ids["video_player"].state = "play"
-
     def sync_new_remote(self, btn):
         if btn.sync_state == "no_sync":
             btn.sync_state = "waiting"
@@ -218,6 +215,7 @@ class KivyApp(App):
                 self.config["rc5_address"] = cmd[0]
                 self.update_config()
                 Clock.schedule_once(lambda _: self.end_sync_remote(btn), 1.5)
+                break
 
     def load_video_list(self):
         if is_banana and input_support:
@@ -245,7 +243,7 @@ class KivyApp(App):
             subprocess.run("/usr/sbin/reboot")
 
     def update_config(self):
-        with open("config/config.json", "w") as config_file:
+        with open("/mnt/V24m/config.json", "w") as config_file:
             json.dump(self.config, config_file)
 
     def send_handler(self, code):
@@ -253,20 +251,11 @@ class KivyApp(App):
 
     def carousel_handler(self, _, old_index, new_index, commands):
         self.send_handler(commands[(2 + new_index - old_index) % 3])
-
     def set_weapon(self, new_weapon):
-        gpio_control.button_emu(37, (3 + new_weapon - self.root.weapon) % 3)
-        self.weapon = new_weapon
-
-        if self.root.weapon == 3 and new_weapon == 0:
-            self.root.epee5 = 1 - self.root.epee5
-            gpio_control.set(15, self.root.epee5)
-        else:
-            self.root.epee5 = 0
-            gpio_control.set(15, self.root.epee5)
+        pass
 
     def change_weapon_connection_type(_):
-        gpio_control.button_emu(27, 1)
+        pass
 
     def passive_stop_card(self, state):
         if self.root.timer_running != 1 and state == "down":
@@ -450,34 +439,40 @@ class KivyApp(App):
 
         self.prev_pins_data = pins_data
 
-        cmds = gpio_control.read_rc5(self.config["rc5_address"])
-        if len(cmds) > 0:
-            self.root.debug = str(cmds)
-        
-        if 7 in cmds:
-            if self.root.timer_running != 1:
-                self.passive_timer.clear()
-        if 17 in cmds: # Left passive
-            if self.root.timer_running != 1:
-                self.passive_timer.clear()
-                if root.ids["passive_2"].state == "normal":
-                    root.ids["passive_2"].state = "down"
-                elif root.ids["passive_1"].state == "normal":
-                    root.ids["passive_1"].state = "down"
-                else:
-                    root.ids["passive_2"].state = "normal"
-                    root.ids["passive_1"].state = "normal"
 
-        if 18 in cmds: # Right passive
-            if self.root.timer_running != 1:
-                self.passive_timer.clear()
-                if root.ids["passive_4"].state == "normal":
-                    root.ids["passive_4"].state = "down"
-                elif root.ids["passive_3"].state == "normal":
-                    root.ids["passive_3"].state = "down"
-                else:
-                    root.ids["passive_4"].state = "normal"
-                    root.ids["passive_3"].state = "normal"
+        if pins_data.weapon_btn == 0:
+            cmds = gpio_control.read_all_rc5()
+            for cmd in cmds:
+                if cmd[1] == 7:
+                    self.config["rc5_address"] = cmd[0]
+                    self.update_config()
+
+        cmds = gpio_control.read_rc5(self.config["rc5_address"])
+        for cmd in cmds:
+            if cmd[2]:
+                if cmd[1] == 7:
+                    if self.root.timer_running != 1:
+                        self.passive_timer.clear()
+                if cmd[1] == 17: # Left passive
+                    if self.root.timer_running != 1:
+                        self.passive_timer.clear()
+                        if root.ids["passive_2"].state == "normal":
+                            root.ids["passive_2"].state = "down"
+                        elif root.ids["passive_1"].state == "normal":
+                            root.ids["passive_1"].state = "down"
+                        else:
+                            root.ids["passive_2"].state = "normal"
+                            root.ids["passive_1"].state = "normal"
+                if cmd[1] == 18: # Right passive
+                    if self.root.timer_running != 1:
+                        self.passive_timer.clear()
+                        if root.ids["passive_4"].state == "normal":
+                            root.ids["passive_4"].state = "down"
+                        elif root.ids["passive_3"].state == "normal":
+                            root.ids["passive_3"].state = "down"
+                        else:
+                            root.ids["passive_4"].state = "normal"
+                            root.ids["passive_3"].state = "normal"
 
     def update_network_data(self, _):
         for name, interface in ifcfg.interfaces().items():
@@ -544,10 +539,13 @@ class KivyApp(App):
         else:
             self.data_rx = None
 
-        config_path = pathlib.Path("config/config.json")
+        config_path = pathlib.Path("/mnt/V24m/config.json")
         if config_path.is_file():
-            with open("config/config.json", "r") as config_file:
-                self.config = json.load(config_file)
+            with open("/mnt/V24m/config.json", "r") as config_file:
+                try:
+                    self.config = json.load(config_file)
+                except:
+                    self.update_config()
         else:
             if config_path.is_dir():
                 print("Config file is directory, removing")
@@ -555,9 +553,9 @@ class KivyApp(App):
             print("No config file, creating!")
             self.update_config()
 
-        if not input_support:
-            self.config["rc5_address"] = gpio_control.update_addr(self.data_rx, self.config["rc5_address"])
-            self.update_config()
+        #if not input_support:
+        #    self.config["rc5_address"] = gpio_control.update_addr(self.data_rx, self.config["rc5_address"])
+        #    self.update_config()
         return Builder.load_file("main.kv")
 
     def on_start(self):
