@@ -1,6 +1,7 @@
 from time import sleep
 from ast import literal_eval
 import subprocess
+import model_info
 
 off_time = 250
 on_time  = 250
@@ -9,7 +10,10 @@ button_emulating = []
 
 send_pin_proc = subprocess.Popen("./send_pin", bufsize=0, text=True, stdin=subprocess.PIPE)
 send_rc5_proc = subprocess.Popen("./send_rc5", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-get_pin_proc = subprocess.Popen("./get_pin", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+if model_info.input_support:
+    get_pin_proc = subprocess.Popen("./get_pin", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+else:
+    get_pin_proc = subprocess.Popen("./get_pin_extended", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 get_rc5_proc = subprocess.Popen("./get_rc5", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
 def static_vars(**kwargs):

@@ -1,4 +1,4 @@
-#!venv/bin/python3
+#!env python3
 import os
 import kivy
 import time
@@ -8,8 +8,8 @@ import ifcfg
 import serial
 import shutil
 import pathlib
-import platform
 import subprocess
+import model_info
 from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.app import App
@@ -19,19 +19,15 @@ from kivy.uix.label import Label
 from kivy.network.urlrequest import UrlRequest
 
 read_interval = .05
-is_banana = platform.machine() == "armv7l"
 
-video_support = False
-input_support = False
-
-if is_banana:
+if model_info.is_banana:
     import gpio_control
-    if video_support:
-        import video_control
-    else:
-        import video_control_emu as video_control
 else:
     import gpio_control_emu as gpio_control
+
+if model_info.video_support:
+    import video_control
+else:
     import video_control_emu as video_control
 
 kivy.require("2.1.0")
@@ -191,20 +187,23 @@ class KivyApp(App):
             self.root.add_widget(Label(text="Updating, please wait", font_size=360, font_name="agencyb"))
 
     def sync_new_remote(self, btn):
-        if btn.sync_state == "no_sync":
-            btn.sync_state = "waiting"
-            btn.text = "press and hold\n3:00/1:00 button on remote"
-            self.read_timer.cancel()
-            self.ir_timer = Clock.schedule_interval(lambda _: self.wait_rc5(btn), read_interval)
+        if model_info.input_support:
+            pass # Not used in this branch
+        else:
+            if btn.sync_state == "no_sync":
+                btn.sync_state = "waiting"
+                btn.text = "press and hold\n3:00/1:00 button on remote"
+                self.read_timer.cancel()
+                self.ir_timer = Clock.schedule_interval(lambda _: self.wait_rc5(btn), read_interval)
 
-    def update_sync_btn_text(self, btn, text):
+    def update_btn_text(self, btn, text):
         btn.text = text
 
     def end_sync_remote(self, btn):
         gpio_control.button_emu(37, 1)
         btn.sync_state = "no_sync"
-        Clock.schedule_once(lambda _: self.update_sync_btn_text(btn, f"Syncing ended, address is {self.config['rc5_address']}"), 0.5)
-        Clock.schedule_once(lambda _: self.update_sync_btn_text(btn, "Sync new remote"), 10.5)
+        Clock.schedule_once(lambda _: self.update_btn_text(btn, f"Syncing ended, address is {self.config['rc5_address']}"), 0.5)
+        Clock.schedule_once(lambda _: self.update_btn_text(btn, "Sync new remote"), 10.5)
         self.ir_timer.cancel()
         self.read_timer = Clock.schedule_interval(self.get_data, read_interval)
 
@@ -218,7 +217,7 @@ class KivyApp(App):
                 break
 
     def load_video_list(self):
-        if is_banana and input_support:
+        if model_info.video_support:
             videos = glob.glob(os.environ["HOME"] + "/Videos/V24m/*.mp4")
             videos.sort(key=lambda x: int(x[21:-4]))
 
@@ -231,19 +230,19 @@ class KivyApp(App):
             self.root.ids["video_player"].state = "pause"
 
     def play_pause_video(self):
-        if video_support:
+        if model_info.video_support:
             self.root.video_playing = not self.root.video_playing
 
     def system_poweroff(_):
-        if is_banana:
+        if model_info.is_banana:
             subprocess.run("/usr/sbin/poweroff")
 
     def system_reboot(_):
-        if is_banana:
+        if model_info.is_banana:
             subprocess.run("/usr/sbin/reboot")
 
     def update_config(self):
-        with open("/mnt/V24m/config.json", "w") as config_file:
+        with open(model_info.config_file, "w") as config_file:
             json.dump(self.config, config_file)
 
     def send_handler(self, code):
@@ -251,11 +250,14 @@ class KivyApp(App):
 
     def carousel_handler(self, _, old_index, new_index, commands):
         self.send_handler(commands[(2 + new_index - old_index) % 3])
+    
     def set_weapon(self, new_weapon):
-        pass
+        if model_info.input_support:
+            pass # Not used in this branch
 
     def change_weapon_connection_type(_):
-        pass
+        if model_info.input_support:
+            pass # Not used in this branch
 
     def passive_stop_card(self, state):
         if self.root.timer_running != 1 and state == "down":
@@ -388,7 +390,7 @@ class KivyApp(App):
     def get_data(self, _):
         root = self.root
         root.current_time = time.time()
-        if is_banana:
+        if model_info.is_banana:
             data = [[0] * 8] * 8
             while self.data_rx.inWaiting() // 8 > 0:
                 for _ in range(8):
@@ -415,11 +417,12 @@ class KivyApp(App):
 
         # Recording section
         # -----------------
-        if ((self.prev_pins_data is None or self.prev_pins_data.recording == 0) and pins_data.recording == 1) or (pins_data.recording == 1 and not (video_control.ffmpeg_proc is not None and video_control.ffmpeg_proc.poll() is None)):
-            video_control.start_recording()
-        elif self.prev_pins_data is not None and self.prev_pins_data.recording == 1 and pins_data.recording == 0:
-            video_control.save_clip()
-            Clock.schedule_once(lambda _: video_control.stop_recording(), 3)
+        if model_info.video_support:
+            if ((self.prev_pins_data is None or self.prev_pins_data.recording == 0) and pins_data.recording == 1) or (pins_data.recording == 1 and not (video_control.ffmpeg_proc is not None and video_control.ffmpeg_proc.poll() is None)):
+                video_control.start_recording()
+            elif self.prev_pins_data is not None and self.prev_pins_data.recording == 1 and pins_data.recording == 0:
+                video_control.save_clip()
+                Clock.schedule_once(lambda _: video_control.stop_recording(), 3)
         # -----------------
 
         root.weapon = pins_data.weapon
@@ -438,7 +441,6 @@ class KivyApp(App):
         root.recording = (video_control.ffmpeg_proc is not None) and (video_control.ffmpeg_proc.poll() is None)
 
         self.prev_pins_data = pins_data
-
 
         if pins_data.weapon_btn == 0:
             cmds = gpio_control.read_all_rc5()
@@ -534,14 +536,14 @@ class KivyApp(App):
 
         self.config = {"rc5_address": -1}
 
-        if is_banana:
+        if model_info.is_banana:
             self.data_rx = serial.Serial("/dev/ttyS2", 38400)
         else:
             self.data_rx = None
 
-        config_path = pathlib.Path("/mnt/V24m/config.json")
+        config_path = pathlib.Path(model_info.config_file)
         if config_path.is_file():
-            with open("/mnt/V24m/config.json", "r") as config_file:
+            with open(model_info.config_file, "r") as config_file:
                 try:
                     self.config = json.load(config_file)
                 except:
@@ -553,10 +555,7 @@ class KivyApp(App):
             print("No config file, creating!")
             self.update_config()
 
-        #if not input_support:
-        #    self.config["rc5_address"] = gpio_control.update_addr(self.data_rx, self.config["rc5_address"])
-        #    self.update_config()
-        return Builder.load_file("main.kv")
+        return Builder.load_file(model_info.kivy_file)
 
     def on_start(self):
         self.read_timer = Clock.schedule_interval(self.get_data, read_interval)
