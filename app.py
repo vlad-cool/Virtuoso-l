@@ -18,6 +18,8 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.network.urlrequest import UrlRequest
 
+# for merging #
+
 read_interval = .05
 is_banana = platform.machine() == "armv7l"
 
