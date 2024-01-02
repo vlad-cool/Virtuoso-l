@@ -1,16 +1,17 @@
 import subprocess
 import platform
 import time
-import sys
 import os
+import model_info
 
-clip_duration = 10 #seconds
-post_record = 2 #seconds
-segment_duration = 30 #seconds
+clip_duration = 10  # seconds
+post_record = 2  # seconds
+
+# TODO Get data from model_info
 
 os.environ["LOG"] = "/dev/null"
 
-if platform.machine() == "armv7l":
+if model_info.is_banana:
     os.environ["OUT_DIR"] = os.environ["HOME"] + "/Videos/V24m"
     os.environ["TMP_DIR"] = os.environ["HOME"] + "/Videos/V24m/tmp"
     os.environ["ENCODER"] = "cedrus264"
@@ -27,6 +28,7 @@ start_time = 0
 
 clips = []
 
+
 def format_time(t):
     if t < 0:
         return "00:00:00"
@@ -37,6 +39,7 @@ def format_time(t):
     hours = t // 60
     return f"{hours}:{minutes}:{seconds}"
 
+
 def start_recording():
     global recording
     global ffmpeg_proc
@@ -45,9 +48,10 @@ def start_recording():
         return
     start_time = time.clock_gettime(time.CLOCK_BOOTTIME)
     os.environ["VIDEO_NAME"] = str(name)
-    ffmpeg_proc = subprocess.Popen(["./start_ffmpeg.sh"], bufsize=0, text=True, stdin=subprocess.PIPE)
+    ffmpeg_proc = subprocess.Popen(
+        ["./start_ffmpeg.sh"], bufsize=0, text=True, stdin=subprocess.PIPE
+    )
     recording = True
-
 
 
 def stop_recording():
@@ -64,19 +68,25 @@ def stop_recording():
     start_time = 0
     name += 1
 
+
 def save_clip():
     global recording
     if recording:
         print(f"clip saved {time.clock_gettime(time.CLOCK_BOOTTIME)}", flush=True)
         clips.append(time.clock_gettime(time.CLOCK_BOOTTIME))
 
+
 def split_video():
     global clips
-    split_proc = subprocess.Popen(["./video_cutter.sh"], bufsize=0, text=True, stdin=subprocess.PIPE)
+    split_proc = subprocess.Popen(
+        ["./video_cutter.sh"], bufsize=0, text=True, stdin=subprocess.PIPE
+    )
     split_proc.stdin.write(f"{name}\n")
     split_proc.stdin.write(f"{len(clips)}\n")
 
     for clip in clips:
-        split_proc.stdin.write(f"{format_time(clip + post_record - clip_duration - start_time)}\n")
+        split_proc.stdin.write(
+            f"{format_time(clip + post_record - clip_duration - start_time)}\n"
+        )
         split_proc.stdin.write(f"{format_time(clip + post_record - start_time)}\n")
     clips = []

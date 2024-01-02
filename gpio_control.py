@@ -4,45 +4,68 @@ import subprocess
 import model_info
 
 off_time = 250
-on_time  = 250
+on_time = 250
 
 button_emulating = []
 
-send_pin_proc = subprocess.Popen("./send_pin", bufsize=0, text=True, stdin=subprocess.PIPE)
-send_rc5_proc = subprocess.Popen("./send_rc5", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+send_pin_proc = subprocess.Popen(
+    "./send_pin", bufsize=0, text=True, stdin=subprocess.PIPE
+)
+send_rc5_proc = subprocess.Popen(
+    "./send_rc5", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE
+)
 if model_info.input_support:
-    get_pin_proc = subprocess.Popen("./get_pin", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    get_pin_proc = subprocess.Popen(
+        "./get_pin", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE
+    )
 else:
-    get_pin_proc = subprocess.Popen("./get_pin_extended", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-get_rc5_proc = subprocess.Popen("./get_rc5", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    get_pin_proc = subprocess.Popen(
+        "./get_pin_extended",
+        bufsize=0,
+        text=True,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+    )
+get_rc5_proc = subprocess.Popen(
+    "./get_rc5", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE
+)
+
 
 def static_vars(**kwargs):
     def decorate(func):
         for k in kwargs:
             setattr(func, k, kwargs[k])
         return func
+
     return decorate
+
 
 def toggle(pin):
     send_pin_proc.stdin.write(f"toggle {pin}\n")
 
+
 def set(pin, value):
     send_pin_proc.stdin.write(f"set {pin} {value}\n")
+
 
 def button_emu(pin, times):
     for _ in range(times):
         send_pin_proc.stdin.write(f"button {pin}\n")
 
+
 def ir_emu(address, command):
     send_rc5_proc.stdin.write(f"transmit {address} {command}\n")
+
 
 def ir_emu_blocking(address, command):
     send_rc5_proc.stdin.write(f"transmit {address} {command}\nping\n")
     send_rc5_proc.stdout.readline()
 
+
 def read_pins():
     get_pin_proc.stdin.write("get\n")
     return literal_eval(get_pin_proc.stdout.readline())
+
 
 @static_vars(toggle=-1)
 def read_rc5(address):
@@ -67,6 +90,7 @@ def read_rc5(address):
         raw_rc5 = get_rc5_proc.stdout.readline()
     return ir_commands
 
+
 @static_vars(toggle=-1)
 def read_all_rc5():
     get_rc5_proc.stdin.write("get\n")
@@ -89,12 +113,14 @@ def read_all_rc5():
         raw_rc5 = get_rc5_proc.stdout.readline()
     return ir_commands
 
+
 def byte_to_arr(byte):
     a = [0] * 8
     for i in range(8):
-            a[i] = byte % 2
-            byte //= 2
+        a[i] = byte % 2
+        byte //= 2
     return a[::-1]
+
 
 def get_address(data_rx):
     spacing_time = 1.3
@@ -108,16 +134,16 @@ def get_address(data_rx):
         data = [[0] * 8] * 8
         for _ in range(8):
             byte = int.from_bytes(data_rx.read(), "big")
-            data[byte // 2 ** 5] = byte_to_arr(byte)
+            data[byte // 2**5] = byte_to_arr(byte)
 
     val = data[4][7]
     timer = data[2][3]
     if timer:
-        command = 13 #timer start stop
+        command = 13  # timer start stop
     elif val:
-        command = 3  #left -
+        command = 3  # left -
     else:
-        command = 2  #left +
+        command = 2  # left +
 
     for k in range(32):
         ir_emu_blocking(k, command)
@@ -127,10 +153,10 @@ def get_address(data_rx):
         while data_rx.inWaiting() // 8 > 0:
             for _ in range(8):
                 byte = int.from_bytes(data_rx.read(), "big")
-                data[byte // 2 ** 5] = byte_to_arr(byte)
+                data[byte // 2**5] = byte_to_arr(byte)
 
-        print(str(data).replace(']', ']\n'))
-        if (val != data[4][7] or timer != data[2][3]):
+        print(str(data).replace("]", "]\n"))
+        if val != data[4][7] or timer != data[2][3]:
             if timer:
                 ir_emu_blocking(k, command)
             else:
@@ -138,6 +164,7 @@ def get_address(data_rx):
 
             return k
     return -1
+
 
 def update_addr(data_rx, address):
     spacing_time = 1.3
@@ -151,16 +178,16 @@ def update_addr(data_rx, address):
         data = [[0] * 8] * 8
         for _ in range(8):
             byte = int.from_bytes(data_rx.read(), "big")
-            data[byte // 2 ** 5] = byte_to_arr(byte)
+            data[byte // 2**5] = byte_to_arr(byte)
 
     val = data[4][7]
     timer = data[2][3]
     if timer:
-        command = 13 #timer start stop
+        command = 13  # timer start stop
     elif val:
-        command = 3  #left -
+        command = 3  # left -
     else:
-        command = 2  #left +
+        command = 2  # left +
 
     if address == -1:
         address = 0
@@ -173,10 +200,10 @@ def update_addr(data_rx, address):
         while data_rx.inWaiting() // 8 > 0:
             for _ in range(8):
                 byte = int.from_bytes(data_rx.read(), "big")
-                data[byte // 2 ** 5] = byte_to_arr(byte)
+                data[byte // 2**5] = byte_to_arr(byte)
 
-        print(str(data).replace(']', ']\n'))
-        if (val != data[4][7] or timer != data[2][3]):
+        print(str(data).replace("]", "]\n"))
+        if val != data[4][7] or timer != data[2][3]:
             if timer:
                 ir_emu_blocking(k, command)
             else:
