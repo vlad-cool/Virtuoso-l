@@ -188,6 +188,7 @@ class KivyApp(App):
 
     def sync_new_remote(self, btn):
         if model_info.input_support:
+            # TODO merge
             pass # Not used in this branch
         else:
             if btn.sync_state == "no_sync":

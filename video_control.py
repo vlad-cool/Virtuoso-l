@@ -7,18 +7,11 @@ import model_info
 clip_duration = 10  # seconds
 post_record = 2  # seconds
 
-# TODO Get data from model_info
-
 os.environ["LOG"] = "/dev/null"
 
-if model_info.is_banana:
-    os.environ["OUT_DIR"] = os.environ["HOME"] + "/Videos/V24m"
-    os.environ["TMP_DIR"] = os.environ["HOME"] + "/Videos/V24m/tmp"
-    os.environ["ENCODER"] = "cedrus264"
-else:
-    output_dir = "."
-    os.environ["TMP_DIR"] = "./tmp"
-    os.environ["ENCODER"] = "libx264"
+os.environ["OUT_DIR"] = model_info.video_path
+os.environ["TMP_DIR"] = model_info.video_path_tmp
+os.environ["ENCODER"] = model_info.video_encoder
 
 recording = False
 ffmpeg_proc = None
