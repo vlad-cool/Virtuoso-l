@@ -13,4 +13,8 @@ clean:
 
 clean_sources:
 	rm $(addsuffix .c, $(EXECS))
-	
+
+release:
+	rm -r release
+	mkdir release
+	cp src/app.py release/
