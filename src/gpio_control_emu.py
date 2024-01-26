@@ -1,5 +1,6 @@
 from time import sleep
 from ast import literal_eval
+import model_info
 
 off_time = 250
 on_time  = 250
@@ -26,7 +27,10 @@ def ir_emu_blocking(address, command):
     print(f"transmitted blocking signal, address: {address}, command: {command}\n")
 
 def read_pins():
-    return literal_eval("{3: 1, 7: 0, 18: 0, 27: 1, 32: 0, 36: 1, }\n")
+    if model_info.input_support:
+        return literal_eval("{3: 1, 7: 0, 18: 0, 27: 1, 32: 0, 36: 1, }\n")
+    else:
+        return literal_eval("{3: 1, 7: 0, 18: 0, 27: 1, 32: 0, 36: 1, 37: 1, }\n")
 
 def read_rc5(_):
     return []

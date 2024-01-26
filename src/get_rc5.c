@@ -58,7 +58,7 @@ int main()
         }
         buffer[55] = digitalRead(rc5_pin);
 
-        if (buffer[1] == 1 && buffer[3] == 0 && buffer[5] == 1 && buffer[7] == 0 && buffer[9] != toggle)
+        if (buffer[1] == 1 && buffer[3] == 0 && buffer[5] == 1 && buffer[7] == 0)
         {
             int valid = 1;
             for (int i = 0; i < 14; i++)
@@ -78,6 +78,10 @@ int main()
                 }
                 printf("\n");
                 fflush(stdout);
+                for (int i = 0; i < 56; i++)
+                {
+                    buffer[i] = 0;
+                }
             }
         }
 
