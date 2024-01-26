@@ -12,16 +12,17 @@ clean:
 
 remote_build:
 	ssh-add ~/.ssh/bananapi
-	ssh -t pi@$(BANANA_IP) mkdir -p src
-	ssh -t pi@$(BANANA_IP) rm -rf src/*
-	scp src/*.c pi@$(BANANA_IP):src/
-	scp src/Makefile_gpio pi@$(BANANA_IP):src/Makefile
-	ssh -t pi@$(BANANA_IP) 'cd src && sudo make'
-	ssh -t pi@$(BANANA_IP) rm src/*.c src/Makefile
-	scp pi@$(BANANA_IP):src/* bin/
+	ssh -t pi@$(BANANA_IP) rm -rf gpio/*
+	scp -r src/gpio pi@192.168.2.12:
+	ssh -t pi@$(BANANA_IP) 'cd gpio && make && rm Makefile *.cpp *.hpp *.o'
+	scp pi@$(BANANA_IP):gpio/* bin/
 
-remote_install_drivers:
-	ssh -t pi@$(BANANA_IP) 'cd V24m && sudo rm $(DRIVER_EXECS)'
-	scp bin/* pi@$(BANANA_IP):V24m/
-	ssh -t pi@$(BANANA_IP) 'cd V24m && sudo chown root $(DRIVER_EXECS)'
-	ssh -t pi@$(BANANA_IP) 'cd V24m && sudo chmod 4755 $(DRIVER_EXECS)'
+local_debug:
+	mkdir -p local_debug
+	rm -rf local_debug/*
+
+	ln -s src/app.py local_debug/app.py
+	ln -s src/gpio_control_emu.py local_debug/gpio_control.py
+	ln -s src/video_control_emu.py local_debug/video_control.py
+
+	

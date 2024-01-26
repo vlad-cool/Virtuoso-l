@@ -1,34 +1,18 @@
-all: send_pin send_rc5 get_pin get_rc5
+CC := g++
+CFLAGS := -c -O3
+LDFLAGS := -lgpiodcxx
 
-gpio_lib.o: gpio_lib.cpp gpio_lib.hpp
-	g++ -c gpio_lib.cpp
+SRCS := $(wildcard *.cpp)
+OBJS := $(patsubst %.cpp,%.o,$(SRCS))
+TARGETS := send_pin send_rc5 get_pin get_rc5
 
-send_pin.o: send_pin.cpp gpio_lib.hpp
-	g++ -c send_pin.cpp
+all: $(TARGETS)
 
-send_rc5.o: send_rc5.cpp gpio_lib.hpp
-	g++ -c send_rc5.cpp
+%.o: %.cpp gpio_lib.hpp
+	$(CC) $(CFLAGS) $< -o $@
 
-get_pin.o: get_pin.cpp gpio_lib.hpp
-	g++ -c get_pin.cpp
-
-get_rc5.o: get_rc5.cpp gpio_lib.hpp
-	g++ -c get_rc5.cpp
-
-send_pin: send_pin.o gpio_lib.o
-	g++ send_pin.o gpio_lib.o -o send_pin -lgpiodcxx
-
-send_rc5: send_rc5.o gpio_lib.o
-	g++ send_rc5.o gpio_lib.o -o send_rc5 -lgpiodcxx
-
-get_pin: get_pin.o gpio_lib.o
-	g++ get_pin.o gpio_lib.o -o get_pin -lgpiodcxx
-
-get_rc5: get_rc5.o gpio_lib.o
-	g++ get_rc5.o gpio_lib.o -o get_rc5 -lgpiodcxx
+$(TARGETS): $(OBJS) gpio_lib.o
+	$(CC) $@.o gpio_lib.o -o $@ $(LDFLAGS)
 
 clean:
-	rm send_pin send_rc5 get_pin get_rc5 *.o
-
-clean_sources:
-	rm Makefile *.cpp *.hpp
+	rm -f $(TARGETS) $(OBJS)
