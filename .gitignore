@@ -5,6 +5,6 @@
 .directory
 config.json
 scripts/upload.sh
-main.kv
 used_software
 /release
+/crossenv

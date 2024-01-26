@@ -25,4 +25,8 @@ local_debug:
 	ln -s src/gpio_control_emu.py local_debug/gpio_control.py
 	ln -s src/video_control_emu.py local_debug/video_control.py
 
+	cd local_debug
+	python3 -m venv
+	venv/bin/python3 -m pip install kivy
+
 	
