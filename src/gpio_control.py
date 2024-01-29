@@ -8,28 +8,28 @@ on_time = 250
 
 button_emulating = []
 
-send_pin_proc = subprocess.Popen(
-    "./send_pin", bufsize=0, text=True, stdin=subprocess.PIPE
-)
-send_rc5_proc = subprocess.Popen(
-    "./send_rc5", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE
-)
-if model_info.input_support:
-    get_pin_proc = subprocess.Popen(
-        "./get_pin", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE
-    )
-else:
-    get_pin_proc = subprocess.Popen(
-        "./get_pin_extended",
-        bufsize=0,
-        text=True,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-    )
-get_rc5_proc = subprocess.Popen(
-    "./get_rc5", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE
-)
+send_pin_proc = subprocess.Popen("./send_pin", bufsize=0, text=True, stdin=subprocess.PIPE)
+send_rc5_proc = subprocess.Popen("./send_rc5", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+get_pin_proc = subprocess.Popen("./get_pin", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+get_rc5_proc = subprocess.Popen("./get_rc5", bufsize=0, text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
+get_pin_proc.stdin.write("add_pin 3\n")
+get_pin_proc.stdin.write("add_pin 7\n")
+get_pin_proc.stdin.write("add_pin 27\n")
+get_pin_proc.stdin.write("add_pin 32\n")
+get_pin_proc.stdin.write("add_pin 36\n")
+
+send_pin_proc.stdin.write("add_pin 5 0\n")
+send_pin_proc.stdin.write("add_pin 15 0\n")
+send_pin_proc.stdin.write("add_pin 26 1\n")
+send_pin_proc.stdin.write("add_pin 29 0\n")
+send_pin_proc.stdin.write("add_pin 35 0\n")
+
+
+if model_info.input_support:
+    send_pin_proc.stdin.write("add_pin 37 1\n")
+else:
+    get_pin_proc.stdin.write("add_pin 37\n")
 
 def static_vars(**kwargs):
     def decorate(func):
