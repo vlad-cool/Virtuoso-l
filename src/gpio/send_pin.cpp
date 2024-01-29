@@ -10,7 +10,7 @@
 #define TIMING 200000
 
 std::map<int, int> pins;
-std::vector<int> static_pins{ 8, 10, 12, 16, 19, 21, 23, 24};
+std::vector<int> static_pins{8, 10, 12, 16, 19, 21, 23, 24};
 
 void flush()
 {
@@ -48,8 +48,8 @@ void set(int pin, int val)
 {
     auto pin_it = pins.find(pin);
     if (pin_it != pins.end()) {
-        *pin_it = val;
-        digitalWrite(pin, *pin_it);
+        pins[pin] = val;
+        digitalWrite(pin, pins[pin]);
     }
     else
     {
@@ -61,8 +61,8 @@ void toggle(int pin)
 {
     auto pin_it = pins.find(pin);
     if (pin_it != pins.end()) {
-        *pin_it = 1 - *pin_it;
-        digitalWrite(pin, 1 - *pin_it);
+        pins[pin] = 1 - pins[pin];
+        digitalWrite(pin, 1 - pins[pin]);
     }
     else
     {
@@ -98,7 +98,7 @@ int main()
             {
                 pinMode(pin, 1);
                 digitalWrite(pin, value);
-                map[pin] = value;
+                pins[pin] = value;
             }
             continue;
         }

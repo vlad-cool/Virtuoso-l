@@ -2,16 +2,16 @@ import subprocess
 import platform
 import time
 import os
-import model_info
+import system_info
 
 clip_duration = 10  # seconds
 post_record = 2  # seconds
 
 os.environ["LOG"] = "/dev/null"
 
-os.environ["OUT_DIR"] = model_info.video_path
-os.environ["TMP_DIR"] = model_info.video_path_tmp
-os.environ["ENCODER"] = model_info.video_encoder
+os.environ["OUT_DIR"] = system_info.video_path
+os.environ["TMP_DIR"] = system_info.video_path_tmp
+os.environ["ENCODER"] = system_info.video_encoder
 
 recording = False
 ffmpeg_proc = None

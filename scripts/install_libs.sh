@@ -54,7 +54,7 @@ tar -zxvf SDL2-2.0.10.tar.gz
 cd SDL2-2.0.10
 ./configure --enable-video-kmsdrm --disable-video-opengl --disable-video-x11 --disable-video-rpi
 make -j$(nproc)
-#sudo make install
+sudo make install
 cd
 
 wget https://libsdl.org/projects/SDL_image/release/SDL2_image-2.0.5.tar.gz
@@ -62,7 +62,7 @@ tar -zxvf SDL2_image-2.0.5.tar.gz
 cd SDL2_image-2.0.5
 ./configure
 make -j$(nproc)
-#sudo make install
+sudo make install
 cd
 
 wget https://libsdl.org/projects/SDL_mixer/release/SDL2_mixer-2.0.4.tar.gz
@@ -70,7 +70,7 @@ tar -zxvf SDL2_mixer-2.0.4.tar.gz
 cd SDL2_mixer-2.0.4
 ./configure
 make -j$(nproc)
-#sudo make install
+sudo make install
 cd
 
 wget https://libsdl.org/projects/SDL_ttf/release/SDL2_ttf-2.0.15.tar.gz
@@ -78,7 +78,7 @@ tar -zxvf SDL2_ttf-2.0.15.tar.gz
 cd SDL2_ttf-2.0.15
 ./configure
 make -j$(nproc)
-#sudo make install
+sudo make install
 cd
 
 ################################################################
@@ -105,17 +105,17 @@ rm -rf SDL2*
 
 mkdir -p V24m
 cd V24m
-sudo mount -o remount,size=4G /tmp/
-#python3 -m pip install --upgrade pip setuptools virtualenv
-#python3 -m venv venv
-sudo apt -y install pypy3
-pypy3 -m venv venv
-venv/bin/python3 -m pip install --upgrade pip setuptools virtualenv
-venv/bin/python3 -m pip install Pillow
+mkdir -p app
+cd app
+
+python3 -m venv venv
+# venv/bin/python3 -m pip install --upgrade pip setuptools virtualenv
 venv/bin/python3 -m pip install setuptools
-venv/bin/python3 -m pip install cython
+    venv/bin/python3 -m pip install cython
 venv/bin/python3 -m pip install clang
 venv/bin/python3 -m pip install pyserial
+venv/bin/python3 -m pip install Pillow
+
 venv/bin/python3 -m pip -vvv install ffpyplayer==4.5.0
 venv/bin/python3 -m pip install "kivy[full]==2.1.0"
 cd

@@ -2,10 +2,10 @@ BANANA_IP := 192.168.2.12
 DRIVER_EXECS := send_pin send_rc5 get_pin get_rc5
 
 release:
-	mkdir -p release
-	rm -rf release/*
-	cp src/app.py src/gpio_control.py src/gpio_control_emu.py src/video_control.py src/video_control_emu.py release/
-	cp bin/* release/
+	mkdir -p release_dir
+	rm -rf release_dir/*
+	cp src/app.py src/gpio_control.py src/video_control.py src/scripts/* release_dir/
+	cp bin/* release_dir/
 
 clean:
 	rm -rf release
@@ -16,17 +16,3 @@ remote_build:
 	scp -r src/gpio pi@192.168.2.12:
 	ssh -t pi@$(BANANA_IP) 'cd gpio && make && rm Makefile *.cpp *.hpp *.o'
 	scp pi@$(BANANA_IP):gpio/* bin/
-
-local_debug:
-	mkdir -p local_debug
-	rm -rf local_debug/*
-
-	ln -s src/app.py local_debug/app.py
-	ln -s src/gpio_control_emu.py local_debug/gpio_control.py
-	ln -s src/video_control_emu.py local_debug/video_control.py
-
-	cd local_debug
-	python3 -m venv
-	venv/bin/python3 -m pip install kivy
-
-	

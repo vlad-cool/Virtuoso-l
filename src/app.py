@@ -9,7 +9,7 @@ import serial
 import shutil
 import pathlib
 import subprocess
-import model_info
+import system_info
 from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.app import App
@@ -20,12 +20,12 @@ from kivy.network.urlrequest import UrlRequest
 
 read_interval = .05
 
-if model_info.is_banana:
+if system_info.is_banana:
     import gpio_control
 else:
     import gpio_control_emu as gpio_control
 
-if model_info.video_support:
+if system_info.video_support:
     import video_control
 else:
     import video_control_emu as video_control
@@ -141,7 +141,7 @@ class KivyApp(App):
         self.root.ids["video_player"].state = "play"
 
     def sync_new_remote(self, btn):
-        if model_info.input_support:
+        if system_info.input_support:
             # TODO merge
             pass # Not used in this branch
         else:
@@ -172,7 +172,7 @@ class KivyApp(App):
                 break
 
     def load_video_list(self):
-        if model_info.video_support:
+        if system_info.video_support:
             videos = glob.glob(os.environ["HOME"] + "/Videos/V24m/*.mp4")
             videos.sort(key=lambda x: int(x[21:-4]))
 
@@ -185,19 +185,19 @@ class KivyApp(App):
             self.root.ids["video_player"].state = "pause"
 
     def play_pause_video(self):
-        if model_info.video_support:
+        if system_info.video_support:
             self.root.video_playing = not self.root.video_playing
 
     def system_poweroff(_):
-        if model_info.is_banana:
+        if system_info.is_banana:
             subprocess.run("/usr/sbin/poweroff")
 
     def system_reboot(_):
-        if model_info.is_banana:
+        if system_info.is_banana:
             subprocess.run("/usr/sbin/reboot")
 
     def update_config(self):
-        with open(model_info.config_file, "w") as config_file:
+        with open(system_info.config_file, "w") as config_file:
             json.dump(self.config, config_file)
 
     def send_handler(self, code):
@@ -207,11 +207,11 @@ class KivyApp(App):
         self.send_handler(commands[(2 + new_index - old_index) % 3])
     
     def set_weapon(self, new_weapon):
-        if model_info.input_support:
+        if system_info.input_support:
             pass # Not used in this branch
 
     def change_weapon_connection_type(_):
-        if model_info.input_support:
+        if system_info.input_support:
             pass # Not used in this branch
 
     def passive_stop_card(self, state):
@@ -345,7 +345,7 @@ class KivyApp(App):
     def get_data(self, _):
         root = self.root
         root.current_time = time.time()
-        if model_info.is_banana:
+        if system_info.is_banana:
             data = [[0] * 8] * 8
             while self.data_rx.inWaiting() // 8 > 0:
                 for _ in range(8):
@@ -372,7 +372,7 @@ class KivyApp(App):
 
         # Recording section
         # -----------------
-        if model_info.video_support:
+        if system_info.video_support:
             if ((self.prev_pins_data is None or self.prev_pins_data.recording == 0) and pins_data.recording == 1) or (pins_data.recording == 1 and not (video_control.ffmpeg_proc is not None and video_control.ffmpeg_proc.poll() is None)):
                 video_control.start_recording()
             elif self.prev_pins_data is not None and self.prev_pins_data.recording == 1 and pins_data.recording == 0:
@@ -491,14 +491,14 @@ class KivyApp(App):
 
         self.config = {"rc5_address": -1}
 
-        if model_info.is_banana:
+        if system_info.is_banana:
             self.data_rx = serial.Serial("/dev/ttyS2", 38400)
         else:
             self.data_rx = None
 
-        config_path = pathlib.Path(model_info.config_file)
+        config_path = pathlib.Path(system_info.config_file)
         if config_path.is_file():
-            with open(model_info.config_file, "r") as config_file:
+            with open(system_info.config_file, "r") as config_file:
                 try:
                     self.config = json.load(config_file)
                 except:
@@ -510,7 +510,7 @@ class KivyApp(App):
             print("No config file, creating!")
             self.update_config()
 
-        return Builder.load_file(model_info.kivy_file)
+        return Builder.load_file(system_info.kivy_file)
 
     def on_start(self):
         self.read_timer = Clock.schedule_interval(self.get_data, read_interval)

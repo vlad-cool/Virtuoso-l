@@ -1,10 +1,7 @@
 /venv
 /__pycache__
 /.vscode
+/release_dir
 /bin
 .directory
-config.json
-scripts/upload.sh
 used_software
-/release
-/crossenv

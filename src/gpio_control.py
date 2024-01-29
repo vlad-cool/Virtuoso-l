@@ -1,7 +1,7 @@
 from time import sleep
 from ast import literal_eval
 import subprocess
-import model_info
+import system_info
 
 off_time = 250
 on_time = 250
@@ -26,7 +26,7 @@ send_pin_proc.stdin.write("add_pin 29 0\n")
 send_pin_proc.stdin.write("add_pin 35 0\n")
 
 
-if model_info.input_support:
+if system_info.input_support:
     send_pin_proc.stdin.write("add_pin 37 1\n")
 else:
     get_pin_proc.stdin.write("add_pin 37\n")

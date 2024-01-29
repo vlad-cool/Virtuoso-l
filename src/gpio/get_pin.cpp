@@ -7,7 +7,7 @@
 #include <sys/poll.h>
 #include <vector>
 
-std::vector<int> pins();
+std::vector<int> pins;
 
 int pin_18_state_buf[8] = {0};
 
