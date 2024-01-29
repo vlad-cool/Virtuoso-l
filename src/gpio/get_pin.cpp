@@ -5,8 +5,9 @@
 #include <stdio.h>
 #include <time.h>
 #include <sys/poll.h>
+#include <vector>
 
-int pins[] = {7, 27, 32, 36};
+std::vector<int> pins();
 
 int pin_18_state_buf[8] = {0};
 
@@ -18,10 +19,6 @@ void flush()
 void setup()
 {
     gpioSetupPhys();
-    for (int i = 0; i < sizeof(pins) / sizeof(int); i++)
-    {
-        pinMode(pins[i], 0);
-    }
     pinMode(18, 0);
 }
 
@@ -46,12 +43,23 @@ int main()
             {
                 break;
             }
+            if (strcmp(s, "add_pin") == 0)
+            {
+                if (scanf("%d", &pin) < 1)
+                    flush();
+                else
+                {
+                    pinMode(pin, 0);
+                    pins.push_back(pin);
+                }
+                continue;
+            }
             if (strcmp(s, "get") == 0)
             {
                 printf("{");
-                for (int i = 0; i < sizeof(pins) / sizeof(int); i++)
+                for (auto pin = pins.begin(); pin != pins.end(); pin++)
                 {
-                    printf("%d: %d, ", pins[i], digitalRead(pins[i]));
+                    printf("%d: %d, ", *pin, digitalRead(*pin));
                 }
 
                 int pin_18_state = 0;

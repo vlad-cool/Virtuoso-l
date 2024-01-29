@@ -52,7 +52,7 @@ int main()
         clock_gettime(CLOCK_BOOTTIME, &t);
         time = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
 
-        for (int i = 0; i < 56; i++)
+        for (int i = 0; i < 55; i++)
         {
             buffer[i] = buffer[i + 1];
         }

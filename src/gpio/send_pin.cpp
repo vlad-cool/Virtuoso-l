@@ -4,11 +4,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <vector>
+#include <map>
 
 #define TIMING 200000
 
-int pins[]  = { 8, 10, 12, 16, 19, 21, 23, 24,  5, 15, 26, 29, 35};
-int state[] = { 1,  1,  1,  1,  1,  1,  1,  1,  0,  0,  1,  0,  0};
+std::map<int, int> pins;
+std::vector<int> static_pins{ 8, 10, 12, 16, 19, 21, 23, 24};
 
 void flush()
 {
@@ -34,35 +36,38 @@ int pin_index(int pin)
 void setup()
 {
     gpioSetupPhys();
-    for (int i = 0; i < sizeof(pins) / sizeof(int); i++)
+    
+    for (auto pin = static_pins.begin(); pin != static_pins.end(); pin++)
     {
-        pinMode(pins[i], 1);
-        digitalWrite(pins[i], state[i]);
+        pinMode(*pin, 1);
+        digitalWrite(*pin, 1);
     }
 }
 
 void set(int pin, int val)
 {
-    int index = pin_index(pin);
-    if (index == -1)
-    {
-        fprintf(stderr, "Unknown pin\n");
-        return;
+    auto pin_it = pins.find(pin);
+    if (pin_it != pins.end()) {
+        *pin_it = val;
+        digitalWrite(pin, *pin_it);
     }
-    digitalWrite(pins[index], val);
-    state[index] = val;
+    else
+    {
+        std::cerr << "Unknown pin" << std::endl;
+    }
 }
 
 void toggle(int pin)
 {
-    int index = pin_index(pin);
-    if (index == -1)
-    {
-        fprintf(stderr, "Unknown pin\n");
-        return;
+    auto pin_it = pins.find(pin);
+    if (pin_it != pins.end()) {
+        *pin_it = 1 - *pin_it;
+        digitalWrite(pin, 1 - *pin_it);
     }
-    digitalWrite(pins[index], 1 - state[index]);
-    state[index] = 1 - state[index];
+    else
+    {
+        std::cerr << "Unknown pin" << std::endl;
+    }
 }
 
 void button(int pin)
@@ -84,6 +89,18 @@ int main()
         if (scanf("%127s", s) < 1)
         {
             break;
+        }
+        if (strcmp(s, "add_pin") == 0)
+        {
+            if (scanf("%d %d", &pin, &value) < 2)
+                flush();
+            else
+            {
+                pinMode(pin, 1);
+                digitalWrite(pin, value);
+                map[pin] = value;
+            }
+            continue;
         }
         if (strcmp(s, "toggle") == 0)
         {
