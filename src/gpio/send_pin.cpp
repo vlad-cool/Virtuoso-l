@@ -18,30 +18,9 @@ void flush()
     printf("Not a number\n");
 }
 
-int pin_index(int pin)
-{
-    int i;
-    for (i = 0; i < sizeof(pins) / sizeof(int) && pins[i] != pin; i++) { }
-    if (i == sizeof(pins) / sizeof(int))
-    {
-        return -1;
-    }    
-    else
-    {
-        return i;
-    }
-
-}
-
 void setup()
 {
     gpioSetupPhys();
-    
-    for (auto pin = static_pins.begin(); pin != static_pins.end(); pin++)
-    {
-        pinMode(*pin, 1);
-        digitalWrite(*pin, 1);
-    }
 }
 
 void set(int pin, int val)
@@ -97,8 +76,21 @@ int main()
             else
             {
                 pinMode(pin, 1);
-                digitalWrite(pin, value);
+                // digitalWrite(pin, value);
                 pins[pin] = value;
+            }
+            continue;
+        }
+        if (strcmp(s, "setup") == 0)
+        {
+            for (auto pin = static_pins.begin(); pin != static_pins.end(); pin++)
+            {
+                pinMode(*pin, 1);
+                digitalWrite(*pin, 1);
+            }
+            for (auto pin = pins.begin(); pin != pins.end(); pin++)
+            {
+                digitalWrite(pin->first, pin->second);
             }
             continue;
         }

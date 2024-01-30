@@ -66,7 +66,7 @@ rm SDL2_ttf-2.0.15.tar.gz
 rm -r SDL2_ttf-2.0.15
 cd
 
-sudo apt -y install gpiod
+sudo apt -y install gpiod xorg
 
 sudo groupadd gpio
 sudo usermod -a -G gpio pi

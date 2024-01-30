@@ -1,4 +1,7 @@
 if [ -z "$SSH_TTY" ] && [ -z "$TMUX" ] && [[ "$(tty)"="/dev/tty1" ]]
 then
+    cd /home/pi/V24m/app
+    clear
+    sudo plymouth quit
     /home/pi/V24m/app/start_script.sh
 fi

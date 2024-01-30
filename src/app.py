@@ -1,4 +1,4 @@
-#!env python3
+#!venv/bin/python3
 import os
 import kivy
 import time
@@ -20,15 +20,10 @@ from kivy.network.urlrequest import UrlRequest
 
 read_interval = .05
 
-if system_info.is_banana:
-    import gpio_control
-else:
-    import gpio_control_emu as gpio_control
-
 if system_info.video_support:
     import video_control
-else:
-    import video_control_emu as video_control
+
+import gpio_control
 
 kivy.require("2.1.0")
 
@@ -84,7 +79,8 @@ class PinsData:
         self.recording  = pins[18]
         self.poweroff   = pins[27]
         self.weapon     = pins[32] * 2 + pins[36]
-        self.weapon_btn = pins[37]
+        if not system_info.input_support:
+            self.weapon_btn = pins[37]
 
 class PassiveTimer:
     def stop(self):
@@ -142,8 +138,11 @@ class KivyApp(App):
 
     def sync_new_remote(self, btn):
         if system_info.input_support:
-            # TODO merge
-            pass # Not used in this branch
+            if btn.sync_state == "no_sync":
+                btn.sync_state = "waiting"
+                btn.text = "press and hold\n3:00/1:00 button on remote"
+                self.read_timer.cancel()
+                self.ir_timer = Clock.schedule_interval(lambda _: self.wait_rc5(btn), read_interval)
         else:
             if btn.sync_state == "no_sync":
                 btn.sync_state = "waiting"
@@ -208,11 +207,19 @@ class KivyApp(App):
     
     def set_weapon(self, new_weapon):
         if system_info.input_support:
-            pass # Not used in this branch
+            gpio_control.button_emu(37, (3 + new_weapon - self.root.weapon) % 3)
+            self.weapon = new_weapon
+
+            if self.root.weapon == 3 and new_weapon == 0:
+                self.root.epee5 = 1 - self.root.epee5
+                gpio_control.set(15, self.root.epee5)
+            else:
+                self.root.epee5 = 0
+                gpio_control.set(15, self.root.epee5)
 
     def change_weapon_connection_type(_):
         if system_info.input_support:
-            pass # Not used in this branch
+            gpio_control.button_emu(27, 1)
 
     def passive_stop_card(self, state):
         if self.root.timer_running != 1 and state == "down":
@@ -397,12 +404,13 @@ class KivyApp(App):
 
         self.prev_pins_data = pins_data
 
-        if pins_data.weapon_btn == 0:
-            cmds = gpio_control.read_all_rc5()
-            for cmd in cmds:
-                if cmd[1] == 7:
-                    self.config["rc5_address"] = cmd[0]
-                    self.update_config()
+        if not system_info.input_support:
+            if pins_data.weapon_btn == 0:
+                cmds = gpio_control.read_all_rc5()
+                for cmd in cmds:
+                    if cmd[1] == 7:
+                        self.config["rc5_address"] = cmd[0]
+                        self.update_config()
 
         cmds = gpio_control.read_rc5(self.config["rc5_address"])
         for cmd in cmds:
