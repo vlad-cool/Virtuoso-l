@@ -2,12 +2,12 @@
 
 # V24m configuring
 export is_banana=False
-export input_support=False
+export input_support=True
 export config_file=config.json
-export kivy_file=main1920x360.kv
+export kivy_file=main1920x480.kv
 ## Video
-export video_support=False
-export video_path=./video
+export video_support=True
+export video_path=/home/vlad/Documents/VSCode/V24m
 export video_path_tmp=./video/tmp
 export video_encoder=libx264
 

@@ -23,7 +23,10 @@ read_interval = .05
 if system_info.video_support:
     import video_control
 
-import gpio_control
+if system_info.is_banana:
+    import gpio_control
+else:
+    import gpio_control_emu as gpio_control
 
 kivy.require("2.1.0")
 
@@ -172,8 +175,11 @@ class KivyApp(App):
 
     def load_video_list(self):
         if system_info.video_support:
-            videos = glob.glob(os.environ["HOME"] + "/Videos/V24m/*.mp4")
-            videos.sort(key=lambda x: int(x[21:-4]))
+            videos = glob.glob(os.environ["video_path"] + "/*.mp4")
+            print("#######################")
+            print(videos)
+            print("#######################")
+            videos.sort(key=lambda x: int(x.split("/")[-1][:-4]))
 
             while len(self.root.ids["video_list"].children) > 0:
                 self.root.ids["video_list"].remove_widget(self.root.ids["video_list"].children[0])
@@ -398,9 +404,10 @@ class KivyApp(App):
         root.passive_coun = self.passive_timer.get_coun()
         root.color_passive = self.color_passive_red if root.passive_time > 50 else self.color_passive_yel
 
-        if video_control.ffmpeg_proc is not None and video_control.ffmpeg_proc.poll() is not None:
-            video_control.ffmpeg_proc = None
-        root.recording = (video_control.ffmpeg_proc is not None) and (video_control.ffmpeg_proc.poll() is None)
+        if system_info.video_support:
+            if video_control.ffmpeg_proc is not None and video_control.ffmpeg_proc.poll() is not None:
+                video_control.ffmpeg_proc = None
+            root.recording = (video_control.ffmpeg_proc is not None) and (video_control.ffmpeg_proc.poll() is None)
 
         self.prev_pins_data = pins_data
 
@@ -518,6 +525,7 @@ class KivyApp(App):
             print("No config file, creating!")
             self.update_config()
 
+        gpio_control.setup()
         return Builder.load_file(system_info.kivy_file)
 
     def on_start(self):
@@ -526,6 +534,10 @@ class KivyApp(App):
         self.root.flash_timer  = time.time()
         self.root.current_time = time.time()
         self.load_video_list()
+        from kivy.graphics.transformation import Matrix
+        mat = Matrix().scale(0.5, 0.5, 0.5)
+
+        self.root.ids["score_layout"].apply_transform(mat)
 
     def on_stop(self):
         if self.data_rx is not None:

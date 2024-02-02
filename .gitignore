@@ -6,3 +6,5 @@
 /assets/venv
 .directory
 used_software
+/src/assets
+/src/__pycache__

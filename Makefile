@@ -1,4 +1,4 @@
-BANANA_IP := 192.168.2.12
+BANANA_IP := 192.168.50.23
 DRIVER_EXECS := send_pin send_rc5 get_pin get_rc5
 
 release: release.zip
@@ -14,7 +14,7 @@ release.zip: src/app.py src/system_info.py src/gpio_control.py src/video_control
 	cp -r assets/venv app/
 	zip -r release.zip app
 
-install: release
+upload: release
 	scp release.zip pi@$(BANANA_IP):
 	ssh pi@$(BANANA_IP) "./install.sh"
 
@@ -24,6 +24,6 @@ clean:
 remote_build:
 	ssh-add ~/.ssh/bananapi
 	ssh -t pi@$(BANANA_IP) rm -rf gpio/*
-	scp -r src/gpio pi@192.168.2.12:
+	scp -r src/gpio pi@$(BANANA_IP):
 	ssh -t pi@$(BANANA_IP) 'cd gpio && make && rm Makefile *.cpp *.hpp *.o'
 	scp pi@$(BANANA_IP):gpio/* bin/

@@ -59,7 +59,6 @@ void button(int pin)
 
 int main()
 {
-    setup();
     int pin = 0, value = 0;
     char s[128];
     
@@ -75,7 +74,6 @@ int main()
                 flush();
             else
             {
-                pinMode(pin, 1);
                 // digitalWrite(pin, value);
                 pins[pin] = value;
             }
@@ -83,6 +81,7 @@ int main()
         }
         if (strcmp(s, "setup") == 0)
         {
+            setup();
             for (auto pin = static_pins.begin(); pin != static_pins.end(); pin++)
             {
                 pinMode(*pin, 1);
@@ -90,6 +89,7 @@ int main()
             }
             for (auto pin = pins.begin(); pin != pins.end(); pin++)
             {
+                pinMode(pin->first, 1);
                 digitalWrite(pin->first, pin->second);
             }
             continue;

@@ -10,6 +10,9 @@ ir_commands = []
 
 button_emulating = []
 
+def setup():
+    pass
+
 def toggle(pin):
     print(f"toggled pin {pin}\n")
 

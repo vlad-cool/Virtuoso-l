@@ -93,7 +93,7 @@ sudo apt -y install gpiod
 sudo cp cedar_ve.ko /lib/modules/5.15.80-sunxi/
 sudo depmod
 echo cedar_ve | sudo tee -a /etc/modules
-echo KERNEL=="cedar_dev", MODE="0660", GROUP="video" | sudo tee /etc/udev/rules.d/50-cedar.rules
+echo SUBSYSTEM==\"cedar_dev\", KERNEL==\"cedar_dev\", GROUP=\"video\", MODE=\"0660\" | sudo tee /etc/udev/rules.d/60-cedar.rules
 
 tar xvf FFmpeg.tar.gz
 cd FFmpeg

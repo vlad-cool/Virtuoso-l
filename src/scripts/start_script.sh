@@ -8,6 +8,8 @@ export kivy_file=main1920x480.kv
 export video_support=True
 export video_path=/home/pi/V24m/Videos
 export video_path_tmp=/home/pi/V24m/app/Videos_tmp
+mkdir -p $video_path
+mkdir -p $video_path_tmp
 export video_encoder=cedrus264
 ## Logs
 export MAIN_LOG=main.log
