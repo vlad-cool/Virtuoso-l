@@ -41,6 +41,11 @@ Carousel:
     color_invis: [0, 0, 0, 0]
 
     video_playing: False
+    video_path: ""
+    video_id: -1
+    max_video_id: -1
+
+    show_player: False
 
     on_index: app.load_video_list()
 
@@ -55,88 +60,94 @@ Carousel:
                 id: video_player
                 size: 640, 480
                 size_hint: None, None
-                pos: 1920 - 640, 0
+                pos: 1920 / 2 + (1920 / 2 - 640) / 2, 0
                 state: "play" if root.video_playing else "pause"
+                source: root.video_path + "/" + str(root.video_id) + ".mp4" if root.video_id >= 0 and root.video_id <= root.max_video_id else ""
 
             BoxLayout:
                 id: player_controls
                 orientation: "horizontal"
-                # size: 960, 120
-                size: 960, 120
+                size: 920, 130
                 size_hint: None, None
-                pos: 0, 290
-            
+                pos: 20, 325
+
+                Label:
+                    text: "10"
+                    font_size: 120
+                    font_name: "agencyb"
+
+                    size: self.parent.height, self.parent.width - self.parent.height * 6
+
                 Button:
                     id: previous_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "prev"
+                    text: "⏪"
                     font_size: 80
-                    font_name:"agencyb"
+                    font_name: "NotoColorEmoji"
                     background_color: [1, 0, 0, 1]
-                    on_press: print("ABOBA")
-                    # on_press: app.next_video()
-            
+                    on_press: app.previous_video()           
+                
                 Button:
                     id: back_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "back"
+                    text: "⏮"
                     font_size: 80
-                    font_name:"agencyb"
+                    font_name: "NotoColorEmoji"
                     background_color: [1, 0, 0, 1]
-                    # on_press: app.next_video()
+                    on_press: app.rewind_video(-0.1)
             
                 Button:
                     id: play_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "play"
+                    text: "⏯"
                     font_size: 80
-                    font_name:"agencyb"
+                    font_name: "NotoColorEmoji"
                     background_color: [0, 1, 0, 1]
-                    # on_press: app.play_pause_video()
+                    on_press: root.video_playing = not root.video_playing
             
                 Button:
                     id: stop_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "pause"
+                    text: "⏹"
                     font_size: 80
-                    font_name:"agencyb"
+                    font_name: "NotoColorEmoji"
                     background_color: [0, 1, 0, 1]
-                    # on_press: app.play_pause_video()
+                    on_press: root.video_id = -1; root.video_playing = False; root.ids.video_player.source = ""
             
                 Button:
                     id: forward_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "forward"
+                    text: "⏭"
                     font_size: 80
-                    font_name:"agencyb"
+                    font_name: "NotoColorEmoji"
                     background_color: [0, 1, 0, 1]
-                    # on_press: app.play_pause_video()
+                    on_press: app.rewind_video(0.1)
             
                 Button:
                     id: next_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "next"
+                    text: "⏩"
                     font_size: 80
-                    font_name:"agencyb"
+                    font_name: "NotoColorEmoji"
                     background_color: [0, 1, 0, 1]
-                    # on_press: app.play_pause_video()
+                    on_press: app.next_video()
             
             BoxLayout:
                 id: video_playback
                 orientation: "horizontal"
-                size: 940, 30
+                size: 920, 40
                 size_hint: None, None
-                pos: 10, 250
+                pos: 20, 260
 
                 Label:
                     text: "-8 sec"
-                    font_size: 20
+                    font_size: 30
                     font_name:"agencyb"
 
                     canvas.before:
@@ -152,7 +163,7 @@ Carousel:
                             size: self.size
                 Label:
                     text: "-7 sec"
-                    font_size: 20
+                    font_size: 30
                     font_name:"agencyb"
 
                     canvas.before:
@@ -168,7 +179,7 @@ Carousel:
                             size: self.size
                 Label:
                     text: "-6 sec"
-                    font_size: 20
+                    font_size: 30
                     font_name:"agencyb"
 
                     canvas.before:
@@ -184,7 +195,7 @@ Carousel:
                             size: self.size
                 Label:
                     text: "-5 sec"
-                    font_size: 20
+                    font_size: 30
                     font_name:"agencyb"
 
                     canvas.before:
@@ -200,7 +211,7 @@ Carousel:
                             size: self.size
                 Label:
                     text: "-4 sec"
-                    font_size: 20
+                    font_size: 30
                     font_name:"agencyb"
 
                     canvas.before:
@@ -216,7 +227,7 @@ Carousel:
                             size: self.size
                 Label:
                     text: "-3 sec"
-                    font_size: 20
+                    font_size: 30
                     font_name:"agencyb"
 
                     canvas.before:
@@ -232,7 +243,7 @@ Carousel:
                             size: self.size
                 Label:
                     text: "-2 sec"
-                    font_size: 20
+                    font_size: 30
                     font_name:"agencyb"
 
                     canvas.before:
@@ -248,7 +259,7 @@ Carousel:
                             size: self.size
                 Label:
                     text: "-1 sec"
-                    font_size: 20
+                    font_size: 30
                     font_name:"agencyb"
 
                     canvas.before:
@@ -264,7 +275,7 @@ Carousel:
                             size: self.size
                 Label:
                     text: "1 sec"
-                    font_size: 20
+                    font_size: 30
                     font_name:"agencyb"
 
                     canvas.before:
@@ -280,7 +291,7 @@ Carousel:
                             size: self.size
                 Label:
                     text: "2 sec"
-                    font_size: 20
+                    font_size: 30
                     font_name:"agencyb"
 
                     canvas.before:
@@ -295,22 +306,11 @@ Carousel:
                             pos: self.pos
                             size: self.size
 
-            ScrollView:
-                size: 400, 480
-                size_hint: None, None
-                pos: 0, 0
-                do_scroll_x: False
-                do_scroll_y: True
-
-                GridLayout:
-                    id: video_list
-                    size_hint: None, None
-                    height: self.minimum_height
-                    cols: 1
-
-        ScatterLayout:
-            id: score_layout
             Label:
+                size: 10, 40
+                pos: root.ids.video_playback.pos[0] - self.size[0] / 2 + root.ids.video_playback.size[0] * min(1, max(0, root.ids.video_player.position / 10)), root.ids.video_playback.pos[1]
+                size_hint: None, None
+            
                 canvas.before:
                     Color:
                         rgba: [0.8, 0.8, 0.8, 1]
@@ -318,10 +318,27 @@ Carousel:
                         width: 4
                         rectangle: self.x, self.y, self.width, self.height
                     Color:
-                        rgba: [0.2, 0.2, 0.2, 1]
+                        rgba: [1, 0.2, 0.2, 1]
                     Rectangle:
                         pos: self.pos
                         size: self.size
+
+        ScatterLayout:
+            id: score_layout
+
+            # Label:
+            #     canvas.before:
+            #         Color:
+            #             rgba: [0.8, 0.8, 0.8, 1]
+            #         Line:
+            #             width: 4
+            #             rectangle: self.x, self.y, self.width, self.height
+            #         Color:
+            #             rgba: [0.2, 0.2, 0.2, 1]
+            #         Rectangle:
+            #             pos: self.pos
+            #             size: self.size
+            
             BoxLayout:
                 id: weapon_selector
                 orientation: "horizontal"
@@ -336,7 +353,7 @@ Carousel:
                     font_size: 80
                     font_name:"agencyb"
                     color: app.color_weapon_dis if root.weapon != 1 else app.color_weapon_ena
-                    background_color: [0, 0, 0, 1]
+                    background_color: [0, 0, 0, 0]
                     on_press: app.change_weapon_connection_type()
 
                 ToggleButton:
@@ -347,7 +364,7 @@ Carousel:
                     font_name:"agencyb"
                     group: "weapon"
                     color: app.color_weapon_dis if root.weapon != 2 else app.color_weapon_ena
-                    background_color: [0, 0, 0, 1]
+                    background_color: [0, 0, 0, 0]
                     on_press: app.set_weapon(2)
 
                 ToggleButton:
@@ -359,7 +376,7 @@ Carousel:
                     font_name:"agencyb"
                     group: "weapon"
                     color: app.color_weapon_dis if root.weapon != 3 else app.color_weapon_ena
-                    background_color: [0, 0, 0, 1]
+                    background_color: [0, 0, 0, 0]
                     on_press: app.set_weapon(0)
 
                 ToggleButton:
@@ -370,7 +387,7 @@ Carousel:
                     font_name:"agencyb"
                     group: "weapon"
                     color: app.color_weapon_dis if root.weapon != 1 else app.color_weapon_ena
-                    background_color: [0, 0, 0, 1]
+                    background_color: [0, 0, 0, 0]
                     on_press: app.set_weapon(1)
 
             Carousel:
@@ -882,7 +899,7 @@ Carousel:
 
                 canvas:
                     Color:
-                        rgba: app.color_rec if root.recording else app.color_black
+                        rgba: app.color_rec if root.recording else [0, 0, 0, 0]
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size

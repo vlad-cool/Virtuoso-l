@@ -17,6 +17,7 @@ from kivy.core.text import LabelBase
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.network.urlrequest import UrlRequest
+from kivy.graphics.transformation import Matrix
 
 read_interval = .05
 
@@ -135,10 +136,32 @@ class PassiveTimer:
 class KivyApp(App):
     Symbols = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
 
-    def play_video(self, vid):
-        self.root.ids["video_player"].source = vid
-        self.root.ids["video_player"].state = "play"
+    def change_player_mode(self):
+        if self.root.show_player:
+            self.root.ids["score_layout"].apply_transform(Matrix().scale(2, 2, 2))
+            self.root.show_player = False
+        else:
+            self.root.ids["score_layout"].apply_transform(Matrix().scale(0.5, 0.5, 0.5))
+            self.root.show_player = True
 
+    def play_video(self, vid):
+        self.root.video_id = vid
+        self.root.video_playing = True
+
+    def rewind_video(self, s):
+        try:
+            self.root.ids.video_player.seek(root.ids.video_player.position / root.ids.video_player.duration + s)
+        except:
+            pass
+
+    def previous_video(self):
+        if self.root.video_id > 0:
+            self.root.video_id -= 1
+
+    def next_video(self):
+        if self.root.video_id < self.root.max_video_id:
+            self.root.video_id += 1
+    
     def sync_new_remote(self, btn):
         if system_info.input_support:
             if btn.sync_state == "no_sync":
@@ -176,22 +199,20 @@ class KivyApp(App):
     def load_video_list(self):
         if system_info.video_support:
             videos = glob.glob(os.environ["video_path"] + "/*.mp4")
-            print("#######################")
-            print(videos)
-            print("#######################")
-            videos.sort(key=lambda x: int(x.split("/")[-1][:-4]))
+            #print("#######################")
+            #print(videos)
+            #print("#######################")
+            #videos.sort(key=lambda x: int(x.split("/")[-1][:-4]))
 
-            while len(self.root.ids["video_list"].children) > 0:
-                self.root.ids["video_list"].remove_widget(self.root.ids["video_list"].children[0])
+            self.root.max_video_id = len(videos) - 1
 
-            for video in videos:
-                self.root.ids["video_list"].add_widget(Button(text=video, on_press=lambda _, video=video: app.play_video(video), size=(400, 120), size_hint=(None, None)))
+            #while len(self.root.ids["video_list"].children) > 0:
+            #    self.root.ids["video_list"].remove_widget(self.root.ids["video_list"].children[0])
 
-            self.root.ids["video_player"].state = "pause"
+            #for video in videos:
+            #    self.root.ids["video_list"].add_widget(Button(text=video, on_press=lambda _, video=video: app.play_video(int(video.split("/")[-1][:-4])), size=(400, 120), size_hint=(None, None)))
 
-    def play_pause_video(self):
-        if system_info.video_support:
-            self.root.video_playing = not self.root.video_playing
+            #self.root.ids["video_player"].state = "pause"
 
     def system_poweroff(_):
         if system_info.is_banana:
@@ -534,10 +555,10 @@ class KivyApp(App):
         self.root.flash_timer  = time.time()
         self.root.current_time = time.time()
         self.load_video_list()
-        from kivy.graphics.transformation import Matrix
-        mat = Matrix().scale(0.5, 0.5, 0.5)
 
-        self.root.ids["score_layout"].apply_transform(mat)
+        self.root.video_path = os.environ["video_path"]
+
+        self.change_player_mode()
 
     def on_stop(self):
         if self.data_rx is not None:
