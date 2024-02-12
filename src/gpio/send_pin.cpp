@@ -92,6 +92,7 @@ int main()
                 pinMode(pin->first, 1);
                 digitalWrite(pin->first, pin->second);
             }
+            // sleep(1);
             continue;
         }
         if (strcmp(s, "toggle") == 0)

@@ -7,14 +7,13 @@ import system_info
 clip_duration = 10  # seconds
 post_record = 2  # seconds
 
-os.environ["LOG"] = "/dev/null"
-
 os.environ["OUT_DIR"] = system_info.video_path
 os.environ["TMP_DIR"] = system_info.video_path_tmp
 os.environ["ENCODER"] = system_info.video_encoder
 
 recording = False
 ffmpeg_proc = None
+cutter_proc = None
 name = 0
 
 start_time = 0
@@ -71,15 +70,14 @@ def save_clip():
 
 def split_video():
     global clips
-    split_proc = subprocess.Popen(
+    global cutter_proc
+    cutter_proc = subprocess.Popen(
         ["./video_cutter.sh"], bufsize=0, text=True, stdin=subprocess.PIPE
     )
-    split_proc.stdin.write(f"{name}\n")
-    split_proc.stdin.write(f"{len(clips)}\n")
+    cutter_proc.stdin.write(f"{name}\n")
+    cutter_proc.stdin.write(f"{len(clips)}\n")
 
     for clip in clips:
-        split_proc.stdin.write(
-            f"{format_time(clip + post_record - clip_duration - start_time)}\n"
-        )
-        split_proc.stdin.write(f"{format_time(clip + post_record - start_time)}\n")
+        cutter_proc.stdin.write(f"{format_time(clip + post_record - clip_duration - start_time)}\n")
+        cutter_proc.stdin.write(f"{format_time(clip_duration)}\n")
     clips = []

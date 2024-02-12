@@ -199,20 +199,7 @@ class KivyApp(App):
     def load_video_list(self):
         if system_info.video_support:
             videos = glob.glob(os.environ["video_path"] + "/*.mp4")
-            #print("#######################")
-            #print(videos)
-            #print("#######################")
-            #videos.sort(key=lambda x: int(x.split("/")[-1][:-4]))
-
             self.root.max_video_id = len(videos) - 1
-
-            #while len(self.root.ids["video_list"].children) > 0:
-            #    self.root.ids["video_list"].remove_widget(self.root.ids["video_list"].children[0])
-
-            #for video in videos:
-            #    self.root.ids["video_list"].add_widget(Button(text=video, on_press=lambda _, video=video: app.play_video(int(video.split("/")[-1][:-4])), size=(400, 120), size_hint=(None, None)))
-
-            #self.root.ids["video_player"].state = "pause"
 
     def system_poweroff(_):
         if system_info.is_banana:
@@ -411,7 +398,9 @@ class KivyApp(App):
                 video_control.start_recording()
             elif self.prev_pins_data is not None and self.prev_pins_data.recording == 1 and pins_data.recording == 0:
                 video_control.save_clip()
-                Clock.schedule_once(lambda _: video_control.stop_recording(), 3)
+                Clock.schedule_once(lambda _: video_control.stop_recording(), 5)
+        if video_control.cutter_proc is not None and video_control.cutter_proc.poll() is None:
+            self.load_video_list()
         # -----------------
 
         root.weapon = pins_data.weapon

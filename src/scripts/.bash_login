@@ -1,5 +1,8 @@
 if [ -z "$SSH_TTY" ] && [ -z "$TMUX" ] && [[ "$(tty)"="/dev/tty1" ]]
 then
+    if [ -f /home/pi/V24m/V24m_update.zip ]; then
+        bash install.sh
+    fi
     cd /home/pi/V24m/app
     clear
     sudo plymouth quit

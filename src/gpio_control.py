@@ -31,6 +31,7 @@ def setup():
 
     send_pin_proc.stdin.write("add_pin 5 0\n")
     send_pin_proc.stdin.write("add_pin 15 0\n")
+    # send_pin_proc.stdin.write("add_pin 26 1\n")
     send_pin_proc.stdin.write("add_pin 29 0\n")
     send_pin_proc.stdin.write("add_pin 35 0\n")
 

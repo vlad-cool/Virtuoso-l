@@ -12,12 +12,12 @@ mkdir -p $video_path
 mkdir -p $video_path_tmp
 export video_encoder=cedrus264
 ## Logs
-export MAIN_LOG=main.log
-export FFMPEG_LOG=ffmpeg.log
-export CUTTER_LOG=cutter.log
+export MAIN_LOG=/home/pi/V24m/logs/main.log
+export FFMPEG_LOG=/home/pi/V24m/logs/ffmpeg.log
+export CUTTER_LOG=/home/pi/V24m/logs/cutter.log
 
 if [ -z "$SSH_TTY" ] && [ -z "$TMUX" ] && [[ "$(tty)"="/dev/tty1" ]]
 then
-    startx ./start_x.sh &> $MAIN_LOG
+    startx ./start_x.sh &>> $MAIN_LOG
     #/usr/sbin/reboot
 fi
