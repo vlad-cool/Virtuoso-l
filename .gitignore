@@ -1,9 +1,11 @@
 /venv
 /__pycache__
 /.vscode
+/app
 /bin
+/assets/venv
 .directory
-config.json
-scripts/upload.sh
-main.kv
 used_software
+/src/assets
+/src/__pycache__
+V24m_update.zip

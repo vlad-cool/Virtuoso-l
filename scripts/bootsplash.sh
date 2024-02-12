@@ -6,4 +6,5 @@ sudo update-alternatives --config default.plymouth
 sudo update-initramfs -v -u
 sudo systemctl mask plymouth-quit-wait.service
 sudo systemctl mask plymouth-quit.service
+rm -r V24m_splash
 sudo apt -y install feh
