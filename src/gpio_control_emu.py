@@ -31,8 +31,15 @@ def ir_emu_blocking(address, command):
 def read_pins():
     return literal_eval("{3: 1, 7: 0, 18: 0, 27: 1, 32: 0, 36: 1, }\n")
 
+read_counter = 0
+
 def read_rc5(_):
-    return []
+    global read_counter
+    read_counter += 1
+    if read_counter % 50 == 0:
+        return [[0, 255, 1]]
+    else:
+        return []
 
 def read_all_rc5():
     return []

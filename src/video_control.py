@@ -60,7 +60,6 @@ def stop_recording():
 def save_clip():
     global recording
     if recording:
-        print(f"clip saved {time.clock_gettime(time.CLOCK_BOOTTIME)}", flush=True)
         clips.append(time.clock_gettime(time.CLOCK_BOOTTIME))
 
 

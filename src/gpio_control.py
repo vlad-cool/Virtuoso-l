@@ -165,7 +165,6 @@ def get_address(data_rx):
                 byte = int.from_bytes(data_rx.read(), "big")
                 data[byte // 2**5] = byte_to_arr(byte)
 
-        print(str(data).replace("]", "]\n"))
         if val != data[4][7] or timer != data[2][3]:
             if timer:
                 ir_emu_blocking(k, command)
@@ -212,7 +211,6 @@ def update_addr(data_rx, address):
                 byte = int.from_bytes(data_rx.read(), "big")
                 data[byte // 2**5] = byte_to_arr(byte)
 
-        print(str(data).replace("]", "]\n"))
         if val != data[4][7] or timer != data[2][3]:
             if timer:
                 ir_emu_blocking(k, command)

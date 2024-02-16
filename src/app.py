@@ -157,6 +157,9 @@ class KivyApp(App):
         if self.root.video_id < self.root.max_video_id:
             self.root.video_id += 1
             self.root.video_playing = True
+
+    def play_pause_video(self):
+        self.root.video_playing = not self.root.video_playing
     
     def sync_new_remote(self, btn):
         if system_info.input_support:
@@ -195,7 +198,6 @@ class KivyApp(App):
     def load_video_list(self):
         if system_info.video_support:
             videos = glob.glob(os.environ["VIDEO_PATH"] + "/*.mp4")
-            print(videos)
             self.root.max_video_id = len(videos) - 1
 
     def system_poweroff(_):
@@ -452,6 +454,22 @@ class KivyApp(App):
                         else:
                             root.ids["passive_4"].state = "normal"
                             root.ids["passive_3"].state = "normal"
+                if cmd[1] == -1: # Play pause button
+                    self.play_pause_video()
+                if cmd[1] == -1: # Previous video
+                    self.previous_video()
+                if cmd[1] == -1: # Next video
+                    self.next_video
+                if cmd[1] == -1: # Rewind back
+                    self.rewind_video(-1)
+                if cmd[1] == -1: # Rewind front
+                    self.rewind_video(1)
+                if cmd[1] == -1: # Change mode
+                    carousel = self.root
+                    if carousel.index == 0:
+                        carousel.index = 1
+                    else:
+                        carousel.index = 0
 
     def update_network_data(self, _):
         for name, interface in ifcfg.interfaces().items():
@@ -527,9 +545,7 @@ class KivyApp(App):
                     self.update_config()
         else:
             if config_path.is_dir():
-                print("Config file is directory, removing")
                 shutil.rmtree(config_path)
-            print("No config file, creating!")
             self.update_config()
 
         gpio_control.setup()

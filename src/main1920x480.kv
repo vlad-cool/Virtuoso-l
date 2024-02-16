@@ -1,6 +1,6 @@
 #:kivy 2.1.0
 
-Carousel:
+Carousel:    
     loop: True
 
     weapon: 0
@@ -629,7 +629,7 @@ Carousel:
                 state: "play" if root.video_playing else "pause"
                 source: root.video_path + "/" + str(root.video_id) + ".mp4" if root.video_id >= 0 and root.video_id <= root.max_video_id else ""
                 options: dict({"avdict": {"codec:v": "h264_vdpau"}})
-            
+
             Button:
                 size: 640, 480
                 size_hint: None, None
@@ -660,7 +660,7 @@ Carousel:
                     font_name: "NotoColorEmoji"
                     background_color: [0, 0, 0, 1]
                     on_press: app.previous_video()
-                
+
                 Button:
                     id: back_video
                     size: self.parent.height, self.parent.height
@@ -670,17 +670,17 @@ Carousel:
                     font_name: "NotoColorEmoji"
                     background_color: [0, 0, 0, 1]
                     on_press: app.rewind_video(-1)
-            
+
                 Button:
                     id: play_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "⏯"
+                    text: "⏸" if root.video_playing == True else "▶"
                     font_size: 80
                     font_name: "NotoColorEmoji"
                     background_color: [0, 0, 0, 1]
-                    on_press: root.video_playing = not root.video_playing
-            
+                    on_press: app.play_pause_video()
+
                 Button:
                     id: stop_video
                     size: self.parent.height, self.parent.height
@@ -690,7 +690,7 @@ Carousel:
                     font_name: "NotoColorEmoji"
                     background_color: [0, 0, 0, 1]
                     on_press: root.video_id = -1; root.video_playing = False; root.ids.video_player.source = ""
-            
+
                 Button:
                     id: forward_video
                     size: self.parent.height, self.parent.height
@@ -700,7 +700,7 @@ Carousel:
                     font_name: "NotoColorEmoji"
                     background_color: [0, 0, 0, 1]
                     on_press: app.rewind_video(1)
-            
+
                 Button:
                     id: next_video
                     size: self.parent.height, self.parent.height
@@ -710,7 +710,7 @@ Carousel:
                     font_name: "NotoColorEmoji"
                     background_color: [0, 0, 0, 1]
                     on_press: app.next_video()
-            
+
             BoxLayout:
                 id: video_playback
                 orientation: "horizontal"
@@ -883,7 +883,7 @@ Carousel:
                 size: (10, 40) if root.video_id >= 0 else (0, 0)
                 pos: root.ids.video_playback.pos[0] - self.size[0] / 2 + root.ids.video_playback.size[0] * min(1, max(0, root.ids.video_player.position / 10)), root.ids.video_playback.pos[1]
                 size_hint: None, None
-            
+
                 canvas.before:
                     Color:
                         rgba: [0.8, 0.8, 0.8, 1]
@@ -911,7 +911,7 @@ Carousel:
             #         Rectangle:
             #             pos: self.pos
             #             size: self.size
-            
+
             BoxLayout:
                 id: weapon_selector
                 orientation: "horizontal"
@@ -1477,7 +1477,7 @@ Carousel:
                         pos: self.pos
                         size: self.size
                         radius: self.size
-    
+
     FloatLayout:
         BoxLayout:
             orientation: "vertical"
@@ -1504,7 +1504,7 @@ Carousel:
                 text: "Remote"
                 font_size: 60
                 font_name:"agencyb"
-            
+
             ToggleButton:
                 id: settings_update
                 group: "settings"
@@ -1514,7 +1514,7 @@ Carousel:
 
         RelativeLayout:
             pos: (480, 0) if settings_system.state == "down" else (480, 480)
-            
+
             Button:
                 size: 360, 360
                 size_hint: None, None
@@ -1522,10 +1522,10 @@ Carousel:
                 background_normal: "assets/poweroff_button.png"
                 background_down: "assets/poweroff_button.png"
                 on_press: app.system_poweroff()
-                
+
         RelativeLayout:
             pos: (480, 0) if settings_network.state == "down" else (480, 480)
-            
+
             Label:
                 pos: 0, 380
                 size: 720, 120
@@ -1533,7 +1533,7 @@ Carousel:
                 text: "Wired"
                 font_size: 60
                 font_name:"agencyb"
-            
+
             Label:
                 pos: 0, 300
                 size: 720, 120
@@ -1541,7 +1541,7 @@ Carousel:
                 text: root.wired_ip
                 font_size: 40
                 font_name:"agencyb"
-            
+
             Label:
                 pos: 720, 380
                 size: 720, 120
@@ -1549,7 +1549,7 @@ Carousel:
                 text: "Wireless"
                 font_size: 60
                 font_name:"agencyb"
-            
+
             Label:
                 pos: 720, 300
                 size: 720, 120
@@ -1571,7 +1571,7 @@ Carousel:
                     size_hint: None, None
                     height: self.minimum_height
                     cols: 1
-        
+
         RelativeLayout:
             pos: (480, 0) if settings_remote.state == "down" else (480, 480)
             Button:
@@ -1584,7 +1584,7 @@ Carousel:
                 text: "Sync new remote"
                 sync_state: "no_sync"
                 on_press: app.sync_new_remote(self)
-        
+
         RelativeLayout:
             pos: (480, 0) if settings_update.state == "down" else (480, 480)
 
