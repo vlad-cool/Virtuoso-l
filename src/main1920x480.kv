@@ -658,7 +658,7 @@ Carousel:
                     text: "⏮"
                     font_size: 80
                     font_name: "NotoColorEmoji"
-                    background_color: [1, 0, 0, 1]
+                    background_color: [0, 0, 0, 1]
                     on_press: app.previous_video()
                 
                 Button:
@@ -668,7 +668,7 @@ Carousel:
                     text: "⏪"
                     font_size: 80
                     font_name: "NotoColorEmoji"
-                    background_color: [1, 0, 0, 1]
+                    background_color: [0, 0, 0, 1]
                     on_press: app.rewind_video(-1)
             
                 Button:
@@ -678,7 +678,7 @@ Carousel:
                     text: "⏯"
                     font_size: 80
                     font_name: "NotoColorEmoji"
-                    background_color: [0, 1, 0, 1]
+                    background_color: [0, 0, 0, 1]
                     on_press: root.video_playing = not root.video_playing
             
                 Button:
@@ -688,7 +688,7 @@ Carousel:
                     text: "⏹"
                     font_size: 80
                     font_name: "NotoColorEmoji"
-                    background_color: [0, 1, 0, 1]
+                    background_color: [0, 0, 0, 1]
                     on_press: root.video_id = -1; root.video_playing = False; root.ids.video_player.source = ""
             
                 Button:
@@ -698,7 +698,7 @@ Carousel:
                     text: "⏩"
                     font_size: 80
                     font_name: "NotoColorEmoji"
-                    background_color: [0, 1, 0, 1]
+                    background_color: [0, 0, 0, 1]
                     on_press: app.rewind_video(1)
             
                 Button:
@@ -708,7 +708,7 @@ Carousel:
                     text: "⏭"
                     font_size: 80
                     font_name: "NotoColorEmoji"
-                    background_color: [0, 1, 0, 1]
+                    background_color: [0, 0, 0, 1]
                     on_press: app.next_video()
             
             BoxLayout:
