@@ -71,7 +71,7 @@ int main()
     setup();
     int address, command;
     char s[128];
-    
+
     while (1)
     {
         if (scanf("%127s", s) < 1)

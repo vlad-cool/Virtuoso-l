@@ -61,7 +61,7 @@ int main()
 {
     int pin = 0, value = 0;
     char s[128];
-    
+
     while (1)
     {
         if (scanf("%127s", s) < 1)

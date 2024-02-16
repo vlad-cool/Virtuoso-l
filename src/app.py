@@ -160,7 +160,7 @@ class KivyApp(App):
 
     def play_pause_video(self):
         self.root.video_playing = not self.root.video_playing
-    
+
     def sync_new_remote(self, btn):
         if system_info.input_support:
             if btn.sync_state == "no_sync":
@@ -217,7 +217,7 @@ class KivyApp(App):
 
     def carousel_handler(self, _, old_index, new_index, commands):
         self.send_handler(commands[(2 + new_index - old_index) % 3])
-    
+
     def set_weapon(self, new_weapon):
         if system_info.input_support:
             gpio_control.button_emu(37, (3 + new_weapon - self.root.weapon) % 3)
@@ -385,7 +385,7 @@ class KivyApp(App):
             self.data_update(data)
 
         pins_data = PinsData(gpio_control.read_pins())
-        
+
 
         if pins_data.poweroff == 0:
             self.system_poweroff()
