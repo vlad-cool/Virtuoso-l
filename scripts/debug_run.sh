@@ -1,15 +1,15 @@
 #!/bin/sh
 
 # V24m configuring
-export is_banana=False
-export input_support=True
-export config_file=config.json
-export kivy_file=main1920x480.kv
+export IS_BANANA=False
+export INPUT_SUPPORT=True
+export CONFIG_FILE=config.json
+export KIVY_FILE=main1920x480.kv
 ## Video
-export video_support=True
-export video_path=/home/vlad/Documents/VSCode/V24m
-export video_path_tmp=./video/tmp
-export video_encoder=libx264
+export VIDEO_SUPPORT=True
+export VIDEO_PATH=/home/vlad/Documents/VSCode/V24m/test_videos
+export VIDEO_PATH_TMP=./video/tmp
+export VIDEO_ENCODER=libx264
 
 cd src
 ../venv/bin/python3 app.py

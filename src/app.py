@@ -136,31 +136,27 @@ class PassiveTimer:
 class KivyApp(App):
     Symbols = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
 
-    def change_player_mode(self):
-        if self.root.show_player:
-            self.root.ids["score_layout"].apply_transform(Matrix().scale(2, 2, 2))
-            self.root.show_player = False
-        else:
-            self.root.ids["score_layout"].apply_transform(Matrix().scale(0.5, 0.5, 0.5))
-            self.root.show_player = True
-
     def play_video(self, vid):
         self.root.video_id = vid
         self.root.video_playing = True
 
+    def on_loaded_changed(self, _, __):
+        if self.root.ids["video_player"].loaded:
+            self.root.ids["video_player"].state = "play"
+
     def rewind_video(self, s):
-        try:
-            self.root.ids.video_player.seek(root.ids.video_player.position / root.ids.video_player.duration + s)
-        except:
-            pass
+        if self.root.ids.video_player.loaded:
+            self.root.ids.video_player.seek(self.root.ids.video_player.position / self.root.ids.video_player.duration + s)
 
     def previous_video(self):
         if self.root.video_id > 0:
             self.root.video_id -= 1
+            self.root.video_playing = True
 
     def next_video(self):
         if self.root.video_id < self.root.max_video_id:
             self.root.video_id += 1
+            self.root.video_playing = True
     
     def sync_new_remote(self, btn):
         if system_info.input_support:
@@ -198,7 +194,8 @@ class KivyApp(App):
 
     def load_video_list(self):
         if system_info.video_support:
-            videos = glob.glob(os.environ["video_path"] + "/*.mp4")
+            videos = glob.glob(os.environ["VIDEO_PATH"] + "/*.mp4")
+            print(videos)
             self.root.max_video_id = len(videos) - 1
 
     def system_poweroff(_):
@@ -536,18 +533,23 @@ class KivyApp(App):
             self.update_config()
 
         gpio_control.setup()
+
         return Builder.load_file(system_info.kivy_file)
 
     def on_start(self):
+        self.get_data(0)
+        self.set_weapon(0)
         self.read_timer = Clock.schedule_interval(self.get_data, read_interval)
         Clock.schedule_interval(self.update_network_data, 2)
         self.root.flash_timer  = time.time()
         self.root.current_time = time.time()
         self.load_video_list()
+        self.root.video_path = os.environ["VIDEO_PATH"]
+        self.root.ids["score_layout"].apply_transform(Matrix().scale(0.5, 0.5, 0.5))
+        self.root.ids["video_player"].bind(
+            loaded=self.on_loaded_changed
+        )
 
-        self.root.video_path = os.environ["video_path"]
-
-        self.change_player_mode()
 
     def on_stop(self):
         if self.data_rx is not None:

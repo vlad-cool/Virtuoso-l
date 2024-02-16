@@ -4,14 +4,14 @@ def bool(s):
     return str.lower(s) == "true"
 
 # General
-is_banana = bool(os.environ["is_banana"])
-input_support = bool(os.environ["input_support"])
-config_file = os.environ["config_file"]
-kivy_file = os.environ["kivy_file"]
+is_banana = bool(os.environ["IS_BANANA"])
+input_support = bool(os.environ["INPUT_SUPPORT"])
+config_file = os.environ["CONFIG_FILE"]
+kivy_file = os.environ["KIVY_FILE"]
 
 # Video
-video_support = bool(os.environ["video_support"])
+video_support = bool(os.environ["VIDEO_SUPPORT"])
 if video_support:
-    video_path = os.environ["video_path"]
-    video_path_tmp = os.environ["video_path_tmp"]
-    video_encoder = os.environ["video_encoder"]
+    video_path = os.environ["VIDEO_PATH"]
+    video_path_tmp = os.environ["VIDEO_PATH_TMP"]
+    video_encoder = os.environ["VIDEO_ENCODER"]

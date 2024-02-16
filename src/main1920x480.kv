@@ -45,8 +45,6 @@ Carousel:
     video_id: -1
     max_video_id: -1
 
-    show_player: False
-
     on_index: app.load_video_list()
 
     recording: False
@@ -630,6 +628,7 @@ Carousel:
                 pos: 1920 / 2 + (1920 / 2 - 640) / 2, 0
                 state: "play" if root.video_playing else "pause"
                 source: root.video_path + "/" + str(root.video_id) + ".mp4" if root.video_id >= 0 and root.video_id <= root.max_video_id else ""
+                options: dict({"avdict": {"codec:v": "h264_vdpau"}})
 
             BoxLayout:
                 id: player_controls
@@ -639,7 +638,7 @@ Carousel:
                 pos: 20, 325
 
                 Label:
-                    text: "10"
+                    text: "∞" if root.video_id > 99 else str(root.video_id) if root.video_id >= 0 else "--"
                     font_size: 120
                     font_name: "agencyb"
 
@@ -649,7 +648,7 @@ Carousel:
                     id: previous_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "⏪"
+                    text: "▶"
                     font_size: 80
                     font_name: "NotoColorEmoji"
                     background_color: [1, 0, 0, 1]
@@ -659,11 +658,11 @@ Carousel:
                     id: back_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "⏮"
+                    text: "⏸"
                     font_size: 80
                     font_name: "NotoColorEmoji"
                     background_color: [1, 0, 0, 1]
-                    on_press: app.rewind_video(-0.1)
+                    on_press: app.rewind_video(-0.025)
             
                 Button:
                     id: play_video
@@ -693,7 +692,7 @@ Carousel:
                     font_size: 80
                     font_name: "NotoColorEmoji"
                     background_color: [0, 1, 0, 1]
-                    on_press: app.rewind_video(0.1)
+                    on_press: app.rewind_video(0.025)
             
                 Button:
                     id: next_video
@@ -874,7 +873,7 @@ Carousel:
                             size: self.size
 
             Label:
-                size: 10, 40
+                size: (10, 40) if root.video_id >= 0 else (0, 0)
                 pos: root.ids.video_playback.pos[0] - self.size[0] / 2 + root.ids.video_playback.size[0] * min(1, max(0, root.ids.video_player.position / 10)), root.ids.video_playback.pos[1]
                 size_hint: None, None
             
