@@ -629,6 +629,13 @@ Carousel:
                 state: "play" if root.video_playing else "pause"
                 source: root.video_path + "/" + str(root.video_id) + ".mp4" if root.video_id >= 0 and root.video_id <= root.max_video_id else ""
                 options: dict({"avdict": {"codec:v": "h264_vdpau"}})
+            
+            Button:
+                size: 640, 480
+                size_hint: None, None
+                pos: 1920 / 2 + (1920 / 2 - 640) / 2, 0
+                on_press: root.video_playing = not root.video_playing
+                background_color: [0, 0, 0, 0]
 
             BoxLayout:
                 id: player_controls
@@ -648,21 +655,21 @@ Carousel:
                     id: previous_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "▶"
+                    text: "⏮"
                     font_size: 80
                     font_name: "NotoColorEmoji"
                     background_color: [1, 0, 0, 1]
-                    on_press: app.previous_video()           
+                    on_press: app.previous_video()
                 
                 Button:
                     id: back_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "⏸"
+                    text: "⏪"
                     font_size: 80
                     font_name: "NotoColorEmoji"
                     background_color: [1, 0, 0, 1]
-                    on_press: app.rewind_video(-0.025)
+                    on_press: app.rewind_video(-1)
             
                 Button:
                     id: play_video
@@ -688,17 +695,17 @@ Carousel:
                     id: forward_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "⏭"
+                    text: "⏩"
                     font_size: 80
                     font_name: "NotoColorEmoji"
                     background_color: [0, 1, 0, 1]
-                    on_press: app.rewind_video(0.025)
+                    on_press: app.rewind_video(1)
             
                 Button:
                     id: next_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "⏩"
+                    text: "⏭"
                     font_size: 80
                     font_name: "NotoColorEmoji"
                     background_color: [0, 1, 0, 1]

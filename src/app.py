@@ -146,7 +146,7 @@ class KivyApp(App):
 
     def rewind_video(self, s):
         if self.root.ids.video_player.loaded:
-            self.root.ids.video_player.seek(self.root.ids.video_player.position / self.root.ids.video_player.duration + s)
+            self.root.ids.video_player.seek((self.root.ids.video_player.position + s) / self.root.ids.video_player.duration, True)
 
     def previous_video(self):
         if self.root.video_id > 0:
