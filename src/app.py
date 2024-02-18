@@ -10,9 +10,9 @@ import shutil
 import pathlib
 import subprocess
 import system_info
+from kivy.app import App
 from kivy.clock import Clock
 from kivy.lang import Builder
-from kivy.app import App
 from kivy.core.text import LabelBase
 from kivy.uix.button import Button
 from kivy.uix.label import Label
@@ -565,7 +565,6 @@ class KivyApp(App):
         self.root.ids["video_player"].bind(
             loaded=self.on_loaded_changed
         )
-
 
     def on_stop(self):
         if self.data_rx is not None:

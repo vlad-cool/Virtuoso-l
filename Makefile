@@ -1,4 +1,4 @@
-BANANA_IP := 192.168.50.23
+BANANA_IP := 192.168.2.12706f6f
 DRIVER_EXECS := send_pin send_rc5 get_pin get_rc5
 
 release: V24m_update.zip

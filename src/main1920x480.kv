@@ -655,60 +655,48 @@ Carousel:
                     id: previous_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "⏮"
-                    font_size: 80
-                    font_name: "NotoColorEmoji"
-                    background_color: [0, 0, 0, 1]
+                    background_normal: "assets/previous_video_light.png"
+                    background_down: "assets/previous_video_dark.png"
                     on_press: app.previous_video()
 
                 Button:
                     id: back_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "⏪"
-                    font_size: 80
-                    font_name: "NotoColorEmoji"
-                    background_color: [0, 0, 0, 1]
+                    background_normal: "assets/rewind_backward_light.png"
+                    background_down: "assets/rewind_backward_dark.png"
                     on_press: app.rewind_video(-1)
 
                 Button:
                     id: play_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "⏸" if root.video_playing == True else "▶"
-                    font_size: 80
-                    font_name: "NotoColorEmoji"
-                    background_color: [0, 0, 0, 1]
+                    background_normal: "assets/pause_light.png" if root.video_playing == True else "assets/play_light.png"
+                    background_down: "assets/pause_dark.png" if root.video_playing == True else "assets/play_dark.png"
                     on_press: app.play_pause_video()
 
                 Button:
                     id: stop_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "⏹"
-                    font_size: 80
-                    font_name: "NotoColorEmoji"
-                    background_color: [0, 0, 0, 1]
+                    background_normal: "assets/stop_light.png"
+                    background_down: "assets/stop_dark.png"
                     on_press: root.video_id = -1; root.video_playing = False; root.ids.video_player.source = ""
 
                 Button:
                     id: forward_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "⏩"
-                    font_size: 80
-                    font_name: "NotoColorEmoji"
-                    background_color: [0, 0, 0, 1]
+                    background_normal: "assets/rewind_forward_light.png"
+                    background_down: "assets/rewind_forward_dark.png"
                     on_press: app.rewind_video(1)
 
                 Button:
                     id: next_video
                     size: self.parent.height, self.parent.height
                     size_hint: None, None
-                    text: "⏭"
-                    font_size: 80
-                    font_name: "NotoColorEmoji"
-                    background_color: [0, 0, 0, 1]
+                    background_normal: "assets/next_video_light.png"
+                    background_down: "assets/next_video_dark.png"
                     on_press: app.next_video()
 
             BoxLayout:
