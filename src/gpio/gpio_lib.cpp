@@ -2,7 +2,7 @@
 
 std::vector<::gpiod::chip> chips;
 
-std::map<int, std::pair<int, int>> pin_map;
+std::pair<int, int> pin_map[40] = {};
 
 int gpioSetupPhys() {
     chips.push_back(::gpiod::chip("/dev/gpiochip0"));
@@ -17,36 +17,34 @@ int gpioSetupPhys() {
     }
 
     // Magic numbers below got from gpioinfo
-    pin_map = std::map<int, std::pair<int, int>>({
-        {13, {0,  0}},
-        {11, {0,  1}},
-        {22, {0,  2}},
-        {15, {0,  3}},
-        { 7, {0,  6}},
-        {29, {0,  7}},
-        {31, {0,  8}},
-        {33, {0,  9}},
-        {35, {0, 10}},
-        { 5, {0, 11}},
-        { 3, {0, 12}},
-        { 8, {0, 13}},
-        {10, {0, 14}},
-        {16, {0, 15}},
-        {12, {0, 16}},
-        {37, {0, 17}},
-        {28, {0, 18}},
-        {27, {0, 19}},
-        {40, {0, 20}},
-        {38, {0, 21}},
-        {19, {0, 64}},
-        {21, {0, 65}},
-        {23, {0, 66}},
-        {24, {0, 67}},
-        {18, {0, 68}},
-        {26, {0, 71}},
-        {32, {1,  2}},
-        {36, {1,  4}},
-    });
+    pin_map[13] = {0,  0};
+    pin_map[11] = {0,  1};
+    pin_map[22] = {0,  2};
+    pin_map[15] = {0,  3};
+    pin_map[ 7] = {0,  6};
+    pin_map[29] = {0,  7};
+    pin_map[31] = {0,  8};
+    pin_map[33] = {0,  9};
+    pin_map[35] = {0, 10};
+    pin_map[ 5] = {0, 11};
+    pin_map[ 3] = {0, 12};
+    pin_map[ 8] = {0, 13};
+    pin_map[10] = {0, 14};
+    pin_map[16] = {0, 15};
+    pin_map[12] = {0, 16};
+    pin_map[37] = {0, 17};
+    pin_map[28] = {0, 18};
+    pin_map[27] = {0, 19};
+    pin_map[40] = {0, 20};
+    pin_map[38] = {0, 21};
+    pin_map[19] = {0, 64};
+    pin_map[21] = {0, 65};
+    pin_map[23] = {0, 66};
+    pin_map[24] = {0, 67};
+    pin_map[18] = {0, 68};
+    pin_map[26] = {0, 71};
+    pin_map[32] = {1,  2};
+    pin_map[36] = {1,  4};
 
     return 0;
 }
