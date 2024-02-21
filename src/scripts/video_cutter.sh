@@ -4,7 +4,7 @@ read n
 
 j=0
 
-while [[ -e $OUT_DIR/${j}.mp4 ]]
+while [[ -e $VIDEO_PATH/${j}.mp4 ]]
 do
     j=$(($j+1))
 done
