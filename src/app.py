@@ -31,6 +31,87 @@ else:
 
 kivy.require("2.1.0")
 
+class Updater:
+    def check_version(self, btn, req, result):
+        if btn.update_state != "waiting":
+            return
+
+        version_path = pathlib.Path("VERSION")
+        old_version = ""
+        if version_path.is_file():
+            with open("VERSION", "r") as version_file:
+                old_version = version_file.readline()
+        else:
+            if version_path.is_dir():
+                shutil.rmtree(version_path)
+            old_version = "v0.0.0"
+
+
+        print(req, result, flush=True)
+        
+        new_version = result["tag_name"]
+        if old_version[0] == 'v':
+            old_version = old_version[1:]
+        if new_version[0] == 'v':
+            new_version = new_version[1:]
+
+        old_version = old_version.replace("\n", "")
+        new_version = new_version.replace("\n", "")
+        
+        old_version_lst = list(map(int, old_version.split(".")))
+        new_version_lst = list(map(int, new_version.split(".")))
+
+        old_major = old_version_lst[0]
+        old_minor = old_version_lst[1]
+        old_patch = old_version_lst[2]
+        
+        new_major = new_version_lst[0]
+        new_minor = new_version_lst[1]
+        new_patch = new_version_lst[2]
+
+        if (old_major < new_major) or (old_major == new_major and old_minor < new_minor) or (old_major == old_minor and old_minor == new_minor and old_patch < new_patch):
+            for res in result["assets"]:
+                if res["name"] == "V24m_update.zip":
+                    self.update_url = result["assets"][0]["browser_download_url"]
+                    btn.text = f"New version found\n{old_version}->{new_version}"
+                    btn.update_state = "wait_for_update"
+                    return
+            btn.text = f"No update candidate"
+            btn.update_state = "no_update"
+    
+    def update_failed(self, btn, req, result):
+        print(req, result)
+        btn.text = "Couldn't get version information"
+        Clock.schedule_once(lambda _: self.update_sync_btn_text(btn, "Check for updates"), 10)
+        btn.update_state = "no_update"
+
+    def update_downloaded(self, btn, req, result):
+        print(result)
+        with open("/home/pi/V24m/V24m_update.zip", "wb") as file:
+            file.write(result)
+        btn.text = "Update downloaded\nPress to install"
+        btn.update_zip = "wait_for_reboot"
+
+    def update(self, btn):
+        repo_owner = "vlad-cool"
+        repo_name = "V24m"
+        
+        url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
+
+        if btn.update_state == "no_update":
+            self.update_request = UrlRequest(url, req_headers={"User-Agent": "V24m"}, on_success=lambda req, result: self.check_version(btn, req, result), on_failure=lambda req, result: self.update_failed(btn, req, result), on_error=lambda req, result: self.update_failed(btn, req, result))
+            btn.text = "Checking for updates..."
+            btn.update_state = "waiting"
+        
+        if btn.update_state == "wait_for_update":
+            btn.text = "Downloading update"
+            btn.update_state = "downloading_update"
+            UrlRequest(self.update_url, req_headers={"User-Agent": "V24m"}, on_success=lambda req, result: self.update_downloaded(btn, req, result))
+
+        if btn.update_state == "wait_for_reboot":
+            if system_info.is_banana:
+                subprocess.run("/usr/sbin/reboot")
+
 class UartData:
     def __init__(self, data):
         self.yellow_white  = data[0][4]
@@ -234,9 +315,18 @@ class KivyApp(App):
         if system_info.input_support:
             gpio_control.button_emu(27, 1)
 
-    def passive_stop_card(self, state):
+    def passive_stop_card(self, state, btn_id):
         if self.root.timer_running != 1 and state == "down":
             self.passive_timer.clear()
+        match btn_id:
+            case 1:
+                self.root.passive_1_state = state
+            case 2:
+                self.root.passive_2_state = state
+            case 3:
+                self.root.passive_3_state = state
+            case 4:
+                self.root.passive_4_state = state
 
     def byte_to_arr(self, byte):
         a = [0] * 8
@@ -350,7 +440,28 @@ class KivyApp(App):
             root.timer_1 = ""
             root.timer_2 = ""
             root.timer_3 = ""
-            root.timer_text = KivyApp.Symbols[timer_d] + KivyApp.Symbols[timer_s]
+            # root.timer_text = KivyApp.Symbols[timer_d] + KivyApp.Symbols[timer_s]
+
+            sym = timer_d * 16 + timer_s
+
+            if sym == 17:
+                if self.on_off_watching == 16:
+                    root.timer_text = "+ASon"
+                    self.on_off_watching = None
+                elif self.on_off_watching == 1:
+                    root.timer_text = "+Aon"
+                    self.on_off_watching = None
+                else:
+                    self.on_off_watching = 17
+            if sym == 196:
+                if self.on_off_watching == 16:
+                    root.timer_text = "+ASoff"
+                    self.on_off_watching = None
+                elif self.on_off_watching == 1:
+                    root.timer_text = "+Aoff"
+                    self.on_off_watching = None
+                else:
+                    self.on_off_watching = 196
 
         root.warning_l = uart_data.warning_l
         root.warning_r = uart_data.warning_r
@@ -383,7 +494,7 @@ class KivyApp(App):
                     [1, 1, 0, 0, 0, 0, 0, 0][::-1],
                     [1, 1, 1, 0, 0, 1, 1, 0][::-1],]
             self.data_update(data)
-
+        
         pins_data = PinsData(gpio_control.read_pins())
 
 
@@ -394,12 +505,16 @@ class KivyApp(App):
         # -----------------
         if system_info.video_support:
             if ((self.prev_pins_data is None or self.prev_pins_data.recording == 0) and pins_data.recording == 1) or (pins_data.recording == 1 and not (video_control.ffmpeg_proc is not None and video_control.ffmpeg_proc.poll() is None)):
-                video_control.start_recording()
+                if self.stop_recording_scheduler is not None:
+                    self.stop_recording_scheduler.cancel()
+                if video_control.ffmpeg_proc is None or video_control.ffmpeg_proc is None:
+                    video_control.start_recording()
+
             elif self.prev_pins_data is not None and self.prev_pins_data.recording == 1 and pins_data.recording == 0:
                 video_control.save_clip()
-                Clock.schedule_once(lambda _: video_control.stop_recording(), 5)
-        if video_control.cutter_proc is not None and video_control.cutter_proc.poll() is None:
-            self.load_video_list()
+                self.stop_recording_scheduler = Clock.schedule_once(lambda _: video_control.stop_recording(), 5)
+            if video_control.cutter_proc is not None and video_control.cutter_proc.poll() is None:
+                self.load_video_list()
         # -----------------
 
         root.weapon = pins_data.weapon
@@ -420,6 +535,8 @@ class KivyApp(App):
 
         self.prev_pins_data = pins_data
 
+        cmds = []
+
         if not system_info.input_support:
             if pins_data.weapon_btn == 0:
                 cmds = gpio_control.read_all_rc5()
@@ -427,8 +544,10 @@ class KivyApp(App):
                     if cmd[1] == 7:
                         self.config["rc5_address"] = cmd[0]
                         self.update_config()
-
-        cmds = gpio_control.read_rc5(self.config["rc5_address"])
+            else:
+                cmds = gpio_control.read_rc5(self.config["rc5_address"])
+        else:
+            cmds = gpio_control.read_rc5(self.config["rc5_address"])
         for cmd in cmds:
             if cmd[2]:
                 if cmd[1] == 7:
@@ -437,23 +556,23 @@ class KivyApp(App):
                 if cmd[1] == 17: # Left passive
                     if self.root.timer_running != 1:
                         self.passive_timer.clear()
-                        if root.ids["passive_2"].state == "normal":
-                            root.ids["passive_2"].state = "down"
-                        elif root.ids["passive_1"].state == "normal":
-                            root.ids["passive_1"].state = "down"
+                        if root.passive_2_state == "normal":
+                            root.passive_2_state = "down"
+                        elif root.passive_1_state == "normal":
+                            root.passive_1_state = "down"
                         else:
-                            root.ids["passive_2"].state = "normal"
-                            root.ids["passive_1"].state = "normal"
+                            root.passive_2_state = "normal"
+                            root.passive_1_state = "normal"
                 if cmd[1] == 18: # Right passive
                     if self.root.timer_running != 1:
                         self.passive_timer.clear()
-                        if root.ids["passive_4"].state == "normal":
-                            root.ids["passive_4"].state = "down"
-                        elif root.ids["passive_3"].state == "normal":
-                            root.ids["passive_3"].state = "down"
+                        if root.passive_4_state == "normal":
+                            root.passive_4_state = "down"
+                        elif root.passive_3_state == "normal":
+                            root.passive_3_state = "down"
                         else:
-                            root.ids["passive_4"].state = "normal"
-                            root.ids["passive_3"].state = "normal"
+                            root.passive_4_state = "normal"
+                            root.passive_3_state = "normal"
                 if cmd[1] == -1: # Play pause button
                     self.play_pause_video()
                 if cmd[1] == -1: # Previous video
@@ -470,6 +589,41 @@ class KivyApp(App):
                         carousel.index = 1
                     else:
                         carousel.index = 0
+
+                if cmd[1] == 16:
+                    if self.on_off_watching == 17:
+                        root.timer_text = "-ASon"
+                        self.on_off_watching = None
+                    elif self.on_off_watching == 196:
+                        root.timer_text = "-ASoff"
+                        self.on_off_watching = None
+                    else:
+                        self.on_off_watching = 16
+                elif cmd[1] == 1:
+                    if self.on_off_watching == 17:
+                        root.timer_text = "-Aon"
+                        self.on_off_watching = None
+                    elif self.on_off_watching == 196:
+                        root.timer_text = "-Aoff"
+                        self.on_off_watching = None
+                    else:
+                        self.on_off_watching = 1
+                else:
+                    self.on_off_watching = None
+
+                # for ui in update_info:
+                #     if ui["symbol"] == 17: # Off?
+                #         if cmd[1] == 16: # auto score on/off
+                #             self.root.timer_text = "ASOff"
+                #         if cmd[1] == 1: # auto on/off
+                #             self.root.timer_text = "AOff"
+                #     if ui["symbol"] == 196: # On?
+                #         if cmd[1] == 16: # auto score on/off
+                #             self.root.timer_text = "ASOn"
+                #         if cmd[1] == 1: # auto on/off
+                #             self.root.timer_text = "AOn"
+                #     # self.root.rc5_command = str(ui["symbol"])
+                # self.root.rc5_command = f"{cmd[1]}, {cmd}, {type(cmd[1])}"
 
     def update_network_data(self, _):
         for name, interface in ifcfg.interfaces().items():
@@ -518,6 +672,10 @@ class KivyApp(App):
 
         self.card_radius = 10
 
+        self.updater = Updater()
+
+        self.stop_recording_scheduler = None
+
         self.old_sec              = "0"
         self.passive_timer        = PassiveTimer(500)
         self.timer_interval       = None
@@ -530,6 +688,8 @@ class KivyApp(App):
         self.read_timer = None
 
         self.config = {"rc5_address": -1}
+
+        self.on_off_watching = None
 
         if system_info.is_banana:
             self.data_rx = serial.Serial("/dev/ttyS2", 38400)

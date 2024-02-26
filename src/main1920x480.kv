@@ -3,6 +3,8 @@
 Carousel:
     loop: True
 
+    rc5_command: "-"
+
     weapon: 0
     weapon_connection_type: 0
 
@@ -11,10 +13,10 @@ Carousel:
     score_r_l: " "
     score_r_r: "0"
 
-    timer_0: "C"
+    timer_0: "-"
     timer_1: ":"
-    timer_2: "0"
-    timer_3: "6"
+    timer_2: "-"
+    timer_3: "-"
 
     timer_text: ""
 
@@ -28,6 +30,11 @@ Carousel:
     passive_time: 0
     passive_size: 0
     passive_coun: "60"
+
+    passive_1_state: "normal"
+    passive_2_state: "normal"
+    passive_3_state: "normal"
+    passive_4_state: "normal"
 
     flash_timer: 0
     current_time: 0
@@ -506,11 +513,12 @@ Carousel:
             text: "Pcard"
             font_size: 30
             font_name:"agencyb"
+            state: root.passive_1_state
             color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
             size: 100, 40
             size_hint: None, None
             pos: 460, 380
-            on_press: app.passive_stop_card(self.state)
+            on_press: app.passive_stop_card(self.state, 1)
             disabled: root.timer_running == 1
 
             background_color: root.color_invis
@@ -532,11 +540,12 @@ Carousel:
             text: "Pcard"
             font_size: 30
             font_name:"agencyb"
+            state: root.passive_2_state
             color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
             size: 100, 40
             size_hint: None, None
             pos: 460, 320
-            on_press: app.passive_stop_card(self.state)
+            on_press: app.passive_stop_card(self.state, 2)
             disabled: root.timer_running == 1
 
             background_color: root.color_invis
@@ -558,11 +567,12 @@ Carousel:
             text: "Pcard"
             font_size: 30
             font_name:"agencyb"
+            state: root.passive_3_state
             color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
             size: 100, 40
             size_hint: None, None
             pos: 1360, 380
-            on_press: app.passive_stop_card(self.state)
+            on_press: app.passive_stop_card(self.state, 3)
             disabled: root.timer_running == 1
 
             background_color: root.color_invis
@@ -584,11 +594,12 @@ Carousel:
             text: "Pcard"
             font_size: 30
             font_name:"agencyb"
+            state: root.passive_4_state
             color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
             size: 100, 40
             size_hint: None, None
             pos: 1360, 320
-            on_press: app.passive_stop_card(self.state)
+            on_press: app.passive_stop_card(self.state, 4)
             disabled: root.timer_running == 1
 
             background_color: root.color_invis
@@ -1353,11 +1364,12 @@ Carousel:
                 text: "Pcard"
                 font_size: 30
                 font_name:"agencyb"
+                state: root.passive_1_state
                 color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
                 size: 100, 40
                 size_hint: None, None
                 pos: 460, 380
-                on_press: app.passive_stop_card(self.state)
+                on_press: app.passive_stop_card(self.state, 1)
                 disabled: root.timer_running == 1
 
                 background_color: root.color_invis
@@ -1379,11 +1391,12 @@ Carousel:
                 text: "Pcard"
                 font_size: 30
                 font_name:"agencyb"
+                state: root.passive_2_state
                 color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
                 size: 100, 40
                 size_hint: None, None
                 pos: 460, 320
-                on_press: app.passive_stop_card(self.state)
+                on_press: app.passive_stop_card(self.state, 2)
                 disabled: root.timer_running == 1
 
                 background_color: root.color_invis
@@ -1405,11 +1418,12 @@ Carousel:
                 text: "Pcard"
                 font_size: 30
                 font_name:"agencyb"
+                state: root.passive_3_state
                 color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
                 size: 100, 40
                 size_hint: None, None
                 pos: 1360, 380
-                on_press: app.passive_stop_card(self.state)
+                on_press: app.passive_stop_card(self.state, 3)
                 disabled: root.timer_running == 1
 
                 background_color: root.color_invis
@@ -1431,11 +1445,12 @@ Carousel:
                 text: "Pcard"
                 font_size: 30
                 font_name:"agencyb"
+                state: root.passive_4_state
                 color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
                 size: 100, 40
                 size_hint: None, None
                 pos: 1360, 320
-                on_press: app.passive_stop_card(self.state)
+                on_press: app.passive_stop_card(self.state, 4)
                 disabled: root.timer_running == 1
 
                 background_color: root.color_invis
@@ -1585,4 +1600,8 @@ Carousel:
                 font_name:"agencyb"
                 text: "Check for updates"
                 update_state: "no_update"
-                on_press: app.update(self)
+                on_press: app.updater.update(self)
+    Label:
+        text: root.rc5_command
+        font_size: 360
+        font_name:"agencyb"

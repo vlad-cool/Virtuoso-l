@@ -10,3 +10,4 @@ used_software
 /src/__pycache__
 /test_videos
 V24m_update.zip
+src/wifi_control.py

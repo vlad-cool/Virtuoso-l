@@ -192,7 +192,7 @@ def update_addr(data_rx, address):
     val = data[4][7]
     timer = data[2][3]
     if timer:
-        command = 13  # timer start stop
+        command = 13 # timer start stop
     elif val:
         command = 3  # left -
     else:
