@@ -21,8 +21,7 @@ int main()
 {
     setup();
     char s[128];
-    struct timespec t;
-    unsigned long time, timer;
+    struct timespec t_start, t_end;
     int toggle = -1;
 
     while (1)
@@ -49,8 +48,7 @@ int main()
             }
         }
 
-        clock_gettime(CLOCK_BOOTTIME, &t);
-        time = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
+        clock_gettime(CLOCK_BOOTTIME, &t_start);
 
         for (int i = 0; i < 55; i++)
         {
@@ -85,11 +83,12 @@ int main()
             }
         }
 
-        usleep(TIMING - 100);
+        usleep(TIMING - 150);
+        clock_gettime(CLOCK_BOOTTIME, &t_end);
 
-        while (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time < TIMING)
+        while ((t_end.tv_sec - t_start.tv_sec) * 1000 * 1000 + (t_end.tv_nsec - t_start.tv_nsec) / 1000 < TIMING)
         {
-            clock_gettime(CLOCK_BOOTTIME, &t);
+            clock_gettime(CLOCK_BOOTTIME, &t_end);
         }
     }
 }

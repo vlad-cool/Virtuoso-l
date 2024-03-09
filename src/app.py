@@ -280,6 +280,7 @@ class KivyApp(App):
         if system_info.video_support:
             videos = glob.glob(os.environ["VIDEO_PATH"] + "/*.mp4")
             self.root.max_video_id = len(videos) - 1
+            self.root.video_id = min(self.root.video_id, self.root.max_video_id)
 
     def system_poweroff(_):
         if system_info.is_banana:
@@ -446,19 +447,19 @@ class KivyApp(App):
 
             if sym == 17:
                 if self.on_off_watching == 16:
-                    root.timer_text = "+ASon"
+                    root.timer_text = "+ASoff"
                     self.on_off_watching = None
                 elif self.on_off_watching == 1:
-                    root.timer_text = "+Aon"
+                    root.timer_text = "+Aoff"
                     self.on_off_watching = None
                 else:
                     self.on_off_watching = 17
             if sym == 196:
                 if self.on_off_watching == 16:
-                    root.timer_text = "+ASoff"
+                    root.timer_text = "+ASon"
                     self.on_off_watching = None
                 elif self.on_off_watching == 1:
-                    root.timer_text = "+Aoff"
+                    root.timer_text = "+Aon"
                     self.on_off_watching = None
                 else:
                     self.on_off_watching = 196
@@ -548,6 +549,7 @@ class KivyApp(App):
                 cmds = gpio_control.read_rc5(self.config["rc5_address"])
         else:
             cmds = gpio_control.read_rc5(self.config["rc5_address"])
+        auto_cmd = None
         for cmd in cmds:
             if cmd[2]:
                 if cmd[1] == 7:
@@ -573,17 +575,17 @@ class KivyApp(App):
                         else:
                             root.passive_4_state = "normal"
                             root.passive_3_state = "normal"
-                if cmd[1] == -1: # Play pause button
+                if cmd[1] == 24: # Play pause button
                     self.play_pause_video()
-                if cmd[1] == -1: # Previous video
+                if cmd[1] == 20: # Previous video
                     self.previous_video()
-                if cmd[1] == -1: # Next video
+                if cmd[1] == 21: # Next video
                     self.next_video
-                if cmd[1] == -1: # Rewind back
+                if cmd[1] == 23: # Rewind back
                     self.rewind_video(-1)
-                if cmd[1] == -1: # Rewind front
+                if cmd[1] == 22: # Rewind front
                     self.rewind_video(1)
-                if cmd[1] == -1: # Change mode
+                if cmd[1] == 19: # Change mode
                     carousel = self.root
                     if carousel.index == 0:
                         carousel.index = 1
@@ -591,39 +593,30 @@ class KivyApp(App):
                         carousel.index = 0
 
                 if cmd[1] == 16:
-                    if self.on_off_watching == 17:
-                        root.timer_text = "-ASon"
-                        self.on_off_watching = None
-                    elif self.on_off_watching == 196:
-                        root.timer_text = "-ASoff"
-                        self.on_off_watching = None
-                    else:
-                        self.on_off_watching = 16
-                elif cmd[1] == 1:
-                    if self.on_off_watching == 17:
-                        root.timer_text = "-Aon"
-                        self.on_off_watching = None
-                    elif self.on_off_watching == 196:
-                        root.timer_text = "-Aoff"
-                        self.on_off_watching = None
-                    else:
-                        self.on_off_watching = 1
-                else:
-                    self.on_off_watching = None
+                    auto_cmd = 16
+                if cmd[1] == 1:
+                    auto_cmd = 1
 
-                # for ui in update_info:
-                #     if ui["symbol"] == 17: # Off?
-                #         if cmd[1] == 16: # auto score on/off
-                #             self.root.timer_text = "ASOff"
-                #         if cmd[1] == 1: # auto on/off
-                #             self.root.timer_text = "AOff"
-                #     if ui["symbol"] == 196: # On?
-                #         if cmd[1] == 16: # auto score on/off
-                #             self.root.timer_text = "ASOn"
-                #         if cmd[1] == 1: # auto on/off
-                #             self.root.timer_text = "AOn"
-                #     # self.root.rc5_command = str(ui["symbol"])
-                # self.root.rc5_command = f"{cmd[1]}, {cmd}, {type(cmd[1])}"
+        if auto_cmd == 16:
+            if self.on_off_watching == 17:
+                root.timer_text = "-ASoff"
+                self.on_off_watching = None
+            elif self.on_off_watching == 196:
+                root.timer_text = "-ASon"
+                self.on_off_watching = None
+            else:
+                self.on_off_watching = 16
+        elif auto_cmd == 1:
+            if self.on_off_watching == 17:
+                root.timer_text = "-Aoff"
+                self.on_off_watching = None
+            elif self.on_off_watching == 196:
+                root.timer_text = "-Aon"
+                self.on_off_watching = None
+            else:
+                self.on_off_watching = 1
+        else:
+            self.on_off_watching = None
 
     def update_network_data(self, _):
         for name, interface in ifcfg.interfaces().items():

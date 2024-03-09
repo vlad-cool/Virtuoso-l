@@ -24,8 +24,7 @@ void setup()
 
 void send(int address, int command)
 {
-    unsigned long time;
-    struct timespec t;
+    struct timespec t_start, t_end;
     int to_transmit = (address * (2 << 5) + command);
     to_transmit += (1 << 13) + (1 << 12);
     to_transmit += ir_toggle_bit * (1 << 11);
@@ -37,28 +36,27 @@ void send(int address, int command)
         to_transmit /= 2;
     }
 
-    clock_gettime(CLOCK_BOOTTIME, &t);
+    clock_gettime(CLOCK_BOOTTIME, &t_start);
 
     for (int i = 0; i < 14; i++)
     {
-        time = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
         digitalWrite(rc5_pin, 0 + data[i]);
 
-        usleep(TIMING * 9 / 10);
+        usleep(TIMING - 150);
 
-        while (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time < TIMING)
+        while ((t_end.tv_sec - t_start.tv_sec) * 1000 * 1000 + (t_end.tv_nsec - t_start.tv_nsec) / 1000 < TIMING)
         {
-            clock_gettime(CLOCK_BOOTTIME, &t);
+            clock_gettime(CLOCK_BOOTTIME, &t_end);
         }
 
-        time = t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000;
+        clock_gettime(CLOCK_BOOTTIME, &t_start);
         digitalWrite(rc5_pin, 1 - data[i]);
 
-        usleep(TIMING * 9 / 10);
+        usleep(TIMING - 150);
 
-        while (t.tv_sec * 1000 * 1000 + t.tv_nsec / 1000 - time < TIMING)
+        while ((t_end.tv_sec - t_start.tv_sec) * 1000 * 1000 + (t_end.tv_nsec - t_start.tv_nsec) / 1000 < TIMING)
         {
-            clock_gettime(CLOCK_BOOTTIME, &t);
+            clock_gettime(CLOCK_BOOTTIME, &t_end);
         }
     }
 

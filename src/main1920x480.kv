@@ -63,19 +63,9 @@ Carousel:
         BoxLayout:
             id: weapon_selector
             orientation: "horizontal"
-            size: 1000, 100
+            size: 760, 100
             size_hint: None, None
-            pos: 460, 0
-
-            ToggleButton:
-                id: weapon_connection_type
-                text: "wls"
-                state: "down" if root.weapon_connection_type == 1 else "normal"
-                font_size: 80
-                font_name:"agencyb"
-                color: app.color_weapon_dis if root.weapon != 1 else app.color_weapon_ena
-                background_color: [0, 0, 0, 0]
-                on_press: app.change_weapon_connection_type()
+            pos: 580, 0
 
             ToggleButton:
                 id: weapon_2
@@ -293,7 +283,7 @@ Carousel:
 
         Label:
             id: passive
-            size: root.passive_size * 2, 0 if root.passive_time > 50 and root.passive_time < 60 and root.current_time - root.flash_timer > 0.5 and root.timer_running == 1 else -32
+            size: root.passive_size * 2, 0 if root.passive_time > 50 and root.passive_time < 60 and root.current_time - root.flash_timer > 0.5 and root.timer_running == 1 else -16
             size_hint: None, None
             pos: 960 - root.passive_size, 480
 
@@ -914,19 +904,9 @@ Carousel:
             BoxLayout:
                 id: weapon_selector
                 orientation: "horizontal"
-                size: 1000, 100
+                size: 760, 100
                 size_hint: None, None
-                pos: 460, 0
-
-                ToggleButton:
-                    id: weapon_connection_type
-                    text: "wls"
-                    state: "down" if root.weapon_connection_type == 1 else "normal"
-                    font_size: 80
-                    font_name:"agencyb"
-                    color: app.color_weapon_dis if root.weapon != 1 else app.color_weapon_ena
-                    background_color: [0, 0, 0, 0]
-                    on_press: app.change_weapon_connection_type()
+                pos: 580, 0
 
                 ToggleButton:
                     id: weapon_2
@@ -1144,7 +1124,7 @@ Carousel:
 
             Label:
                 id: passive
-                size: root.passive_size * 2, 0 if root.passive_time > 50 and root.passive_time < 60 and root.current_time - root.flash_timer > 0.5 and root.timer_running == 1 else -32
+                size: root.passive_size * 2, 0 if root.passive_time > 50 and root.passive_time < 60 and root.current_time - root.flash_timer > 0.5 and root.timer_running == 1 else -16
                 size_hint: None, None
                 pos: 960 - root.passive_size, 480
 
