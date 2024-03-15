@@ -104,8 +104,33 @@
     {
         "width": 320,
         "height": 32,
-        "x": 1880,
+        "x": 1560,
         "y": 440,
         "font_size": 40
+    },
+    "video_player":
+    {
+        "width": 640,
+        "height": 480,
+        "x": 1120,
+        "y": 0
+    },
+    "player_controls": {
+        "width": 920,
+        "height": 130,
+        "x": 20,
+        "y": 325,
+        "font_size": 120
+    },
+    "video_playback": {
+        "width": 920,
+        "height": 40,
+        "x": 20,
+        "y": 260,
+        "font_size": 30
+    },
+    "video_pointer": {
+        "width": 10,
+        "height": 40
     }
 }

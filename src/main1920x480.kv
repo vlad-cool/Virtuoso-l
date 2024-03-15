@@ -655,7 +655,7 @@ Carousel:
             text: "recording on" if root.recording_enabled else "recording off"
             size: 320, 32
             size_hint: None, None
-            pos: 1880, 440
+            pos: 1560, 440
             font_size: 40
             font_name: "agencyb"
             color: app.color_weapon_ena if root.recording_enabled else app.color_weapon_dis
@@ -669,7 +669,7 @@ Carousel:
                 id: video_player
                 size: 640, 480
                 size_hint: None, None
-                pos: 1920 / 2 + (1920 / 2 - 640) / 2, 0
+                pos: 1120, 0
                 state: "play" if root.video_playing else "pause"
                 source: root.video_path + "/" + str(root.video_id) + ".mp4" if root.video_id >= root.min_video_id and root.video_id <= root.max_video_id else ""
                 options: dict({"avdict": {"codec:v": "h264_vdpau"}})
@@ -677,7 +677,7 @@ Carousel:
             Button:
                 size: 640, 480
                 size_hint: None, None
-                pos: 1920 / 2 + (1920 / 2 - 640) / 2, 0
+                pos: 1120, 0
                 on_press: root.video_playing = not root.video_playing
                 background_color: [0, 0, 0, 0]
 
@@ -915,7 +915,7 @@ Carousel:
                 size: (10, 40) if root.video_id >= 0 else (0, 0)
                 pos: root.ids.video_playback.pos[0] - self.size[0] / 2 + root.ids.video_playback.size[0] * max(0, 10 - root.ids.video_player.duration + root.ids.video_player.position) / 10, root.ids.video_playback.pos[1]
                 size_hint: None, None
-
+            
                 canvas.before:
                     Color:
                         rgba: [0.8, 0.8, 0.8, 1]
