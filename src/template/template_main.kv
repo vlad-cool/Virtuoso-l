@@ -66,15 +66,15 @@ Carousel:
         BoxLayout:
             id: weapon_selector
             orientation: "horizontal"
-            size: 760, 100
+            size: {{ data["weapon_selector"]["width"] }}, {{ data["weapon_selector"]["height"] }}
             size_hint: None, None
-            pos: 580, 0
+            pos: {{ data["weapon_selector"]["x"] }}, {{ data["weapon_selector"]["y"] }}
 
             ToggleButton:
                 id: weapon_2
                 text: "fleuret"
                 state: "down" if root.weapon == 2 else "normal"
-                font_size: 80
+                font_size: {{ data["weapon_selector"]["font_size"] }}
                 font_name: "agencyb"
                 group: "weapon"
                 color: app.color_weapon_dis if root.weapon != 2 else app.color_weapon_ena
@@ -86,7 +86,7 @@ Carousel:
                 markup: True
                 text: "epee [color=4c4c4c]5[/color]" if root.epee5 == 0 else "epee 5"
                 state: "down" if root.weapon == 3 else "normal"
-                font_size: 80
+                font_size: {{ data["weapon_selector"]["font_size"] }}
                 font_name: "agencyb"
                 group: "weapon"
                 color: app.color_weapon_dis if root.weapon != 3 else app.color_weapon_ena
@@ -97,7 +97,7 @@ Carousel:
                 id: weapon_1
                 text: "sabre"
                 state: "down" if root.weapon == 1 else "normal"
-                font_size: 80
+                font_size: {{ data["weapon_selector"]["font_size"] }}
                 font_name: "agencyb"
                 group: "weapon"
                 color: app.color_weapon_dis if root.weapon != 1 else app.color_weapon_ena
@@ -108,9 +108,9 @@ Carousel:
             id: left_score_carousel
             direction: "top"
             loop: True
-            size: 420, 420
+            size: {{ data["score"]["width"] * 2 }}, {{ data["score"]["height"] }}
             size_hint: None, None
-            pos: 20, 10
+            pos: {{ data["score"]["delta_x"] }}, {{ data["score"]["y"] }}
             min_move: 0.05
 
             old_index: 0
@@ -137,30 +137,30 @@ Carousel:
         Label:
             id: score_l_l
             text: root.score_l_l
-            font_size: 500
+            font_size: {{ data["score"]["font_size"] }}
             font_name: "agencyb"
-            size: 210, 420
+            size: {{ data["score"]["width"] }}, {{ data["score"]["height"] }}
             size_hint: None, None
-            pos: 20, 10
+            pos: {{ data["score"]["delta_x"] }}, {{ data["score"]["y"] }}
             color: app.color_left_score
 
         Label:
             id: score_l_r
             text: root.score_l_r
-            font_size: 500
+            font_size: {{ data["score"]["font_size"] }}
             font_name: "agencyb"
-            size: 210, 420
+            size: {{ data["score"]["width"] }}, {{ data["score"]["height"] }}
             size_hint: None, None
-            pos: 230, 10
+            pos: {{ data["score"]["delta_x"] + data["score"]["width"] }}, {{ data["score"]["y"] }}
             color: app.color_left_score
 
         Carousel:
             id: right_score_carousel
             direction: "top"
             loop: True
-            size: 420, 420
+            size: {{ data["score"]["width"] * 2 }}, {{ data["score"]["height"] }}
             size_hint: None, None
-            pos: 1480, 10
+            pos: {{ data["width"] - data["score"]["delta_x"] - data["score"]["width"] * 2 }}, {{ data["score"]["y"] }}
             min_move: 0.05
 
             old_index: 0
@@ -187,30 +187,30 @@ Carousel:
         Label:
             id: score_r_l
             text: root.score_r_l
-            font_size: 500
+            font_size: {{ data["score"]["font_size"] }}
             font_name: "agencyb"
-            size: 210, 420
+            size: {{ data["score"]["width"] }}, {{ data["score"]["height"] }}
             size_hint: None, None
-            pos: 1480, 10
+            pos: {{ data["width"] - data["score"]["delta_x"] - data["score"]["width"] * 2 }}, {{ data["score"]["y"] }}
             color: app.color_right_score
 
         Label:
             id: score_r_r
             text: root.score_r_r
-            font_size: 500
+            font_size: {{ data["score"]["font_size"] }}
             font_name: "agencyb"
-            size: 210, 420
+            size: {{ data["score"]["width"] }}, {{ data["score"]["height"] }}
             size_hint: None, None
-            pos: 1690, 10
+            pos: {{ data["width"] - data["score"]["delta_x"] - data["score"]["width"] }}, {{ data["score"]["y"] }}
             color: app.color_right_score
 
         Carousel:
             id: timer_carousel
             direction: "top"
             loop: True
-            size: 550, 300
+            size: {{ data["timer"]["width"] }}, {{ data["timer"]["height"] }}
             size_hint: None, None
-            pos: 700, 140
+            pos: {{ data["timer"]["x"] }}, {{ data["timer"]["y"] }}
             min_move: 0.05
 
             old_index: 0
@@ -237,58 +237,58 @@ Carousel:
         Label:
             id: timer_min
             text: root.timer_0
-            font_size: 360
+            font_size: {{ data["timer"]["time_font_size"] }}
             font_name: "agencyb"
-            size: 155, 300
+            size: {{ data["timer"]["number_width"] }}, {{ data["timer"]["height"] }}
             size_hint: None, None
-            pos: 700, 140
+            pos: {{ data["timer"]["x"] }}, {{ data["timer"]["y"] }}
             color: root.color_timer
 
         Label:
             id: timer_dot
             text: root.timer_1 if root.timer_running == 0 or root.current_time - root.flash_timer < 0.5 else " "
-            font_size: 360
+            font_size: {{ data["timer"]["time_font_size"] }}
             font_name: "agencyb"
-            size: 85, 300
+            size: {{ data["timer"]["dot_width"] }}, {{ data["timer"]["height"] }}
             size_hint: None, None
-            pos: 855, 140
+            pos: {{ data["timer"]["x"] + data["timer"]["number_width"] }}, {{ data["timer"]["y"] }}
             color: root.color_timer
 
         Label:
             id: timer_dec
             text: root.timer_2
-            font_size: 360
+            font_size: {{ data["timer"]["time_font_size"] }}
             font_name: "agencyb"
-            size: 155, 300
+            size: {{ data["timer"]["number_width"] }}, {{ data["timer"]["height"] }}
             size_hint: None, None
-            pos: 940, 140
+            pos: {{ data["timer"]["x"] + data["timer"]["number_width"] + data["timer"]["dot_width"] }}, {{ data["timer"]["y"] }}
             color: root.color_timer
 
         Label:
             id: timer_sec
             text: root.timer_3
-            font_size: 360
+            font_size: {{ data["timer"]["time_font_size"] }}
             font_name: "agencyb"
-            size: 155, 300
+            size: {{ data["timer"]["number_width"] }}, {{ data["timer"]["height"] }}
             size_hint: None, None
-            pos: 1095, 140
+            pos: {{ data["timer"]["x"] + data["timer"]["number_width"] * 2 + data["timer"]["dot_width"] }}, {{ data["timer"]["y"] }}
             color: root.color_timer
 
         Label:
             id: timer_text
             text: root.timer_text
-            font_size: 120
+            font_size: {{ data["timer"]["text_font_size"] }}
             font_name: "agencyb"
-            size: 550, 300
+            size: {{ data["timer"]["width"] }}, {{ data["timer"]["height"] }}
             size_hint: None, None
-            pos: 700, 140
+            pos: {{ data["timer"]["x"] }}, {{ data["timer"]["y"] }}
             color: root.color_timer
 
         Label:
             id: passive
-            size: root.passive_size * 1000, 0 if root.passive_time > 50 and root.passive_time < 60 and root.current_time - root.flash_timer > 0.5 and root.timer_running == 1 else -16
+            size: root.passive_size * {{ data["passive"]["width"] * 2 }}, 0 if root.passive_time > 50 and root.passive_time < 60 and root.current_time - root.flash_timer > 0.5 and root.timer_running == 1 else {{ -data["passive"]["height"] }}
             size_hint: None, None
-            pos: 960 - root.passive_size * 500, 480
+            pos: {{ data["passive"]["x"] }} - root.passive_size * {{ data["passive"]["width"] }}, {{ data["passive"]["y"] }}
 
             canvas:
                 Color:
@@ -300,11 +300,11 @@ Carousel:
         Button:
             id: period
             text: str(root.period)
-            font_size: 200
+            font_size: {{ data["period"]["font_size"] }}
             font_name: "agencyb"
-            size: 120, 200
+            size: {{ data["period"]["width"] }}, {{ data["period"]["height"] }}
             size_hint: None, None
-            pos: 580, 100
+            pos: {{ data["period"]["x"] }}, {{ data["period"]["y"] }}
             color: app.color_period
 
             on_press: app.send_handler(8)
@@ -316,11 +316,11 @@ Carousel:
         Label:
             id: passive_counter_2_1
             text: root.passive_coun[0] if root.time_updated or root.timer_running == 0 else self.text
-            font_size: 
+            font_size: {{ data["passive"]["font_size"] }}
             font_name: "agencyb"
-            size: 500, 16
+            size: {{ data["passive"]["width"] }}, {{ data["passive"]["height"] }}
             size_hint: None, None
-            pos: 960, 480
+            pos: {{ data["passive"]["x"] }}, {{ data["passive"]["y"] }}
             color: app.color_passive_white if root.weapon != 1 else app.color_passive_inact
 
             background_color: root.color_invis
@@ -330,11 +330,11 @@ Carousel:
         Label:
             id: passive_counter_2_2
             text: root.passive_coun[1] if root.time_updated or root.timer_running == 0 else self.text
-            font_size: 
+            font_size: {{ data["passive"]["font_size"] }}
             font_name: "agencyb"
-            size: 500, 16
+            size: {{ data["passive"]["width"] }}, {{ data["passive"]["height"] }}
             size_hint: None, None
-            pos: 1460, 480
+            pos: {{ data["passive"]["x"] + data["passive"]["width"] }}, {{ data["passive"]["y"] }}
             color: app.color_passive_white if root.weapon != 1 else app.color_passive_inact
 
             background_color: root.color_invis
@@ -344,11 +344,11 @@ Carousel:
         Label:
             id: warning_top_l
             text: "penalty"
-            font_size: 30
+            font_size: {{ data["warning_card"]["font_size"] }}
             font_name: "agencyb"
-            size: 100, 40
+            size: {{ data["warning_card"]["width"] }}, {{ data["warning_card"]["height"] }}
             size_hint: None, None
-            pos: 460, 250
+            pos: {{ data["warning_card"]["x"] }}, {{ data["warning_card"]["y"] + data["warning_card"]["height"] + data["warning_card"]["gap"] }}
 
             color: app.color_warn_text_ena if root.warning_l >= 2 else app.color_warn_text_dis
             
@@ -364,16 +364,16 @@ Carousel:
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
-                    radius: [10,]
+                    radius: [{{ data["card"]["radius"] }},]
 
         Label:
             id: warning_bot_l
             text: "caution"
-            font_size: 30
+            font_size: {{ data["warning_card"]["font_size"] }}
             font_name: "agencyb"
-            size: 100, 40
+            size: {{ data["warning_card"]["width"] }}, {{ data["warning_card"]["height"] }}
             size_hint: None, None
-            pos: 460, 190
+            pos: {{ data["warning_card"]["x"] }}, {{ data["warning_card"]["y"] }}
 
             color: app.color_warn_text_ena if root.warning_l >= 1 else app.color_warn_text_dis
             
@@ -389,13 +389,13 @@ Carousel:
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
-                    radius: [10,]
+                    radius: [{{ data["card"]["radius"] }},]
 
         Button:
             id: left_warning_button
-            size: 100, 100
+            size: {{ data["warning_card"]["width"] }}, {{ data["warning_card"]["height"] * 2 + data["warning_card"]["gap"] }}
             size_hint: None, None
-            pos: 460, 190
+            pos: {{ data["warning_card"]["x"] }}, {{ data["warning_card"]["y"] }}
 
             on_press: app.send_handler(4)
 
@@ -406,11 +406,11 @@ Carousel:
         Label:
             id: warning_top_r
             text: "penalty"
-            font_size: 30
+            font_size: {{ data["warning_card"]["font_size"] }}
             font_name: "agencyb"
-            size: 100, 40
+            size: {{ data["warning_card"]["width"] }}, {{ data["warning_card"]["height"] }}
             size_hint: None, None
-            pos: 1360, 250
+            pos: {{ data["width"] - data["warning_card"]["width"] - data["warning_card"]["x"] }}, {{ data["warning_card"]["y"] + data["warning_card"]["height"] + data["warning_card"]["gap"] }}
 
             color: app.color_warn_text_ena if root.warning_r >= 2 else app.color_warn_text_dis
 
@@ -426,16 +426,16 @@ Carousel:
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
-                    radius: [10,]
+                    radius: [{{ data["card"]["radius"] }},]
 
         Label:
             id: warning_bot_r
             text: "caution"
-            font_size: 30
+            font_size: {{ data["warning_card"]["font_size"] }}
             font_name: "agencyb"
-            size: 100, 40
+            size: {{ data["warning_card"]["width"] }}, {{ data["warning_card"]["height"] }}
             size_hint: None, None
-            pos: 1360, 190
+            pos: {{ data["width"] - data["warning_card"]["width"] - data["warning_card"]["x"] }}, {{ data["warning_card"]["y"] }}
 
             color: app.color_warn_text_ena if root.warning_r >= 1 else app.color_warn_text_dis
             
@@ -451,13 +451,13 @@ Carousel:
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
-                    radius: [10,]
+                    radius: [{{ data["card"]["radius"] }},]
 
         Button:
             id: left_warning_button
-            size: 100, 100
+            size: {{ data["warning_card"]["width"] }}, {{ data["warning_card"]["height"] * 2 + data["warning_card"]["gap"] }}
             size_hint: None, None
-            pos: 1360, 190
+            pos: {{ data["width"] - data["warning_card"]["width"] - data["warning_card"]["x"] }}, {{ data["warning_card"]["y"] }}
 
             on_press: app.send_handler(11)
 
@@ -468,30 +468,30 @@ Carousel:
         Label:
             id: priority_l_cap
             text: "P"
-            font_size: 120
+            font_size: {{ data["priority"]["cap_font_size"] }}
             font_name: "agencyb"
-            size: 100, 100
+            size: {{ data["priority"]["cap_width"] }}, {{ data["priority"]["cap_height"] }}
             size_hint: None, None
-            pos: 425, 80
+            pos: {{ data["priority"]["cap_l_x"] }}, {{ data["priority"]["cap_y"] }}
             color: app.color_left_p_ena if root.priority == -1 else app.color_left_p_dis
 
         Label:
             id: priority_l_word
             text: "priority"
-            font_size: 36
+            font_size: {{ data["priority"]["word_font_size"] }}
             font_name: "agencyb"
-            size: 100, 100
+            size: {{ data["priority"]["word_width"] }}, {{ data["priority"]["word_height"] }}
             size_hint: None, None
-            pos: 471, 53
+            pos: {{ data["priority"]["word_l_x"] }}, {{ data["priority"]["word_y"] }}
             color: app.color_warn_text_ena if root.priority == -1 else app.color_warn_text_dis
         
         Button:
             text: root.auto_score_status
-            font_size: 32
+            font_size: {{ data["auto_score_status"]["font_size"] }}
             font_name: "agencyb"
-            size: 100, 80
+            size: {{ data["auto_score_status"]["width"] }}, {{ data["auto_score_status"]["height"] }}
             size_hint: None, None
-            pos: 471, 0
+            pos: {{ data["auto_score_status"]["x"] }}, {{ data["auto_score_status"]["y"] }}
             color: app.color_weapon_ena if root.auto_score_status == "Auto score\non" else app.color_weapon_dis
             halign: "center"
             background_color: [0, 0, 0, 0]
@@ -500,30 +500,30 @@ Carousel:
         Label:
             id: priority_r_cap
             text: "P"
-            font_size: 120
+            font_size: {{ data["priority"]["cap_font_size"] }}
             font_name: "agencyb"
-            size: 100, 100
+            size: {{ data["priority"]["cap_width"] }}, {{ data["priority"]["cap_height"] }}
             size_hint: None, None
-            pos: 1325, 80
+            pos: {{ data["priority"]["cap_r_x"] }}, {{ data["priority"]["cap_y"] }}
             color: app.color_right_p_ena if root.priority == +1 else app.color_right_p_dis
 
         Label:
             id: priority_r_word
             text: "priority"
-            font_size: 36
+            font_size: {{ data["priority"]["word_font_size"] }}
             font_name: "agencyb"
-            size: 100, 100
+            size: {{ data["priority"]["word_width"] }}, {{ data["priority"]["word_height"] }}
             size_hint: None, None
-            pos: 1371, 53
+            pos: {{ data["priority"]["word_r_x"] }}, {{ data["priority"]["word_y"] }}
             color: app.color_warn_text_ena if root.priority == +1 else app.color_warn_text_dis
         
         Button:
             text: root.auto_timer_status
-            font_size: 32
+            font_size: {{ data["auto_timer_status"]["font_size"] }}
             font_name: "agencyb"
-            size: 100, 80
+            size: {{ data["auto_timer_status"]["width"] }}, {{ data["auto_timer_status"]["height"] }}
             size_hint: None, None
-            pos: 1371, 0
+            pos: {{ data["auto_timer_status"]["x"] }}, {{ data["auto_timer_status"]["y"] }}
             color: app.color_weapon_ena if root.auto_timer_status == "Auto timer\non" else app.color_weapon_dis
             halign: "center"
             background_color: [0, 0, 0, 0]
@@ -532,13 +532,13 @@ Carousel:
         ToggleButton:
             id: passive_1
             text: "Pcard"
-            font_size: 30
+            font_size: {{ data["passive_card"]["font_size"] }}
             font_name: "agencyb"
             state: root.passive_1_state
             color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
-            size: 100, 40
+            size: {{ data["passive_card"]["width"] }}, {{ data["passive_card"]["height"] }}
             size_hint: None, None
-            pos: 460, 320
+            pos: {{ data["passive_card"]["x"] }}, {{ data["passive_card"]["y"] }}
             on_press: app.passive_stop_card(self.state, 1)
             disabled: root.timer_running == 1
 
@@ -554,18 +554,18 @@ Carousel:
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
-                    radius: [10,]
+                    radius: [{{ data["card"]["radius"] }},]
 
         ToggleButton:
             id: passive_2
             text: "Pcard"
-            font_size: 30
+            font_size: {{ data["passive_card"]["font_size"] }}
             font_name: "agencyb"
             state: root.passive_2_state
             color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
-            size: 100, 40
+            size: {{ data["passive_card"]["width"] }}, {{ data["passive_card"]["height"] }}
             size_hint: None, None
-            pos: 460, 380
+            pos: {{ data["passive_card"]["x"] }}, {{ data["passive_card"]["y"] + data["passive_card"]["height"] + data["passive_card"]["gap"] }}
             on_press: app.passive_stop_card(self.state, 2)
             disabled: root.timer_running == 1
 
@@ -581,18 +581,18 @@ Carousel:
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
-                    radius: [10,]
+                    radius: [{{ data["card"]["radius"] }},]
 
         ToggleButton:
             id: passive_3
             text: "Pcard"
-            font_size: 30
+            font_size: {{ data["passive_card"]["font_size"] }}
             font_name: "agencyb"
             state: root.passive_3_state
             color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
-            size: 100, 40
+            size: {{ data["passive_card"]["width"] }}, {{ data["passive_card"]["height"] }}
             size_hint: None, None
-            pos: 1360, 380
+            pos: {{ data["width"] - data["passive_card"]["width"] - data["passive_card"]["x"] }}, {{ data["passive_card"]["y"] + data["passive_card"]["height"] + data["passive_card"]["gap"] }}
             on_press: app.passive_stop_card(self.state, 3)
             disabled: root.timer_running == 1
 
@@ -608,18 +608,18 @@ Carousel:
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
-                    radius: [10,]
+                    radius: [{{ data["card"]["radius"] }},]
 
         ToggleButton:
             id: passive_4
             text: "Pcard"
-            font_size: 30
+            font_size: {{ data["passive_card"]["font_size"] }}
             font_name: "agencyb"
             state: root.passive_4_state
             color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
-            size: 100, 40
+            size: {{ data["passive_card"]["width"] }}, {{ data["passive_card"]["height"] }}
             size_hint: None, None
-            pos: 1360, 320
+            pos: {{ data["width"] - data["passive_card"]["width"] - data["passive_card"]["x"] }}, {{ data["passive_card"]["y"] }}
             on_press: app.passive_stop_card(self.state, 4)
             disabled: root.timer_running == 1
 
@@ -635,13 +635,13 @@ Carousel:
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
-                    radius: [10,]
+                    radius: [{{ data["card"]["radius"] }},]
 
         Label:
             id: recording_indicator
-            size: 32, 32
+            size: {{ data["recording_indicator"]["size"] }}, {{ data["recording_indicator"]["size"] }}
             size_hint: None, None
-            pos: 1880, 440
+            pos: {{ data["recording_indicator"]["x"] }}, {{ data["recording_indicator"]["y"] }}
 
             canvas:
                 Color:
@@ -653,10 +653,10 @@ Carousel:
 
         Button:
             text: "recording on" if root.recording_enabled else "recording off"
-            size: 320, 32
+            size: {{ data["recording_status"]["width"] }}, {{ data["recording_status"]["height"] }}
             size_hint: None, None
-            pos: 1880, 440
-            font_size: 40
+            pos: {{ data["recording_status"]["x"] }}, {{ data["recording_status"]["y"] }}
+            font_size: {{ data["recording_status"]["font_size"] }}
             font_name: "agencyb"
             color: app.color_weapon_ena if root.recording_enabled else app.color_weapon_dis
             background_color: [0, 0, 0, 0]
@@ -1244,7 +1244,7 @@ Carousel:
             #         RoundedRectangle:
             #             pos: self.pos
             #             size: self.size
-            #             radius: [10,]
+            #             radius: [{{ data["card"]["radius"] }},]
 
             # Label:
             #     id: warning_bot_l
@@ -1268,7 +1268,7 @@ Carousel:
             #         RoundedRectangle:
             #             pos: self.pos
             #             size: self.size
-            #             radius: [10,]
+            #             radius: [{{ data["card"]["radius"] }},]
 
             # Button:
             #     id: left_warning_button
@@ -1304,7 +1304,7 @@ Carousel:
             #         RoundedRectangle:
             #             pos: self.pos
             #             size: self.size
-            #             radius: [10,]
+            #             radius: [{{ data["card"]["radius"] }},]
 
             # Label:
             #     id: warning_bot_r
@@ -1328,7 +1328,7 @@ Carousel:
             #         RoundedRectangle:
             #             pos: self.pos
             #             size: self.size
-            #             radius: [10,]
+            #             radius: [{{ data["card"]["radius"] }},]
 
             # Button:
             #     id: right_warning_button
@@ -1427,7 +1427,7 @@ Carousel:
             #         RoundedRectangle:
             #             pos: self.pos
             #             size: self.size
-            #             radius: [10,]
+            #             radius: [{{ data["card"]["radius"] }},]
 
             # ToggleButton:
             #     id: passive_2
@@ -1454,7 +1454,7 @@ Carousel:
             #         RoundedRectangle:
             #             pos: self.pos
             #             size: self.size
-            #             radius: [10,]
+            #             radius: [{{ data["card"]["radius"] }},]
 
             # ToggleButton:
             #     id: passive_3
@@ -1481,7 +1481,7 @@ Carousel:
             #         RoundedRectangle:
             #             pos: self.pos
             #             size: self.size
-            #             radius: [10,]
+            #             radius: [{{ data["card"]["radius"] }},]
 
             # ToggleButton:
             #     id: passive_4
@@ -1508,7 +1508,7 @@ Carousel:
             #         RoundedRectangle:
             #             pos: self.pos
             #             size: self.size
-            #             radius: [10,]
+            #             radius: [{{ data["card"]["radius"] }},]
 
             # Label:
             #     id: record_indicator

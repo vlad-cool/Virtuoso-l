@@ -199,8 +199,8 @@ class PassiveTimer:
 
         cur_time = time.time()
         delta = cur_time - self.prev_time
-        self.size += self.max_size * delta / 50
-        self.size = min(self.size, self.max_size)
+        self.size += 1 * delta / 50
+        self.size = min(self.size, 1)
         self.time += delta
         if self.time < 60.0:
             self.coun = str(60 - int(self.time) - 0.0001)
@@ -210,46 +210,43 @@ class PassiveTimer:
             self.coun = " 0"
         self.prev_time = cur_time
 
-    def __init__(self, passive_max_size):
-        self.max_size = passive_max_size
+    def __init__(self):
         self.clear()
 
 class KivyApp(App):
     Symbols = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
 
-    def play_video(self, vid):
-        self.root.video_id = vid
-        self.root.video_playing = True
-
-    def on_loaded_changed(self, _, __):
-        if self.root.ids["video_player"].loaded:
-            self.root.ids["video_player"].state = "play"
+    def toggle_recording(self):
+        if not self.root.timer_running:
+            self.root.recording_enabled = video_control.toggle_recording()
 
     def rewind_video(self, s):
         if self.root.ids.video_player.loaded:
             self.root.ids.video_player.seek((self.root.ids.video_player.position + s) / self.root.ids.video_player.duration, True)
 
     def previous_video(self):
-        if self.root.video_id > 0:
+        self.root.video_playing = True
+        if self.root.video_id == -1:
+            self.root.video_id = self.root.max_video_id
+        elif self.root.video_id > self.root.min_video_id:
             self.root.video_id -= 1
-            self.root.video_playing = True
+        else:
+            self.root.video_id = self.root.max_video_id
 
     def next_video(self):
-        if self.root.video_id < self.root.max_video_id:
+        self.root.video_playing = True
+        if self.root.video_id == -1:
+            self.root.video_id = self.root.min_video_id
+        elif self.root.video_id < self.root.max_video_id:
             self.root.video_id += 1
-            self.root.video_playing = True
+        else:
+            self.root.video_id = self.root.min_video_id
 
     def play_pause_video(self):
         self.root.video_playing = not self.root.video_playing
 
     def sync_new_remote(self, btn):
         if system_info.input_support:
-            if btn.sync_state == "no_sync":
-                btn.sync_state = "waiting"
-                btn.text = "press and hold\n3:00/1:00 button on remote"
-                self.read_timer.cancel()
-                self.ir_timer = Clock.schedule_interval(lambda _: self.wait_rc5(btn), read_interval)
-        else:
             if btn.sync_state == "no_sync":
                 btn.sync_state = "waiting"
                 btn.text = "press and hold\n3:00/1:00 button on remote"
@@ -276,12 +273,19 @@ class KivyApp(App):
                 Clock.schedule_once(lambda _: self.end_sync_remote(btn), 1.5)
                 break
 
+    def mid(self, a, b, c):
+        return a + b + c - min(a, b, c) - max(a, b, c)
+
     def load_video_list(self):
         if system_info.video_support:
             videos = glob.glob(os.environ["VIDEO_PATH"] + "/*.mp4")
-            self.root.max_video_id = len(videos) - 1
-            self.root.video_id = min(self.root.video_id, self.root.max_video_id)
-
+            if (len(videos) == 0):
+                return
+            self.root.min_video_id = int(videos[ 0].split("/")[-1].split(".")[0])
+            self.root.max_video_id = int(videos[-1].split("/")[-1].split(".")[0])
+            if self.root.video_id != -1:
+                self.root.video_id = self.mid(self.root.min_video_id, self.root.video_id, self.root.max_video_id)
+    
     def system_poweroff(_):
         if system_info.is_banana:
             subprocess.run("/usr/sbin/poweroff")
@@ -447,19 +451,23 @@ class KivyApp(App):
 
             if sym == 17:
                 if self.on_off_watching == 16:
-                    root.timer_text = "+ASoff"
+                    root.timer_text = "Auto score off"
+                    root.auto_score_status = "Auto score\noff"
                     self.on_off_watching = None
                 elif self.on_off_watching == 1:
-                    root.timer_text = "+Aoff"
+                    root.timer_text = "Auto timer off"
+                    root.auto_timer_status = "Auto timer\noff"
                     self.on_off_watching = None
                 else:
                     self.on_off_watching = 17
             if sym == 196:
                 if self.on_off_watching == 16:
-                    root.timer_text = "+ASon"
+                    root.timer_text = "Auto score on"
+                    root.auto_score_status = "Auto score\non"
                     self.on_off_watching = None
                 elif self.on_off_watching == 1:
-                    root.timer_text = "+Aon"
+                    root.timer_text = "Auto timer on"
+                    root.auto_timer_status = "Auto timer\non"
                     self.on_off_watching = None
                 else:
                     self.on_off_watching = 196
@@ -490,14 +498,13 @@ class KivyApp(App):
                     [0, 0, 1, 0, 0, 0, 0, 0][::-1],
                     [0, 1, 0, 1, 0, 0, 0, 0][::-1],
                     [0, 1, 1, 0, 0, 0, 0, 0][::-1],
-                    [1, 0, 0, 0, 0, 0, 0, 0][::-1],
-                    [1, 0, 1, 0, 0, 0, 1, 1][::-1],
-                    [1, 1, 0, 0, 0, 0, 0, 0][::-1],
-                    [1, 1, 1, 0, 0, 1, 1, 0][::-1],]
+                    [1, 0, 0, 1, 1, 1, 1, 1][::-1],
+                    [1, 0, 1, 1, 1, 1, 1, 1][::-1],
+                    [1, 1, 0, 1, 0, 0, 0, 0][::-1],
+                    [1, 1, 1, 1, 0, 1, 1, 0][::-1],]
             self.data_update(data)
         
         pins_data = PinsData(gpio_control.read_pins())
-
 
         if pins_data.poweroff == 0:
             self.system_poweroff()
@@ -512,7 +519,37 @@ class KivyApp(App):
                     video_control.start_recording()
 
             elif self.prev_pins_data is not None and self.prev_pins_data.recording == 1 and pins_data.recording == 0:
-                video_control.save_clip()
+                clip_data = {}
+                # clip_data["uart_data"] = self.prev_uart_data
+                # clip_data["pins_data"] = pins_data
+                
+                clip_data["uart_data"] = {}
+                clip_data["uart_data"]["yellow_white"] = self.prev_uart_data.yellow_white          
+                clip_data["uart_data"]["red"] = self.prev_uart_data.red          
+                clip_data["uart_data"]["white_green"] = self.prev_uart_data.white_green  
+                clip_data["uart_data"]["yellow_green"] = self.prev_uart_data.yellow_green 
+                clip_data["uart_data"]["green"] = self.prev_uart_data.green        
+                clip_data["uart_data"]["white_red"] = self.prev_uart_data.white_red    
+                clip_data["uart_data"]["apparel_sound"] = self.prev_uart_data.apparel_sound
+                clip_data["uart_data"]["symbol"] = self.prev_uart_data.symbol       
+                clip_data["uart_data"]["on_timer"] = self.prev_uart_data.on_timer     
+                clip_data["uart_data"]["timer_sound"] = self.prev_uart_data.timer_sound  
+                
+                clip_data["pins_data"] = {}
+
+                clip_data["pins_data"]["wireless"] = pins_data.wireless
+                clip_data["pins_data"]["recording"] = pins_data.recording
+                clip_data["pins_data"]["poweroff"] = pins_data.poweroff
+                clip_data["pins_data"]["weapon"] = pins_data.weapon
+
+                clip_data["passive_1"] = self.root.passive_1_state
+                clip_data["passive_2"] = self.root.passive_2_state
+                clip_data["passive_3"] = self.root.passive_3_state
+                clip_data["passive_4"] = self.root.passive_4_state
+                clip_data["passive_size"] = self.passive_timer.size
+                clip_data["passive_coun"] = self.passive_timer.coun
+
+                video_control.save_clip(metadata=json.dumps(clip_data))
                 self.stop_recording_scheduler = Clock.schedule_once(lambda _: video_control.stop_recording(), 5)
             if video_control.cutter_proc is not None and video_control.cutter_proc.poll() is None:
                 self.load_video_list()
@@ -575,8 +612,12 @@ class KivyApp(App):
                         else:
                             root.passive_4_state = "normal"
                             root.passive_3_state = "normal"
-                if cmd[1] == 24: # Play pause button
-                    self.play_pause_video()
+                if cmd[1] == 24: # Play pause button | enable disable recording
+                    carousel = self.root
+                    if carousel.index == 0:
+                        self.toggle_recording()
+                    else:
+                        self.play_pause_video()
                 if cmd[1] == 20: # Previous video
                     self.previous_video()
                 if cmd[1] == 21: # Next video
@@ -599,19 +640,23 @@ class KivyApp(App):
 
         if auto_cmd == 16:
             if self.on_off_watching == 17:
-                root.timer_text = "-ASoff"
+                root.timer_text = "Auto score off"
+                root.auto_score_status = "Auto score\noff"
                 self.on_off_watching = None
             elif self.on_off_watching == 196:
-                root.timer_text = "-ASon"
+                root.timer_text = "Auto score on"
+                root.auto_score_status = "Auto score\non"
                 self.on_off_watching = None
             else:
                 self.on_off_watching = 16
         elif auto_cmd == 1:
             if self.on_off_watching == 17:
-                root.timer_text = "-Aoff"
+                root.timer_text = "Auto timer off"
+                root.auto_timer_status = "Auto timer\noff"
                 self.on_off_watching = None
             elif self.on_off_watching == 196:
-                root.timer_text = "-Aon"
+                root.timer_text = "Auto timer on"
+                root.auto_timer_status = "Auto timer\non"
                 self.on_off_watching = None
             else:
                 self.on_off_watching = 1
@@ -663,14 +708,12 @@ class KivyApp(App):
         self.color_rec            = [255 / 255,   0 / 255,   0 / 255, 1.0] # red
         self.color_black          = [  0 / 255,   0 / 255,   0 / 255, 1.0] # black
 
-        self.card_radius = 10
-
         self.updater = Updater()
 
         self.stop_recording_scheduler = None
 
         self.old_sec              = "0"
-        self.passive_timer        = PassiveTimer(500)
+        self.passive_timer        = PassiveTimer()
         self.timer_interval       = None
         self.timer_millis         = 0
 
@@ -715,9 +758,6 @@ class KivyApp(App):
         self.load_video_list()
         self.root.video_path = os.environ["VIDEO_PATH"]
         self.root.ids["score_layout"].apply_transform(Matrix().scale(0.5, 0.5, 0.5))
-        self.root.ids["video_player"].bind(
-            loaded=self.on_loaded_changed
-        )
 
     def on_stop(self):
         if self.data_rx is not None:

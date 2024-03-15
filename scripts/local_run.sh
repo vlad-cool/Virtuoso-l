@@ -12,4 +12,4 @@ export VIDEO_PATH_TMP=./video/tmp
 export VIDEO_ENCODER=libx264
 
 cd src
-../venv/bin/python3 -m cProfile -s time -o local_prof app.py
+../venv/bin/python3 app.py

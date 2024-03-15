@@ -1,10 +1,10 @@
-BANANA_IP := 192.168.2.20
+BANANA_IP := 192.168.2.4
 DRIVER_EXECS := send_pin send_rc5 get_pin get_rc5
 
 release: V24m_update.zip
 
 V24m_update.zip: src/app.py src/system_info.py src/gpio_control.py src/video_control.py src/scripts/* src/main*.kv assets/*.TTF assets/*.png bin/* 
-	rm -f release.zip
+	rm -f V24m_update.zip
 	mkdir -p app
 	rm -rf app/*
 	mkdir -p app/assets

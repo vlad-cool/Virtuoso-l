@@ -84,11 +84,9 @@ int main()
         }
 
         usleep(TIMING - 150);
-        clock_gettime(CLOCK_BOOTTIME, &t_end);
-
-        while ((t_end.tv_sec - t_start.tv_sec) * 1000 * 1000 + (t_end.tv_nsec - t_start.tv_nsec) / 1000 < TIMING)
-        {
+        
+        do {
             clock_gettime(CLOCK_BOOTTIME, &t_end);
-        }
+        } while ((t_end.tv_sec - t_start.tv_sec) * 1000 * 1000 + (t_end.tv_nsec - t_start.tv_nsec) / 1000 < TIMING);
     }
 }

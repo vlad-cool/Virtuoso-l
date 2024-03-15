@@ -36,28 +36,25 @@ void send(int address, int command)
         to_transmit /= 2;
     }
 
-    clock_gettime(CLOCK_BOOTTIME, &t_start);
-
     for (int i = 0; i < 14; i++)
     {
+        clock_gettime(CLOCK_BOOTTIME, &t_start);
         digitalWrite(rc5_pin, 0 + data[i]);
 
         usleep(TIMING - 150);
-
-        while ((t_end.tv_sec - t_start.tv_sec) * 1000 * 1000 + (t_end.tv_nsec - t_start.tv_nsec) / 1000 < TIMING)
-        {
+        
+        do {
             clock_gettime(CLOCK_BOOTTIME, &t_end);
-        }
+        } while ((t_end.tv_sec - t_start.tv_sec) * 1000 * 1000 + (t_end.tv_nsec - t_start.tv_nsec) / 1000 < TIMING);
 
         clock_gettime(CLOCK_BOOTTIME, &t_start);
         digitalWrite(rc5_pin, 1 - data[i]);
 
         usleep(TIMING - 150);
 
-        while ((t_end.tv_sec - t_start.tv_sec) * 1000 * 1000 + (t_end.tv_nsec - t_start.tv_nsec) / 1000 < TIMING)
-        {
+        do {
             clock_gettime(CLOCK_BOOTTIME, &t_end);
-        }
+        } while ((t_end.tv_sec - t_start.tv_sec) * 1000 * 1000 + (t_end.tv_nsec - t_start.tv_nsec) / 1000 < TIMING);
     }
 
     digitalWrite(rc5_pin, 1);
