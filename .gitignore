@@ -11,3 +11,5 @@ used_software
 /test_videos
 V24m_update.zip
 src/wifi_control.py
+src/main1920x360.kv
+src/main1920x480.kv
