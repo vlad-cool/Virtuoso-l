@@ -43,7 +43,7 @@ Carousel:
 
     color_passive: [0, 0, 0, 1]
     color_timer: app.color_timer_orange
-    color_invis: [1, 0, 0, 0.5]
+    color_invis: [0, 0, 0, 0]
 
     video_playing: False
     video_path: ""
@@ -78,7 +78,7 @@ Carousel:
                 font_name: "agencyb"
                 group: "weapon"
                 color: app.color_weapon_dis if root.weapon != 2 else app.color_weapon_ena
-                background_color: [0, 0, 0, 0]
+                background_color: root.color_invis
                 on_press: app.set_weapon(2)
 
             ToggleButton:
@@ -90,7 +90,7 @@ Carousel:
                 font_name: "agencyb"
                 group: "weapon"
                 color: app.color_weapon_dis if root.weapon != 3 else app.color_weapon_ena
-                background_color: [0, 0, 0, 0]
+                background_color: root.color_invis
                 on_press: app.set_weapon(0)
 
             ToggleButton:
@@ -101,7 +101,7 @@ Carousel:
                 font_name: "agencyb"
                 group: "weapon"
                 color: app.color_weapon_dis if root.weapon != 1 else app.color_weapon_ena
-                background_color: [0, 0, 0, 0]
+                background_color: root.color_invis
                 on_press: app.set_weapon(1)
 
         Carousel:
@@ -316,11 +316,11 @@ Carousel:
         Label:
             id: passive_counter_2_1
             text: root.passive_coun[0] if root.time_updated or root.timer_running == 0 else self.text
-            font_size: {{ data["passive"]["font_size"] }}
+            font_size: {{ data["passive_counter"]["font_size"] }}
             font_name: "agencyb"
-            size: {{ data["passive"]["width"] }}, {{ data["passive"]["height"] }}
+            size: {{ data["passive_counter"]["width"] }}, {{ data["passive_counter"]["height"] }}
             size_hint: None, None
-            pos: {{ data["passive"]["x"] }}, {{ data["passive"]["y"] }}
+            pos: {{ data["passive_counter"]["x"] }}, {{ data["passive_counter"]["y"] }}
             color: app.color_passive_white if root.weapon != 1 else app.color_passive_inact
 
             background_color: root.color_invis
@@ -330,11 +330,11 @@ Carousel:
         Label:
             id: passive_counter_2_2
             text: root.passive_coun[1] if root.time_updated or root.timer_running == 0 else self.text
-            font_size: {{ data["passive"]["font_size"] }}
+            font_size: {{ data["passive_counter"]["font_size"] }}
             font_name: "agencyb"
-            size: {{ data["passive"]["width"] }}, {{ data["passive"]["height"] }}
+            size: {{ data["passive_counter"]["width"] }}, {{ data["passive_counter"]["height"] }}
             size_hint: None, None
-            pos: {{ data["passive"]["x"] + data["passive"]["width"] }}, {{ data["passive"]["y"] }}
+            pos: {{ data["passive_counter"]["x"] + data["passive_counter"]["width"] }}, {{ data["passive_counter"]["y"] }}
             color: app.color_passive_white if root.weapon != 1 else app.color_passive_inact
 
             background_color: root.color_invis
@@ -494,7 +494,7 @@ Carousel:
             pos: {{ data["auto_score_status"]["x"] }}, {{ data["auto_score_status"]["y"] }}
             color: app.color_weapon_ena if root.auto_score_status == "Auto score\non" else app.color_weapon_dis
             halign: "center"
-            background_color: [0, 0, 0, 0]
+            background_color: root.color_invis
             on_press: app.send_handler(16); app.on_off_watching = 16
 
         Label:
@@ -526,7 +526,7 @@ Carousel:
             pos: {{ data["auto_timer_status"]["x"] }}, {{ data["auto_timer_status"]["y"] }}
             color: app.color_weapon_ena if root.auto_timer_status == "Auto timer\non" else app.color_weapon_dis
             halign: "center"
-            background_color: [0, 0, 0, 0]
+            background_color: root.color_invis
             on_press: app.send_handler(1); app.on_off_watching = 1
 
         ToggleButton:
@@ -645,7 +645,7 @@ Carousel:
 
             canvas:
                 Color:
-                    rgba: app.color_rec if root.recording else [0, 0, 0, 0]
+                    rgba: app.color_rec if root.recording else root.color_invis
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
@@ -659,7 +659,7 @@ Carousel:
             font_size: {{ data["recording_status"]["font_size"] }}
             font_name: "agencyb"
             color: app.color_weapon_ena if root.recording_enabled else app.color_weapon_dis
-            background_color: [0, 0, 0, 0]
+            background_color: root.color_invis
             on_press: app.toggle_recording()
             halign: "right"
 
@@ -679,7 +679,7 @@ Carousel:
                 size_hint: None, None
                 pos: {{ data["video_player"]["x"] }}, {{ data["video_player"]["y"] }}
                 on_press: root.video_playing = not root.video_playing
-                background_color: [0, 0, 0, 0]
+                background_color: root.color_invis
 
             BoxLayout:
                 id: player_controls
@@ -912,7 +912,7 @@ Carousel:
                             size: self.size
 
             Label:
-                size: ({{ data["video_pointer"]["width"] }}, {{ data["video_pointer"]["height"] }}) if root.video_id >= 0 else (0, 0)
+                size: ({{ data["video_pointer"]["width"] }}, {{ data["video_pointer"]["height"] }}) if root.video_id >= 0 and root.ids.video_player.loaded else (0, 0)
                 pos: root.ids.video_playback.pos[0] - self.size[0] / 2 + root.ids.video_playback.size[0] * max(0, 10 - root.ids.video_player.duration + root.ids.video_player.position) / 10, root.ids.video_playback.pos[1]
                 size_hint: None, None
             
@@ -959,7 +959,7 @@ Carousel:
             #         font_name: "agencyb"
             #         group: "weapon"
             #         color: app.color_weapon_dis if root.weapon != 2 else app.color_weapon_ena
-            #         background_color: [0, 0, 0, 0]
+            #         background_color: root.color_invis
             #         on_press: app.set_weapon(2)
 
             #     ToggleButton:
@@ -971,7 +971,7 @@ Carousel:
             #         font_name: "agencyb"
             #         group: "weapon"
             #         color: app.color_weapon_dis if root.weapon != 3 else app.color_weapon_ena
-            #         background_color: [0, 0, 0, 0]
+            #         background_color: root.color_invis
             #         on_press: app.set_weapon(0)
 
             #     ToggleButton:
@@ -982,7 +982,7 @@ Carousel:
             #         font_name: "agencyb"
             #         group: "weapon"
             #         color: app.color_weapon_dis if root.weapon != 1 else app.color_weapon_ena
-            #         background_color: [0, 0, 0, 0]
+            #         background_color: root.color_invis
             #         on_press: app.set_weapon(1)
 
             # Carousel:
@@ -1518,7 +1518,7 @@ Carousel:
 
             #     canvas:
             #         Color:
-            #             rgba: app.color_rec if root.recording else [0, 0, 0, 0]
+            #             rgba: app.color_rec if root.recording else root.color_invis
             #         RoundedRectangle:
             #             pos: self.pos
             #             size: self.size
