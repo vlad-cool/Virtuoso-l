@@ -1527,119 +1527,127 @@ Carousel:
     FloatLayout:
         BoxLayout:
             orientation: "vertical"
-            size: 480, 480
+            size: {{ data["settings"]["category_button_width"] }}, {{ data["height"] }}
             size_hint: None, None
+            pos: 0, 0
 
             ToggleButton:
                 id: settings_system
                 group: "settings"
                 text: "System"
-                font_size: 60
-                font_name: "agencyb"
-
-            ToggleButton:
-                id: settings_network
-                group: "settings"
-                text: "Network"
-                font_size: 60
+                font_size: {{ data["settings"]["category_button_font_size"] }}
                 font_name: "agencyb"
 
             ToggleButton:
                 id: settings_remote
                 group: "settings"
                 text: "Remote"
-                font_size: 60
+                font_size: {{ data["settings"]["category_button_font_size"] }}
+                font_name: "agencyb"
+            
+            ToggleButton:
+                id: settings_video
+                group: "settings"
+                text: "Video"
+                font_size: {{ data["settings"]["category_button_font_size"] }}
+                font_name: "agencyb"
+                disabled: True
+        
+        BoxLayout:
+            orientation: "vertical"
+            size: {{ data["settings"]["category_button_width"] }}, {{ data["height"] }}
+            size_hint: None, None
+            pos: {{ data["width"] - data["settings"]["category_button_width"] }}, 0
+
+            ToggleButton:
+                id: settings_ethernet
+                group: "settings"
+                text: "Ethernet"
+                font_size: {{ data["settings"]["category_button_font_size"] }}
+                font_name: "agencyb"
+
+            ToggleButton:
+                id: settings_wifi
+                group: "settings"
+                text: "Wifi"
+                font_size: {{ data["settings"]["category_button_font_size"] }}
                 font_name: "agencyb"
 
             ToggleButton:
                 id: settings_update
                 group: "settings"
                 text: "Update"
-                font_size: 60
+                font_size: {{ data["settings"]["category_button_font_size"] }}
                 font_name: "agencyb"
 
-        RelativeLayout:
-            pos: (480, 0) if settings_system.state == "down" else (480, 480)
+        BoxLayout:
+            pos: ({{ (data["width"] - data["height"]) / 2 }}, 0) if settings_system.state == "down" else ({{ data["settings"]["category_button_width"] }}, {{ data["width"] }})
+            size: {{ data["height"] }}, {{ data["height"] }}
 
             Button:
-                size: 360, 360
+                size: {{ data["height"] }}, {{ data["height"] }}
                 size_hint: None, None
-                pos: (1940 - 480) / 2 - 180, 60
                 background_normal: "assets/poweroff_button.png"
                 background_down: "assets/poweroff_button.png"
                 on_press: app.system_poweroff()
 
-        RelativeLayout:
-            pos: (480, 0) if settings_network.state == "down" else (480, 480)
+        BoxLayout:
+            pos: ({{ (data["width"] - data["height"]) / 2 }}, 0) if settings_remote.state == "down" else ({{ data["settings"]["category_button_width"] }}, {{ data["width"] }})
+            size: {{ data["height"] }}, {{ data["height"] }}
 
-            Label:
-                pos: 0, 380
-                size: 720, 120
-                size_hint: None, None
-                text: "Wired"
-                font_size: 60
-                font_name: "agencyb"
-
-            Label:
-                pos: 0, 300
-                size: 720, 120
-                size_hint: None, None
-                text: root.wired_ip
-                font_size: 40
-                font_name: "agencyb"
-
-            Label:
-                pos: 720, 380
-                size: 720, 120
-                size_hint: None, None
-                text: "Wireless"
-                font_size: 60
-                font_name: "agencyb"
-
-            Label:
-                pos: 720, 300
-                size: 720, 120
-                size_hint: None, None
-                text: root.wireless_ip
-                font_size: 40
-                font_name: "agencyb"
-
-            ScrollView:
-                pos: 720, 240
-                size: 720, 240
-                size_hint: None, None
-                pos: 0, 0
-                do_scroll_x: False
-                do_scroll_y: True
-
-                GridLayout:
-                    id: wifi_list
-                    size_hint: None, None
-                    height: self.minimum_height
-                    cols: 1
-
-        RelativeLayout:
-            pos: (480, 0) if settings_remote.state == "down" else (480, 480)
             Button:
                 id: sync_remote
-                pos: 480, 0
-                size: 480, 480
+                size: {{ data["height"] }}, {{ data["height"] }}
                 size_hint: None, None
-                font_size: 40
+                font_size: {{ data["settings"]["button_1_font_size"] }}
                 font_name: "agencyb"
                 text: "Sync new remote"
                 sync_state: "no_sync"
                 on_press: app.sync_new_remote(self)
 
-        RelativeLayout:
-            pos: (480, 0) if settings_update.state == "down" else (480, 480)
+        BoxLayout:
+            pos: ({{ (data["width"] - data["height"]) / 2 }}, {{ data["height"] / 2 }}) if settings_ethernet.state == "down" else ({{ data["settings"]["category_button_width"] }}, {{ data["width"] }})
+            size: {{ data["height"] }}, {{ data["height"] / 2 }}
+            size_hint: None, None
+            orientation: "vertical"       
+
+            Label:
+                text: "Wired"
+                font_size: {{ data["settings"]["large_label_font_size"] }}
+                font_name: "agencyb"
+
+            Label:
+                text: root.wired_ip
+                font_size: {{ data["settings"]["small_label_font_size"] }}
+                font_name: "agencyb"
+
+        BoxLayout:
+            pos: ({{ (data["width"] - data["height"]) / 2 }}, {{ data["height"] / 2 }}) if settings_wifi.state == "down" else ({{ data["settings"]["category_button_width"] }}, {{ data["width"] }})
+            size: {{ data["height"] }}, {{ data["height"] / 2 }}
+            size_hint: None, None
+            orientation: "vertical"       
+
+            Label:
+                text: "Wireless"
+                font_size: {{ data["settings"]["large_label_font_size"] }}
+                font_name: "agencyb"
+
+            Label:
+                text: root.wireless_ip
+                font_size: {{ data["settings"]["small_label_font_size"] }}
+                font_name: "agencyb"
+        
+
+
+        BoxLayout:
+            pos: ({{ (data["width"] - data["height"]) / 2 }}, 0) if settings_update.state == "down" else ({{ data["settings"]["category_button_width"] }}, {{ data["width"] }})
+            size: {{ data["height"] }}, {{ data["height"] }}
 
             Button:
                 id: update_btn
-                pos: 480, 0
-                size: 480, 480
+                size: {{ data["height"] }}, {{ data["height"] }}
                 size_hint: None, None
-                font_size: 40
+                font_size: {{ data["settings"]["button_1_font_size"] }}
                 font_name: "agencyb"
                 text: "Check for updates"
                 update_state: "no_update"

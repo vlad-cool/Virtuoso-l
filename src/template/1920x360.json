@@ -133,5 +133,12 @@
     "video_pointer": {
         "width": 10,
         "height": 40
+    },
+    "settings": {
+        "category_button_width": 480,
+        "category_button_font_size": 60,
+        "button_1_font_size": 40,
+        "large_label_font_size": 60,
+        "small_label_font_size": 40
     }
 }
