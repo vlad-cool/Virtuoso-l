@@ -671,7 +671,7 @@ Carousel:
                 size_hint: None, None
                 pos: {{ data["video_player"]["x"] }}, {{ data["video_player"]["y"] }}
                 state: "play" if root.video_playing else "pause"
-                source: root.video_path + "/" + str(root.video_id) + ".mp4" if root.video_id >= root.min_video_id and root.video_id <= root.max_video_id else ""
+                source: root.video_path + "/" + str(root.video_id) + ".mp4" if root.video_id >= root.min_video_id and root.video_id <= root.max_video_id and root.video_id != -1 else ""
                 options: dict({"avdict": {"codec:v": "h264_vdpau"}})
 
             Button:
