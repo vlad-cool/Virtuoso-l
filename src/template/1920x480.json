@@ -23,8 +23,8 @@
         "height": 300,
         "x": 700,
         "y": 140,
-        "number_width": 155,
-        "dot_width": 85,
+        "number_width": 165,
+        "dot_width": 55,
         "time_font_size": 360,
         "text_font_size": 120
     },

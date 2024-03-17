@@ -35,7 +35,7 @@ def setup():
     send_pin_proc.stdin.write("add_pin 35 0\n")
 
     if system_info.input_support:
-        send_pin_proc.stdin.write("add_pin 37 1\n")
+        send_pin_proc.stdin.write("add_pin 37 0\n")
     else:
         get_pin_proc.stdin.write("add_pin 37\n")
 

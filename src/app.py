@@ -188,7 +188,7 @@ class PassiveTimer:
         return int(self.time)
 
     def get_size(self):
-        return int(self.size)
+        return self.size
 
     def get_coun(self):
         return self.coun
@@ -304,17 +304,18 @@ class KivyApp(App):
     def carousel_handler(self, _, old_index, new_index, commands):
         self.send_handler(commands[(2 + new_index - old_index) % 3])
 
-    def set_weapon(self, new_weapon):
+    def set_weapon(self, new_weapon, epee5=True):
         if system_info.input_support:
             gpio_control.button_emu(37, (3 + new_weapon - self.root.weapon) % 3)
             self.weapon = new_weapon
-
-            if self.root.weapon == 3 and new_weapon == 0:
-                self.root.epee5 = 1 - self.root.epee5
-                gpio_control.set(15, self.root.epee5)
-            else:
-                self.root.epee5 = 0
-                gpio_control.set(15, self.root.epee5)
+            
+            if epee5:
+                if self.root.weapon == 3 and new_weapon == 0:
+                    self.root.epee5 = 1 - self.root.epee5
+                    gpio_control.set(15, self.root.epee5)
+                else:
+                    self.root.epee5 = 0
+                    gpio_control.set(15, self.root.epee5)
 
     def change_weapon_connection_type(_):
         if system_info.input_support:
@@ -445,7 +446,6 @@ class KivyApp(App):
             root.timer_1 = ""
             root.timer_2 = ""
             root.timer_3 = ""
-            # root.timer_text = KivyApp.Symbols[timer_d] + KivyApp.Symbols[timer_s]
 
             sym = timer_d * 16 + timer_s
 
@@ -612,22 +612,22 @@ class KivyApp(App):
                         else:
                             root.passive_4_state = "normal"
                             root.passive_3_state = "normal"
+                carousel = self.root
                 if cmd[1] == 24: # Play pause button | enable disable recording
-                    carousel = self.root
                     if carousel.index == 0:
                         self.toggle_recording()
-                    else:
+                    elif carousel.index == 1:
                         self.play_pause_video()
-                if cmd[1] == 20: # Previous video
-                    self.previous_video()
-                if cmd[1] == 21: # Next video
-                    self.next_video
-                if cmd[1] == 23: # Rewind back
-                    self.rewind_video(-1)
-                if cmd[1] == 22: # Rewind front
-                    self.rewind_video(1)
+                if carousel.index == 1:
+                    if cmd[1] == 2: # Previous video
+                        self.previous_video()
+                    if cmd[1] == 3: # Next video
+                        self.next_video
+                    if cmd[1] == 9: # Rewind back
+                        self.rewind_video(-1)
+                    if cmd[1] == 15: # Rewind front
+                        self.rewind_video(1)
                 if cmd[1] == 19: # Change mode
-                    carousel = self.root
                     if carousel.index == 0:
                         carousel.index = 1
                     else:
@@ -750,7 +750,7 @@ class KivyApp(App):
 
     def on_start(self):
         self.get_data(0)
-        self.set_weapon(0)
+        Clock.schedule_once(lambda _: self.set_weapon(0, epee5=False), 1)
         self.read_timer = Clock.schedule_interval(self.get_data, read_interval)
         Clock.schedule_interval(self.update_network_data, 2)
         self.root.flash_timer  = time.time()

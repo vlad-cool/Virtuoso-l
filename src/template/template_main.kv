@@ -538,7 +538,7 @@ Carousel:
             color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
             size: {{ data["passive_card"]["width"] }}, {{ data["passive_card"]["height"] }}
             size_hint: None, None
-            pos: {{ data["passive_card"]["x"] }}, {{ data["passive_card"]["y"] }}
+            pos: {{ data["passive_card"]["x"] }}, {{ data["passive_card"]["y"] + data["passive_card"]["height"] + data["passive_card"]["gap"] }}
             on_press: app.passive_stop_card(self.state, 1)
             disabled: root.timer_running == 1
 
@@ -565,7 +565,7 @@ Carousel:
             color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
             size: {{ data["passive_card"]["width"] }}, {{ data["passive_card"]["height"] }}
             size_hint: None, None
-            pos: {{ data["passive_card"]["x"] }}, {{ data["passive_card"]["y"] + data["passive_card"]["height"] + data["passive_card"]["gap"] }}
+            pos: {{ data["passive_card"]["x"] }}, {{ data["passive_card"]["y"] }}
             on_press: app.passive_stop_card(self.state, 2)
             disabled: root.timer_running == 1
 
@@ -670,9 +670,9 @@ Carousel:
                 size: {{ data["video_player"]["width"] }}, {{ data["video_player"]["height"] }}
                 size_hint: None, None
                 pos: {{ data["video_player"]["x"] }}, {{ data["video_player"]["y"] }}
-                state: "play" if root.video_playing else "pause"
+                state: "play" if root.video_playing and root.index == 1 else "pause"
                 source: root.video_path + "/" + str(root.video_id) + ".mp4" if root.video_id >= root.min_video_id and root.video_id <= root.max_video_id and root.video_id != -1 else ""
-                options: dict({"avdict": {"codec:v": "h264_vdpau"}})
+                options: dict({"avdict": {"vcodec": "h264_vdpau"}})
 
             Button:
                 size: {{ data["video_player"]["width"] }}, {{ data["video_player"]["height"] }}
@@ -915,7 +915,7 @@ Carousel:
                 size: ({{ data["video_pointer"]["width"] }}, {{ data["video_pointer"]["height"] }}) if root.video_id >= 0 and root.ids.video_player.loaded else (0, 0)
                 pos: root.ids.video_playback.pos[0] - self.size[0] / 2 + root.ids.video_playback.size[0] * max(0, 10 - root.ids.video_player.duration + root.ids.video_player.position) / 10, root.ids.video_playback.pos[1]
                 size_hint: None, None
-            
+
                 canvas.before:
                     Color:
                         rgba: [0.8, 0.8, 0.8, 1]
