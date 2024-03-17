@@ -6,10 +6,10 @@
 #include <time.h>
 #include <sys/poll.h>
 
-#define TIMING 444
+#define TIMING 889
 #define rc5_pin 3
 
-int buffer[56] = {0};
+int buffer[28] = {1};
 
 void setup()
 {
@@ -22,7 +22,6 @@ int main()
     setup();
     char s[128];
     struct timespec t_start, t_end;
-    int toggle = -1;
 
     while (1)
     {
@@ -48,20 +47,26 @@ int main()
             }
         }
 
-        clock_gettime(CLOCK_BOOTTIME, &t_start);
+        buffer[1] = digitalRead(rc5_pin);
 
-        for (int i = 0; i < 55; i++)
+        if (buffer[1] == 1)
         {
-            buffer[i] = buffer[i + 1];
+            usleep(TIMING / 2);
         }
-        buffer[55] = digitalRead(rc5_pin);
-
-        if (buffer[1] == 1 && buffer[3] == 0 && buffer[5] == 1 && buffer[7] == 0)
+        else
         {
+            for (int i = 1; i < 28; i++)
+            {
+                clock_gettime(CLOCK_BOOTTIME, &t_start);
+                buffer[i] = digitalRead(rc5_pin);
+                do {
+                    clock_gettime(CLOCK_BOOTTIME, &t_end);
+                } while ((t_end.tv_sec - t_start.tv_sec) * 1000 * 1000 + (t_end.tv_nsec - t_start.tv_nsec) / 1000 < TIMING);
+            }
             int valid = 1;
             for (int i = 0; i < 14; i++)
             {
-                if (buffer[i * 4 + 1] + buffer[i * 4 + 3] != 1)
+                if (buffer[i * 2 + 1] + buffer[i * 2] != 1)
                 {
                     valid = 0;
                 }
@@ -69,24 +74,13 @@ int main()
 
             if (valid)
             {
-                toggle = buffer[9];
                 for (int i = 0; i < 28; i++)
                 {
-                    printf(" %d", buffer[i * 2 + 1]);
+                    printf(" %d", buffer[i]);
                 }
                 printf("\n");
                 fflush(stdout);
-                for (int i = 0; i < 56; i++)
-                {
-                    buffer[i] = 0;
-                }
             }
         }
-
-        usleep(TIMING - 150);
-        
-        do {
-            clock_gettime(CLOCK_BOOTTIME, &t_end);
-        } while ((t_end.tv_sec - t_start.tv_sec) * 1000 * 1000 + (t_end.tv_nsec - t_start.tv_nsec) / 1000 < TIMING);
     }
 }
