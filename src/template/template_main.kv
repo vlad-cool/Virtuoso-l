@@ -495,7 +495,7 @@ Carousel:
             color: app.color_weapon_ena if root.auto_score_status == "Auto score\non" else app.color_weapon_dis
             halign: "center"
             background_color: root.color_invis
-            on_press: app.send_handler(16); app.on_off_watching = 16
+            on_press: app.send_handler(16); app.auto_status.switch_changed(1)
 
         Label:
             id: priority_r_cap
@@ -527,7 +527,7 @@ Carousel:
             color: app.color_weapon_ena if root.auto_timer_status == "Auto timer\non" else app.color_weapon_dis
             halign: "center"
             background_color: root.color_invis
-            on_press: app.send_handler(1); app.on_off_watching = 1
+            on_press: app.send_handler(1); app.auto_status.switch_changed(0)
 
         ToggleButton:
             id: passive_1

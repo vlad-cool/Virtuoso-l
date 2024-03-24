@@ -213,9 +213,38 @@ class PassiveTimer:
     def __init__(self):
         self.clear()
 
-class KivyApp(App):
-    Symbols = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
+class SwitchController:
+    def __init__(self, n, timeout=1):
+        self.switches_states = [False] * n
+        self.switch_number = None
+        self.new_state = None
+        self.start_time = None
+        self.timeout = timeout
+        self.last_switch = None
 
+    def switch_changed(self, switch_number):
+        self.switch_number = switch_number
+        self.update_state()
+
+    def switch_state(self, new_state):
+        self.new_state = new_state
+        self.update_state()
+    
+    def update_state(self):
+        if self.new_state is None or self.switch_number is None:
+            self.start_time = time.clock_gettime(time.CLOCK_BOOTTIME)
+        elif time.clock_gettime(time.CLOCK_BOOTTIME) - self.start_time > self.timeout:
+            self.switch_number = None
+            self.new_state = None
+            self.start_time = None
+        else:
+            self.switches_states[self.switch_number] = self.new_state
+            self.last_switch = self.switch_number
+            self.switch_number = None
+            self.new_state = None
+            self.start_time = None
+
+class KivyApp(App):
     def toggle_recording(self):
         if not self.root.timer_running:
             self.root.recording_enabled = video_control.toggle_recording()
@@ -407,6 +436,7 @@ class KivyApp(App):
         if uart_data.period == 12 and timer_m == 0:
             timer_m = 4
 
+        self.symbol = uart_data.symbol
         if uart_data.symbol == 0:
             if self.old_sec != str(timer_s):
                 root.time_updated = True
@@ -450,27 +480,9 @@ class KivyApp(App):
             sym = timer_d * 16 + timer_s
 
             if sym == 17:
-                if self.on_off_watching == 16:
-                    root.timer_text = "Auto score off"
-                    root.auto_score_status = "Auto score\noff"
-                    self.on_off_watching = None
-                elif self.on_off_watching == 1:
-                    root.timer_text = "Auto timer off"
-                    root.auto_timer_status = "Auto timer\noff"
-                    self.on_off_watching = None
-                else:
-                    self.on_off_watching = 17
-            if sym == 196:
-                if self.on_off_watching == 16:
-                    root.timer_text = "Auto score on"
-                    root.auto_score_status = "Auto score\non"
-                    self.on_off_watching = None
-                elif self.on_off_watching == 1:
-                    root.timer_text = "Auto timer on"
-                    root.auto_timer_status = "Auto timer\non"
-                    self.on_off_watching = None
-                else:
-                    self.on_off_watching = 196
+                self.auto_status.switch_state(False)
+            elif sym == 196:
+                self.auto_status.switch_state(True)
 
         root.warning_l = uart_data.warning_l
         root.warning_r = uart_data.warning_r
@@ -483,6 +495,8 @@ class KivyApp(App):
         self.prev_uart_data = uart_data
 
     def get_data(self, _):
+        self.auto_status.update_state()
+
         root = self.root
         root.current_time = time.time()
         if system_info.is_banana:
@@ -619,13 +633,13 @@ class KivyApp(App):
                     elif carousel.index == 1:
                         self.play_pause_video()
                 if carousel.index == 1:
-                    if cmd[1] == 2: # Previous video
+                    if cmd[1] == 20: # Previous video
                         self.previous_video()
-                    if cmd[1] == 3: # Next video
+                    if cmd[1] == 21: # Next video
                         self.next_video
-                    if cmd[1] == 9: # Rewind back
+                    if cmd[1] == 23: # Rewind back
                         self.rewind_video(-1)
-                    if cmd[1] == 15: # Rewind front
+                    if cmd[1] == 22: # Rewind front
                         self.rewind_video(1)
                 if cmd[1] == 19: # Change mode
                     if carousel.index == 0:
@@ -634,34 +648,27 @@ class KivyApp(App):
                         carousel.index = 0
 
                 if cmd[1] == 16:
-                    auto_cmd = 16
+                    self.auto_status.switch_changed(1)
                 if cmd[1] == 1:
-                    auto_cmd = 1
+                    self.auto_status.switch_changed(0)
 
-        if auto_cmd == 16:
-            if self.on_off_watching == 17:
-                root.timer_text = "Auto score off"
-                root.auto_score_status = "Auto score\noff"
-                self.on_off_watching = None
-            elif self.on_off_watching == 196:
-                root.timer_text = "Auto score on"
-                root.auto_score_status = "Auto score\non"
-                self.on_off_watching = None
-            else:
-                self.on_off_watching = 16
-        elif auto_cmd == 1:
-            if self.on_off_watching == 17:
-                root.timer_text = "Auto timer off"
-                root.auto_timer_status = "Auto timer\noff"
-                self.on_off_watching = None
-            elif self.on_off_watching == 196:
-                root.timer_text = "Auto timer on"
+        if self.symbol == 1:
+            if self.auto_status.switches_states[0]:
+                if self.auto_status.last_switch == 0:
+                    root.timer_text = "Auto timer on"
                 root.auto_timer_status = "Auto timer\non"
-                self.on_off_watching = None
             else:
-                self.on_off_watching = 1
-        else:
-            self.on_off_watching = None
+                if self.auto_status.last_switch == 0:
+                    root.timer_text = "Auto timer off"
+                root.auto_timer_status = "Auto timer\noff"
+            if self.auto_status.switches_states[1]:
+                if self.auto_status.last_switch == 1:
+                    root.timer_text = "Auto score on"
+                root.auto_score_status = "Auto score\non"
+            else:
+                if self.auto_status.last_switch == 1:
+                    root.timer_text = "Auto score off"
+                root.auto_score_status = "Auto score\noff"
 
     def update_network_data(self, _):
         for name, interface in ifcfg.interfaces().items():
@@ -712,6 +719,10 @@ class KivyApp(App):
 
         self.stop_recording_scheduler = None
 
+        self.auto_status = SwitchController(2)
+
+        self.symbol = 0
+
         self.old_sec              = "0"
         self.passive_timer        = PassiveTimer()
         self.timer_interval       = None
@@ -724,8 +735,6 @@ class KivyApp(App):
         self.read_timer = None
 
         self.config = {"rc5_address": -1}
-
-        self.on_off_watching = None
 
         if system_info.is_banana:
             self.data_rx = serial.Serial("/dev/ttyS2", 38400)
