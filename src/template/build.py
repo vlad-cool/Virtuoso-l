@@ -1,5 +1,6 @@
 #!/bin/python3
 import jinja2
+import copy
 import json
 import sys
 
@@ -13,6 +14,14 @@ def to_hex_color(data):
             data[key] = data[key].replace("#", "")
         if isinstance(data[key], dict):
             data[key] = to_hex_color(data[key])
+    return data
+
+def resize(data):
+    for key in data:
+        if isinstance(data[key], int):
+            data[key] = data[key] // 2
+        if isinstance(data[key], dict):
+            data[key] = resize(data[key])
     return data
 
 def hex_to_rgba(color):
@@ -31,6 +40,8 @@ if len(sys.argv) <= 1:
 with open(sys.argv[1]) as f:
     data = json.load(f)
 
+resized_data = resize(copy.deepcopy(data))
+
 with open("colors.json") as f:
     colors = to_hex_color(json.load(f))
 
@@ -40,4 +51,4 @@ environment = jinja2.Environment(loader=jinja2.FileSystemLoader("."))
 template = environment.get_template("template_main.kv")
 
 with open("output.kv", "w") as f:
-    f.write(template.render(data=data, colors=colors, darker=darker, hex_to_rgba=hex_to_rgba))
+    f.write(template.render(data=data, resized_data=resized_data, colors=colors, darker=darker, hex_to_rgba=hex_to_rgba))

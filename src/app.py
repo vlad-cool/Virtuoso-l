@@ -48,7 +48,7 @@ class Updater:
 
 
         print(req, result, flush=True)
-        
+
         new_version = result["tag_name"]
         if old_version[0] == 'v':
             old_version = old_version[1:]
@@ -57,14 +57,14 @@ class Updater:
 
         old_version = old_version.replace("\n", "")
         new_version = new_version.replace("\n", "")
-        
+
         old_version_lst = list(map(int, old_version.split(".")))
         new_version_lst = list(map(int, new_version.split(".")))
 
         old_major = old_version_lst[0]
         old_minor = old_version_lst[1]
         old_patch = old_version_lst[2]
-        
+
         new_major = new_version_lst[0]
         new_minor = new_version_lst[1]
         new_patch = new_version_lst[2]
@@ -78,7 +78,7 @@ class Updater:
                     return
             btn.text = f"No update candidate"
             btn.update_state = "no_update"
-    
+
     def update_failed(self, btn, req, result):
         print(req, result)
         btn.text = "Couldn't get version information"
@@ -95,14 +95,14 @@ class Updater:
     def update(self, btn):
         repo_owner = "vlad-cool"
         repo_name = "V24m"
-        
+
         url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
 
         if btn.update_state == "no_update":
             self.update_request = UrlRequest(url, req_headers={"User-Agent": "V24m"}, on_success=lambda req, result: self.check_version(btn, req, result), on_failure=lambda req, result: self.update_failed(btn, req, result), on_error=lambda req, result: self.update_failed(btn, req, result))
             btn.text = "Checking for updates..."
             btn.update_state = "waiting"
-        
+
         if btn.update_state == "wait_for_update":
             btn.text = "Downloading update"
             btn.update_state = "downloading_update"
@@ -229,7 +229,7 @@ class SwitchController:
     def switch_state(self, new_state):
         self.new_state = new_state
         self.update_state()
-    
+
     def update_state(self):
         if self.new_state is None or self.switch_number is None:
             self.start_time = time.clock_gettime(time.CLOCK_BOOTTIME)
@@ -245,6 +245,35 @@ class SwitchController:
             self.start_time = None
 
 class KivyApp(App):
+    def load_metadata(self):
+        result = subprocess.run(['ffprobe', '-v', 'quiet', '-print_format', 'json', '-show_format', '-show_streams', self.root.ids["video_player"].source], capture_output=True)
+        try:
+            clip_data = json.loads(result.stdout)["format"]["tags"]["comment"]
+            
+            self.root.video_info_score_l = clip_data["score_l"]
+            self.root.video_info_score_r = clip_data["score_r"]
+            self.root.video_info_timer_m = clip_data["timer_m"]
+            self.root.video_info_timer_d = clip_data["timer_d"]
+            self.root.video_info_timer_s = clip_data["timer_s"]
+            self.root.video_info_period = clip_data["period"]
+            self.root.video_info_warning_l = clip_data["warning_l"]
+            self.root.video_info_warning_r = clip_data["warning_r"]
+            self.root.video_info_weapon = clip_data["weapon"]
+            self.root.video_info_epee5 = clip_data["epee5"]
+            self.root.video_info_passive_1 = clip_data["passive_1"]
+            self.root.video_info_passive_2 = clip_data["passive_2"]
+            self.root.video_info_passive_3 = clip_data["passive_3"]
+            self.root.video_info_passive_4 = clip_data["passive_4"]
+            self.root.video_info_passive_size = clip_data["passive_size"]
+            self.root.video_info_passive_coun = clip_data["passive_coun"]
+            self.root.video_info_priority = clip_data["priority"]
+            
+            self.root.video_info = True
+        except:
+            self.root.video_info = False
+            return
+
+
     def toggle_recording(self):
         if not self.root.timer_running:
             self.root.recording_enabled = video_control.toggle_recording()
@@ -261,6 +290,7 @@ class KivyApp(App):
             self.root.video_id -= 1
         else:
             self.root.video_id = self.root.max_video_id
+        self.load_metadata()
 
     def next_video(self):
         self.root.video_playing = True
@@ -270,6 +300,7 @@ class KivyApp(App):
             self.root.video_id += 1
         else:
             self.root.video_id = self.root.min_video_id
+        self.load_metadata()
 
     def play_pause_video(self):
         self.root.video_playing = not self.root.video_playing
@@ -314,7 +345,8 @@ class KivyApp(App):
             self.root.max_video_id = int(videos[-1].split("/")[-1].split(".")[0])
             if self.root.video_id != -1:
                 self.root.video_id = self.mid(self.root.min_video_id, self.root.video_id, self.root.max_video_id)
-    
+            self.load_metadata()
+
     def system_poweroff(_):
         if system_info.is_banana:
             subprocess.run("/usr/sbin/poweroff")
@@ -337,7 +369,7 @@ class KivyApp(App):
         if system_info.input_support:
             gpio_control.button_emu(37, (3 + new_weapon - self.root.weapon) % 3)
             self.weapon = new_weapon
-            
+
             if epee5:
                 if self.root.weapon == 3 and new_weapon == 0:
                     self.root.epee5 = 1 - self.root.epee5
@@ -517,7 +549,7 @@ class KivyApp(App):
                     [1, 1, 0, 1, 0, 0, 0, 0][::-1],
                     [1, 1, 1, 1, 0, 1, 1, 0][::-1],]
             self.data_update(data)
-        
+
         pins_data = PinsData(gpio_control.read_pins())
 
         if pins_data.poweroff == 0:
@@ -534,27 +566,30 @@ class KivyApp(App):
 
             elif self.prev_pins_data is not None and self.prev_pins_data.recording == 1 and pins_data.recording == 0:
                 clip_data = {}
-                # clip_data["uart_data"] = self.prev_uart_data
-                # clip_data["pins_data"] = pins_data
-                
-                clip_data["uart_data"] = {}
-                clip_data["uart_data"]["yellow_white"] = self.prev_uart_data.yellow_white          
-                clip_data["uart_data"]["red"] = self.prev_uart_data.red          
-                clip_data["uart_data"]["white_green"] = self.prev_uart_data.white_green  
-                clip_data["uart_data"]["yellow_green"] = self.prev_uart_data.yellow_green 
-                clip_data["uart_data"]["green"] = self.prev_uart_data.green        
-                clip_data["uart_data"]["white_red"] = self.prev_uart_data.white_red    
-                clip_data["uart_data"]["apparel_sound"] = self.prev_uart_data.apparel_sound
-                clip_data["uart_data"]["symbol"] = self.prev_uart_data.symbol       
-                clip_data["uart_data"]["on_timer"] = self.prev_uart_data.on_timer     
-                clip_data["uart_data"]["timer_sound"] = self.prev_uart_data.timer_sound  
-                
-                clip_data["pins_data"] = {}
 
-                clip_data["pins_data"]["wireless"] = pins_data.wireless
-                clip_data["pins_data"]["recording"] = pins_data.recording
-                clip_data["pins_data"]["poweroff"] = pins_data.poweroff
-                clip_data["pins_data"]["weapon"] = pins_data.weapon
+                clip_data["yellow_white"] = self.prev_uart_data.yellow_white
+                clip_data["red"] = self.prev_uart_data.red
+                clip_data["white_green"] = self.prev_uart_data.white_green
+                clip_data["yellow_green"] = self.prev_uart_data.yellow_green
+                clip_data["green"] = self.prev_uart_data.green
+                clip_data["white_red"] = self.prev_uart_data.white_red
+                clip_data["apparel_sound"] = self.prev_uart_data.apparel_sound
+                clip_data["symbol"] = self.prev_uart_data.symbol
+                clip_data["on_timer"] = self.prev_uart_data.on_timer
+                clip_data["timer_sound"] = self.prev_uart_data.timer_sound
+
+                clip_data["score_l"] = self.prev_uart_data.score_l
+                clip_data["score_r"] = self.prev_uart_data.score_r
+                clip_data["timer_m"] = self.prev_uart_data.timer_m
+                clip_data["timer_d"] = self.prev_uart_data.timer_d
+                clip_data["timer_s"] = self.prev_uart_data.timer_s
+                clip_data["period"] = self.prev_uart_data.period
+                clip_data["warning_l"] = self.prev_uart_data.warning_l
+                clip_data["warning_r"] = self.prev_uart_data.warning_r
+
+                clip_data["weapon"] = pins_data.weapon
+                clip_data["wireless"] = pins_data.wireless
+                clip_data["epee5"] = self.root.epee5
 
                 clip_data["passive_1"] = self.root.passive_1_state
                 clip_data["passive_2"] = self.root.passive_2_state
@@ -562,6 +597,8 @@ class KivyApp(App):
                 clip_data["passive_4"] = self.root.passive_4_state
                 clip_data["passive_size"] = self.passive_timer.size
                 clip_data["passive_coun"] = self.passive_timer.coun
+
+                clip_data["priority"] = self.root.priority
 
                 video_control.save_clip(metadata=json.dumps(clip_data))
                 self.stop_recording_scheduler = Clock.schedule_once(lambda _: video_control.stop_recording(), 5)
@@ -735,7 +772,6 @@ class KivyApp(App):
         self.root.current_time = time.time()
         self.load_video_list()
         self.root.video_path = os.environ["VIDEO_PATH"]
-        self.root.ids["score_layout"].apply_transform(Matrix().scale(0.5, 0.5, 0.5))
 
     def on_stop(self):
         if self.data_rx is not None:
