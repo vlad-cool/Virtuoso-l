@@ -29,7 +29,7 @@ def ir_emu_blocking(address, command):
     print(f"transmitted blocking signal, address: {address}, command: {command}\n")
 
 def read_pins():
-    return literal_eval("{3: 1, 7: 0, 18: 0, 27: 1, 32: 0, 36: 1, }\n")
+    return literal_eval("{3: 1, 7: 0, 18: 0, 27: 1, 32: 1, 36: 1, }\n")
 
 read_counter = 0
 

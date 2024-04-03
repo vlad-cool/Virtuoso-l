@@ -445,9 +445,9 @@ class KivyApp(App):
                 root.time_updated = False
 
             if uart_data.on_timer == 0:
-                root.color_timer = app.color_timer_orange
+                root.color_timer = root.color_timer_orange
             elif timer_m == 0 and timer_d == 0:
-                root.color_timer = app.color_timer_blue
+                root.color_timer = root.color_timer_blue
                 if self.timer_interval is None:
                     self.timer_interval = Clock.schedule_interval(self.update_millis, 0.02)
                     self.timer_millis = 0
@@ -456,8 +456,8 @@ class KivyApp(App):
                     root.timer_0 = "9"
                 root.timer_0 = str(timer_s - 1)
 
-            elif timer_m > 0 or root.color_timer == app.color_timer_orange:
-                root.color_timer = app.color_timer_white
+            elif timer_m > 0 or root.color_timer == root.color_timer_orange:
+                root.color_timer = root.color_timer_white
 
             if (timer_m > 0 or timer_d > 0 or (timer_m == 0 and timer_d == 0 and timer_s == 0)) and self.timer_interval is not None:
                 self.timer_interval.cancel()
@@ -578,7 +578,7 @@ class KivyApp(App):
         root.passive_size = self.passive_timer.get_size()
         root.passive_time = self.passive_timer.get_time()
         root.passive_coun = self.passive_timer.get_coun()
-        root.color_passive = self.color_passive_red if root.passive_time > 50 else self.color_passive_yel
+        root.color_passive = root.color_passive_red if root.passive_time > 50 else root.color_passive_yel
 
         if system_info.video_support:
             if video_control.ffmpeg_proc is not None and video_control.ffmpeg_proc.poll() is not None:
@@ -684,37 +684,6 @@ class KivyApp(App):
                     self.root.wired_ip = f"IP address is {interface['inet']}"
 
     def build(self):
-        self.color_left_score     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
-        self.color_right_score    = [  0 / 255, 152 / 255,  70 / 255, 1.0] # green
-
-        self.color_period         = [  0 / 255, 160 / 255, 227 / 255, 1.0] # blue
-
-        self.color_timer_white    = [223 / 255, 223 / 255, 223 / 255, 1.0] # white
-        self.color_timer_orange   = [239 / 255, 127 / 255,  26 / 255, 1.0] # orange
-        self.color_timer_blue     = [  0 / 255, 160 / 255, 227 / 255, 1.0] # blue
-
-        self.color_warn_red_ena   = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
-        self.color_warn_red_dis   = [227 / 255,  30 / 255,  36 / 255, 0.2] # dark red
-        self.color_warn_yel_ena   = [204 / 255, 204 / 255,   0 / 255, 1.0] # yellow
-        self.color_warn_yel_dis   = [ 51 / 255,  51 / 255,   0 / 255, 1.0] # dark yellow
-        self.color_warn_text_ena  = [230 / 255, 230 / 255, 230 / 255, 1.0] # white
-        self.color_warn_text_dis  = [102 / 255, 102 / 255, 102 / 255, 1.0] # grey
-
-        self.color_passive_yel    = [204 / 255, 204 / 255,   0 / 255, 1.0] # yellow
-        self.color_passive_red    = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
-        self.color_passive_white  = [223 / 255, 223 / 255, 223 / 255, 1.0] # white
-        self.color_passive_inact  = [ 76 / 255,  76 / 255,  76 / 255, 1.0] # gray
-
-        self.color_left_p_ena     = [227 / 255,  30 / 255,  36 / 255, 1.0] # red
-        self.color_left_p_dis     = [227 / 255,  30 / 255,  36 / 255, 0.2] # dark red
-        self.color_right_p_ena    = [  0 / 255, 152 / 255,  70 / 255, 1.0] # green
-        self.color_right_p_dis    = [  0 / 255, 152 / 255,  70 / 255, 0.2] # dark green
-
-        self.color_weapon_ena     = [179 / 255, 179 / 255, 179 / 255, 1.0] # light gray
-        self.color_weapon_dis     = [ 76 / 255,  76 / 255,  76 / 255, 1.0] # dark gray
-        self.color_rec            = [255 / 255,   0 / 255,   0 / 255, 1.0] # red
-        self.color_black          = [  0 / 255,   0 / 255,   0 / 255, 1.0] # black
-
         self.updater = Updater()
 
         self.stop_recording_scheduler = None

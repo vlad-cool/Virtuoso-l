@@ -41,10 +41,18 @@ Carousel:
 
     time_updated: True
 
-    color_passive: [0, 0, 0, 1]
-    color_timer: app.color_timer_orange
     color_invis: [0, 0, 0, 0]
-
+    
+    color_timer_white: {{ hex_to_rgba(colors["timer"]["white"]) }}
+    color_timer_orange: {{ hex_to_rgba(colors["timer"]["orange"]) }}
+    color_timer_blue: {{ hex_to_rgba(colors["timer"]["blue"]) }}
+    
+    color_passive_yel: {{ hex_to_rgba(colors["passive"]["yellow"]) }}
+    color_passive_red: {{ hex_to_rgba(colors["passive"]["red"]) }}
+    
+    color_timer: {{ hex_to_rgba(colors["timer"]["orange"]) }}
+    color_passive: [0, 0, 0, 0]
+    
     video_playing: False
     video_path: ""
     video_id: -1
@@ -77,19 +85,19 @@ Carousel:
                 font_size: {{ data["weapon_selector"]["font_size"] }}
                 font_name: "agencyb"
                 group: "weapon"
-                color: app.color_weapon_dis if root.weapon != 2 else app.color_weapon_ena
+                color: {{ colors["weapon"]["text_dark"] }} if root.weapon != 2 else {{ colors["weapon"]["text_light"] }}
                 background_color: root.color_invis
                 on_press: app.set_weapon(2)
 
             ToggleButton:
                 id: weapon_0
                 markup: True
-                text: "epee [color=4c4c4c]5[/color]" if root.epee5 == 0 else "epee 5"
+                text: "epee [color=" + {{ colors['weapon']['text_dark'] }} + "]5[/color]" if root.epee5 == 0 else "epee 5"
                 state: "down" if root.weapon == 3 else "normal"
                 font_size: {{ data["weapon_selector"]["font_size"] }}
                 font_name: "agencyb"
                 group: "weapon"
-                color: app.color_weapon_dis if root.weapon != 3 else app.color_weapon_ena
+                color: {{ colors["weapon"]["text_dark"] }} if root.weapon != 3 else {{ colors["weapon"]["text_light"] }}
                 background_color: root.color_invis
                 on_press: app.set_weapon(0)
 
@@ -100,7 +108,7 @@ Carousel:
                 font_size: {{ data["weapon_selector"]["font_size"] }}
                 font_name: "agencyb"
                 group: "weapon"
-                color: app.color_weapon_dis if root.weapon != 1 else app.color_weapon_ena
+                color: {{ colors["weapon"]["text_dark"] }} if root.weapon != 1 else {{ colors["weapon"]["text_light"] }}
                 background_color: root.color_invis
                 on_press: app.set_weapon(1)
 
@@ -142,7 +150,7 @@ Carousel:
             size: {{ data["score"]["width"] }}, {{ data["score"]["height"] }}
             size_hint: None, None
             pos: {{ data["score"]["delta_x"] }}, {{ data["score"]["y"] }}
-            color: app.color_left_score
+            color: {{ colors["score"]["left"] }}
 
         Label:
             id: score_l_r
@@ -152,7 +160,7 @@ Carousel:
             size: {{ data["score"]["width"] }}, {{ data["score"]["height"] }}
             size_hint: None, None
             pos: {{ data["score"]["delta_x"] + data["score"]["width"] }}, {{ data["score"]["y"] }}
-            color: app.color_left_score
+            color: {{ colors["score"]["left"] }}
 
         Carousel:
             id: right_score_carousel
@@ -192,7 +200,7 @@ Carousel:
             size: {{ data["score"]["width"] }}, {{ data["score"]["height"] }}
             size_hint: None, None
             pos: {{ data["width"] - data["score"]["delta_x"] - data["score"]["width"] * 2 }}, {{ data["score"]["y"] }}
-            color: app.color_right_score
+            color: {{ colors["score"]["right"] }}
 
         Label:
             id: score_r_r
@@ -202,7 +210,7 @@ Carousel:
             size: {{ data["score"]["width"] }}, {{ data["score"]["height"] }}
             size_hint: None, None
             pos: {{ data["width"] - data["score"]["delta_x"] - data["score"]["width"] }}, {{ data["score"]["y"] }}
-            color: app.color_right_score
+            color: {{ colors["score"]["right"] }}
 
         Carousel:
             id: timer_carousel
@@ -305,7 +313,7 @@ Carousel:
             size: {{ data["period"]["width"] }}, {{ data["period"]["height"] }}
             size_hint: None, None
             pos: {{ data["period"]["x"] }}, {{ data["period"]["y"] }}
-            color: app.color_period
+            color: {{ colors["period"] }}
 
             on_press: app.send_handler(8)
 
@@ -321,7 +329,7 @@ Carousel:
             size: {{ data["passive_counter"]["width"] }}, {{ data["passive_counter"]["height"] }}
             size_hint: None, None
             pos: {{ data["passive_counter"]["x"] }}, {{ data["passive_counter"]["y"] }}
-            color: app.color_passive_white if root.weapon != 1 else app.color_passive_inact
+            color: {{ colors["passive"]["text_light"] }} if root.weapon != 1 else {{ colors["passive"]["text_dark"] }}
 
             background_color: root.color_invis
             background_down: ""
@@ -335,7 +343,7 @@ Carousel:
             size: {{ data["passive_counter"]["width"] }}, {{ data["passive_counter"]["height"] }}
             size_hint: None, None
             pos: {{ data["passive_counter"]["x"] + data["passive_counter"]["width"] }}, {{ data["passive_counter"]["y"] }}
-            color: app.color_passive_white if root.weapon != 1 else app.color_passive_inact
+            color: {{ colors["passive"]["text_light"] }} if root.weapon != 1 else {{ colors["passive"]["text_dark"] }}
 
             background_color: root.color_invis
             background_down: ""
@@ -350,8 +358,8 @@ Carousel:
             size_hint: None, None
             pos: {{ data["warning_card"]["x"] }}, {{ data["warning_card"]["y"] + data["warning_card"]["height"] + data["warning_card"]["gap"] }}
 
-            color: app.color_warn_text_ena if root.warning_l >= 2 else app.color_warn_text_dis
-            
+            color: {{ colors["warning"]["text_light"] }} if root.warning_l >= 2 else {{ colors["warning"]["text_dark"] }}
+
             background_color: root.color_invis
             background_down: ""
             background_normal: ""
@@ -360,7 +368,7 @@ Carousel:
 
             canvas.before:
                 Color:
-                    rgba: app.color_warn_red_dis if root.warning_l < 2 else app.color_warn_red_ena
+                    rgba: {{ hex_to_rgba(darker(colors["warning"]["red"])) }} if root.warning_l < 2 else {{ hex_to_rgba(colors["warning"]["red"]) }}
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
@@ -375,7 +383,7 @@ Carousel:
             size_hint: None, None
             pos: {{ data["warning_card"]["x"] }}, {{ data["warning_card"]["y"] }}
 
-            color: app.color_warn_text_ena if root.warning_l >= 1 else app.color_warn_text_dis
+            color: {{ colors["warning"]["text_light"] }} if root.warning_l >= 1 else {{ colors["warning"]["text_dark"] }}
             
             background_color: root.color_invis
             background_down: ""
@@ -385,7 +393,7 @@ Carousel:
 
             canvas.before:
                 Color:
-                    rgba: app.color_warn_yel_dis if root.warning_l < 1 else app.color_warn_yel_ena
+                    rgba: {{ hex_to_rgba(darker(colors["warning"]["yellow"])) }} if root.warning_l < 1 else {{ hex_to_rgba(colors["warning"]["yellow"]) }}
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
@@ -412,7 +420,7 @@ Carousel:
             size_hint: None, None
             pos: {{ data["width"] - data["warning_card"]["width"] - data["warning_card"]["x"] }}, {{ data["warning_card"]["y"] + data["warning_card"]["height"] + data["warning_card"]["gap"] }}
 
-            color: app.color_warn_text_ena if root.warning_r >= 2 else app.color_warn_text_dis
+            color: {{ colors["warning"]["text_light"] }} if root.warning_r >= 2 else {{ colors["warning"]["text_dark"] }}
 
             background_color: root.color_invis
             background_down: ""
@@ -422,7 +430,7 @@ Carousel:
 
             canvas.before:
                 Color:
-                    rgba: app.color_warn_red_dis if root.warning_r < 2 else app.color_warn_red_ena
+                    rgba: {{ hex_to_rgba(darker(colors["warning"]["red"])) }} if root.warning_r < 2 else {{ hex_to_rgba(colors["warning"]["red"]) }}
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
@@ -437,7 +445,7 @@ Carousel:
             size_hint: None, None
             pos: {{ data["width"] - data["warning_card"]["width"] - data["warning_card"]["x"] }}, {{ data["warning_card"]["y"] }}
 
-            color: app.color_warn_text_ena if root.warning_r >= 1 else app.color_warn_text_dis
+            color: {{ colors["warning"]["text_light"] }} if root.warning_r >= 1 else {{ colors["warning"]["text_dark"] }}
             
             background_color: root.color_invis
             background_down: ""
@@ -447,7 +455,7 @@ Carousel:
 
             canvas.before:
                 Color:
-                    rgba: app.color_warn_yel_dis if root.warning_r < 1 else app.color_warn_yel_ena
+                    rgba: {{ hex_to_rgba(darker(colors["warning"]["yellow"])) }} if root.warning_r < 1 else {{ hex_to_rgba(colors["warning"]["yellow"]) }}
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
@@ -473,7 +481,7 @@ Carousel:
             size: {{ data["priority"]["cap_width"] }}, {{ data["priority"]["cap_height"] }}
             size_hint: None, None
             pos: {{ data["priority"]["cap_l_x"] }}, {{ data["priority"]["cap_y"] }}
-            color: app.color_left_p_ena if root.priority == -1 else app.color_left_p_dis
+            color: {{ colors["priority"]["left"] }} if root.priority == -1 else {{ darker(colors["priority"]["left"]) }}
 
         Label:
             id: priority_l_word
@@ -483,7 +491,7 @@ Carousel:
             size: {{ data["priority"]["word_width"] }}, {{ data["priority"]["word_height"] }}
             size_hint: None, None
             pos: {{ data["priority"]["word_l_x"] }}, {{ data["priority"]["word_y"] }}
-            color: app.color_warn_text_ena if root.priority == -1 else app.color_warn_text_dis
+            color: {{ colors["priority"]["text_light"] }} if root.priority == -1 else {{ colors["priority"]["text_dark"] }}
         
         Button:
             text: root.auto_score_status
@@ -492,7 +500,7 @@ Carousel:
             size: {{ data["auto_score_status"]["width"] }}, {{ data["auto_score_status"]["height"] }}
             size_hint: None, None
             pos: {{ data["auto_score_status"]["x"] }}, {{ data["auto_score_status"]["y"] }}
-            color: app.color_weapon_ena if root.auto_score_status == "Auto score\non" else app.color_weapon_dis
+            color: {{ colors["auto_status"]["text_light"] }} if root.auto_score_status == "Auto score\non" else {{ colors["auto_status"]["text_dark"] }}
             halign: "center"
             background_color: root.color_invis
             on_press: app.send_handler(16); app.auto_status.switch_changed(1)
@@ -505,7 +513,7 @@ Carousel:
             size: {{ data["priority"]["cap_width"] }}, {{ data["priority"]["cap_height"] }}
             size_hint: None, None
             pos: {{ data["priority"]["cap_r_x"] }}, {{ data["priority"]["cap_y"] }}
-            color: app.color_right_p_ena if root.priority == +1 else app.color_right_p_dis
+            color: {{ colors["priority"]["right"] }} if root.priority == -1 else {{ darker(colors["priority"]["right"]) }}
 
         Label:
             id: priority_r_word
@@ -515,7 +523,7 @@ Carousel:
             size: {{ data["priority"]["word_width"] }}, {{ data["priority"]["word_height"] }}
             size_hint: None, None
             pos: {{ data["priority"]["word_r_x"] }}, {{ data["priority"]["word_y"] }}
-            color: app.color_warn_text_ena if root.priority == +1 else app.color_warn_text_dis
+            color: {{ colors["priority"]["text_light"] }} if root.priority == +1 else {{ colors["priority"]["text_dark"] }}
         
         Button:
             text: root.auto_timer_status
@@ -524,7 +532,7 @@ Carousel:
             size: {{ data["auto_timer_status"]["width"] }}, {{ data["auto_timer_status"]["height"] }}
             size_hint: None, None
             pos: {{ data["auto_timer_status"]["x"] }}, {{ data["auto_timer_status"]["y"] }}
-            color: app.color_weapon_ena if root.auto_timer_status == "Auto timer\non" else app.color_weapon_dis
+            color: {{ colors["auto_status"]["text_light"] }} if root.auto_timer_status == "Auto timer\non" else {{ colors["auto_status"]["text_dark"] }}
             halign: "center"
             background_color: root.color_invis
             on_press: app.send_handler(1); app.auto_status.switch_changed(0)
@@ -535,7 +543,7 @@ Carousel:
             font_size: {{ data["passive_card"]["font_size"] }}
             font_name: "agencyb"
             state: root.passive_1_state
-            color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
+            color: {{ colors["warning"]["text_light"] }} if self.state == "down" else {{ colors["warning"]["text_dark"] }}
             size: {{ data["passive_card"]["width"] }}, {{ data["passive_card"]["height"] }}
             size_hint: None, None
             pos: {{ data["passive_card"]["x"] }}, {{ data["passive_card"]["y"] + data["passive_card"]["height"] + data["passive_card"]["gap"] }}
@@ -550,7 +558,7 @@ Carousel:
 
             canvas.before:
                 Color:
-                    rgba: app.color_warn_red_dis if self.state == "normal" else app.color_warn_red_ena
+                    rgba: {{ hex_to_rgba(darker(colors["warning"]["red"])) }} if self.state == "normal" else {{ hex_to_rgba(colors["warning"]["red"]) }}
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
@@ -562,7 +570,7 @@ Carousel:
             font_size: {{ data["passive_card"]["font_size"] }}
             font_name: "agencyb"
             state: root.passive_2_state
-            color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
+            color: {{ colors["warning"]["text_light"] }} if self.state == "down" else {{ colors["warning"]["text_dark"] }}
             size: {{ data["passive_card"]["width"] }}, {{ data["passive_card"]["height"] }}
             size_hint: None, None
             pos: {{ data["passive_card"]["x"] }}, {{ data["passive_card"]["y"] }}
@@ -577,7 +585,7 @@ Carousel:
 
             canvas.before:
                 Color:
-                    rgba: app.color_warn_yel_dis if self.state == "normal" else app.color_warn_yel_ena
+                    rgba: {{ hex_to_rgba(darker(colors["warning"]["yellow"])) }} if self.state == "normal" else {{ hex_to_rgba(colors["warning"]["yellow"]) }}
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
@@ -589,7 +597,7 @@ Carousel:
             font_size: {{ data["passive_card"]["font_size"] }}
             font_name: "agencyb"
             state: root.passive_3_state
-            color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
+            color: {{ colors["warning"]["text_light"] }} if self.state == "down" else {{ colors["warning"]["text_dark"] }}
             size: {{ data["passive_card"]["width"] }}, {{ data["passive_card"]["height"] }}
             size_hint: None, None
             pos: {{ data["width"] - data["passive_card"]["width"] - data["passive_card"]["x"] }}, {{ data["passive_card"]["y"] + data["passive_card"]["height"] + data["passive_card"]["gap"] }}
@@ -604,7 +612,7 @@ Carousel:
 
             canvas.before:
                 Color:
-                    rgba: app.color_warn_red_dis if self.state == "normal" else app.color_warn_red_ena
+                    rgba: {{ hex_to_rgba(darker(colors["warning"]["red"])) }} if self.state == "normal" else {{ hex_to_rgba(colors["warning"]["red"]) }}
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
@@ -616,7 +624,7 @@ Carousel:
             font_size: {{ data["passive_card"]["font_size"] }}
             font_name: "agencyb"
             state: root.passive_4_state
-            color: app.color_warn_text_ena if self.state == "down" else app.color_warn_text_dis
+            color: {{ colors["warning"]["text_light"] }} if self.state == "down" else {{ colors["warning"]["text_dark"] }}
             size: {{ data["passive_card"]["width"] }}, {{ data["passive_card"]["height"] }}
             size_hint: None, None
             pos: {{ data["width"] - data["passive_card"]["width"] - data["passive_card"]["x"] }}, {{ data["passive_card"]["y"] }}
@@ -631,7 +639,7 @@ Carousel:
 
             canvas.before:
                 Color:
-                    rgba: app.color_warn_yel_dis if self.state == "normal" else app.color_warn_yel_ena
+                    rgba: {{ hex_to_rgba(darker(colors["warning"]["yellow"])) }} if self.state == "normal" else {{ hex_to_rgba(colors["warning"]["yellow"]) }}
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
@@ -645,20 +653,20 @@ Carousel:
 
             canvas:
                 Color:
-                    rgba: app.color_rec if root.recording else root.color_invis
+                    rgba: {{ hex_to_rgba(colors["recording"]) }} if root.recording else root.color_invis
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
                     radius: self.size
 
         Button:
-            text: "recording on" if root.recording_enabled else "recording off"
+            text: "Video on" if root.recording_enabled else "Video off"
             size: {{ data["recording_status"]["width"] }}, {{ data["recording_status"]["height"] }}
             size_hint: None, None
             pos: {{ data["recording_status"]["x"] }}, {{ data["recording_status"]["y"] }}
             font_size: {{ data["recording_status"]["font_size"] }}
             font_name: "agencyb"
-            color: app.color_weapon_ena if root.recording_enabled else app.color_weapon_dis
+            color: {{ colors["auto_status"]["text_light"] }} if root.recording_enabled else {{ colors["auto_status"]["text_dark"] }}
             background_color: root.color_invis
             on_press: app.toggle_recording()
             halign: "right"
