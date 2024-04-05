@@ -14,10 +14,7 @@ from kivy.app import App
 from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.core.text import LabelBase
-from kivy.uix.button import Button
-from kivy.uix.label import Label
 from kivy.network.urlrequest import UrlRequest
-from kivy.graphics.transformation import Matrix
 
 read_interval = .05
 
@@ -249,35 +246,51 @@ class KivyApp(App):
         result = subprocess.run(['ffprobe', '-v', 'quiet', '-print_format', 'json', '-show_format', '-show_streams', self.root.ids["video_player"].source], capture_output=True)
         try:
             clip_data = json.loads(result.stdout)["format"]["tags"]["comment"]
-            
-            self.root.video_info_score_l = clip_data["score_l"]
-            self.root.video_info_score_r = clip_data["score_r"]
-            self.root.video_info_timer_m = clip_data["timer_m"]
-            self.root.video_info_timer_d = clip_data["timer_d"]
-            self.root.video_info_timer_s = clip_data["timer_s"]
-            self.root.video_info_period = clip_data["period"]
-            self.root.video_info_warning_l = clip_data["warning_l"]
-            self.root.video_info_warning_r = clip_data["warning_r"]
-            self.root.video_info_weapon = clip_data["weapon"]
-            self.root.video_info_epee5 = clip_data["epee5"]
-            self.root.video_info_passive_1 = clip_data["passive_1"]
-            self.root.video_info_passive_2 = clip_data["passive_2"]
-            self.root.video_info_passive_3 = clip_data["passive_3"]
-            self.root.video_info_passive_4 = clip_data["passive_4"]
-            self.root.video_info_passive_size = clip_data["passive_size"]
-            self.root.video_info_passive_coun = clip_data["passive_coun"]
-            self.root.video_info_priority = clip_data["priority"]
-            
-            self.root.video_info = True
         except:
-            self.root.video_info = False
             return
+        data = clip_data.split(";")
 
+        clip_data = {}
+
+        for s in data:
+            if s == "":
+                continue
+            a, b = s.split(":")
+            clip_data[a] = b
+
+        self.root.video_info_score_l_l = clip_data["score_l_l"]
+        self.root.video_info_score_l_r = clip_data["score_l_r"]
+        self.root.video_info_score_r_l = clip_data["score_r_l"]
+        self.root.video_info_score_r_r = clip_data["score_r_r"]
+        self.root.video_info_timer_0 = clip_data["timer_0"]
+        self.root.video_info_timer_2 = clip_data["timer_2"]
+        self.root.video_info_timer_3 = clip_data["timer_3"]
+        self.root.video_info_period = clip_data["period"]
+        self.root.video_info_priority = clip_data["priority"]
+        self.root.video_info_warning_l = clip_data["warning_l"]
+        self.root.video_info_warning_r = clip_data["warning_r"]
+        self.root.video_info_passive_size = clip_data["passive_size"]
+        self.root.video_info_passive_coun = clip_data["passive_coun"]
+        self.root.video_info_passive_1_state = clip_data["passive_1_state"]
+        self.root.video_info_passive_2_state = clip_data["passive_2_state"]
+        self.root.video_info_passive_3_state = clip_data["passive_3_state"]
+        self.root.video_info_passive_4_state = clip_data["passive_4_state"]
+        self.root.video_info_epee5 = clip_data["epee5"]
+        self.root.video_info_weapon = clip_data["weapon"]
+        self.root.video_info_color_passive = list(map(float, (clip_data["color_passive"].replace("[", "").replace("]", "").split(","))))
+        
+        self.root.video_info = True
 
     def toggle_recording(self):
         if not self.root.timer_running:
             self.root.recording_enabled = video_control.toggle_recording()
 
+    def on_position_change(self, player, pos):
+        if (self.old_pos > 2 and player.duration - pos <= 2):
+            self.play_pause_video(False)
+            Clock.schedule_once(lambda _: self.play_pause_video(True), 1)
+        self.old_pos = player.duration - pos
+    
     def rewind_video(self, s):
         if self.root.ids.video_player.loaded:
             self.root.ids.video_player.seek((self.root.ids.video_player.position + s) / self.root.ids.video_player.duration, True)
@@ -302,8 +315,8 @@ class KivyApp(App):
             self.root.video_id = self.root.min_video_id
         self.load_metadata()
 
-    def play_pause_video(self):
-        self.root.video_playing = not self.root.video_playing
+    def play_pause_video(self, play=None):
+        self.root.video_playing = play or not self.root.video_playing
 
     def sync_new_remote(self, btn):
         if system_info.input_support:
@@ -565,43 +578,30 @@ class KivyApp(App):
                     video_control.start_recording()
 
             elif self.prev_pins_data is not None and self.prev_pins_data.recording == 1 and pins_data.recording == 0:
-                clip_data = {}
+                clip_data = ""
+                clip_data += f"score_l_l:{root.score_l_l};"
+                clip_data += f"score_l_r:{root.score_l_r};"
+                clip_data += f"score_r_l:{root.score_r_l};"
+                clip_data += f"score_r_r:{root.score_r_r};"
+                clip_data += f"timer_0:{root.timer_0};"
+                clip_data += f"timer_2:{root.timer_2};"
+                clip_data += f"timer_3:{root.timer_3};"
+                clip_data += f"period:{root.period};"
+                clip_data += f"priority:{root.priority};"
+                clip_data += f"warning_l:{root.warning_l};"
+                clip_data += f"warning_r:{root.warning_r};"
+                clip_data += f"passive_size:{root.passive_size};"
+                clip_data += f"passive_coun:{root.passive_coun};"
+                clip_data += f"passive_1_state:{root.passive_1_state};"
+                clip_data += f"passive_2_state:{root.passive_2_state};"
+                clip_data += f"passive_3_state:{root.passive_3_state};"
+                clip_data += f"passive_4_state:{root.passive_4_state};"
+                clip_data += f"epee5:{root.epee5};"
+                clip_data += f"weapon:{root.weapon};"
+                clip_data += f"color_passive:{root.color_passive};"
 
-                clip_data["yellow_white"] = self.prev_uart_data.yellow_white
-                clip_data["red"] = self.prev_uart_data.red
-                clip_data["white_green"] = self.prev_uart_data.white_green
-                clip_data["yellow_green"] = self.prev_uart_data.yellow_green
-                clip_data["green"] = self.prev_uart_data.green
-                clip_data["white_red"] = self.prev_uart_data.white_red
-                clip_data["apparel_sound"] = self.prev_uart_data.apparel_sound
-                clip_data["symbol"] = self.prev_uart_data.symbol
-                clip_data["on_timer"] = self.prev_uart_data.on_timer
-                clip_data["timer_sound"] = self.prev_uart_data.timer_sound
-
-                clip_data["score_l"] = self.prev_uart_data.score_l
-                clip_data["score_r"] = self.prev_uart_data.score_r
-                clip_data["timer_m"] = self.prev_uart_data.timer_m
-                clip_data["timer_d"] = self.prev_uart_data.timer_d
-                clip_data["timer_s"] = self.prev_uart_data.timer_s
-                clip_data["period"] = self.prev_uart_data.period
-                clip_data["warning_l"] = self.prev_uart_data.warning_l
-                clip_data["warning_r"] = self.prev_uart_data.warning_r
-
-                clip_data["weapon"] = pins_data.weapon
-                clip_data["wireless"] = pins_data.wireless
-                clip_data["epee5"] = self.root.epee5
-
-                clip_data["passive_1"] = self.root.passive_1_state
-                clip_data["passive_2"] = self.root.passive_2_state
-                clip_data["passive_3"] = self.root.passive_3_state
-                clip_data["passive_4"] = self.root.passive_4_state
-                clip_data["passive_size"] = self.passive_timer.size
-                clip_data["passive_coun"] = self.passive_timer.coun
-
-                clip_data["priority"] = self.root.priority
-
-                video_control.save_clip(metadata=json.dumps(clip_data))
-                self.stop_recording_scheduler = Clock.schedule_once(lambda _: video_control.stop_recording(), 5)
+                video_control.save_clip(metadata=json.dumps(clip_data).replace(" ", ""))
+                self.stop_recording_scheduler = Clock.schedule_once(lambda _: video_control.stop_recording(), 2)
             if video_control.cutter_proc is not None and video_control.cutter_proc.poll() is None:
                 self.load_video_list()
         # -----------------
@@ -683,7 +683,6 @@ class KivyApp(App):
                         carousel.index = 1
                     else:
                         carousel.index = 0
-
                 if cmd[1] == 16:
                     self.auto_status.switch_changed(1)
                 if cmd[1] == 1:
@@ -740,6 +739,8 @@ class KivyApp(App):
 
         self.read_timer = None
 
+        self.old_pos = 0
+
         self.config = {"rc5_address": -1}
 
         if system_info.is_banana:
@@ -772,6 +773,9 @@ class KivyApp(App):
         self.root.current_time = time.time()
         self.load_video_list()
         self.root.video_path = os.environ["VIDEO_PATH"]
+        self.root.ids["video_player"].bind(
+            position=self.on_position_change
+        )
 
     def on_stop(self):
         if self.data_rx is not None:

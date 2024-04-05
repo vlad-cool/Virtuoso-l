@@ -1,7 +1,9 @@
 from time import sleep
 from ast import literal_eval
+from static_vars import static_vars
 import subprocess
 import system_info
+
 
 off_time = 250
 on_time = 250
@@ -40,15 +42,6 @@ def setup():
         get_pin_proc.stdin.write("add_pin 37\n")
 
     send_pin_proc.stdin.write("setup\n")
-
-def static_vars(**kwargs):
-    def decorate(func):
-        for k in kwargs:
-            setattr(func, k, kwargs[k])
-        return func
-
-    return decorate
-
 
 def toggle(pin):
     send_pin_proc.stdin.write(f"toggle {pin}\n")
