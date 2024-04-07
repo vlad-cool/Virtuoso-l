@@ -29,6 +29,12 @@ else:
 kivy.require("2.1.0")
 
 class Updater:
+    def __init__(self):
+        self.download_proc = None
+
+    def update_sync_btn_text(self, btn, text):
+        btn.text = text
+
     def check_version(self, btn, req, result):
         if btn.update_state != "waiting":
             return
@@ -73,41 +79,66 @@ class Updater:
                     btn.text = f"New version found\n{old_version}->{new_version}"
                     btn.update_state = "wait_for_update"
                     return
-            btn.text = f"No update candidate"
-            btn.update_state = "no_update"
+        btn.text = f"No update candidate"
+        btn.update_state = "no_update"
 
     def update_failed(self, btn, req, result):
-        print(req, result)
         btn.text = "Couldn't get version information"
         Clock.schedule_once(lambda _: self.update_sync_btn_text(btn, "Check for updates"), 10)
         btn.update_state = "no_update"
 
+    def download_failed(self, btn, req, result):
+        btn.text = "Download failed"
+        Clock.schedule_once(lambda _: self.update_sync_btn_text(btn, "Check for updates"), 10)
+        btn.update_state = "no_update"
+
     def update_downloaded(self, btn, req, result):
-        print(result)
-        with open("/home/pi/V24m/V24m_update.zip", "wb") as file:
-            file.write(result)
         btn.text = "Update downloaded\nPress to install"
-        btn.update_zip = "wait_for_reboot"
+        btn.update_state = "wait_for_reboot"
+
+    def check_download(self):
+        if self.download_proc is None:
+            return
+        if self.download_proc.poll() == 0:
+            self.update_downloaded(self.btn, None, None)
+            self.download_proc = None
+            return
+        if self.download_proc.poll() is not None:
+            self.download_proc = None
+            self.download_failed(self.btn, None, None)
 
     def update(self, btn):
+        self.btn = btn
+        try:
+            print(self.download_request)
+            print(self.download_request.is_finished)
+            print(self.update_url)
+        except:
+            pass
         repo_owner = "vlad-cool"
         repo_name = "V24m"
 
         url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
 
         if btn.update_state == "no_update":
-            self.update_request = UrlRequest(url, req_headers={"User-Agent": "V24m"}, on_success=lambda req, result: self.check_version(btn, req, result), on_failure=lambda req, result: self.update_failed(btn, req, result), on_error=lambda req, result: self.update_failed(btn, req, result))
+            self.update_request = UrlRequest(url, req_headers={"User-Agent": "V24m"}, on_redirect = lambda req, result: print("REDIRECT ", result), on_success=lambda req, result: self.check_version(btn, req, result), on_failure=lambda req, result: self.update_failed(btn, req, result), on_error=lambda req, result: self.update_failed(btn, req, result))
+            print(self.update_request)
             btn.text = "Checking for updates..."
             btn.update_state = "waiting"
+            return
 
         if btn.update_state == "wait_for_update":
             btn.text = "Downloading update"
             btn.update_state = "downloading_update"
-            UrlRequest(self.update_url, req_headers={"User-Agent": "V24m"}, on_success=lambda req, result: self.update_downloaded(btn, req, result))
+            # self.download_proc = subprocess.Popen(["wget", "-P", "/home/pi/V24m", self.update_url])
+            self.download_proc = subprocess.run(["rm", "/home/pi/V24m/V24m_update.zip"])
+            self.download_proc = subprocess.Popen(["wget", "-P", "/home/pi/V24m", self.update_url])
+            return
 
         if btn.update_state == "wait_for_reboot":
             if system_info.is_banana:
                 subprocess.run("/usr/sbin/reboot")
+            return
 
 class UartData:
     def __init__(self, data):
@@ -563,6 +594,7 @@ class KivyApp(App):
 
     def get_data(self, _):
         self.auto_status.update_state()
+        self.updater.check_download()
 
         root = self.root
         root.current_time = time.time()
@@ -790,7 +822,7 @@ class KivyApp(App):
 
     def on_start(self):
         self.get_data(0)
-        self.set_weapon(0, False)
+        # self.set_weapon(0, False)
         Clock.schedule_once(lambda _: self.set_weapon(0, epee5=False), 1)
         self.read_timer = Clock.schedule_interval(self.get_data, read_interval)
         Clock.schedule_interval(self.update_network_data, 2)
