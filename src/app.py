@@ -243,43 +243,60 @@ class SwitchController:
 
 class KivyApp(App):
     def load_metadata(self):
-        result = subprocess.run(['ffprobe', '-v', 'quiet', '-print_format', 'json', '-show_format', '-show_streams', self.root.ids["video_player"].source], capture_output=True)
-        try:
-            clip_data = json.loads(result.stdout)["format"]["tags"]["comment"]
-        except:
+        path = self.root.ids["video_player"].source
+
+        if path == "":
             return
-        data = clip_data.split(";")
 
-        clip_data = {}
+        if not path in self.metadata_procs:
+            self.metadata_procs[path] = subprocess.run(["./get_comment_metadata.sh", path], capture_output=True).stdout().decode()
+        elif isinstance(self.metadata_procs[path], subprocess.Popen):
+            self.metadata_procs[path] = self.metadata_procs[path].stdout.readline().decode()
 
-        for s in data:
-            if s == "":
-                continue
-            a, b = s.split(":")
-            clip_data[a] = b
+        result = self.metadata_procs[path]
 
-        self.root.video_info_score_l_l = clip_data["score_l_l"]
-        self.root.video_info_score_l_r = clip_data["score_l_r"]
-        self.root.video_info_score_r_l = clip_data["score_r_l"]
-        self.root.video_info_score_r_r = clip_data["score_r_r"]
-        self.root.video_info_timer_0 = clip_data["timer_0"]
-        self.root.video_info_timer_2 = clip_data["timer_2"]
-        self.root.video_info_timer_3 = clip_data["timer_3"]
-        self.root.video_info_period = clip_data["period"]
-        self.root.video_info_priority = clip_data["priority"]
-        self.root.video_info_warning_l = clip_data["warning_l"]
-        self.root.video_info_warning_r = clip_data["warning_r"]
-        self.root.video_info_passive_size = clip_data["passive_size"]
-        self.root.video_info_passive_coun = clip_data["passive_coun"]
-        self.root.video_info_passive_1_state = clip_data["passive_1_state"]
-        self.root.video_info_passive_2_state = clip_data["passive_2_state"]
-        self.root.video_info_passive_3_state = clip_data["passive_3_state"]
-        self.root.video_info_passive_4_state = clip_data["passive_4_state"]
-        self.root.video_info_epee5 = clip_data["epee5"]
-        self.root.video_info_weapon = clip_data["weapon"]
-        self.root.video_info_color_passive = list(map(float, (clip_data["color_passive"].replace("[", "").replace("]", "").split(","))))
-        
-        self.root.video_info = True
+        if result == "":
+            self.root.video_info = False
+            return
+
+        try:
+            result = result.replace("Comment", "")
+            result = result.replace(" ", "")
+            result = result[1:]
+            data = result.split(";")
+
+            clip_data = {}
+
+            for s in data:
+                if s == "\n" or s == "":
+                    continue
+                a, b = s.split(":")
+                clip_data[a] = b
+
+            self.root.video_info_score_l_l = clip_data["score_l_l"]
+            self.root.video_info_score_l_r = clip_data["score_l_r"]
+            self.root.video_info_score_r_l = clip_data["score_r_l"]
+            self.root.video_info_score_r_r = clip_data["score_r_r"]
+            self.root.video_info_timer_0 = clip_data["timer_0"]
+            self.root.video_info_timer_2 = clip_data["timer_2"]
+            self.root.video_info_timer_3 = clip_data["timer_3"]
+            self.root.video_info_period = clip_data["period"]
+            self.root.video_info_priority = clip_data["priority"]
+            self.root.video_info_warning_l = clip_data["warning_l"]
+            self.root.video_info_warning_r = clip_data["warning_r"]
+            self.root.video_info_passive_size = clip_data["passive_size"]
+            self.root.video_info_passive_coun = clip_data["passive_coun"]
+            self.root.video_info_passive_1_state = clip_data["passive_1_state"]
+            self.root.video_info_passive_2_state = clip_data["passive_2_state"]
+            self.root.video_info_passive_3_state = clip_data["passive_3_state"]
+            self.root.video_info_passive_4_state = clip_data["passive_4_state"]
+            self.root.video_info_epee5 = clip_data["epee5"]
+            self.root.video_info_weapon = clip_data["weapon"]
+            self.root.video_info_color_passive = list(map(float, (clip_data["color_passive"].replace("[", "").replace("]", "").split(","))))
+
+            self.root.video_info = True
+        except:
+            self.root.video_info = False
 
     def toggle_recording(self):
         if not self.root.timer_running:
@@ -290,7 +307,7 @@ class KivyApp(App):
             self.play_pause_video(False)
             Clock.schedule_once(lambda _: self.play_pause_video(True), 1)
         self.old_pos = player.duration - pos
-    
+
     def rewind_video(self, s):
         if self.root.ids.video_player.loaded:
             self.root.ids.video_player.seek((self.root.ids.video_player.position + s) / self.root.ids.video_player.duration, True)
@@ -352,6 +369,11 @@ class KivyApp(App):
     def load_video_list(self):
         if system_info.video_support:
             videos = glob.glob(os.environ["VIDEO_PATH"] + "/*.mp4")
+            for video in videos:
+                if not video in self.metadata_procs:
+                    self.metadata_procs[video] = subprocess.Popen(["./get_comment_metadata.sh", video], stdout=subprocess.PIPE)
+                elif isinstance(self.metadata_procs[video], subprocess.Popen) and self.metadata_procs[video].poll() == 0:
+                    self.metadata_procs[video] = self.metadata_procs[video].stdout.readline().decode()
             if (len(videos) == 0):
                 return
             self.root.min_video_id = int(videos[ 0].split("/")[-1].split(".")[0])
@@ -720,6 +742,8 @@ class KivyApp(App):
                     self.root.wired_ip = f"IP address is {interface['inet']}"
 
     def build(self):
+        self.metadata_procs = {}
+
         self.updater = Updater()
 
         self.stop_recording_scheduler = None
@@ -766,6 +790,7 @@ class KivyApp(App):
 
     def on_start(self):
         self.get_data(0)
+        self.set_weapon(0, False)
         Clock.schedule_once(lambda _: self.set_weapon(0, epee5=False), 1)
         self.read_timer = Clock.schedule_interval(self.get_data, read_interval)
         Clock.schedule_interval(self.update_network_data, 2)

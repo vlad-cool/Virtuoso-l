@@ -88,6 +88,7 @@ sudo apt -y install python3-setuptools python3-pip python3-dev python3-venv
 sudo apt -y install mencoder
 sudo apt -y install xinput xorg
 sudo apt -y install gpiod
+sudo apt -y install exiftool
 
 
 sudo cp cedar_ve.ko /lib/modules/5.15.80-sunxi/

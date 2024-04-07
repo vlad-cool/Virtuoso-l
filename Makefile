@@ -1,4 +1,4 @@
-BANANA_IP := 192.168.2.7
+BANANA_IP := 192.168.2.9
 DRIVER_EXECS := send_pin send_rc5 get_pin get_rc5
 
 release: V24m_update.zip
@@ -6,13 +6,13 @@ release: V24m_update.zip
 ssh:
 	ssh-add ~/.ssh/bananapi
 
-V24m_update.zip: src/app.py src/system_info.py src/gpio_control.py src/video_control.py src/static_vars.py src/scripts/* src/main*.kv assets/*.TTF assets/*.png bin/* 
+V24m_update.zip: src/app.py src/system_info.py src/gpio_control.py src/video_control.py src/static_vars.py src/get_comment_metadata.sh src/scripts/* src/main*.kv assets/*.TTF assets/*.png bin/* 
 	cd src/template && make
 	rm -f V24m_update.zip
 	mkdir -p app
 	rm -rf app/*
 	mkdir -p app/assets
-	cp src/app.py src/system_info.py src/gpio_control.py src/video_control.py src/static_vars.py src/scripts/* src/main*.kv app/
+	cp src/app.py src/system_info.py src/gpio_control.py src/video_control.py src/static_vars.py src/get_comment_metadata.sh src/scripts/* src/main*.kv app/
 	cp bin/* app/
 	cp assets/*.TTF assets/*.png app/assets/
 	cp -r assets/venv app/

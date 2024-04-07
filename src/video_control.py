@@ -1,8 +1,6 @@
 import subprocess
-import platform
 import time
 import os
-import system_info
 
 clip_duration = 10  # seconds
 post_record = 2  # seconds

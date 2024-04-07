@@ -9,6 +9,7 @@ used_software
 /src/assets
 /src/__pycache__
 /test_videos
+/test_videos_1
 V24m_update.zip
 src/wifi_control.py
 src/main1920x360.kv
