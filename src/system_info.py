@@ -15,3 +15,6 @@ if video_support:
     video_path = os.environ["VIDEO_PATH"]
     video_path_tmp = os.environ["VIDEO_PATH_TMP"]
     video_encoder = os.environ["VIDEO_ENCODER"]
+
+# Updates
+update_dir = os.environ["UPDATE_DIR"]

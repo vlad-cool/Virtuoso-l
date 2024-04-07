@@ -15,6 +15,8 @@ export VIDEO_ENCODER=cedrus264
 export MAIN_LOG=/home/pi/V24m/logs/main.log
 export FFMPEG_LOG=/home/pi/V24m/logs/ffmpeg.log
 export CUTTER_LOG=/home/pi/V24m/logs/cutter.log
+## Updates
+export UPDATE_DIR=/home/pi/V24m
 
 if [ -z "$SSH_TTY" ] && [ -z "$TMUX" ] && [[ "$(tty)"="/dev/tty1" ]]
 then

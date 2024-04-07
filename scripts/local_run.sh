@@ -10,6 +10,8 @@ export VIDEO_SUPPORT=True
 export VIDEO_PATH=/home/vlad/Documents/VSCode/V24m/test_videos
 export VIDEO_PATH_TMP=./video/tmp
 export VIDEO_ENCODER=libx264
+## Updates
+export UPDATE_DIR=~/Downloads
 
 set -e
 

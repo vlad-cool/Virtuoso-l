@@ -130,9 +130,8 @@ class Updater:
         if btn.update_state == "wait_for_update":
             btn.text = "Downloading update"
             btn.update_state = "downloading_update"
-            # self.download_proc = subprocess.Popen(["wget", "-P", "/home/pi/V24m", self.update_url])
-            self.download_proc = subprocess.run(["rm", "/home/pi/V24m/V24m_update.zip"])
-            self.download_proc = subprocess.Popen(["wget", "-P", "/home/pi/V24m", self.update_url])
+            self.download_proc = subprocess.run(["rm", f"{system_info.update_dir}/V24m_update.zip"])
+            self.download_proc = subprocess.Popen(["wget", "-P", f"{system_info.update_dir}/V24m", self.update_url])
             return
 
         if btn.update_state == "wait_for_reboot":
