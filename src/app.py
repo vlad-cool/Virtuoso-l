@@ -10,6 +10,7 @@ import shutil
 import pathlib
 import subprocess
 import system_info
+from collections import OrderedDict
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.lang import Builder
@@ -271,24 +272,80 @@ class SwitchController:
             self.new_state = None
             self.start_time = None
 
-class KivyApp(App):
+class VideoPlayer:
+    def __init__(self, player, kivy_root):
+        self.player = player
+        self.root = kivy_root
+        self.available_videos = OrderedDict()
+        self.recording = False
+        self.player.state = "play"
+        self.player.source = "/dev/video0" if not self.recording else ""
+        self.video_id = -1
+
+    def play_pause(self):
+        if self.player.state == "pause":
+            self.start_playback()
+        else:
+            self.pause_playback()
+    
+    def start_playback(self):
+        if self.video_id != -1:
+            self.player.state = "play"
+    
+    def pause_playback(self):
+        if self.video_id != -1:
+            self.player.state = "pause"
+    
+    def stop_playback(self):
+        self.player.state = "play"
+        self.player.source = "/dev/video0" if not self.recording else ""
+        self.video_id = -1
+
+    def play_video(self, id):
+        id = id % len(self.available_videos)
+        self.player.camera = False
+        self.video_id = id
+        self.player.source = list(self.available_videos)[id]
+        self.start_playback()
+        self.load_metadata()
+        self.root.video_id = id
+
+    def play_next_video(self):
+        self.play_video(self.video_id + 1)
+
+    def play_previous_video(self):
+        self.play_video(self.video_id - 1)
+
+    def rewind_video(self, s):
+        if self.video_id != 0 and self.root.ids.video_player.loaded:
+            self.root.ids.video_player.seek((self.root.ids.video_player.position + s) / self.root.ids.video_player.duration, True)
+
+    def load_videos(self):
+        if system_info.video_support:
+            videos = glob.glob(os.environ["VIDEO_PATH"] + "/*.mp4")
+            for video in videos:
+                if not video in self.available_videos:
+                    self.available_videos[video] = subprocess.Popen(["./get_comment_metadata.sh", video], stdout=subprocess.PIPE)
+                elif isinstance(self.available_videos[video], subprocess.Popen) and self.available_videos[video].poll() == 0:
+                    self.available_videos[video] = self.available_videos[video].stdout.readline().decode()
+            for video in self.available_videos:
+                if video not in videos:
+                    self.available_videos.pop(video)
+            if (len(videos) == 0):
+                return
+
     def load_metadata(self):
-        path = self.root.ids["video_player"].source
+        path = self.player.source
+        if not path in self.available_videos:
+            self.available_videos[path] = subprocess.run(["./get_comment_metadata.sh", path], capture_output=True).stdout.decode()
+        elif isinstance(self.available_videos[path], subprocess.Popen):
+            self.available_videos[path] = self.available_videos[path].stdout.readline().decode()
 
-        if path == "":
-            return
-
-        if not path in self.metadata_procs:
-            self.metadata_procs[path] = subprocess.run(["./get_comment_metadata.sh", path], capture_output=True).stdout().decode()
-        elif isinstance(self.metadata_procs[path], subprocess.Popen):
-            self.metadata_procs[path] = self.metadata_procs[path].stdout.readline().decode()
-
-        result = self.metadata_procs[path]
+        result = self.available_videos[path]
 
         if result == "":
             self.root.video_info = False
             return
-
         try:
             result = result.replace("Comment", "")
             result = result.replace(" ", "")
@@ -327,43 +384,27 @@ class KivyApp(App):
             self.root.video_info = True
         except:
             self.root.video_info = False
+    
+    def recording_started(self):
+        if self.video_id == -1:
+            self.player.src = ""
+        self.recording = True
 
+    def recording_stopped(self):
+        if self.video_id == -1:
+            self.player.src = "/dev/video0"
+        self.recording = False
+
+class KivyApp(App):
     def toggle_recording(self):
         if not self.root.timer_running:
             self.root.recording_enabled = video_control.toggle_recording()
 
     def on_position_change(self, player, pos):
         if (self.old_pos > 2 and player.duration - pos <= 2):
-            self.play_pause_video(False)
-            Clock.schedule_once(lambda _: self.play_pause_video(True), 1)
+            self.video_player.pause_playback()
+            Clock.schedule_once(lambda _: self.video_player.start_playback(), 1)
         self.old_pos = player.duration - pos
-
-    def rewind_video(self, s):
-        if self.root.ids.video_player.loaded:
-            self.root.ids.video_player.seek((self.root.ids.video_player.position + s) / self.root.ids.video_player.duration, True)
-
-    def previous_video(self):
-        self.root.video_playing = True
-        if self.root.video_id == -1:
-            self.root.video_id = self.root.max_video_id
-        elif self.root.video_id > self.root.min_video_id:
-            self.root.video_id -= 1
-        else:
-            self.root.video_id = self.root.max_video_id
-        self.load_metadata()
-
-    def next_video(self):
-        self.root.video_playing = True
-        if self.root.video_id == -1:
-            self.root.video_id = self.root.min_video_id
-        elif self.root.video_id < self.root.max_video_id:
-            self.root.video_id += 1
-        else:
-            self.root.video_id = self.root.min_video_id
-        self.load_metadata()
-
-    def play_pause_video(self, play=None):
-        self.root.video_playing = play or not self.root.video_playing
 
     def sync_new_remote(self, btn):
         if system_info.input_support:
@@ -392,25 +433,6 @@ class KivyApp(App):
                 self.update_config()
                 Clock.schedule_once(lambda _: self.end_sync_remote(btn), 1.5)
                 break
-
-    def mid(self, a, b, c):
-        return a + b + c - min(a, b, c) - max(a, b, c)
-
-    def load_video_list(self):
-        if system_info.video_support:
-            videos = glob.glob(os.environ["VIDEO_PATH"] + "/*.mp4")
-            for video in videos:
-                if not video in self.metadata_procs:
-                    self.metadata_procs[video] = subprocess.Popen(["./get_comment_metadata.sh", video], stdout=subprocess.PIPE)
-                elif isinstance(self.metadata_procs[video], subprocess.Popen) and self.metadata_procs[video].poll() == 0:
-                    self.metadata_procs[video] = self.metadata_procs[video].stdout.readline().decode()
-            if (len(videos) == 0):
-                return
-            self.root.min_video_id = int(videos[ 0].split("/")[-1].split(".")[0])
-            self.root.max_video_id = int(videos[-1].split("/")[-1].split(".")[0])
-            if self.root.video_id != -1:
-                self.root.video_id = self.mid(self.root.min_video_id, self.root.video_id, self.root.max_video_id)
-            self.load_metadata()
 
     def system_poweroff(_):
         if system_info.is_banana:
@@ -628,6 +650,7 @@ class KivyApp(App):
                 if self.stop_recording_scheduler is not None:
                     self.stop_recording_scheduler.cancel()
                 if video_control.ffmpeg_proc is None or video_control.ffmpeg_proc is None:
+                    self.video_player.recording_started()
                     video_control.start_recording()
 
             elif self.prev_pins_data is not None and self.prev_pins_data.recording == 1 and pins_data.recording == 0:
@@ -654,7 +677,7 @@ class KivyApp(App):
                 clip_data += f"color_passive:{root.color_passive};"
 
                 video_control.save_clip(metadata=json.dumps(clip_data).replace(" ", ""))
-                self.stop_recording_scheduler = Clock.schedule_once(lambda _: video_control.stop_recording(), 2)
+                self.stop_recording_scheduler = Clock.schedule_once(lambda _: video_control.stop_recording(), self.video_player.recording_stopped(), 2)
             if video_control.cutter_proc is not None and video_control.cutter_proc.poll() is None:
                 self.load_video_list()
         # -----------------
@@ -690,7 +713,6 @@ class KivyApp(App):
                 cmds = gpio_control.read_rc5(self.config["rc5_address"])
         else:
             cmds = gpio_control.read_rc5(self.config["rc5_address"])
-        auto_cmd = None
         for cmd in cmds:
             if cmd[2]:
                 if cmd[1] == 7:
@@ -726,7 +748,7 @@ class KivyApp(App):
                     if cmd[1] == 20: # Previous video
                         self.previous_video()
                     if cmd[1] == 21: # Next video
-                        self.next_video
+                        self.next_video()
                     if cmd[1] == 23: # Rewind back
                         self.rewind_video(-1)
                     if cmd[1] == 22: # Rewind front
@@ -821,13 +843,14 @@ class KivyApp(App):
 
     def on_start(self):
         self.get_data(0)
+        self.video_player = VideoPlayer(self.root.ids["video_player"], self.root)
         # self.set_weapon(0, False)
         Clock.schedule_once(lambda _: self.set_weapon(0, epee5=False), 1)
         self.read_timer = Clock.schedule_interval(self.get_data, read_interval)
         Clock.schedule_interval(self.update_network_data, 2)
         self.root.flash_timer  = time.time()
         self.root.current_time = time.time()
-        self.load_video_list()
+        self.video_player.load_videos()
         self.root.video_path = os.environ["VIDEO_PATH"]
         self.root.ids["video_player"].bind(
             position=self.on_position_change

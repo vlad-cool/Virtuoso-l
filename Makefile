@@ -22,7 +22,7 @@ V24m_update.zip: src/app.py src/system_info.py src/gpio_control.py src/video_con
 upload: release ssh
 	scp V24m_update.zip pi@$(BANANA_IP):V24m/
 	ssh pi@$(BANANA_IP) ./install.sh
-	ssh pi@$(BANANA_IP) /usr/sbin/reboot
+	ssh pi@$(BANANA_IP) ./kill.sh
 
 clean:
 	rm -rf release
