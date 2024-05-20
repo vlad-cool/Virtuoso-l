@@ -1,5 +1,6 @@
 if [ -z "$SSH_TTY" ] && [ -z "$TMUX" ] && [[ "$(tty)"="/dev/tty1" ]]
 then
+    echo $$ > bash_pid
     if [ -f /home/pi/V24m/V24m_update.zip ]; then
         bash install.sh
     fi

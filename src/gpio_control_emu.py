@@ -36,9 +36,11 @@ read_counter = 0
 def read_rc5(_):
     global read_counter
     read_counter += 1
-    if read_counter % 50 == 0:
-        return [[0, 255, 1]]
+    if read_counter % 100 == 0:
+        print("23 send")
+        return [[0, 23, 1]]
     else:
+        print(f"{read_counter}")
         return []
 
 def read_all_rc5():
