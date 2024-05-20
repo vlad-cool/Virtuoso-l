@@ -24,8 +24,10 @@ if system_info.video_support:
 
 if system_info.is_banana:
     import gpio_control
+    camera_file = "/dev/video0"
 else:
     import gpio_control_emu as gpio_control
+    camera_file = "/dev/video0"
 
 kivy.require("2.1.0")
 
@@ -80,7 +82,7 @@ class Updater:
                     btn.text = f"New version found\n{old_version}->{new_version}"
                     btn.update_state = "wait_for_update"
                     return
-        btn.text = f"No update candidate"
+        btn.text = "No update candidate"
         btn.update_state = "no_update"
 
     def update_failed(self, btn, req, result):
@@ -107,22 +109,26 @@ class Updater:
         if self.download_proc.poll() is not None:
             self.download_proc = None
             self.download_failed(self.btn, None, None)
+    
+    def update_redirect_handler(self, btn, req, result):
+        req = UrlRequest(
+            result["url"],
+            req_headers=req.req_headers,
+            on_redirect = lambda req, result: self.update_redirect_handler(btn, req, result),
+            on_success=lambda req, result: self.check_version(btn, req, result),
+            on_failure=lambda req, result: self.update_failed(btn, req, result),
+            on_error=lambda req, result: self.update_failed(btn, req, result),
+        )
 
     def update(self, btn):
         self.btn = btn
-        try:
-            print(self.download_request)
-            print(self.download_request.is_finished)
-            print(self.update_url)
-        except:
-            pass
         repo_owner = "vlad-cool"
         repo_name = "V24m"
 
         url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
 
         if btn.update_state == "no_update":
-            self.update_request = UrlRequest(url, req_headers={"User-Agent": "V24m"}, on_redirect = lambda req, result: print("REDIRECT ", result), on_success=lambda req, result: self.check_version(btn, req, result), on_failure=lambda req, result: self.update_failed(btn, req, result), on_error=lambda req, result: self.update_failed(btn, req, result))
+            self.update_request = UrlRequest(url, req_headers={"User-Agent": "V24m"}, on_redirect = lambda req, result: self.update_redirect_handler(btn, req, result), on_success=lambda req, result: self.check_version(btn, req, result), on_failure=lambda req, result: self.update_failed(btn, req, result), on_error=lambda req, result: self.update_failed(btn, req, result))
             print(self.update_request)
             btn.text = "Checking for updates..."
             btn.update_state = "waiting"
@@ -200,7 +206,7 @@ class PassiveTimer:
         self.running = False
 
     def start(self):
-        if self.running == False:
+        if not self.running:
             self.prev_time = time.time()
             self.running = True
 
@@ -222,7 +228,7 @@ class PassiveTimer:
         return self.coun
 
     def update(self):
-        if self.running == False:
+        if not self.running:
             return
 
         cur_time = time.time()
@@ -279,11 +285,23 @@ class VideoPlayer:
         self.available_videos = OrderedDict()
         self.recording = False
         self.player.state = "play"
-        self.player.source = "/dev/video0" if not self.recording else ""
         self.video_id = -1
+        self.show_preview()
+
+    def show_preview(self):
+        self.player.source = ""
+        # if not self.recording:
+        #     subprocess.run(["media-ctl", "--device", "/dev/media0", "--set-v4l2", "'\"ov5640 0-003c\":0[fmt:UYVY8_2X8/1280x720@1/60]'"])
+        #     self.player.state = "play"
+        #     self.video_id = -1
+        # self.player.source = camera_file if not self.recording else ""
 
     def play_pause(self):
-        if self.player.state == "pause":
+        print(self.player.eos)
+        if self.player.eos:
+            self.player.seek(0)
+            self.start_playback()
+        elif self.player.state == "pause":
             self.start_playback()
         else:
             self.pause_playback()
@@ -297,11 +315,13 @@ class VideoPlayer:
             self.player.state = "pause"
     
     def stop_playback(self):
-        self.player.state = "play"
-        self.player.source = "/dev/video0" if not self.recording else ""
         self.video_id = -1
+        self.root.video_id = -1
+        self.show_preview()
 
     def play_video(self, id):
+        if len(self.available_videos) == 0:
+            return
         id = id % len(self.available_videos)
         self.player.camera = False
         self.video_id = id
@@ -317,14 +337,14 @@ class VideoPlayer:
         self.play_video(self.video_id - 1)
 
     def rewind_video(self, s):
-        if self.video_id != 0 and self.root.ids.video_player.loaded:
+        if self.video_id != -1 and self.root.ids.video_player.loaded:
             self.root.ids.video_player.seek((self.root.ids.video_player.position + s) / self.root.ids.video_player.duration, True)
 
     def load_videos(self):
         if system_info.video_support:
             videos = glob.glob(os.environ["VIDEO_PATH"] + "/*.mp4")
             for video in videos:
-                if not video in self.available_videos:
+                if video not in self.available_videos:
                     self.available_videos[video] = subprocess.Popen(["./get_comment_metadata.sh", video], stdout=subprocess.PIPE)
                 elif isinstance(self.available_videos[video], subprocess.Popen) and self.available_videos[video].poll() == 0:
                     self.available_videos[video] = self.available_videos[video].stdout.readline().decode()
@@ -336,7 +356,9 @@ class VideoPlayer:
 
     def load_metadata(self):
         path = self.player.source
-        if not path in self.available_videos:
+        if path == camera_file:
+            return
+        if path not in self.available_videos:
             self.available_videos[path] = subprocess.run(["./get_comment_metadata.sh", path], capture_output=True).stdout.decode()
         elif isinstance(self.available_videos[path], subprocess.Popen):
             self.available_videos[path] = self.available_videos[path].stdout.readline().decode()
@@ -382,17 +404,18 @@ class VideoPlayer:
             self.root.video_info_color_passive = list(map(float, (clip_data["color_passive"].replace("[", "").replace("]", "").split(","))))
 
             self.root.video_info = True
-        except:
+        except (ValueError, KeyError) as e:
+            print(f"An error occurred: {e}")
             self.root.video_info = False
     
     def recording_started(self):
         if self.video_id == -1:
-            self.player.src = ""
+            self.player.source = ""
         self.recording = True
 
     def recording_stopped(self):
         if self.video_id == -1:
-            self.player.src = "/dev/video0"
+            self.player.source = camera_file
         self.recording = False
 
 class KivyApp(App):
@@ -677,9 +700,9 @@ class KivyApp(App):
                 clip_data += f"color_passive:{root.color_passive};"
 
                 video_control.save_clip(metadata=json.dumps(clip_data).replace(" ", ""))
-                self.stop_recording_scheduler = Clock.schedule_once(lambda _: video_control.stop_recording(), self.video_player.recording_stopped(), 2)
+                self.stop_recording_scheduler = Clock.schedule_once(lambda _: (video_control.stop_recording(), self.video_player.recording_stopped()), 2)
             if video_control.cutter_proc is not None and video_control.cutter_proc.poll() is None:
-                self.load_video_list()
+                self.video_player.load_videos()
         # -----------------
 
         root.weapon = pins_data.weapon
@@ -743,16 +766,16 @@ class KivyApp(App):
                     if carousel.index == 0:
                         self.toggle_recording()
                     elif carousel.index == 1:
-                        self.play_pause_video()
+                        self.video_player.play_pause()
                 if carousel.index == 1:
                     if cmd[1] == 20: # Previous video
-                        self.previous_video()
+                        self.video_player.play_previous_video()
                     if cmd[1] == 21: # Next video
-                        self.next_video()
+                        self.video_player.play_next_video()
                     if cmd[1] == 23: # Rewind back
-                        self.rewind_video(-1)
+                        self.video_player.rewind_video(-1)
                     if cmd[1] == 22: # Rewind front
-                        self.rewind_video(1)
+                        self.video_player.rewind_video(1)
                 if cmd[1] == 19: # Change mode
                     if carousel.index == 0:
                         carousel.index = 1
@@ -830,7 +853,8 @@ class KivyApp(App):
             with open(system_info.config_file, "r") as config_file:
                 try:
                     self.config = json.load(config_file)
-                except:
+                except (ValueError, KeyError) as e:
+                    print(f"An error occurred when loading config file: {e}")
                     self.update_config()
         else:
             if config_path.is_dir():
@@ -844,8 +868,8 @@ class KivyApp(App):
     def on_start(self):
         self.get_data(0)
         self.video_player = VideoPlayer(self.root.ids["video_player"], self.root)
-        # self.set_weapon(0, False)
-        Clock.schedule_once(lambda _: self.set_weapon(0, epee5=False), 1)
+        self.set_weapon(0, False)
+        # Clock.schedule_once(lambda _: self.set_weapon(0, epee5=False), 1)
         self.read_timer = Clock.schedule_interval(self.get_data, read_interval)
         Clock.schedule_interval(self.update_network_data, 2)
         self.root.flash_timer  = time.time()

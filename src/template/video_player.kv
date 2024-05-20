@@ -4,15 +4,17 @@
                 size: {{ data["video_player"]["width"] }}, {{ data["video_player"]["height"] }}
                 size_hint: None, None
                 pos: {{ data["video_player"]["x"] }}, {{ data["video_player"]["y"] }}
-                options: dict({"avdict": {"vcodec": "h264_vdpau"}})
                 background_color: root.color_invis
                 state: self.state if root.index == 1 else "pause"
+                # options: {"video_size" : "320x240"} if self.source == "/dev/video0" else {}
+                options: {'allow_stretch': True}
 
             Button:
                 size: {{ data["video_player"]["width"] }}, {{ data["video_player"]["height"] }}
                 size_hint: None, None
                 pos: {{ data["video_player"]["x"] }}, {{ data["video_player"]["y"] }}
                 on_press: app.video_player.play_pause()
+                disabled: root.ids.video_player.source == "/dev/video0"
                 background_color: root.color_invis
 
             BoxLayout:
@@ -51,6 +53,7 @@
                     size_hint: None, None
                     background_normal: "assets/pause_light.png" if root.ids.video_player.state == "play" else "assets/play_light.png"
                     background_down: "assets/pause_dark.png" if root.ids.video_player.state == "play" else "assets/play_dark.png"
+                    disabled: root.ids.video_player.source == "/dev/video0"
                     on_press: app.video_player.play_pause()
 
                 Button:

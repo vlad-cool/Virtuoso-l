@@ -37,6 +37,7 @@ def start_recording():
         return
     start_time = time.clock_gettime(time.CLOCK_BOOTTIME)
     os.environ["VIDEO_NAME"] = str(name)
+    subprocess.run(["media-ctl", "--device", "/dev/media0", "--set-v4l2", "'\"ov5640 0-003c\":0[fmt:UYVY8_2X8/640x480@1/60]'"])
     ffmpeg_proc = subprocess.Popen(
         ["./start_ffmpeg.sh"], bufsize=0, text=True, stdin=subprocess.PIPE
     )
