@@ -4,8 +4,14 @@
                 size: {{ data["video_player"]["width"] }}, {{ data["video_player"]["height"] }}
                 size_hint: None, None
                 pos: {{ data["video_player"]["x"] }}, {{ data["video_player"]["y"] }}
-                background_color: root.color_invis
                 state: self.state if root.index == 1 else "pause"
+                canvas.before:
+                    PushMatrix
+                    Rotate:
+                        angle: 180 if root.ids.video_player.source == "/dev/video0" else 0
+                        origin: self.center
+                canvas.after:
+                    PopMatrix
 
             Button:
                 size: {{ data["video_player"]["width"] }}, {{ data["video_player"]["height"] }}

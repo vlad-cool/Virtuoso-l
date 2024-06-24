@@ -6,7 +6,7 @@ release: V24m_update.zip
 ssh:
 	ssh-add ~/.ssh/bananapi
 
-V24m_update.zip: src/app.py src/system_info.py src/gpio_control.py src/video_control.py src/static_vars.py src/get_comment_metadata.sh src/scripts/* src/main*.kv assets/*.TTF assets/*.png bin/* 
+V24m_update.zip: src/* assets/* bin/*
 	cd src/template && make
 	rm -f V24m_update.zip
 	mkdir -p app

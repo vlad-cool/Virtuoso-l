@@ -290,7 +290,9 @@ class VideoPlayer:
         if not self.recording:
             self.player.state = "play"
             self.video_id = -1
-        # self.player.unload()
+        self.player.unload()
+        while self.player.loaded:
+            pass
         self.player.source = system_info.camera_path if not self.recording else ""
 
     def play_pause(self):
@@ -323,6 +325,8 @@ class VideoPlayer:
         self.player.camera = False
         self.video_id = id
         self.player.unload()
+        while self.player.loaded:
+            pass
         self.player.source = list(self.available_videos)[id]
         self.start_playback()
         self.load_metadata()
@@ -409,12 +413,16 @@ class VideoPlayer:
     def recording_started(self):
         if self.video_id == -1:
             self.player.unload()
+            while self.player.loaded:
+                pass
             self.player.source = ""
         self.recording = True
 
     def recording_stopped(self):
         if self.video_id == -1:
             self.player.unload()
+            while self.player.loaded:
+                pass
             self.player.source = system_info.camera_path
         self.recording = False
 
