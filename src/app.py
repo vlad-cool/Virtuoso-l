@@ -24,10 +24,8 @@ if system_info.video_support:
 
 if system_info.is_banana:
     import gpio_control
-    camera_file = "/dev/video0"
 else:
     import gpio_control_emu as gpio_control
-    camera_file = "/dev/video0"
 
 kivy.require("2.1.0")
 
@@ -289,12 +287,11 @@ class VideoPlayer:
         self.show_preview()
 
     def show_preview(self):
-        self.player.source = ""
-        # if not self.recording:
-        #     subprocess.run(["media-ctl", "--device", "/dev/media0", "--set-v4l2", "'\"ov5640 0-003c\":0[fmt:UYVY8_2X8/1280x720@1/60]'"])
-        #     self.player.state = "play"
-        #     self.video_id = -1
-        # self.player.source = camera_file if not self.recording else ""
+        if not self.recording:
+            self.player.state = "play"
+            self.video_id = -1
+        # self.player.unload()
+        self.player.source = system_info.camera_path if not self.recording else ""
 
     def play_pause(self):
         print(self.player.eos)
@@ -325,6 +322,7 @@ class VideoPlayer:
         id = id % len(self.available_videos)
         self.player.camera = False
         self.video_id = id
+        self.player.unload()
         self.player.source = list(self.available_videos)[id]
         self.start_playback()
         self.load_metadata()
@@ -356,7 +354,7 @@ class VideoPlayer:
 
     def load_metadata(self):
         path = self.player.source
-        if path == camera_file:
+        if path == system_info.camera_path:
             return
         if path not in self.available_videos:
             self.available_videos[path] = subprocess.run(["./get_comment_metadata.sh", path], capture_output=True).stdout.decode()
@@ -410,12 +408,14 @@ class VideoPlayer:
     
     def recording_started(self):
         if self.video_id == -1:
+            self.player.unload()
             self.player.source = ""
         self.recording = True
 
     def recording_stopped(self):
         if self.video_id == -1:
-            self.player.source = camera_file
+            self.player.unload()
+            self.player.source = system_info.camera_path
         self.recording = False
 
 class KivyApp(App):

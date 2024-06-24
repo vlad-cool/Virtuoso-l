@@ -6,8 +6,6 @@
                 pos: {{ data["video_player"]["x"] }}, {{ data["video_player"]["y"] }}
                 background_color: root.color_invis
                 state: self.state if root.index == 1 else "pause"
-                # options: {"video_size" : "320x240"} if self.source == "/dev/video0" else {}
-                options: {'allow_stretch': True}
 
             Button:
                 size: {{ data["video_player"]["width"] }}, {{ data["video_player"]["height"] }}

@@ -1,6 +1,9 @@
 import subprocess
 import time
 import os
+import system_info
+
+from kivy.clock import Clock
 
 clip_duration = 10  # seconds
 post_record = 2  # seconds
@@ -13,8 +16,17 @@ cutter_proc = None
 name = 0
 
 start_time = 0
+stop_time = 0
 
 clips = []
+
+def is_camera_free():
+    result = subprocess.run(["lsof", system_info.camera_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return not result.stdout
+
+def wait_camera():
+    # Clock.schedule_once()
+    pass
 
 def format_time(t):
     if t < 0:
@@ -47,9 +59,11 @@ def stop_recording():
     global recording
     global ffmpeg_proc
     global start_time
+    global stop_time
     global name
     if not recording or ffmpeg_proc is None:
         return
+    stop_time = time.clock_gettime(time.CLOCK_BOOTTIME)
     ffmpeg_proc.stdin.write("q\n")
     recording = False
 
