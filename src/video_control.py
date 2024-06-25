@@ -24,10 +24,6 @@ def is_camera_free():
     result = subprocess.run(["lsof", system_info.camera_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return not result.stdout
 
-def wait_camera():
-    # Clock.schedule_once()
-    pass
-
 def format_time(t):
     if t < 0:
         return "00:00:00"
@@ -96,8 +92,3 @@ def split_video():
         cutter_proc.stdin.write(f"{format_time(clip_duration)}\n")
         cutter_proc.stdin.write(f"{clip[1]}\n")
     clips = []
-
-def toggle_recording():
-    global enabled
-    enabled = not enabled
-    return enabled

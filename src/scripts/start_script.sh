@@ -24,5 +24,4 @@ v4l2-ctl --set-fmt-video=width=640,height=480 --device=/dev/video0
 if [ -z "$SSH_TTY" ] && [ -z "$TMUX" ] && [[ "$(tty)"="/dev/tty1" ]]
 then
     startx ./start_x.sh &> $MAIN_LOG
-    # /usr/sbin/reboot
 fi

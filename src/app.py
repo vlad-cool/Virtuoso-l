@@ -121,12 +121,12 @@ class Updater:
     def update(self, btn):
         self.btn = btn
         repo_owner = "vlad-cool"
-        repo_name = "V24m"
+        repo_name = "Virtuoso-l"
 
         url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
 
         if btn.update_state == "no_update":
-            self.update_request = UrlRequest(url, req_headers={"User-Agent": "V24m"}, on_redirect = lambda req, result: self.update_redirect_handler(btn, req, result), on_success=lambda req, result: self.check_version(btn, req, result), on_failure=lambda req, result: self.update_failed(btn, req, result), on_error=lambda req, result: self.update_failed(btn, req, result))
+            self.update_request = UrlRequest(url, req_headers={"User-Agent": "Virtuoso-l"}, on_redirect = lambda req, result: self.update_redirect_handler(btn, req, result), on_success=lambda req, result: self.check_version(btn, req, result), on_failure=lambda req, result: self.update_failed(btn, req, result), on_error=lambda req, result: self.update_failed(btn, req, result))
             print(self.update_request)
             btn.text = "Checking for updates..."
             btn.update_state = "waiting"
