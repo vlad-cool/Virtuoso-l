@@ -73,7 +73,7 @@ class Updater:
         new_minor = new_version_lst[1]
         new_patch = new_version_lst[2]
 
-        if (old_major < new_major) or (old_major == new_major and old_minor < new_minor) or (old_major == old_minor and old_minor == new_minor and old_patch < new_patch):
+        if (old_major < new_major) or (old_major == new_major and old_minor < new_minor) or (old_major == new_major and old_minor == new_minor and old_patch < new_patch):
             for res in result["assets"]:
                 if res["name"] == "V24m_update.zip":
                     self.update_url = result["assets"][0]["browser_download_url"]
@@ -355,6 +355,9 @@ class VideoPlayer:
                     self.available_videos.pop(video)
             if (len(videos) == 0):
                 return
+        
+        if self.video_id == -1:
+            self.show_preview()
 
     def load_metadata(self):
         path = self.player.source
@@ -677,10 +680,10 @@ class KivyApp(App):
         # Recording section
         # -----------------
         if system_info.video_support:
-            if ((self.prev_pins_data is None or self.prev_pins_data.recording == 0) and pins_data.recording == 1) or (pins_data.recording == 1 and not (video_control.ffmpeg_proc is not None and video_control.ffmpeg_proc.poll() is None)):
+            if ((self.prev_pins_data is None or self.prev_pins_data.recording == 0) and pins_data.recording == 1) or (pins_data.recording == 1 and not (video_control.recorder_proc is not None and video_control.recorder_proc.poll() is None)):
                 if self.stop_recording_scheduler is not None:
                     self.stop_recording_scheduler.cancel()
-                if video_control.ffmpeg_proc is None or video_control.ffmpeg_proc is None:
+                if video_control.recorder_proc is None or video_control.recorder_proc is None:
                     self.video_player.recording_started()
                     video_control.start_recording()
 
@@ -708,8 +711,8 @@ class KivyApp(App):
                 clip_data += f"color_passive:{root.color_passive};"
 
                 video_control.save_clip(metadata=json.dumps(clip_data).replace(" ", ""))
-                self.stop_recording_scheduler = Clock.schedule_once(lambda _: (video_control.stop_recording(), self.video_player.recording_stopped()), 2)
-            if video_control.cutter_proc is not None and video_control.cutter_proc.poll() is None:
+                self.stop_recording_scheduler = Clock.schedule_once(lambda _: (video_control.stop_recording(), self.video_player.recording_stopped()), 4)
+            if video_control.recorder_proc is not None and video_control.recorder_proc.poll() is None:
                 self.video_player.load_videos()
         # -----------------
 
@@ -725,9 +728,9 @@ class KivyApp(App):
         root.color_passive = root.color_passive_red if root.passive_time > 50 else root.color_passive_yel
 
         if system_info.video_support:
-            if video_control.ffmpeg_proc is not None and video_control.ffmpeg_proc.poll() is not None:
-                video_control.ffmpeg_proc = None
-            root.recording = (video_control.ffmpeg_proc is not None) and (video_control.ffmpeg_proc.poll() is None)
+            if video_control.recorder_proc is not None and video_control.recorder_proc.poll() is not None:
+                video_control.recorder_proc.stdout.close()
+            root.recording = (video_control.recorder_proc is not None) and (video_control.recorder_proc.poll() is None)
 
         self.prev_pins_data = pins_data
 
