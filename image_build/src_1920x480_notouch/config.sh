@@ -22,4 +22,4 @@ export CUTTER_LOG_ERR=/dev/null
 ## Updates
 export UPDATE_DIR=/home/pi/Virtuoso
 ## Splash
-export SPLASH=Virtuoso_splash1920x360
+export SPLASH=Virtuoso_splash1920x480

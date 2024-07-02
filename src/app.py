@@ -801,8 +801,8 @@ class KivyApp(App):
                 if cmd[1] == 19: # Change mode
                     if carousel.index == 0:
                         carousel.index = 1
-                    elif carousel.index == 1:
-                        carousel.index = 2
+                    # elif carousel.index == 1:
+                    #     carousel.index = 2
                     else:
                         carousel.index = 0
                 if cmd[1] == 16:
