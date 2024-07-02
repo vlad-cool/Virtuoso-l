@@ -13,4 +13,5 @@ src/main1920x360.kv
 src/main1920x480.kv
 src/main1920x550.kv
 image_build/*.img
+image_build/*.z*
 image_build/mnt/*
