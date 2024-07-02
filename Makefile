@@ -1,14 +1,16 @@
 BANANA_IP := 192.168.2.9
 DRIVER_EXECS := send_pin send_rc5 get_pin get_rc5
 
-release: V24m_update.zip
+.PHONY: release ssh upload clean
+
+release: Virtuoso_update.zip 
 
 ssh:
 	ssh-add ~/.ssh/bananapi
 
-V24m_update.zip: src/* assets/* bin/* src/*/*
+Virtuoso_update.zip: src/* assets/* bin/* src/*/*
 	cd src/template && make
-	rm -f V24m_update.zip
+	rm -f Virtuoso_update.zip
 	mkdir -p app
 	rm -rf app/*
 	mkdir -p app/assets
@@ -17,10 +19,10 @@ V24m_update.zip: src/* assets/* bin/* src/*/*
 	cp assets/*.TTF assets/*.png app/assets/
 	cp -r assets/venv app/
 	cp VERSION app/
-	zip -r V24m_update.zip app
+	zip -r Virtuoso_update.zip app
 
 upload: release ssh
-	scp V24m_update.zip pi@$(BANANA_IP):V24m/
+	scp Virtuoso_update.zip pi@$(BANANA_IP):Virtuoso/
 	ssh pi@$(BANANA_IP) ./install.sh
 	ssh pi@$(BANANA_IP) ./kill.sh
 

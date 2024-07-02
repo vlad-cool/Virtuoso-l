@@ -1,9 +1,10 @@
 import subprocess
 import time
+import sys
 import os
 
 clip_duration = 10  # seconds
-post_record = 2  # seconds
+post_record = 4  # seconds
 
 enabled = False
 
@@ -20,13 +21,17 @@ def start_recording():
         return
     global recorder_proc
     os.environ["VIDEO_NAME"] = str(name)
-    recorder_proc = subprocess.Popen(
-        ["./recorder.sh"], bufsize=0, text=True, 
-        stdin=subprocess.PIPE,
-        stdout=open(os.environ["RECORDER_LOG_OUT"], "w"),
-        stderr=open(os.environ["RECORDER_LOG_ERR"], "w")
-    )
-    recording = True
+    
+    try:    
+        recorder_proc = subprocess.Popen(
+            ["./recorder.sh"], bufsize=0, text=True, 
+            stdin=subprocess.PIPE,
+            stdout=open(os.environ["RECORDER_LOG_OUT"], "w"),
+            stderr=open(os.environ["RECORDER_LOG_ERR"], "w")
+        )
+        recording = True
+    except Exception as e:
+        print(f"Failed to cut videos, an following exception occured: {e}", file=sys.stderr)
 
 def stop_recording():
     global recording
@@ -40,14 +45,14 @@ def stop_recording():
     try:
         recorder_proc.stdin.write("q")
         recorder_proc.stdin.flush()
-    except BrokenPipeError:
-        print("Failed to send quit signal to ffmpeg process.")
-    recording = False
-
-    split_video()
-    name += 1
-
-    recorder_proc = None
+        split_video()
+        name += 1
+    except Exception as e:
+        print(f"Failed to cut videos, an following exception occured: {e}", file=sys.stderr)
+    finally:
+        pass
+        recording = False
+        recorder_proc = None
 
 def save_clip(metadata=""):
     global enabled
@@ -66,11 +71,15 @@ def split_video():
 
     recorder_proc.stdin.write(f"{len(clips)}\n")
 
-    for clip in clips:
-        recorder_proc.stdin.write(f"{(clip[0] + post_record - clip_duration)}\n")
-        recorder_proc.stdin.write(f"{(clip_duration)}\n")
-        recorder_proc.stdin.write(f"{clip[1]}\n")
-    clips = []
+    try:
+        for clip in clips:
+            recorder_proc.stdin.write(f"{(clip[0] + post_record - clip_duration)}\n")
+            recorder_proc.stdin.write(f"{(clip_duration)}\n")
+            recorder_proc.stdin.write(f"{clip[1]}\n")
+    except Exception as e:
+        print(f"Failed to cut videos, an following exception occured: {e}", file=sys.stderr)
+    finally:
+        clips = []
 
 def toggle_recording():
     global enabled

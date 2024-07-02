@@ -75,7 +75,7 @@ class Updater:
 
         if (old_major < new_major) or (old_major == new_major and old_minor < new_minor) or (old_major == new_major and old_minor == new_minor and old_patch < new_patch):
             for res in result["assets"]:
-                if res["name"] == "V24m_update.zip":
+                if res["name"] == "Virtuoso_update.zip":
                     self.update_url = result["assets"][0]["browser_download_url"]
                     btn.text = f"New version found\n{old_version}->{new_version}"
                     btn.update_state = "wait_for_update"
@@ -135,8 +135,8 @@ class Updater:
         if btn.update_state == "wait_for_update":
             btn.text = "Downloading update"
             btn.update_state = "downloading_update"
-            self.download_proc = subprocess.run(["rm", f"{system_info.update_dir}/V24m_update.zip"])
-            self.download_proc = subprocess.Popen(["wget", "-P", f"{system_info.update_dir}/V24m", self.update_url])
+            self.download_proc = subprocess.run(["rm", f"{system_info.update_dir}/Virtuoso_update.zip"])
+            self.download_proc = subprocess.Popen(["wget", "-P", f"{system_info.update_dir}/Virtuoso", self.update_url])
             return
 
         if btn.update_state == "wait_for_reboot":
@@ -289,7 +289,15 @@ class VideoPlayer:
     def show_preview(self):
         if not self.recording:
             self.player.state = "play"
-            self.video_id = -1
+        
+        if self.video_id == -1:
+            self.player.unload()
+            while self.player.loaded:
+                pass
+            self.player.source = ""
+        
+        self.video_id = -1
+        
         self.player.unload()
         while self.player.loaded:
             pass
@@ -336,7 +344,10 @@ class VideoPlayer:
         self.play_video(self.video_id + 1)
 
     def play_previous_video(self):
-        self.play_video(self.video_id - 1)
+        if self.video_id == -1:
+            self.play_video(self.video_id)
+        else:
+            self.play_video(self.video_id - 1)
 
     def rewind_video(self, s):
         if self.video_id != -1 and self.root.ids.video_player.loaded:
@@ -683,7 +694,7 @@ class KivyApp(App):
             if ((self.prev_pins_data is None or self.prev_pins_data.recording == 0) and pins_data.recording == 1) or (pins_data.recording == 1 and not (video_control.recorder_proc is not None and video_control.recorder_proc.poll() is None)):
                 if self.stop_recording_scheduler is not None:
                     self.stop_recording_scheduler.cancel()
-                if video_control.recorder_proc is None or video_control.recorder_proc is None:
+                if video_control.recorder_proc is None:
                     self.video_player.recording_started()
                     video_control.start_recording()
 
@@ -728,8 +739,6 @@ class KivyApp(App):
         root.color_passive = root.color_passive_red if root.passive_time > 50 else root.color_passive_yel
 
         if system_info.video_support:
-            if video_control.recorder_proc is not None and video_control.recorder_proc.poll() is not None:
-                video_control.recorder_proc.stdout.close()
             root.recording = (video_control.recorder_proc is not None) and (video_control.recorder_proc.poll() is None)
 
         self.prev_pins_data = pins_data
@@ -773,12 +782,12 @@ class KivyApp(App):
                             root.passive_4_state = "normal"
                             root.passive_3_state = "normal"
                 carousel = self.root
-                if cmd[1] == 24: # Play pause button | enable disable recording
-                    if carousel.index == 0:
+                if carousel.index == 0:
+                    if cmd[1] == 24: # Enable disable recording
                         self.toggle_recording()
-                    elif carousel.index == 1:
+                elif carousel.index == 1:
+                    if cmd[1] == 24: # Play pause button
                         self.video_player.play_pause()
-                if carousel.index == 1:
                     if cmd[1] == 20: # Previous video
                         self.video_player.play_previous_video()
                     if cmd[1] == 21: # Next video
@@ -787,9 +796,13 @@ class KivyApp(App):
                         self.video_player.rewind_video(-1)
                     if cmd[1] == 22: # Rewind front
                         self.video_player.rewind_video(1)
+                elif carousel.index == 2:
+                    pass
                 if cmd[1] == 19: # Change mode
                     if carousel.index == 0:
                         carousel.index = 1
+                    elif carousel.index == 1:
+                        carousel.index = 2
                     else:
                         carousel.index = 0
                 if cmd[1] == 16:
@@ -877,10 +890,9 @@ class KivyApp(App):
         return Builder.load_file(system_info.kivy_file)
 
     def on_start(self):
-        self.get_data(0)
         self.video_player = VideoPlayer(self.root.ids["video_player"], self.root)
+        self.get_data(0)
         self.set_weapon(0, False)
-        # Clock.schedule_once(lambda _: self.set_weapon(0, epee5=False), 1)
         self.read_timer = Clock.schedule_interval(self.get_data, read_interval)
         Clock.schedule_interval(self.update_network_data, 2)
         self.root.flash_timer  = time.time()

@@ -6,7 +6,7 @@ ModuleName=two-step
 [two-step]
 Font=DejaVu Sans 15
 TitleFont=DejaVu Sans Mono Bold 30
-ImageDir=/usr/share/plymouth/themes/V24m_splash
+ImageDir=/usr/share/plymouth/themes/Virtuoso_splash1920x360
 DialogHorizontalAlignment=.5
 DialogVerticalAlignment=.5
 TitleHorizontalAlignment=.5

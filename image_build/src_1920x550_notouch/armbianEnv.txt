@@ -1,0 +1,9 @@
+verbosity=0
+bootlogo=true
+console=both
+overlay_prefix=sun8i-h3
+rootdev=UUID=a27460ab-a2e0-4e92-914b-ae7131795ab0
+rootfstype=ext4
+extraargs=video=HDMI-A-1:1920x550@60
+overlays=uart2
+usbstoragequirks=0x2537:0x1066:u,0x2537:0x1068:u

@@ -5,11 +5,12 @@
 /bin
 /assets/venv
 .directory
-used_software
 /src/assets
 /src/__pycache__
 /test_videos
-V24m_update.zip
+Virtuoso_update.zip
 src/main1920x360.kv
 src/main1920x480.kv
 src/main1920x550.kv
+image_build/*.img
+image_build/mnt/*
