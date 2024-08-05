@@ -1,0 +1,39 @@
+{
+    "score": {
+        "left": "#e31e24ff",
+        "right": "#009846ff"
+    },
+    "period": "#00a0e3ff",
+    "timer": {
+        "white": "#dfdfdfff",
+        "orange": "#ef7f1aff",
+        "blue": "#00a0e3ff"
+    },
+    "warning": {
+        "red": "#e31e24ff",
+        "yellow": "#cccc00ff",
+        "text_light": "#e6e6e6ff",
+        "text_dark": "#666666ff"
+    },
+    "passive": {
+        "yellow": "#cccc00ff",
+        "red": "#e31e24ff",
+        "text_light": "#dfdfdfff",
+        "text_dark": "#4c4c4cff"
+    },
+    "priority": {
+        "left": "#e31e24ff",
+        "right": "#009846ff",
+        "text_light": "#e6e6e6ff",
+        "text_dark": "#666666ff"
+    },
+    "weapon": {
+        "text_light": "#dfdfdfff",
+        "text_dark": "#4c4c4cff"
+    },
+    "auto_status": {
+        "text_light": "#dfdfdfff",
+        "text_dark": "#4c4c4cff"
+    },
+    "recording": "#ff0000ff"
+}

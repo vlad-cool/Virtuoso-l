@@ -1,0 +1,11 @@
+if [ -z "$SSH_TTY" ] && [ -z "$TMUX" ] && [[ "$(tty)"="/dev/tty1" ]]
+then
+    echo $$ > bash_pid
+    if [ -f /home/pi/Virtuoso/Virtuoso_update.zip ]; then
+        bash install.sh
+    fi
+    cd /home/pi/Virtuoso/app
+    clear
+    sudo plymouth quit
+    /home/pi/Virtuoso/app/start_script.sh
+fi

@@ -1,0 +1,833 @@
+#:kivy 2.1.0
+
+Carousel:
+    loop: True
+
+    weapon: 0
+    weapon_connection_type: 0
+
+    score_l_l: "0"
+    score_l_r: " "
+    score_r_l: " "
+    score_r_r: "0"
+
+    timer_0: "-"
+    timer_1: ":"
+    timer_2: "-"
+    timer_3: "-"
+
+    timer_text: ""
+
+    timer_running: 0
+
+    period: 1
+    priority: 0
+    warning_l: 0
+    warning_r: 0
+
+    passive_time: 0
+    passive_size: 0
+    passive_coun: "60"
+
+    passive_1_state: "normal"
+    passive_2_state: "normal"
+    passive_3_state: "normal"
+    passive_4_state: "normal"
+    epee5: 0
+
+    flash_timer: 0
+    current_time: 0
+
+    time_updated: True
+
+    color_invis: [0, 0, 0, 0]
+    
+    color_timer_white: {{ hex_to_rgba(colors["timer"]["white"]) }}
+    color_timer_orange: {{ hex_to_rgba(colors["timer"]["orange"]) }}
+    color_timer_blue: {{ hex_to_rgba(colors["timer"]["blue"]) }}
+    
+    color_passive_yel: {{ hex_to_rgba(colors["passive"]["yellow"]) }}
+    color_passive_red: {{ hex_to_rgba(colors["passive"]["red"]) }}
+    
+    color_timer: {{ hex_to_rgba(colors["timer"]["orange"]) }}
+    color_passive: [0, 0, 0, 0]
+    
+    video_playing: False
+    video_path: ""
+    video_id: -1
+    max_video_id: -1
+    min_video_id: -1
+
+    video_info: False
+
+    video_info_score_l_l: "0"
+    video_info_score_l_r: " "
+    video_info_score_r_l: " "
+    video_info_score_r_r: "0"
+    video_info_timer_0: "-"
+    video_info_timer_1: ":"
+    video_info_timer_2: "-"
+    video_info_timer_3: "-"
+    video_info_timer_text: ""
+    video_info_timer_running: 0
+    video_info_period: 1
+    video_info_priority: 0
+    video_info_warning_l: 0
+    video_info_warning_r: 0
+    video_info_passive_time: 0
+    video_info_passive_size: 0
+    video_info_passive_coun: "60"
+    video_info_passive_1_state: "normal"
+    video_info_passive_2_state: "normal"
+    video_info_passive_3_state: "normal"
+    video_info_passive_4_state: "normal"
+    video_info_epee5: 0
+    video_info_color_passive: [0, 0, 0, 0]
+    video_info_weapon: 0
+
+    on_index: app.video_player.load_videos()
+
+    recording_enabled: False
+    recording: False
+
+    wired_ip: "No connection"
+    wireless_ip: "No connection"
+
+    auto_score_status: "Auto score\noff"
+    auto_timer_status: "Auto timer\noff"
+
+    FloatLayout:
+        BoxLayout:
+            id: weapon_selector
+            orientation: "horizontal"
+            size: {{ data["weapon_selector"]["width"] }}, {{ data["weapon_selector"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["weapon_selector"]["x"] }}, {{ data["weapon_selector"]["y"] }}
+
+            ToggleButton:
+                id: weapon_2
+                text: "fleuret"
+                state: "down" if root.weapon == 2 else "normal"
+                font_size: {{ data["weapon_selector"]["font_size"] }}
+                font_name: "agencyb"
+                group: "weapon"
+                color: {{ colors["weapon"]["text_dark"] }} if root.weapon != 2 else {{ colors["weapon"]["text_light"] }}
+                background_color: root.color_invis
+                on_press: app.set_weapon(2)
+
+            ToggleButton:
+                id: weapon_0
+                markup: True
+                text: "epee [color=" + {{ colors['weapon']['text_dark'] }} + "]5[/color]" if root.epee5 == 0 else "epee 5"
+                state: "down" if root.weapon == 3 else "normal"
+                font_size: {{ data["weapon_selector"]["font_size"] }}
+                font_name: "agencyb"
+                group: "weapon"
+                color: {{ colors["weapon"]["text_dark"] }} if root.weapon != 3 else {{ colors["weapon"]["text_light"] }}
+                background_color: root.color_invis
+                on_press: app.set_weapon(0)
+
+            ToggleButton:
+                id: weapon_1
+                text: "sabre"
+                state: "down" if root.weapon == 1 else "normal"
+                font_size: {{ data["weapon_selector"]["font_size"] }}
+                font_name: "agencyb"
+                group: "weapon"
+                color: {{ colors["weapon"]["text_dark"] }} if root.weapon != 1 else {{ colors["weapon"]["text_light"] }}
+                background_color: root.color_invis
+                on_press: app.set_weapon(1)
+
+        Carousel:
+            id: left_score_carousel
+            direction: "top"
+            loop: True
+            size: {{ data["score"]["width"] * 2 }}, {{ data["score"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["score"]["delta_x"] }}, {{ data["score"]["y"] }}
+            min_move: 0.05
+
+            old_index: 0
+            on_index: app.carousel_handler(0, self.old_index, self.index, [3, 2]); self.old_index = self.index
+
+            Button:
+                on_press: app.send_handler(2)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+            Button:
+                on_press: app.send_handler(2)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+            Button:
+                on_press: app.send_handler(2)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+        Label:
+            id: score_l_l
+            text: root.score_l_l
+            font_size: {{ data["score"]["font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["score"]["width"] }}, {{ data["score"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["score"]["delta_x"] }}, {{ data["score"]["y"] }}
+            color: {{ colors["score"]["left"] }}
+
+        Label:
+            id: score_l_r
+            text: root.score_l_r
+            font_size: {{ data["score"]["font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["score"]["width"] }}, {{ data["score"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["score"]["delta_x"] + data["score"]["width"] }}, {{ data["score"]["y"] }}
+            color: {{ colors["score"]["left"] }}
+
+        Carousel:
+            id: right_score_carousel
+            direction: "top"
+            loop: True
+            size: {{ data["score"]["width"] * 2 }}, {{ data["score"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["width"] - data["score"]["delta_x"] - data["score"]["width"] * 2 }}, {{ data["score"]["y"] }}
+            min_move: 0.05
+
+            old_index: 0
+            on_index: app.carousel_handler(0, self.old_index, self.index, [15, 9]); self.old_index = self.index
+
+            Button:
+                on_press: app.send_handler(9)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+            Button:
+                on_press: app.send_handler(9)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+            Button:
+                on_press: app.send_handler(9)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+        Label:
+            id: score_r_l
+            text: root.score_r_l
+            font_size: {{ data["score"]["font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["score"]["width"] }}, {{ data["score"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["width"] - data["score"]["delta_x"] - data["score"]["width"] * 2 }}, {{ data["score"]["y"] }}
+            color: {{ colors["score"]["right"] }}
+
+        Label:
+            id: score_r_r
+            text: root.score_r_r
+            font_size: {{ data["score"]["font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["score"]["width"] }}, {{ data["score"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["width"] - data["score"]["delta_x"] - data["score"]["width"] }}, {{ data["score"]["y"] }}
+            color: {{ colors["score"]["right"] }}
+
+        Carousel:
+            id: timer_carousel
+            direction: "top"
+            loop: True
+            size: {{ data["timer"]["width"] }}, {{ data["timer"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["timer"]["x"] }}, {{ data["timer"]["y"] }}
+            min_move: 0.05
+
+            old_index: 0
+            on_index: app.carousel_handler(0, self.old_index, self.index, [6, 14]); self.old_index = self.index
+
+            Button:
+                on_press: app.send_handler(13)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+            Button:
+                on_press: app.send_handler(13)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+            Button:
+                on_press: app.send_handler(13)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+        Label:
+            id: timer_min
+            text: root.timer_0
+            font_size: {{ data["timer"]["time_font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["timer"]["number_width"] }}, {{ data["timer"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["timer"]["x"] }}, {{ data["timer"]["y"] }}
+            color: root.color_timer
+
+        Label:
+            id: timer_dot
+            text: root.timer_1 if root.timer_running == 0 or root.current_time - root.flash_timer < 0.5 else " "
+            font_size: {{ data["timer"]["time_font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["timer"]["dot_width"] }}, {{ data["timer"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["timer"]["x"] + data["timer"]["number_width"] }}, {{ data["timer"]["y"] }}
+            color: root.color_timer
+
+        Label:
+            id: timer_dec
+            text: root.timer_2
+            font_size: {{ data["timer"]["time_font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["timer"]["number_width"] }}, {{ data["timer"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["timer"]["x"] + data["timer"]["number_width"] + data["timer"]["dot_width"] }}, {{ data["timer"]["y"] }}
+            color: root.color_timer
+
+        Label:
+            id: timer_sec
+            text: root.timer_3
+            font_size: {{ data["timer"]["time_font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["timer"]["number_width"] }}, {{ data["timer"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["timer"]["x"] + data["timer"]["number_width"] * 2 + data["timer"]["dot_width"] }}, {{ data["timer"]["y"] }}
+            color: root.color_timer
+
+        Label:
+            id: timer_text
+            text: root.timer_text
+            font_size: {{ data["timer"]["text_font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["timer"]["width"] }}, {{ data["timer"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["timer"]["x"] }}, {{ data["timer"]["y"] }}
+            color: root.color_timer
+
+        Label:
+            id: passive
+            size: root.passive_size * {{ data["passive"]["width"] * 2 }}, 0 if root.passive_time > 50 and root.passive_time < 60 and root.current_time - root.flash_timer > 0.5 and root.timer_running == 1 else {{ -data["passive"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["passive"]["x"] }} - root.passive_size * {{ data["passive"]["width"] }}, {{ data["passive"]["y"] }}
+
+            canvas:
+                Color:
+                    rgba: root.color_passive
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+        Button:
+            id: period
+            text: str(root.period)
+            font_size: {{ data["period"]["font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["period"]["width"] }}, {{ data["period"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["period"]["x"] }}, {{ data["period"]["y"] }}
+            color: {{ colors["period"] }}
+
+            on_press: app.send_handler(8)
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+
+        Label:
+            id: passive_counter_2_1
+            text: root.passive_coun[0] if root.time_updated or root.timer_running == 0 else self.text
+            font_size: {{ data["passive_counter"]["font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["passive_counter"]["width"] }}, {{ data["passive_counter"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["passive_counter"]["x"] }}, {{ data["passive_counter"]["y"] }}
+            color: {{ colors["passive"]["text_light"] }} if root.weapon != 1 else {{ colors["passive"]["text_dark"] }}
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+
+        Label:
+            id: passive_counter_2_2
+            text: root.passive_coun[1] if root.time_updated or root.timer_running == 0 else self.text
+            font_size: {{ data["passive_counter"]["font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["passive_counter"]["width"] }}, {{ data["passive_counter"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["passive_counter"]["x"] + data["passive_counter"]["width"] }}, {{ data["passive_counter"]["y"] }}
+            color: {{ colors["passive"]["text_light"] }} if root.weapon != 1 else {{ colors["passive"]["text_dark"] }}
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+
+        Label:
+            id: warning_top_l
+            text: "penalty"
+            font_size: {{ data["warning_card"]["font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["warning_card"]["width"] }}, {{ data["warning_card"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["warning_card"]["x"] }}, {{ data["warning_card"]["y"] + data["warning_card"]["height"] + data["warning_card"]["gap"] }}
+
+            color: {{ colors["warning"]["text_light"] }} if root.warning_l >= 2 else {{ colors["warning"]["text_dark"] }}
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: {{ hex_to_rgba(darker(colors["warning"]["red"])) }} if root.warning_l < 2 else {{ hex_to_rgba(colors["warning"]["red"]) }}
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [{{ data["card"]["radius"] }},]
+
+        Label:
+            id: warning_bot_l
+            text: "caution"
+            font_size: {{ data["warning_card"]["font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["warning_card"]["width"] }}, {{ data["warning_card"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["warning_card"]["x"] }}, {{ data["warning_card"]["y"] }}
+
+            color: {{ colors["warning"]["text_light"] }} if root.warning_l >= 1 else {{ colors["warning"]["text_dark"] }}
+            
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: {{ hex_to_rgba(darker(colors["warning"]["yellow"])) }} if root.warning_l < 1 else {{ hex_to_rgba(colors["warning"]["yellow"]) }}
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [{{ data["card"]["radius"] }},]
+
+        Button:
+            id: left_warning_button
+            size: {{ data["warning_card"]["width"] }}, {{ data["warning_card"]["height"] * 2 + data["warning_card"]["gap"] }}
+            size_hint: None, None
+            pos: {{ data["warning_card"]["x"] }}, {{ data["warning_card"]["y"] }}
+
+            on_press: app.send_handler(4)
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+
+        Label:
+            id: warning_top_r
+            text: "penalty"
+            font_size: {{ data["warning_card"]["font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["warning_card"]["width"] }}, {{ data["warning_card"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["width"] - data["warning_card"]["width"] - data["warning_card"]["x"] }}, {{ data["warning_card"]["y"] + data["warning_card"]["height"] + data["warning_card"]["gap"] }}
+
+            color: {{ colors["warning"]["text_light"] }} if root.warning_r >= 2 else {{ colors["warning"]["text_dark"] }}
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: {{ hex_to_rgba(darker(colors["warning"]["red"])) }} if root.warning_r < 2 else {{ hex_to_rgba(colors["warning"]["red"]) }}
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [{{ data["card"]["radius"] }},]
+
+        Label:
+            id: warning_bot_r
+            text: "caution"
+            font_size: {{ data["warning_card"]["font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["warning_card"]["width"] }}, {{ data["warning_card"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["width"] - data["warning_card"]["width"] - data["warning_card"]["x"] }}, {{ data["warning_card"]["y"] }}
+
+            color: {{ colors["warning"]["text_light"] }} if root.warning_r >= 1 else {{ colors["warning"]["text_dark"] }}
+            
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: {{ hex_to_rgba(darker(colors["warning"]["yellow"])) }} if root.warning_r < 1 else {{ hex_to_rgba(colors["warning"]["yellow"]) }}
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [{{ data["card"]["radius"] }},]
+
+        Button:
+            id: left_warning_button
+            size: {{ data["warning_card"]["width"] }}, {{ data["warning_card"]["height"] * 2 + data["warning_card"]["gap"] }}
+            size_hint: None, None
+            pos: {{ data["width"] - data["warning_card"]["width"] - data["warning_card"]["x"] }}, {{ data["warning_card"]["y"] }}
+
+            on_press: app.send_handler(11)
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+
+        Label:
+            id: priority_l_cap
+            text: "P"
+            font_size: {{ data["priority"]["cap_font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["priority"]["cap_width"] }}, {{ data["priority"]["cap_height"] }}
+            size_hint: None, None
+            pos: {{ data["priority"]["cap_l_x"] }}, {{ data["priority"]["cap_y"] }}
+            color: {{ colors["priority"]["left"] }} if root.priority == -1 else {{ darker(colors["priority"]["left"]) }}
+
+        Label:
+            id: priority_l_word
+            text: "priority"
+            font_size: {{ data["priority"]["word_font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["priority"]["word_width"] }}, {{ data["priority"]["word_height"] }}
+            size_hint: None, None
+            pos: {{ data["priority"]["word_l_x"] }}, {{ data["priority"]["word_y"] }}
+            color: {{ colors["priority"]["text_light"] }} if root.priority == -1 else {{ colors["priority"]["text_dark"] }}
+        
+        Button:
+            text: root.auto_score_status
+            font_size: {{ data["auto_score_status"]["font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["auto_score_status"]["width"] }}, {{ data["auto_score_status"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["auto_score_status"]["x"] }}, {{ data["auto_score_status"]["y"] }}
+            color: {{ colors["auto_status"]["text_light"] }} if root.auto_score_status == "Auto score\non" else {{ colors["auto_status"]["text_dark"] }}
+            halign: "center"
+            background_color: root.color_invis
+            on_press: app.send_handler(16); app.auto_status.switch_changed(1)
+
+        Label:
+            id: priority_r_cap
+            text: "P"
+            font_size: {{ data["priority"]["cap_font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["priority"]["cap_width"] }}, {{ data["priority"]["cap_height"] }}
+            size_hint: None, None
+            pos: {{ data["priority"]["cap_r_x"] }}, {{ data["priority"]["cap_y"] }}
+            color: {{ colors["priority"]["right"] }} if root.priority == +1 else {{ darker(colors["priority"]["right"]) }}
+
+        Label:
+            id: priority_r_word
+            text: "priority"
+            font_size: {{ data["priority"]["word_font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["priority"]["word_width"] }}, {{ data["priority"]["word_height"] }}
+            size_hint: None, None
+            pos: {{ data["priority"]["word_r_x"] }}, {{ data["priority"]["word_y"] }}
+            color: {{ colors["priority"]["text_light"] }} if root.priority == +1 else {{ colors["priority"]["text_dark"] }}
+        
+        Button:
+            text: root.auto_timer_status
+            font_size: {{ data["auto_timer_status"]["font_size"] }}
+            font_name: "agencyb"
+            size: {{ data["auto_timer_status"]["width"] }}, {{ data["auto_timer_status"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["auto_timer_status"]["x"] }}, {{ data["auto_timer_status"]["y"] }}
+            color: {{ colors["auto_status"]["text_light"] }} if root.auto_timer_status == "Auto timer\non" else {{ colors["auto_status"]["text_dark"] }}
+            halign: "center"
+            background_color: root.color_invis
+            on_press: app.send_handler(1); app.auto_status.switch_changed(0)
+
+        ToggleButton:
+            id: passive_1
+            text: "Pcard"
+            font_size: {{ data["passive_card"]["font_size"] }}
+            font_name: "agencyb"
+            state: root.passive_1_state
+            color: {{ colors["warning"]["text_light"] }} if self.state == "down" else {{ colors["warning"]["text_dark"] }}
+            size: {{ data["passive_card"]["width"] }}, {{ data["passive_card"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["passive_card"]["x"] }}, {{ data["passive_card"]["y"] + data["passive_card"]["height"] + data["passive_card"]["gap"] }}
+            on_press: app.passive_stop_card(self.state, 1)
+            disabled: root.timer_running == 1
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: {{ hex_to_rgba(darker(colors["warning"]["red"])) }} if self.state == "normal" else {{ hex_to_rgba(colors["warning"]["red"]) }}
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [{{ data["card"]["radius"] }},]
+
+        ToggleButton:
+            id: passive_2
+            text: "Pcard"
+            font_size: {{ data["passive_card"]["font_size"] }}
+            font_name: "agencyb"
+            state: root.passive_2_state
+            color: {{ colors["warning"]["text_light"] }} if self.state == "down" else {{ colors["warning"]["text_dark"] }}
+            size: {{ data["passive_card"]["width"] }}, {{ data["passive_card"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["passive_card"]["x"] }}, {{ data["passive_card"]["y"] }}
+            on_press: app.passive_stop_card(self.state, 2)
+            disabled: root.timer_running == 1
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: {{ hex_to_rgba(darker(colors["warning"]["yellow"])) }} if self.state == "normal" else {{ hex_to_rgba(colors["warning"]["yellow"]) }}
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [{{ data["card"]["radius"] }},]
+
+        ToggleButton:
+            id: passive_3
+            text: "Pcard"
+            font_size: {{ data["passive_card"]["font_size"] }}
+            font_name: "agencyb"
+            state: root.passive_3_state
+            color: {{ colors["warning"]["text_light"] }} if self.state == "down" else {{ colors["warning"]["text_dark"] }}
+            size: {{ data["passive_card"]["width"] }}, {{ data["passive_card"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["width"] - data["passive_card"]["width"] - data["passive_card"]["x"] }}, {{ data["passive_card"]["y"] + data["passive_card"]["height"] + data["passive_card"]["gap"] }}
+            on_press: app.passive_stop_card(self.state, 3)
+            disabled: root.timer_running == 1
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: {{ hex_to_rgba(darker(colors["warning"]["red"])) }} if self.state == "normal" else {{ hex_to_rgba(colors["warning"]["red"]) }}
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [{{ data["card"]["radius"] }},]
+
+        ToggleButton:
+            id: passive_4
+            text: "Pcard"
+            font_size: {{ data["passive_card"]["font_size"] }}
+            font_name: "agencyb"
+            state: root.passive_4_state
+            color: {{ colors["warning"]["text_light"] }} if self.state == "down" else {{ colors["warning"]["text_dark"] }}
+            size: {{ data["passive_card"]["width"] }}, {{ data["passive_card"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["width"] - data["passive_card"]["width"] - data["passive_card"]["x"] }}, {{ data["passive_card"]["y"] }}
+            on_press: app.passive_stop_card(self.state, 4)
+            disabled: root.timer_running == 1
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: {{ hex_to_rgba(darker(colors["warning"]["yellow"])) }} if self.state == "normal" else {{ hex_to_rgba(colors["warning"]["yellow"]) }}
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [{{ data["card"]["radius"] }},]
+
+        Label:
+            id: recording_indicator
+            size: {{ data["recording_indicator"]["size"] }}, {{ data["recording_indicator"]["size"] }}
+            size_hint: None, None
+            pos: {{ data["recording_indicator"]["x"] }}, {{ data["recording_indicator"]["y"] }}
+
+            canvas:
+                Color:
+                    rgba: {{ hex_to_rgba(colors["recording"]) }} if root.recording else root.color_invis
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: self.size
+
+        Button:
+            text: "Video on" if root.recording_enabled else "Video off"
+            size: {{ data["recording_status"]["width"] }}, {{ data["recording_status"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["recording_indicator"]["x"] - data["recording_status"]["width"] - data["recording_indicator"]["size"] / 2 }}, {{ data["recording_status"]["y"] }}
+            font_size: {{ data["recording_status"]["font_size"] }}
+            font_name: "agencyb"
+            color: {{ colors["auto_status"]["text_light"] }} if root.recording_enabled else {{ colors["auto_status"]["text_dark"] }}
+            background_color: root.color_invis
+            on_press: app.toggle_recording()
+            text_size: self.size
+            halign: "right"
+
+    FloatLayout:
+
+{% include "video_player.kv" %}
+{% include "video_info.kv" %}
+
+    FloatLayout:
+        BoxLayout:
+            orientation: "vertical"
+            size: {{ data["settings"]["category_button_width"] }}, {{ data["height"] }}
+            size_hint: None, None
+            pos: 0, 0
+
+            ToggleButton:
+                id: settings_system
+                group: "settings"
+                text: "System"
+                font_size: {{ data["settings"]["category_button_font_size"] }}
+                font_name: "agencyb"
+
+            ToggleButton:
+                id: settings_remote
+                group: "settings"
+                text: "Remote"
+                font_size: {{ data["settings"]["category_button_font_size"] }}
+                font_name: "agencyb"
+            
+            ToggleButton:
+                id: settings_video
+                group: "settings"
+                text: "Video"
+                font_size: {{ data["settings"]["category_button_font_size"] }}
+                font_name: "agencyb"
+                disabled: True
+        
+        BoxLayout:
+            orientation: "vertical"
+            size: {{ data["settings"]["category_button_width"] }}, {{ data["height"] }}
+            size_hint: None, None
+            pos: {{ data["width"] - data["settings"]["category_button_width"] }}, 0
+
+            ToggleButton:
+                id: settings_ethernet
+                group: "settings"
+                text: "Ethernet"
+                font_size: {{ data["settings"]["category_button_font_size"] }}
+                font_name: "agencyb"
+
+            ToggleButton:
+                id: settings_wifi
+                group: "settings"
+                text: "Wifi"
+                font_size: {{ data["settings"]["category_button_font_size"] }}
+                font_name: "agencyb"
+
+            ToggleButton:
+                id: settings_update
+                group: "settings"
+                text: "Update"
+                font_size: {{ data["settings"]["category_button_font_size"] }}
+                font_name: "agencyb"
+
+        BoxLayout:
+            pos: ({{ (data["width"] - data["height"]) / 2 }}, 0) if settings_system.state == "down" else ({{ data["settings"]["category_button_width"] }}, {{ data["width"] }})
+            size: {{ data["height"] }}, {{ data["height"] }}
+
+            Button:
+                size: {{ data["height"] }}, {{ data["height"] }}
+                size_hint: None, None
+                background_normal: "assets/poweroff_button.png"
+                background_down: "assets/poweroff_button.png"
+                on_press: app.system_poweroff()
+
+        BoxLayout:
+            pos: ({{ (data["width"] - data["height"]) / 2 }}, 0) if settings_remote.state == "down" else ({{ data["settings"]["category_button_width"] }}, {{ data["width"] }})
+            size: {{ data["height"] }}, {{ data["height"] }}
+
+            Button:
+                id: sync_remote
+                size: {{ data["height"] }}, {{ data["height"] }}
+                size_hint: None, None
+                font_size: {{ data["settings"]["button_1_font_size"] }}
+                font_name: "agencyb"
+                text: "Sync new remote"
+                sync_state: "no_sync"
+                on_press: app.sync_new_remote(self)
+
+        BoxLayout:
+            pos: ({{ (data["width"] - data["height"]) / 2 }}, {{ data["height"] / 2 }}) if settings_ethernet.state == "down" else ({{ data["settings"]["category_button_width"] }}, {{ data["width"] }})
+            size: {{ data["height"] }}, {{ data["height"] / 2 }}
+            size_hint: None, None
+            orientation: "vertical"       
+
+            Label:
+                text: "Wired"
+                font_size: {{ data["settings"]["large_label_font_size"] }}
+                font_name: "agencyb"
+
+            Label:
+                text: root.wired_ip
+                font_size: {{ data["settings"]["small_label_font_size"] }}
+                font_name: "agencyb"
+
+        BoxLayout:
+            pos: ({{ (data["width"] - data["height"]) / 2 }}, {{ data["height"] / 2 }}) if settings_wifi.state == "down" else ({{ data["settings"]["category_button_width"] }}, {{ data["width"] }})
+            size: {{ data["height"] }}, {{ data["height"] / 2 }}
+            size_hint: None, None
+            orientation: "vertical"       
+
+            Label:
+                text: "Wireless"
+                font_size: {{ data["settings"]["large_label_font_size"] }}
+                font_name: "agencyb"
+
+            Label:
+                text: root.wireless_ip
+                font_size: {{ data["settings"]["small_label_font_size"] }}
+                font_name: "agencyb"
+        
+
+
+        BoxLayout:
+            pos: ({{ (data["width"] - data["height"]) / 2 }}, 0) if settings_update.state == "down" else ({{ data["settings"]["category_button_width"] }}, {{ data["width"] }})
+            size: {{ data["height"] }}, {{ data["height"] }}
+
+            Button:
+                id: update_btn
+                size: {{ data["height"] }}, {{ data["height"] }}
+                size_hint: None, None
+                font_size: {{ data["settings"]["button_1_font_size"] }}
+                font_name: "agencyb"
+                text: "Check for updates"
+                update_state: "no_update"
+                on_press: app.updater.update(self)
