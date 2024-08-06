@@ -1,0 +1,400 @@
+        FloatLayout:
+            id: video_info_layout
+
+            opacity: 1 if root.video_info else 0
+
+            BoxLayout:
+                id: weapon_selector
+                orientation: "horizontal"
+                size: {{ resized_data["weapon_selector"]["width"] }}, {{ resized_data["weapon_selector"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["weapon_selector"]["x"] }}, {{ resized_data["weapon_selector"]["y"] }}
+
+                Label:
+                    id: weapon_2
+                    text: "fleuret"
+                    state: "down" if root.video_info_weapon == 2 else "normal"
+                    font_size: {{ resized_data["weapon_selector"]["font_size"] }}
+                    font_name: "agencyb"
+                    color: {{ colors["weapon"]["text_dark"] }} if root.video_info_weapon != 2 else {{ colors["weapon"]["text_light"] }}
+
+                Label:
+                    id: weapon_0
+                    markup: True
+                    text: "epee [color=" + {{ colors['weapon']['text_dark'] }} + "]5[/color]" if root.video_info_epee5 == 0 else "epee 5"
+                    state: "down" if root.video_info_weapon == 3 else "normal"
+                    font_size: {{ resized_data["weapon_selector"]["font_size"] }}
+                    font_name: "agencyb"
+                    color: {{ colors["weapon"]["text_dark"] }} if root.video_info_weapon != 3 else {{ colors["weapon"]["text_light"] }}
+
+                Label:
+                    id: weapon_1
+                    text: "sabre"
+                    state: "down" if root.video_info_weapon == 1 else "normal"
+                    font_size: {{ resized_data["weapon_selector"]["font_size"] }}
+                    font_name: "agencyb"
+                    color: {{ colors["weapon"]["text_dark"] }} if root.video_info_weapon != 1 else {{ colors["weapon"]["text_light"] }}
+
+            Label:
+                id: score_l_l
+                text: root.video_info_score_l_l
+                font_size: {{ resized_data["score"]["font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["score"]["width"] }}, {{ resized_data["score"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["score"]["delta_x"] }}, {{ resized_data["score"]["y"] }}
+                color: {{ colors["score"]["left"] }}
+
+            Label:
+                id: score_l_r
+                text: root.video_info_score_l_r
+                font_size: {{ resized_data["score"]["font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["score"]["width"] }}, {{ resized_data["score"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["score"]["delta_x"] + resized_data["score"]["width"] }}, {{ resized_data["score"]["y"] }}
+                color: {{ colors["score"]["left"] }}
+
+            Label:
+                id: score_r_l
+                text: root.video_info_score_r_l
+                font_size: {{ resized_data["score"]["font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["score"]["width"] }}, {{ resized_data["score"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["width"] - resized_data["score"]["delta_x"] - resized_data["score"]["width"] * 2 }}, {{ resized_data["score"]["y"] }}
+                color: {{ colors["score"]["right"] }}
+
+            Label:
+                id: score_r_r
+                text: root.video_info_score_r_r
+                font_size: {{ resized_data["score"]["font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["score"]["width"] }}, {{ resized_data["score"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["width"] - resized_data["score"]["delta_x"] - resized_data["score"]["width"] }}, {{ resized_data["score"]["y"] }}
+                color: {{ colors["score"]["right"] }}
+
+            Label:
+                id: timer_min
+                text: root.video_info_timer_0
+                font_size: {{ resized_data["timer"]["time_font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["timer"]["number_width"] }}, {{ resized_data["timer"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["timer"]["x"] }}, {{ resized_data["timer"]["y"] }}
+                color: {{ colors["timer"]["orange"] }}
+
+            Label:
+                id: timer_dot
+                text: root.video_info_timer_1 if root.video_info_timer_running == 0 or root.video_info_current_time - root.video_info_flash_timer < 0.5 else " "
+                font_size: {{ resized_data["timer"]["time_font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["timer"]["dot_width"] }}, {{ resized_data["timer"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["timer"]["x"] + resized_data["timer"]["number_width"] }}, {{ resized_data["timer"]["y"] }}
+                color: {{ colors["timer"]["orange"] }}
+
+            Label:
+                id: timer_dec
+                text: root.video_info_timer_2
+                font_size: {{ resized_data["timer"]["time_font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["timer"]["number_width"] }}, {{ resized_data["timer"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["timer"]["x"] + resized_data["timer"]["number_width"] + resized_data["timer"]["dot_width"] }}, {{ resized_data["timer"]["y"] }}
+                color: {{ colors["timer"]["orange"] }}
+
+            Label:
+                id: timer_sec
+                text: root.video_info_timer_3
+                font_size: {{ resized_data["timer"]["time_font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["timer"]["number_width"] }}, {{ resized_data["timer"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["timer"]["x"] + resized_data["timer"]["number_width"] * 2 + resized_data["timer"]["dot_width"] }}, {{ resized_data["timer"]["y"] }}
+                color: {{ colors["timer"]["orange"] }}
+
+            Label:
+                id: passive
+                size: root.video_info_passive_size * {{ resized_data["passive"]["width"] * 2 }}, 0 if root.video_info_passive_time > 50 and root.video_info_passive_time < 60 and root.video_info_current_time - root.video_info_flash_timer > 0.5 and root.video_info_timer_running == 1 else {{ -resized_data["passive"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["passive"]["x"] }} - root.video_info_passive_size * {{ resized_data["passive"]["width"] }}, {{ resized_data["passive"]["y"] }}
+
+                canvas:
+                    Color:
+                        rgba: root.video_info_color_passive
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Label:
+                id: period
+                text: str(root.video_info_period)
+                font_size: {{ resized_data["period"]["font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["period"]["width"] }}, {{ resized_data["period"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["period"]["x"] }}, {{ resized_data["period"]["y"] }}
+                color: {{ colors["period"] }}
+
+                background_down: ""
+                background_normal: ""
+
+            Label:
+                id: passive_counter_2_1
+                text: root.video_info_passive_coun[0]
+                font_size: {{ resized_data["passive_counter"]["font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["passive_counter"]["width"] }}, {{ resized_data["passive_counter"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["passive_counter"]["x"] }}, {{ resized_data["passive_counter"]["y"] }}
+                color: {{ colors["passive"]["text_light"] }} if root.video_info_weapon != 1 else {{ colors["passive"]["text_dark"] }}
+
+                background_down: ""
+                background_normal: ""
+
+            Label:
+                id: passive_counter_2_2
+                text: root.video_info_passive_coun[1]
+                font_size: {{ resized_data["passive_counter"]["font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["passive_counter"]["width"] }}, {{ resized_data["passive_counter"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["passive_counter"]["x"] + resized_data["passive_counter"]["width"] }}, {{ resized_data["passive_counter"]["y"] }}
+                color: {{ colors["passive"]["text_light"] }} if root.video_info_weapon != 1 else {{ colors["passive"]["text_dark"] }}
+
+                background_down: ""
+                background_normal: ""
+
+            Label:
+                id: warning_top_l
+                text: "penalty"
+                font_size: {{ resized_data["warning_card"]["font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["warning_card"]["width"] }}, {{ resized_data["warning_card"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["warning_card"]["x"] }}, {{ resized_data["warning_card"]["y"] + resized_data["warning_card"]["height"] + resized_data["warning_card"]["gap"] }}
+
+                color: {{ colors["warning"]["text_light"] }} if root.video_info_warning_l >= 2 else {{ colors["warning"]["text_dark"] }}
+
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+
+                canvas.before:
+                    Color:
+                        rgba: {{ hex_to_rgba(darker(colors["warning"]["red"])) }} if root.video_info_warning_l < 2 else {{ hex_to_rgba(colors["warning"]["red"]) }}
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [{{ resized_data["card"]["radius"] }},]
+
+            Label:
+                id: warning_bot_l
+                text: "caution"
+                font_size: {{ resized_data["warning_card"]["font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["warning_card"]["width"] }}, {{ resized_data["warning_card"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["warning_card"]["x"] }}, {{ resized_data["warning_card"]["y"] }}
+
+                color: {{ colors["warning"]["text_light"] }} if root.video_info_warning_l >= 1 else {{ colors["warning"]["text_dark"] }}
+                
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+
+                canvas.before:
+                    Color:
+                        rgba: {{ hex_to_rgba(darker(colors["warning"]["yellow"])) }} if root.video_info_warning_l < 1 else {{ hex_to_rgba(colors["warning"]["yellow"]) }}
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [{{ resized_data["card"]["radius"] }},]
+
+            Label:
+                id: warning_top_r
+                text: "penalty"
+                font_size: {{ resized_data["warning_card"]["font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["warning_card"]["width"] }}, {{ resized_data["warning_card"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["width"] - resized_data["warning_card"]["width"] - resized_data["warning_card"]["x"] }}, {{ resized_data["warning_card"]["y"] + resized_data["warning_card"]["height"] + resized_data["warning_card"]["gap"] }}
+
+                color: {{ colors["warning"]["text_light"] }} if root.video_info_warning_r >= 2 else {{ colors["warning"]["text_dark"] }}
+
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+
+                canvas.before:
+                    Color:
+                        rgba: {{ hex_to_rgba(darker(colors["warning"]["red"])) }} if root.video_info_warning_r < 2 else {{ hex_to_rgba(colors["warning"]["red"]) }}
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [{{ resized_data["card"]["radius"] }},]
+
+            Label:
+                id: warning_bot_r
+                text: "caution"
+                font_size: {{ resized_data["warning_card"]["font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["warning_card"]["width"] }}, {{ resized_data["warning_card"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["width"] - resized_data["warning_card"]["width"] - resized_data["warning_card"]["x"] }}, {{ resized_data["warning_card"]["y"] }}
+
+                color: {{ colors["warning"]["text_light"] }} if root.video_info_warning_r >= 1 else {{ colors["warning"]["text_dark"] }}
+                
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+
+                canvas.before:
+                    Color:
+                        rgba: {{ hex_to_rgba(darker(colors["warning"]["yellow"])) }} if root.video_info_warning_r < 1 else {{ hex_to_rgba(colors["warning"]["yellow"]) }}
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [{{ resized_data["card"]["radius"] }},]
+
+            Label:
+                id: priority_l_cap
+                text: "P"
+                font_size: {{ resized_data["priority"]["cap_font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["priority"]["cap_width"] }}, {{ resized_data["priority"]["cap_height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["priority"]["cap_l_x"] }}, {{ resized_data["priority"]["cap_y"] }}
+                color: {{ colors["priority"]["left"] }} if root.video_info_priority == -1 else {{ darker(colors["priority"]["left"]) }}
+
+            Label:
+                id: priority_l_word
+                text: "priority"
+                font_size: {{ resized_data["priority"]["word_font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["priority"]["word_width"] }}, {{ resized_data["priority"]["word_height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["priority"]["word_l_x"] }}, {{ resized_data["priority"]["word_y"] }}
+                color: {{ colors["priority"]["text_light"] }} if root.video_info_priority == -1 else {{ colors["priority"]["text_dark"] }}
+
+            Label:
+                id: priority_r_cap
+                text: "P"
+                font_size: {{ resized_data["priority"]["cap_font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["priority"]["cap_width"] }}, {{ resized_data["priority"]["cap_height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["priority"]["cap_r_x"] }}, {{ resized_data["priority"]["cap_y"] }}
+                color: {{ colors["priority"]["right"] }} if root.video_info_priority == +1 else {{ darker(colors["priority"]["right"]) }}
+
+            Label:
+                id: priority_r_word
+                text: "priority"
+                font_size: {{ resized_data["priority"]["word_font_size"] }}
+                font_name: "agencyb"
+                size: {{ resized_data["priority"]["word_width"] }}, {{ resized_data["priority"]["word_height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["priority"]["word_r_x"] }}, {{ resized_data["priority"]["word_y"] }}
+                color: {{ colors["priority"]["text_light"] }} if root.video_info_priority == +1 else {{ colors["priority"]["text_dark"] }}
+
+            Label:
+                id: passive_1
+                text: "Pcard"
+                font_size: {{ resized_data["passive_card"]["font_size"] }}
+                font_name: "agencyb"
+                state: root.video_info_passive_1_state
+                color: {{ colors["warning"]["text_light"] }} if self.state == "down" else {{ colors["warning"]["text_dark"] }}
+                size: {{ resized_data["passive_card"]["width"] }}, {{ resized_data["passive_card"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["passive_card"]["x"] }}, {{ resized_data["passive_card"]["y"] + resized_data["passive_card"]["height"] + resized_data["passive_card"]["gap"] }}
+
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+
+                canvas.before:
+                    Color:
+                        rgba: {{ hex_to_rgba(darker(colors["warning"]["red"])) }} if self.state == "normal" else {{ hex_to_rgba(colors["warning"]["red"]) }}
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [{{ resized_data["card"]["radius"] }},]
+
+            Label:
+                id: passive_2
+                text: "Pcard"
+                font_size: {{ resized_data["passive_card"]["font_size"] }}
+                font_name: "agencyb"
+                state: root.video_info_passive_2_state
+                color: {{ colors["warning"]["text_light"] }} if self.state == "down" else {{ colors["warning"]["text_dark"] }}
+                size: {{ resized_data["passive_card"]["width"] }}, {{ resized_data["passive_card"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["passive_card"]["x"] }}, {{ resized_data["passive_card"]["y"] }}
+
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+
+                canvas.before:
+                    Color:
+                        rgba: {{ hex_to_rgba(darker(colors["warning"]["yellow"])) }} if self.state == "normal" else {{ hex_to_rgba(colors["warning"]["yellow"]) }}
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [{{ resized_data["card"]["radius"] }},]
+
+            Label:
+                id: passive_3
+                text: "Pcard"
+                font_size: {{ resized_data["passive_card"]["font_size"] }}
+                font_name: "agencyb"
+                state: root.video_info_passive_3_state
+                color: {{ colors["warning"]["text_light"] }} if self.state == "down" else {{ colors["warning"]["text_dark"] }}
+                size: {{ resized_data["passive_card"]["width"] }}, {{ resized_data["passive_card"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["width"] - resized_data["passive_card"]["width"] - resized_data["passive_card"]["x"] }}, {{ resized_data["passive_card"]["y"] + resized_data["passive_card"]["height"] + resized_data["passive_card"]["gap"] }}
+
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+
+                canvas.before:
+                    Color:
+                        rgba: {{ hex_to_rgba(darker(colors["warning"]["red"])) }} if self.state == "normal" else {{ hex_to_rgba(colors["warning"]["red"]) }}
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [{{ resized_data["card"]["radius"] }},]
+
+            Label:
+                id: passive_4
+                text: "Pcard"
+                font_size: {{ resized_data["passive_card"]["font_size"] }}
+                font_name: "agencyb"
+                state: root.video_info_passive_4_state
+                color: {{ colors["warning"]["text_light"] }} if self.state == "down" else {{ colors["warning"]["text_dark"] }}
+                size: {{ resized_data["passive_card"]["width"] }}, {{ resized_data["passive_card"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["width"] - resized_data["passive_card"]["width"] - resized_data["passive_card"]["x"] }}, {{ resized_data["passive_card"]["y"] }}
+
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+
+                canvas.before:
+                    Color:
+                        rgba: {{ hex_to_rgba(darker(colors["warning"]["yellow"])) }} if self.state == "normal" else {{ hex_to_rgba(colors["warning"]["yellow"]) }}
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [{{ resized_data["card"]["radius"] }},]

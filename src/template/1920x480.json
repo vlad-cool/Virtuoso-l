@@ -1,0 +1,144 @@
+{
+    "width": 1920,
+    "height": 480,
+    "weapon_selector":
+    {
+        "width": 760,
+        "height": 100,
+        "x": 580,
+        "y": 0,
+        "font_size": 80
+    },
+    "score":
+    {
+        "width": 210,
+        "height": 420,
+        "delta_x": 20,
+        "y": 10,
+        "font_size": 500
+    },
+    "timer":
+    {
+        "width": 630,
+        "height": 300,
+        "x": 700,
+        "y": 120,
+        "number_width": 190,
+        "dot_width": 60,
+        "time_font_size": 400,
+        "text_font_size": 120
+    },
+    "passive": {
+        "width": 500,
+        "height": 16,
+        "x": 960,
+        "y": 480
+    },
+    "period": {
+        "width": 120,
+        "height": 200,
+        "x": 580,
+        "y": 100,
+        "font_size": 200
+    },
+    "passive_counter": {
+        "width": 50,
+        "height": 200,
+        "x": 585,
+        "y": 285,
+        "font_size": 100
+    },
+    "card": {
+        "radius": 10
+    }, 
+    "warning_card": {
+        "width": 100,
+        "height": 40,
+        "x": 460,
+        "y": 190,
+        "font_size": 30,
+        "gap": 20
+    },
+    "passive_card": {
+        "width": 100,
+        "height": 40,
+        "x": 460,
+        "y": 320,
+        "font_size": 30,
+        "gap": 20
+    },
+    "priority": {
+        "cap_font_size": 120,
+        "cap_width": 100,
+        "cap_height": 100,
+        "cap_l_x": 425,
+        "cap_r_x": 1325,
+        "cap_y": 80,
+        "word_font_size": 36,
+        "word_width": 100,
+        "word_height": 100,
+        "word_l_x": 471,
+        "word_r_x": 1371,
+        "word_y": 53
+    },
+    "auto_score_status": {
+        "width": 100,
+        "height": 80,
+        "x": 471,
+        "y": 0,
+        "font_size": 32
+    },
+    "auto_timer_status": {
+        "width": 100,
+        "height": 80,
+        "x": 1371,
+        "y": 0,
+        "font_size": 32
+    },
+    "recording_indicator":
+    {
+        "size": 32,
+        "x": 1880,
+        "y": 440
+    },
+    "recording_status":
+    {
+        "width": 320,
+        "height": 48,
+        "x": 1560,
+        "y": 440,
+        "font_size": 40
+    },
+    "video_player":
+    {
+        "width": 640,
+        "height": 480,
+        "x": 1120,
+        "y": 0
+    },
+    "player_controls": {
+        "width": 920,
+        "height": 130,
+        "x": 20,
+        "y": 325,
+        "font_size": 120
+    },
+    "video_playback": {
+        "width": 920,
+        "height": 40,
+        "x": 20,
+        "y": 260,
+        "font_size": 30
+    },
+    "video_pointer": {
+        "width": 10,
+        "height": 40
+    },
+    "settings": {
+        "category_button_width": 480,
+        "category_button_font_size": 60,
+        "button_1_font_size": 40,
+        "large_label_font_size": 60,
+        "small_label_font_size": 40
+    }
+}
