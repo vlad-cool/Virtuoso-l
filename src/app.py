@@ -10,12 +10,30 @@ import shutil
 import pathlib
 import subprocess
 import system_info
+from enum import Enum
 from collections import OrderedDict
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.core.text import LabelBase
 from kivy.network.urlrequest import UrlRequest
+
+# Define an enumeration class
+class IrKeys(Enum):
+    CHANGE_TIME = 7
+    TOGGLE_RECORDING = 24
+    PLAY_PAUSE = 24
+    PREVIOUS_VIDEO = 20
+    NEXT_VIDEO = 21
+    REWIND = 23
+    FAST_FORWARD = 22
+    CHANGE_MODE = 17
+    AUTO_SCORE = 16
+    AUTO_TIMER = 1
+    LEFT_PASSIVE = 17
+    RIGHT_PASSIVE = 18
+    
+    UPDATE_BTN = 18
 
 read_interval = .05
 
@@ -80,7 +98,7 @@ class Updater:
                     btn.text = f"New version found\n{old_version}->{new_version}"
                     btn.update_state = "wait_for_update"            
                     if not system_info.input_support:
-                        btn.on_press()
+                        self.update(self.btn)
                     return
         btn.text = "No update candidate"
         btn.update_state = "no_update"
@@ -105,7 +123,7 @@ class Updater:
         if self.download_proc.poll() == 0:
             self.update_downloaded(self.btn, None, None)
             if not system_info.input_support:
-                self.root.update_btn.on_press()
+                self.update(self.btn)
             self.download_proc = None
             return
         if self.download_proc.poll() is not None:
@@ -477,7 +495,7 @@ class KivyApp(App):
     def wait_rc5(self, btn):
         cmds = gpio_control.read_all_rc5()
         for cmd in cmds:
-            if cmd[1] == 7:
+            if cmd[1] == IrKeys.CHANGE_TIME:
                 self.config["rc5_address"] = cmd[0]
                 self.update_config()
                 Clock.schedule_once(lambda _: self.end_sync_remote(btn), 1.5)
@@ -695,37 +713,40 @@ class KivyApp(App):
         # Recording section
         # -----------------
         if system_info.video_support:
+            boottime = time.clock_gettime(time.CLOCK_BOOTTIME)
+            clip_data = ""
+            clip_data += f"boottime:{boottime}"
+            clip_data += f"score_l_l:{root.score_l_l};"
+            clip_data += f"score_l_r:{root.score_l_r};"
+            clip_data += f"score_r_l:{root.score_r_l};"
+            clip_data += f"score_r_r:{root.score_r_r};"
+            clip_data += f"timer_0:{root.timer_0};"
+            clip_data += f"timer_2:{root.timer_2};"
+            clip_data += f"timer_3:{root.timer_3};"
+            clip_data += f"period:{root.period};"
+            clip_data += f"priority:{root.priority};"
+            clip_data += f"warning_l:{root.warning_l};"
+            clip_data += f"warning_r:{root.warning_r};"
+            clip_data += f"passive_size:{root.passive_size};"
+            clip_data += f"passive_coun:{root.passive_coun};"
+            clip_data += f"passive_1_state:{root.passive_1_state};"
+            clip_data += f"passive_2_state:{root.passive_2_state};"
+            clip_data += f"passive_3_state:{root.passive_3_state};"
+            clip_data += f"passive_4_state:{root.passive_4_state};"
+            clip_data += f"epee5:{root.epee5};"
+            clip_data += f"weapon:{root.weapon};"
+            clip_data += f"color_passive:{root.color_passive};"
+            self.clip_data_dict[boottime] = clip_data
+            
             if ((self.prev_pins_data is None or self.prev_pins_data.recording == 0) and pins_data.recording == 1) or (pins_data.recording == 1 and not (video_control.recorder_proc is not None and video_control.recorder_proc.poll() is None)):
                 if self.stop_recording_scheduler is not None:
                     self.stop_recording_scheduler.cancel()
                 if video_control.recorder_proc is None:
                     self.video_player.recording_started()
                     video_control.start_recording()
-
+            
             elif self.prev_pins_data is not None and self.prev_pins_data.recording == 1 and pins_data.recording == 0:
-                clip_data = ""
-                clip_data += f"score_l_l:{root.score_l_l};"
-                clip_data += f"score_l_r:{root.score_l_r};"
-                clip_data += f"score_r_l:{root.score_r_l};"
-                clip_data += f"score_r_r:{root.score_r_r};"
-                clip_data += f"timer_0:{root.timer_0};"
-                clip_data += f"timer_2:{root.timer_2};"
-                clip_data += f"timer_3:{root.timer_3};"
-                clip_data += f"period:{root.period};"
-                clip_data += f"priority:{root.priority};"
-                clip_data += f"warning_l:{root.warning_l};"
-                clip_data += f"warning_r:{root.warning_r};"
-                clip_data += f"passive_size:{root.passive_size};"
-                clip_data += f"passive_coun:{root.passive_coun};"
-                clip_data += f"passive_1_state:{root.passive_1_state};"
-                clip_data += f"passive_2_state:{root.passive_2_state};"
-                clip_data += f"passive_3_state:{root.passive_3_state};"
-                clip_data += f"passive_4_state:{root.passive_4_state};"
-                clip_data += f"epee5:{root.epee5};"
-                clip_data += f"weapon:{root.weapon};"
-                clip_data += f"color_passive:{root.color_passive};"
-
-                video_control.save_clip(metadata=json.dumps(clip_data).replace(" ", ""))
+                video_control.save_clip(metadata=json.dumps(self.clip_data_dict).replace(" ", ""))
                 self.stop_recording_scheduler = Clock.schedule_once(lambda _: (video_control.stop_recording(), self.video_player.recording_stopped()), 4)
             if video_control.recorder_proc is not None and video_control.recorder_proc.poll() is None:
                 self.video_player.load_videos()
@@ -753,23 +774,23 @@ class KivyApp(App):
             if pins_data.weapon_btn == 0:
                 cmds = gpio_control.read_all_rc5()
                 for cmd in cmds:
-                    if cmd[1] == 7:
+                    if cmd[1] == IrKeys.CHANGE_TIME:
                         self.config["rc5_address"] = cmd[0]
                         self.update_config()
-                    if cmd[1] == 24: # Play / pause button
-                        self.carousel.index = 2
-                        self.root.ids["settings_update"].state = "down"
-                        self.root.update_btn.on_press()
             else:
                 cmds = gpio_control.read_rc5(self.config["rc5_address"])
         else:
             cmds = gpio_control.read_rc5(self.config["rc5_address"])
         for cmd in cmds:
             if cmd[2]:
-                if cmd[1] == 7:
+                if cmd[1] == IrKeys.CHANGE_TIME:
                     if self.root.timer_running != 1:
                         self.passive_timer.clear()
-                if cmd[1] == 17: # Left passive
+                if not system_info.input_support and pins_data.weapon == 0 and cmd[1] == IrKeys.UPDATE_BTN:
+                    self.root.index = 2
+                    self.root.ids["settings_update"].state = "down"
+                    self.updater.update(self.root.ids["update_btn"])
+                if cmd[1] == IrKeys.LEFT_PASSIVE:
                     if self.root.timer_running != 1:
                         self.passive_timer.clear()
                         if root.passive_2_state == "normal":
@@ -779,7 +800,7 @@ class KivyApp(App):
                         else:
                             root.passive_2_state = "normal"
                             root.passive_1_state = "normal"
-                if cmd[1] == 18: # Right passive
+                if cmd[1] == IrKeys.RIGHT_PASSIVE:
                     if self.root.timer_running != 1:
                         self.passive_timer.clear()
                         if root.passive_4_state == "normal":
@@ -791,31 +812,31 @@ class KivyApp(App):
                             root.passive_3_state = "normal"
                 carousel = self.root
                 if carousel.index == 0:
-                    if cmd[1] == 24: # Enable disable recording
+                    if cmd[1] == IrKeys.TOGGLE_RECORDING:
                         self.toggle_recording()
                 elif carousel.index == 1:
-                    if cmd[1] == 24: # Play pause button
+                    if cmd[1] == IrKeys.PLAY_PAUSE:
                         self.video_player.play_pause()
-                    if cmd[1] == 20: # Previous video
+                    if cmd[1] == IrKeys.PREVIOUS_VIDEO:
                         self.video_player.play_previous_video()
-                    if cmd[1] == 21: # Next video
+                    if cmd[1] == IrKeys.NEXT_VIDEO:
                         self.video_player.play_next_video()
-                    if cmd[1] == 23: # Rewind back
+                    if cmd[1] == IrKeys.REWIND:
                         self.video_player.rewind_video(-1)
-                    if cmd[1] == 22: # Rewind front
+                    if cmd[1] == IrKeys.FAST_FORWARD:
                         self.video_player.rewind_video(1)
                 elif carousel.index == 2:
                     pass
-                if cmd[1] == 19: # Change mode
+                if cmd[1] == IrKeys.CHANGE_MODE:
                     if carousel.index == 0:
                         carousel.index = 1
                     # elif carousel.index == 1:
                     #     carousel.index = 2
                     else:
                         carousel.index = 0
-                if cmd[1] == 16:
+                if cmd[1] == IrKeys.AUTO_SCORE:
                     self.auto_status.switch_changed(1)
-                if cmd[1] == 1:
+                if cmd[1] == IrKeys.AUTO_TIMER:
                     self.auto_status.switch_changed(0)
 
         if self.symbol == 1:
@@ -851,6 +872,8 @@ class KivyApp(App):
 
     def build(self):
         self.metadata_procs = {}
+        
+        self.clip_data_dict = {}
 
         self.updater = Updater()
 

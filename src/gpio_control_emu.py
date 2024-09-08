@@ -1,10 +1,6 @@
 from time import sleep
 from ast import literal_eval
 
-off_time = 250
-on_time  = 250
-TIMING = 889
-
 ir_commands = []
 
 button_emulating = []

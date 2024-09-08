@@ -3,36 +3,36 @@
     "height": 550,
     "weapon_selector":
     {
-        "width": 760,
+        "width": 650,
         "height": 100,
-        "x": 580,
+        "x": 635,
         "y": 35,
-        "font_size": 80
+        "font_size": 70
     },
     "score":
     {
-        "width": 210,
+        "width": 250,
         "height": 420,
         "delta_x": 20,
         "y": 45,
-        "font_size": 500
+        "font_size": 600
     },
     "timer":
     {
-        "width": 550,
+        "width": 350,
         "height": 300,
         "x": 700,
-        "y": 175,
-        "number_width": 165,
-        "dot_width": 55,
-        "time_font_size": 360,
-        "text_font_size": 120
+        "y": 155,
+        "number_width": 160,
+        "dot_width": 50,
+        "time_font_size": 340,
+        "text_font_size": 100
     },
     "passive": {
         "width": 500,
         "height": 16,
         "x": 960,
-        "y": 535
+        "y": 515
     },
     "period": {
         "width": 120,
@@ -42,7 +42,7 @@
         "font_size": 200
     },
     "passive_counter": {
-        "width": 60,
+        "width": 50,
         "height": 200,
         "x": 585,
         "y": 320,
@@ -104,7 +104,7 @@
     "recording_status":
     {
         "width": 320,
-        "height": 32,
+        "height": 48,
         "x": 1560,
         "y": 475,
         "font_size": 40
