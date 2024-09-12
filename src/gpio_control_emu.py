@@ -1,93 +1,110 @@
 from time import sleep
 from ast import literal_eval
+from static_vars import static_vars
+from flask import Flask, render_template
+import json
+import threading
+import system_info
+
+app = Flask(__name__)
+
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
+input_pins = {}
+output_pins = {}
+input_rc5 = []
+output_rc5 = []
+
+lock = threading.Lock()
+
+@app.route("/")
+def index():
+    global output_pins
+    with lock:
+        return render_template('index.html', input_pins=input_pins, output_pins=output_pins)
+
+@app.route("/output_pins")
+def get_output_pins():
+    global output_pins
+    with lock:
+        return json.dumps(output_pins)
+
+@app.route("/toggle_pin/<pin>")
+def set_pin(pin):
+    global input_pins
+    with lock:
+        input_pins[int(pin)] = 1 - input_pins[int(pin)]
+    
+    return json.dumps({"status": "ok"})
 
 ir_commands = []
 
 button_emulating = []
 
-def setup():
-    print("Setted up!")
+def run_emulator():
+    global app
+    app.run(host="0.0.0.0", port=1234)
 
-def toggle(pin):
-    print(f"toggled pin {pin}\n")
+
+def setup():
+    global output_pins
+    
+
+    input_pins[7] = 0
+    input_pins[27] = 0
+    input_pins[32] = 0
+    input_pins[36] = 0
+    input_pins[18] = 0
+
+    with lock:
+        output_pins[5] = 0
+        output_pins[15] = 0
+        output_pins[29] = 0
+        output_pins[35] = 0
+
+        if system_info.input_support:
+            output_pins[37] = 1
+        else:
+            input_pins[37] =  0
+
+    flask_thread = threading.Thread(target=run_emulator)
+    flask_thread.start()
+    
+    print("Setted up!")
+    
 
 def set(pin, value):
-    print(f"setted pin {pin} value to {value}\n")
+    global input_pins
+    with lock:
+        input_pins[pin] = value
+    print(f"Setted pin {pin} to value {value}")
+
 
 def button_emu(pin, times):
     for _ in range(times):
-        print(f"button {pin} pressed\n")
+        print(f"Pressed button on pin {pin} {times} times")
+
 
 def ir_emu(address, command):
-    print(f"transmitted signal, address: {address}, command: {command}\n")
+    global output_rc5
+    with lock:
+        output_rc5.append((address, command))
+    print(f"Pressed {command} button on remote with address {address}")
 
-def ir_emu_blocking(address, command):
-    print(f"transmitted blocking signal, address: {address}, command: {command}\n")
 
 def read_pins():
-    return literal_eval("{3: 1, 7: 0, 18: 0, 27: 1, 32: 1, 36: 1, }\n")
+    global input_pins
+    with lock:
+        ret_val = input_pins.copy()
 
-read_counter = 0
+    return ret_val
 
-def read_rc5(_):
-    global read_counter
-    read_counter += 1
-    if read_counter % 100 == 100:
-        print("23 send")
-        return [[0, 23, 1]]
-    else:
-        print(f"{read_counter}")
-        return []
 
-def read_all_rc5():
-    return []
+def read_rc5():
+    global input_rc5
+    with lock:
+        ret_val = input_rc5.copy()
 
-def byte_to_arr(byte):
-    a = [0] * 8
-    for i in range(8):
-            a[i] = byte % 2
-            byte //= 2
-    return a[::-1]
-
-def get_address(data_rx):
-    spacing_time = 1.3
-    toggle_bit = 0
-
-    button_emu(37, 3)
-    sleep(2)
-
-    data = [[0] * 8] * 8
-    while data_rx.inWaiting() // 8 > 0:
-        data = [[0] * 8] * 8
-        for _ in range(8):
-            byte = int.from_bytes(data_rx.read(), "big")
-            data[byte // 2 ** 5] = byte_to_arr(byte)
-
-    val = data[4][7]
-    timer = data[2][3]
-    if timer:
-        command = 13 #timer start stop
-    elif val:
-        command = 3  #left -
-    else:
-        command = 2  #left +
-
-    for k in range(32):
-        ir_emu_blocking(k, command)
-        toggle_bit = 1 - toggle_bit
-        sleep(spacing_time + timer)
-
-        while data_rx.inWaiting() // 8 > 0:
-            for _ in range(8):
-                byte = int.from_bytes(data_rx.read(), "big")
-                data[byte // 2 ** 5] = byte_to_arr(byte)
-
-        print(str(data).replace(']', ']\n'))
-        if (val != data[4][7] or timer != data[2][3]):
-            if timer:
-                ir_emu_blocking(k, command)
-            else:
-                ir_emu_blocking(k, 5 - command)
-
-            return k
-    return -1
+    return ret_val

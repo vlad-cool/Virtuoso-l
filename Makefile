@@ -1,4 +1,4 @@
-BANANA_IP := 192.168.2.9
+BANANA_IP := 192.168.2.15
 DRIVER_EXECS := send_pin send_rc5 get_pin get_rc5
 
 .PHONY: release ssh upload clean
@@ -14,7 +14,7 @@ Virtuoso_update.zip: src/* assets/* bin/* src/*/*
 	mkdir -p app
 	rm -rf app/*
 	mkdir -p app/assets
-	cp src/app.py src/system_info.py src/gpio_control.py src/video_control.py src/static_vars.py src/get_comment_metadata.sh src/scripts/* src/main*.kv app/
+	cp src/app.py src/system_info.py src/gpio_control.py src/video_control.py src/static_vars.py src/get_comment_metadata.sh src/recorder.sh src/scripts/* src/main*.kv app/
 	cp bin/* app/
 	cp assets/*.TTF assets/*.png app/assets/
 	cp -r assets/venv app/

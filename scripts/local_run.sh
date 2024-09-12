@@ -32,13 +32,19 @@ esac
 # Virtuoso configuring
 export IS_BANANA=False
 export INPUT_SUPPORT=True
-export CONFIG_FILE=config.json
+export CONFIG_FILE=/tmp/Virtuoso_config.json
 ## Video
 export VIDEO_SUPPORT=True
 export VIDEO_PATH=/home/vlad/Documents/VSCode/Virtuoso-l/test_videos
 export VIDEO_PATH_TMP=./video/tmp
 export VIDEO_ENCODER=libx264
-export CAMERA_PATH=/dev/video1
+export CAMERA_PATH=/dev/video0
+
+export RECORDER_LOG_OUT=$(pwd)/logs/RECORDER_LOG_OUT
+export RECORDER_LOG_ERR=$(pwd)/logs/RECORDER_LOG_ERR
+export CUTTER_LOG_OUT=$(pwd)/logs/CUTTER_LOG_OUT
+export CUTTER_LOG_ERR=$(pwd)/logs/CUTTER_LOG_ERR
+
 ## Updates
 export UPDATE_DIR=~/Downloads
 

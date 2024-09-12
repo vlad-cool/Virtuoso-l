@@ -18,23 +18,6 @@ from kivy.lang import Builder
 from kivy.core.text import LabelBase
 from kivy.network.urlrequest import UrlRequest
 
-# Define an enumeration class
-class IrKeys(Enum):
-    CHANGE_TIME = 7
-    TOGGLE_RECORDING = 24
-    PLAY_PAUSE = 24
-    PREVIOUS_VIDEO = 20
-    NEXT_VIDEO = 21
-    REWIND = 23
-    FAST_FORWARD = 22
-    CHANGE_MODE = 17
-    AUTO_SCORE = 16
-    AUTO_TIMER = 1
-    LEFT_PASSIVE = 17
-    RIGHT_PASSIVE = 18
-    
-    UPDATE_BTN = 18
-
 read_interval = .05
 
 if system_info.video_support:
@@ -46,6 +29,21 @@ else:
     import gpio_control_emu as gpio_control
 
 kivy.require("2.1.0")
+
+class IrKeys(Enum):
+    CHANGE_TIME = 7
+    TOGGLE_RECORDING = 24
+    PLAY_PAUSE = 24
+    PREVIOUS_VIDEO = 20
+    NEXT_VIDEO = 21
+    REWIND = 23
+    FAST_FORWARD = 22
+    CHANGE_MODE = 19
+    AUTO_SCORE = 16
+    AUTO_TIMER = 1
+    LEFT_PASSIVE = 17
+    RIGHT_PASSIVE = 18
+    UPDATE_BTN = 18
 
 class Updater:
     def __init__(self):
@@ -349,6 +347,7 @@ class VideoPlayer:
         self.show_preview()
 
     def play_video(self, id):
+        print(id)
         if len(self.available_videos) == 0:
             return
         id = id % len(self.available_videos)
@@ -493,7 +492,7 @@ class KivyApp(App):
         self.read_timer = Clock.schedule_interval(self.get_data, read_interval)
 
     def wait_rc5(self, btn):
-        cmds = gpio_control.read_all_rc5()
+        cmds = gpio_control.read_rc5()
         for cmd in cmds:
             if cmd[1] == IrKeys.CHANGE_TIME:
                 self.config["rc5_address"] = cmd[0]
@@ -688,16 +687,25 @@ class KivyApp(App):
         root.current_time = time.time()
         if system_info.is_banana:
             data = [[0] * 8] * 8
-            while self.data_rx.inWaiting() // 8 > 0:
-                for _ in range(8):
-                    byte = int.from_bytes(self.data_rx.read(), "big")
-                    data[byte // 2 ** 5] = self.byte_to_arr(byte)
-
-                self.data_update(data)
+            while self.data_rx.inWaiting() > 0:
+                flag = True
+                while flag:
+                    recieved_byte = int.from_bytes(self.data_rx.read(), "big")
+                    flag = recieved_byte >> 5 != 0
+                data[0] = self.byte_to_arr(recieved_byte)
+                for i in range(1, 8):
+                    if self.data_rx.inWaiting() == 0:
+                        break
+                    recieved_byte = int.from_bytes(self.data_rx.read(), "big")
+                    if recieved_byte >> 5 != i:
+                        break
+                    data[i] = self.byte_to_arr(recieved_byte)
+                else:
+                    self.data_update(data)
         else:
             data = [[0, 0, 0, 0, 0, 0, 0, 0][::-1],
                     [0, 0, 1, 0, 0, 0, 0, 0][::-1],
-                    [0, 1, 0, 1, 0, 0, 0, 0][::-1],
+                    [0, 1, 0, 0, 0, 0, 0, 0][::-1],
                     [0, 1, 1, 0, 0, 0, 0, 0][::-1],
                     [1, 0, 0, 1, 1, 1, 1, 1][::-1],
                     [1, 0, 1, 1, 1, 1, 1, 1][::-1],
@@ -755,6 +763,7 @@ class KivyApp(App):
         root.weapon = pins_data.weapon
         if root.weapon == 1:
             self.passive_timer.clear()
+        
         root.weapon_connection_type = pins_data.wireless
 
         self.passive_timer.update()
@@ -768,76 +777,76 @@ class KivyApp(App):
 
         self.prev_pins_data = pins_data
 
-        cmds = []
+        cmds = gpio_control.read_rc5()
 
         if not system_info.input_support:
             if pins_data.weapon_btn == 0:
-                cmds = gpio_control.read_all_rc5()
                 for cmd in cmds:
                     if cmd[1] == IrKeys.CHANGE_TIME:
                         self.config["rc5_address"] = cmd[0]
                         self.update_config()
-            else:
-                cmds = gpio_control.read_rc5(self.config["rc5_address"])
-        else:
-            cmds = gpio_control.read_rc5(self.config["rc5_address"])
+        
         for cmd in cmds:
-            if cmd[2]:
-                if cmd[1] == IrKeys.CHANGE_TIME:
-                    if self.root.timer_running != 1:
-                        self.passive_timer.clear()
-                if not system_info.input_support and pins_data.weapon == 0 and cmd[1] == IrKeys.UPDATE_BTN:
-                    self.root.index = 2
-                    self.root.ids["settings_update"].state = "down"
-                    self.updater.update(self.root.ids["update_btn"])
-                if cmd[1] == IrKeys.LEFT_PASSIVE:
-                    if self.root.timer_running != 1:
-                        self.passive_timer.clear()
-                        if root.passive_2_state == "normal":
-                            root.passive_2_state = "down"
-                        elif root.passive_1_state == "normal":
-                            root.passive_1_state = "down"
-                        else:
-                            root.passive_2_state = "normal"
-                            root.passive_1_state = "normal"
-                if cmd[1] == IrKeys.RIGHT_PASSIVE:
-                    if self.root.timer_running != 1:
-                        self.passive_timer.clear()
-                        if root.passive_4_state == "normal":
-                            root.passive_4_state = "down"
-                        elif root.passive_3_state == "normal":
-                            root.passive_3_state = "down"
-                        else:
-                            root.passive_4_state = "normal"
-                            root.passive_3_state = "normal"
-                carousel = self.root
-                if carousel.index == 0:
-                    if cmd[1] == IrKeys.TOGGLE_RECORDING:
-                        self.toggle_recording()
-                elif carousel.index == 1:
-                    if cmd[1] == IrKeys.PLAY_PAUSE:
-                        self.video_player.play_pause()
-                    if cmd[1] == IrKeys.PREVIOUS_VIDEO:
-                        self.video_player.play_previous_video()
-                    if cmd[1] == IrKeys.NEXT_VIDEO:
-                        self.video_player.play_next_video()
-                    if cmd[1] == IrKeys.REWIND:
-                        self.video_player.rewind_video(-1)
-                    if cmd[1] == IrKeys.FAST_FORWARD:
-                        self.video_player.rewind_video(1)
-                elif carousel.index == 2:
+            if cmd[0] != self.config["rc5_address"]:
+                continue
+            if cmd[2] == False:
+                continue
+            
+            if not system_info.input_support and pins_data.weapon_btn == 0 and cmd[1] == IrKeys.UPDATE_BTN:
+                self.root.index = 2
+                self.root.ids["settings_update"].state = "down"
+                self.updater.update(self.root.ids["update_btn"])
+            
+            match root.index:
+                case 0:
+                    match cmd[1]:
+                        case IrKeys.CHANGE_TIME:
+                            if self.root.timer_running != 1:
+                                self.passive_timer.clear()
+                        case IrKeys.LEFT_PASSIVE:
+                            if self.root.timer_running != 1:
+                                self.passive_timer.clear()
+                                if root.passive_2_state == "normal":
+                                    root.passive_2_state = "down"
+                                elif root.passive_1_state == "normal":
+                                    root.passive_1_state = "down"
+                                else:
+                                    root.passive_2_state = "normal"
+                                    root.passive_1_state = "normal"
+                        case IrKeys.RIGHT_PASSIVE:
+                            if self.root.timer_running != 1:
+                                self.passive_timer.clear()
+                                if root.passive_4_state == "normal":
+                                    root.passive_4_state = "down"
+                                elif root.passive_3_state == "normal":
+                                    root.passive_3_state = "down"
+                                else:
+                                    root.passive_4_state = "normal"
+                                    root.passive_3_state = "normal"
+                        case IrKeys.TOGGLE_RECORDING:
+                            self.toggle_recording()
+                        case IrKeys.CHANGE_MODE:
+                            root.index = 1
+                case 1:
+                    match cmd[1]:
+                        case IrKeys.PLAY_PAUSE:
+                            self.video_player.play_pause()
+                        case IrKeys.PREVIOUS_VIDEO:
+                            self.video_player.play_previous_video()
+                        case IrKeys.NEXT_VIDEO:
+                            self.video_player.play_next_video()
+                        case IrKeys.REWIND:
+                            self.video_player.rewind_video(-1)
+                        case IrKeys.FAST_FORWARD:
+                            self.video_player.rewind_video(1)
+                        case IrKeys.CHANGE_MODE:
+                            root.index = 0
+                case 2:
                     pass
-                if cmd[1] == IrKeys.CHANGE_MODE:
-                    if carousel.index == 0:
-                        carousel.index = 1
-                    # elif carousel.index == 1:
-                    #     carousel.index = 2
-                    else:
-                        carousel.index = 0
-                if cmd[1] == IrKeys.AUTO_SCORE:
-                    self.auto_status.switch_changed(1)
-                if cmd[1] == IrKeys.AUTO_TIMER:
-                    self.auto_status.switch_changed(0)
+            if cmd[1] == IrKeys.AUTO_SCORE:
+                self.auto_status.switch_changed(1)
+            if cmd[1] == IrKeys.AUTO_TIMER:
+                self.auto_status.switch_changed(0)
 
         if self.symbol == 1:
             if self.auto_status.switches_states[0]:
@@ -921,13 +930,16 @@ class KivyApp(App):
         return Builder.load_file(system_info.kivy_file)
 
     def on_start(self):
-        self.video_player = VideoPlayer(self.root.ids["video_player"], self.root)
         self.get_data(0)
         self.set_weapon(0, False)
+        
         self.read_timer = Clock.schedule_interval(self.get_data, read_interval)
         Clock.schedule_interval(self.update_network_data, 2)
+        
         self.root.flash_timer  = time.time()
         self.root.current_time = time.time()
+        
+        self.video_player = VideoPlayer(self.root.ids["video_player"], self.root)
         self.video_player.load_videos()
         self.root.video_path = os.environ["VIDEO_PATH"]
         self.root.ids["video_player"].bind(
