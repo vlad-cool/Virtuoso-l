@@ -1,7 +1,7 @@
 from time import sleep
 from ast import literal_eval
 from static_vars import static_vars
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import json
 import threading
 import system_info
@@ -12,12 +12,19 @@ import logging
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
+flask_thread = None
+
 input_pins = {}
 output_pins = {}
 input_rc5 = []
 output_rc5 = []
 
 lock = threading.Lock()
+
+@app.route("/stop")
+def stop():
+    global flask_thread
+    return "STOP"
 
 @app.route("/")
 def index():
@@ -50,6 +57,7 @@ def run_emulator():
 
 def setup():
     global output_pins
+    global flask_thread
     
 
     input_pins[7] = 0

@@ -35,8 +35,8 @@ export INPUT_SUPPORT=True
 export CONFIG_FILE=/tmp/Virtuoso_config.json
 ## Video
 export VIDEO_SUPPORT=True
-export VIDEO_PATH=/home/vlad/Documents/VSCode/Virtuoso-l/test_videos
-export VIDEO_PATH_TMP=./video/tmp
+export VIDEO_PATH=$(pwd)/video
+export VIDEO_PATH_TMP=$(pwd)/video/tmp
 export VIDEO_ENCODER=libx264
 export CAMERA_PATH=/dev/video0
 

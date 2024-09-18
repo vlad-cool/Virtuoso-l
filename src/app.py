@@ -17,6 +17,7 @@ from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.core.text import LabelBase
 from kivy.network.urlrequest import UrlRequest
+from kivy.uix.widget import Widget
 
 read_interval = .05
 
@@ -305,6 +306,8 @@ class VideoPlayer:
         self.player.state = "play"
         self.video_id = -1
         self.show_preview()
+        self.current_metadata = None
+        self.video_start_time = 0
 
     def show_preview(self):
         if not self.recording:
@@ -404,46 +407,52 @@ class VideoPlayer:
 
         if result == "":
             self.root.video_info = False
+            self.current_metadata = None
             return
         try:
             result = result.replace("Comment", "")
             result = result.replace(" ", "")
             result = result[1:]
-            data = result.split(";")
+            
+            self.video_start_time = float(result.split("v1")[0])
+            self.current_metadata = list(map(VideoMetadata, result.split("v1")[1:]))
+            
+            # data = result.split(";")
 
-            clip_data = {}
+            # clip_data = {}
 
-            for s in data:
-                if s == "\n" or s == "":
-                    continue
-                a, b = s.split(":")
-                clip_data[a] = b
+            # for s in data:
+            #     if s == "\n" or s == "":
+            #         continue
+            #     a, b = s.split(":")
+            #     clip_data[a] = b
 
-            self.root.video_info_score_l_l = clip_data["score_l_l"]
-            self.root.video_info_score_l_r = clip_data["score_l_r"]
-            self.root.video_info_score_r_l = clip_data["score_r_l"]
-            self.root.video_info_score_r_r = clip_data["score_r_r"]
-            self.root.video_info_timer_0 = clip_data["timer_0"]
-            self.root.video_info_timer_2 = clip_data["timer_2"]
-            self.root.video_info_timer_3 = clip_data["timer_3"]
-            self.root.video_info_period = clip_data["period"]
-            self.root.video_info_priority = clip_data["priority"]
-            self.root.video_info_warning_l = clip_data["warning_l"]
-            self.root.video_info_warning_r = clip_data["warning_r"]
-            self.root.video_info_passive_size = clip_data["passive_size"]
-            self.root.video_info_passive_coun = clip_data["passive_coun"]
-            self.root.video_info_passive_1_state = clip_data["passive_1_state"]
-            self.root.video_info_passive_2_state = clip_data["passive_2_state"]
-            self.root.video_info_passive_3_state = clip_data["passive_3_state"]
-            self.root.video_info_passive_4_state = clip_data["passive_4_state"]
-            self.root.video_info_epee5 = clip_data["epee5"]
-            self.root.video_info_weapon = clip_data["weapon"]
-            self.root.video_info_color_passive = list(map(float, (clip_data["color_passive"].replace("[", "").replace("]", "").split(","))))
+            # self.root.video_info_score_l_l = clip_data["score_l_l"]
+            # self.root.video_info_score_l_r = clip_data["score_l_r"]
+            # self.root.video_info_score_r_l = clip_data["score_r_l"]
+            # self.root.video_info_score_r_r = clip_data["score_r_r"]
+            # self.root.video_info_timer_0 = clip_data["timer_0"]
+            # self.root.video_info_timer_2 = clip_data["timer_2"]
+            # self.root.video_info_timer_3 = clip_data["timer_3"]
+            # self.root.video_info_period = clip_data["period"]
+            # self.root.video_info_priority = clip_data["priority"]
+            # self.root.video_info_warning_l = clip_data["warning_l"]
+            # self.root.video_info_warning_r = clip_data["warning_r"]
+            # self.root.video_info_passive_size = clip_data["passive_size"]
+            # self.root.video_info_passive_coun = clip_data["passive_coun"]
+            # self.root.video_info_passive_1_state = clip_data["passive_1_state"]
+            # self.root.video_info_passive_2_state = clip_data["passive_2_state"]
+            # self.root.video_info_passive_3_state = clip_data["passive_3_state"]
+            # self.root.video_info_passive_4_state = clip_data["passive_4_state"]
+            # self.root.video_info_epee5 = clip_data["epee5"]
+            # self.root.video_info_weapon = clip_data["weapon"]
+            # self.root.video_info_color_passive = list(map(float, (clip_data["color_passive"].replace("[", "").replace("]", "").split(","))))
 
-            self.root.video_info = True
+            # self.root.video_info = True
         except (ValueError, KeyError) as e:
             print(f"An error occurred: {e}")
             self.root.video_info = False
+            self.current_metadata = None
     
     def recording_started(self):
         if self.video_id == -1:
@@ -460,6 +469,92 @@ class VideoPlayer:
                 pass
             self.player.source = system_info.camera_path
         self.recording = False
+
+    def update_metadata(self):
+        if self.player.state == "play" and self.video_id != -1 and self.current_metadata is not None:
+            for i in range(len(self.current_metadata) - 1):
+                # print(f"i: {i}")
+                if float(self.current_metadata[i + 1].boottime) > self.video_start_time + self.root.ids.video_player.position:
+                    print(f"Processing {i} metadata")
+                    self.root.video_info_score_l_l = self.current_metadata[i].score_l_l
+                    self.root.video_info_score_l_r = self.current_metadata[i].score_l_r
+                    self.root.video_info_score_r_l = self.current_metadata[i].score_r_l
+                    self.root.video_info_score_r_r = self.current_metadata[i].score_r_r
+                    self.root.video_info_timer_0 = self.current_metadata[i].timer_0
+                    self.root.video_info_timer_2 = self.current_metadata[i].timer_2
+                    self.root.video_info_timer_3 = self.current_metadata[i].timer_3
+                    self.root.video_info_period = self.current_metadata[i].period
+                    self.root.video_info_priority = self.current_metadata[i].priority
+                    self.root.video_info_warning_l = self.current_metadata[i].warning_l
+                    self.root.video_info_warning_r = self.current_metadata[i].warning_r
+                    self.root.video_info_passive_size = self.current_metadata[i].passive_size
+                    self.root.video_info_passive_coun = self.current_metadata[i].passive_coun
+                    self.root.video_info_passive_1_state = self.current_metadata[i].passive_1_state
+                    self.root.video_info_passive_2_state = self.current_metadata[i].passive_2_state
+                    self.root.video_info_passive_3_state = self.current_metadata[i].passive_3_state
+                    self.root.video_info_passive_4_state = self.current_metadata[i].passive_4_state
+                    self.root.video_info_epee5 = self.current_metadata[i].epee5
+                    self.root.video_info_weapon = self.current_metadata[i].weapon
+                    self.root.video_info_color_passive = list(map(float, (self.current_metadata[i].color_passive.replace("[", "").replace("]", "").split(","))))
+                    self.root.video_info = True
+                    return
+
+class VideoMetadata:
+    def __init__(self, src):
+        if isinstance(src, Widget):
+            self.version = "v1"
+            self.boottime = time.clock_gettime(time.CLOCK_BOOTTIME)
+            self.score_l_l = src.score_l_l
+            self.score_l_r = src.score_l_r
+            self.score_r_l = src.score_r_l
+            self.score_r_r = src.score_r_r
+            self.timer_0 = src.timer_0
+            self.timer_2 = src.timer_2
+            self.timer_3 = src.timer_3
+            self.period = src.period
+            self.priority = src.priority
+            self.warning_l = src.warning_l
+            self.warning_r = src.warning_r
+            self.passive_size = src.passive_size
+            self.passive_coun = src.passive_coun
+            self.passive_1_state = src.passive_1_state
+            self.passive_2_state = src.passive_2_state
+            self.passive_3_state = src.passive_3_state
+            self.passive_4_state = src.passive_4_state
+            self.epee5 = src.epee5
+            self.weapon = src.weapon
+            self.color_passive = src.color_passive
+        elif isinstance(src, str):
+            # match src[0]:
+            #     case "v1":
+            src = src.split(",")
+            # self.version = src[0]
+            self.boottime = src[1]
+            self.score_l_l = src[2]
+            self.score_l_r = src[3]
+            self.score_r_l = src[4]
+            self.score_r_r = src[5]
+            self.timer_0 = src[6]
+            self.timer_2 = src[7]
+            self.timer_3 = src[8]
+            self.period = src[9]
+            self.priority = src[10]
+            self.warning_l = src[11]
+            self.warning_r = src[12]
+            self.passive_size = src[13]
+            self.passive_coun = src[14]
+            self.passive_1_state = src[15]
+            self.passive_2_state = src[16]
+            self.passive_3_state = src[17]
+            self.passive_4_state = src[18]
+            self.epee5 = src[19]
+            self.weapon = src[20]
+            self.color_passive = src[21]
+                # case _:
+                #     print("Unknown metadata version")
+    
+    def to_str(self):
+        return f"{self.version},{self.boottime},{self.score_l_l},{self.score_l_r},{self.score_r_l},{self.score_r_r},{self.timer_0},{self.timer_2},{self.timer_3},{self.period},{self.priority},{self.warning_l},{self.warning_r},{self.passive_size},{self.passive_coun},{self.passive_1_state},{self.passive_2_state},{self.passive_3_state},{self.passive_4_state},{self.epee5},{self.weapon},{self.color_passive}"
 
 class KivyApp(App):
     def toggle_recording(self):
@@ -682,6 +777,7 @@ class KivyApp(App):
     def get_data(self, _):
         self.auto_status.update_state()
         self.updater.check_download()
+        self.video_player.update_metadata()
 
         root = self.root
         root.current_time = time.time()
@@ -721,30 +817,34 @@ class KivyApp(App):
         # Recording section
         # -----------------
         if system_info.video_support:
-            boottime = time.clock_gettime(time.CLOCK_BOOTTIME)
-            clip_data = ""
-            clip_data += f"boottime:{boottime}"
-            clip_data += f"score_l_l:{root.score_l_l};"
-            clip_data += f"score_l_r:{root.score_l_r};"
-            clip_data += f"score_r_l:{root.score_r_l};"
-            clip_data += f"score_r_r:{root.score_r_r};"
-            clip_data += f"timer_0:{root.timer_0};"
-            clip_data += f"timer_2:{root.timer_2};"
-            clip_data += f"timer_3:{root.timer_3};"
-            clip_data += f"period:{root.period};"
-            clip_data += f"priority:{root.priority};"
-            clip_data += f"warning_l:{root.warning_l};"
-            clip_data += f"warning_r:{root.warning_r};"
-            clip_data += f"passive_size:{root.passive_size};"
-            clip_data += f"passive_coun:{root.passive_coun};"
-            clip_data += f"passive_1_state:{root.passive_1_state};"
-            clip_data += f"passive_2_state:{root.passive_2_state};"
-            clip_data += f"passive_3_state:{root.passive_3_state};"
-            clip_data += f"passive_4_state:{root.passive_4_state};"
-            clip_data += f"epee5:{root.epee5};"
-            clip_data += f"weapon:{root.weapon};"
-            clip_data += f"color_passive:{root.color_passive};"
-            self.clip_data_dict[boottime] = clip_data
+            if (video_control.recorder_proc is not None) and (video_control.recorder_proc.poll() is None):
+                # boottime = time.clock_gettime(time.CLOCK_BOOTTIME)
+                # clip_data = ""
+                # clip_data += f"boottime:{boottime}"
+                # clip_data += f"score_l_l:{root.score_l_l};"
+                # clip_data += f"score_l_r:{root.score_l_r};"
+                # clip_data += f"score_r_l:{root.score_r_l};"
+                # clip_data += f"score_r_r:{root.score_r_r};"
+                # clip_data += f"timer_0:{root.timer_0};"
+                # clip_data += f"timer_2:{root.timer_2};"
+                # clip_data += f"timer_3:{root.timer_3};"
+                # clip_data += f"period:{root.period};"
+                # clip_data += f"priority:{root.priority};"
+                # clip_data += f"warning_l:{root.warning_l};"
+                # clip_data += f"warning_r:{root.warning_r};"
+                # clip_data += f"passive_size:{root.passive_size};"
+                # clip_data += f"passive_coun:{root.passive_coun};"
+                # clip_data += f"passive_1_state:{root.passive_1_state};"
+                # clip_data += f"passive_2_state:{root.passive_2_state};"
+                # clip_data += f"passive_3_state:{root.passive_3_state};"
+                # clip_data += f"passive_4_state:{root.passive_4_state};"
+                # clip_data += f"epee5:{root.epee5};"
+                # clip_data += f"weapon:{root.weapon};"
+                # clip_data += f"color_passive:{root.color_passive};"
+                # self.clip_data_dict[boottime] = clip_data
+            
+                metadata = VideoMetadata(root)
+                self.clip_data_dict[metadata.boottime] = metadata.to_str()
             
             if ((self.prev_pins_data is None or self.prev_pins_data.recording == 0) and pins_data.recording == 1) or (pins_data.recording == 1 and not (video_control.recorder_proc is not None and video_control.recorder_proc.poll() is None)):
                 if self.stop_recording_scheduler is not None:
@@ -754,8 +854,8 @@ class KivyApp(App):
                     video_control.start_recording()
             
             elif self.prev_pins_data is not None and self.prev_pins_data.recording == 1 and pins_data.recording == 0:
-                video_control.save_clip(metadata=json.dumps(self.clip_data_dict).replace(" ", ""))
-                self.stop_recording_scheduler = Clock.schedule_once(lambda _: (video_control.stop_recording(), self.video_player.recording_stopped()), 4)
+                video_control.save_clip()
+                self.stop_recording_scheduler = Clock.schedule_once(lambda _: (video_control.stop_recording(self.clip_data_dict), self.video_player.recording_stopped()), 4)
             if video_control.recorder_proc is not None and video_control.recorder_proc.poll() is None:
                 self.video_player.load_videos()
         # -----------------
@@ -882,7 +982,7 @@ class KivyApp(App):
     def build(self):
         self.metadata_procs = {}
         
-        self.clip_data_dict = {}
+        self.clip_data_dict = OrderedDict()
 
         self.updater = Updater()
 
@@ -930,6 +1030,9 @@ class KivyApp(App):
         return Builder.load_file(system_info.kivy_file)
 
     def on_start(self):
+        self.video_player = VideoPlayer(self.root.ids["video_player"], self.root)
+        self.video_player.load_videos()
+        
         self.get_data(0)
         self.set_weapon(0, False)
         
@@ -939,8 +1042,6 @@ class KivyApp(App):
         self.root.flash_timer  = time.time()
         self.root.current_time = time.time()
         
-        self.video_player = VideoPlayer(self.root.ids["video_player"], self.root)
-        self.video_player.load_videos()
         self.root.video_path = os.environ["VIDEO_PATH"]
         self.root.ids["video_player"].bind(
             position=self.on_position_change

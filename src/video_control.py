@@ -33,7 +33,7 @@ def start_recording():
     except Exception as e:
         print(f"Failed to cut videos, an following exception occured: {e}", file=sys.stderr)
 
-def stop_recording():
+def stop_recording(metadata):
     global recording
     global recorder_proc
     global name
@@ -45,24 +45,24 @@ def stop_recording():
     try:
         recorder_proc.stdin.write("q")
         recorder_proc.stdin.flush()
-        split_video()
+        split_video(metadata)
         name += 1
     except Exception as e:
         print(f"Failed to cut videos, an following exception occured: {e}", file=sys.stderr)
     finally:
-        pass
         recording = False
         recorder_proc = None
+        metadata.clear()
 
-def save_clip(metadata=""):
+def save_clip():
     global enabled
     global recording
     global clips
     if not enabled or not recording:
         return
-    clips.append((time.clock_gettime(time.CLOCK_BOOTTIME), metadata))
+    clips.append(time.clock_gettime(time.CLOCK_BOOTTIME) - clip_duration + post_record)
 
-def split_video():
+def split_video(metadata):
     global enabled
     global clips
     global recorder_proc
@@ -73,9 +73,13 @@ def split_video():
 
     try:
         for clip in clips:
-            recorder_proc.stdin.write(f"{(clip[0] + post_record - clip_duration)}\n")
+            recorder_proc.stdin.write(f"{(clip)}\n")
             recorder_proc.stdin.write(f"{(clip_duration)}\n")
-            recorder_proc.stdin.write(f"{clip[1]}\n")
+            metadata_str = f"{clip}"
+            for key, value in metadata.items():
+                if key > clip and key < clip + clip_duration:
+                    metadata_str += str(value)
+            recorder_proc.stdin.write(metadata_str + "\n")
     except Exception as e:
         print(f"Failed to cut videos, an following exception occured: {e}", file=sys.stderr)
     finally:
