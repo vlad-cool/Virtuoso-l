@@ -8,6 +8,7 @@ VIDEO=$VIDEO_PATH_TMP/$VIDEO_NAME.mp4
 ffmpeg -y -f v4l2 -video_size $RESOLUTION -framerate $FPS -i /dev/video0 -vf "transpose=2,transpose=2" -c:v $VIDEO_ENCODER -pix_fmt nv12 $VIDEO
 
 END_TIME=$(./get_time)
+END_TIME=$($END_TIME - $VIDEO_LAG)
 
 DURATION=$(gst-discoverer-1.0 $VIDEO | grep Duration | head -n 1)
 IFS=':' read -ra parts <<< "$DURATION"

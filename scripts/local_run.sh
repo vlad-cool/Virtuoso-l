@@ -39,6 +39,8 @@ export VIDEO_PATH=$(pwd)/video
 export VIDEO_PATH_TMP=$(pwd)/video/tmp
 export VIDEO_ENCODER=libx264
 export CAMERA_PATH=/dev/video0
+export COMPRESS_METADATA=bz2
+export VIDEO_LAG=0
 
 export RECORDER_LOG_OUT=$(pwd)/logs/RECORDER_LOG_OUT
 export RECORDER_LOG_ERR=$(pwd)/logs/RECORDER_LOG_ERR

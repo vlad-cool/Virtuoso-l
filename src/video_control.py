@@ -2,9 +2,12 @@ import subprocess
 import time
 import sys
 import os
+import system_info
+import base64
+import bz2
 
 clip_duration = 10  # seconds
-post_record = 4  # seconds
+post_record = 2  # seconds
 
 enabled = False
 
@@ -79,7 +82,11 @@ def split_video(metadata):
             for key, value in metadata.items():
                 if key > clip and key < clip + clip_duration:
                     metadata_str += str(value)
-            recorder_proc.stdin.write(metadata_str + "\n")
+            
+            match system_info.comress_metadata.lower():
+                case "bz2":
+                    metadata_str = base64.b64encode(bz2.compress(metadata_str.encode())).decode()
+            recorder_proc.stdin.write(f"{system_info.comress_metadata.lower()}#{metadata_str}" + "\n")
     except Exception as e:
         print(f"Failed to cut videos, an following exception occured: {e}", file=sys.stderr)
     finally:

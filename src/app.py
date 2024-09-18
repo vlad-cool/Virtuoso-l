@@ -19,6 +19,9 @@ from kivy.core.text import LabelBase
 from kivy.network.urlrequest import UrlRequest
 from kivy.uix.widget import Widget
 
+import bz2
+import base64
+
 read_interval = .05
 
 if system_info.video_support:
@@ -414,41 +417,19 @@ class VideoPlayer:
             result = result.replace(" ", "")
             result = result[1:]
             
+            splitted = result.split("#")
+            
+            if (len(splitted)) > 1:
+                compress = splitted[0]
+                result = splitted[1]
+            
+                match compress:
+                    case "bz2":            
+                        result = bz2.decompress(base64.b64decode(result.encode())).decode()
+            
             self.video_start_time = float(result.split("v1")[0])
             self.current_metadata = list(map(VideoMetadata, result.split("v1")[1:]))
-            
-            # data = result.split(";")
 
-            # clip_data = {}
-
-            # for s in data:
-            #     if s == "\n" or s == "":
-            #         continue
-            #     a, b = s.split(":")
-            #     clip_data[a] = b
-
-            # self.root.video_info_score_l_l = clip_data["score_l_l"]
-            # self.root.video_info_score_l_r = clip_data["score_l_r"]
-            # self.root.video_info_score_r_l = clip_data["score_r_l"]
-            # self.root.video_info_score_r_r = clip_data["score_r_r"]
-            # self.root.video_info_timer_0 = clip_data["timer_0"]
-            # self.root.video_info_timer_2 = clip_data["timer_2"]
-            # self.root.video_info_timer_3 = clip_data["timer_3"]
-            # self.root.video_info_period = clip_data["period"]
-            # self.root.video_info_priority = clip_data["priority"]
-            # self.root.video_info_warning_l = clip_data["warning_l"]
-            # self.root.video_info_warning_r = clip_data["warning_r"]
-            # self.root.video_info_passive_size = clip_data["passive_size"]
-            # self.root.video_info_passive_coun = clip_data["passive_coun"]
-            # self.root.video_info_passive_1_state = clip_data["passive_1_state"]
-            # self.root.video_info_passive_2_state = clip_data["passive_2_state"]
-            # self.root.video_info_passive_3_state = clip_data["passive_3_state"]
-            # self.root.video_info_passive_4_state = clip_data["passive_4_state"]
-            # self.root.video_info_epee5 = clip_data["epee5"]
-            # self.root.video_info_weapon = clip_data["weapon"]
-            # self.root.video_info_color_passive = list(map(float, (clip_data["color_passive"].replace("[", "").replace("]", "").split(","))))
-
-            # self.root.video_info = True
         except (ValueError, KeyError) as e:
             print(f"An error occurred: {e}")
             self.root.video_info = False
@@ -473,7 +454,6 @@ class VideoPlayer:
     def update_metadata(self):
         if self.player.state == "play" and self.video_id != -1 and self.current_metadata is not None:
             for i in range(len(self.current_metadata) - 1):
-                # print(f"i: {i}")
                 if float(self.current_metadata[i + 1].boottime) > self.video_start_time + self.root.ids.video_player.position:
                     print(f"Processing {i} metadata")
                     self.root.video_info_score_l_l = self.current_metadata[i].score_l_l
@@ -495,7 +475,7 @@ class VideoPlayer:
                     self.root.video_info_passive_4_state = self.current_metadata[i].passive_4_state
                     self.root.video_info_epee5 = self.current_metadata[i].epee5
                     self.root.video_info_weapon = self.current_metadata[i].weapon
-                    self.root.video_info_color_passive = list(map(float, (self.current_metadata[i].color_passive.replace("[", "").replace("]", "").split(","))))
+                    self.root.video_info_color_passive = self.current_metadata[i].color_passive
                     self.root.video_info = True
                     return
 
@@ -549,7 +529,7 @@ class VideoMetadata:
             self.passive_4_state = src[18]
             self.epee5 = src[19]
             self.weapon = src[20]
-            self.color_passive = src[21]
+            self.color_passive = [float(src[21].replace("[", "")), float(src[22]), float(src[23].replace("]", ""))]
                 # case _:
                 #     print("Unknown metadata version")
     
