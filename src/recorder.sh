@@ -7,8 +7,7 @@ RESOLUTION=640x480
 VIDEO=$VIDEO_PATH_TMP/$VIDEO_NAME.mp4
 ffmpeg -y -f v4l2 -video_size $RESOLUTION -framerate $FPS -i /dev/video0 -vf "transpose=2,transpose=2" -c:v $VIDEO_ENCODER -pix_fmt nv12 $VIDEO
 
-END_TIME=$(./get_time)
-END_TIME=$($END_TIME - $VIDEO_LAG)
+read END_TIME
 
 DURATION=$(gst-discoverer-1.0 $VIDEO | grep Duration | head -n 1)
 IFS=':' read -ra parts <<< "$DURATION"
@@ -24,7 +23,6 @@ max=0
 
 for file in $VIDEO_PATH/[0-9]*.mp4; do
     if [ -f "$file" ]; then
-        echo "Processing $file"
         file=$(basename "$file")
         num=${file%.*}
         if [ "$num" -gt "$max" ]; then
@@ -66,4 +64,4 @@ for file in $VIDEO_PATH/*.mp4; do
     fi
 done
 
-rm $TMP_DIR/$VIDEO
+rm $VIDEO

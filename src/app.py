@@ -313,31 +313,27 @@ class VideoPlayer:
         self.video_start_time = 0
 
     def show_preview(self):
-        if not self.recording:
-            self.player.state = "play"
-        
-        if self.video_id == -1:
+        if self.recording:
+            self.player.state = "stop"
+            self.player.source = ""
+        else:
             self.player.unload()
             while self.player.loaded:
                 pass
-            self.player.source = ""
-        
+            self.player.state = "play"
+            self.player.source = system_info.camera_path
         self.video_id = -1
-        
-        self.player.unload()
-        while self.player.loaded:
-            pass
-        self.player.source = system_info.camera_path if not self.recording else ""
+        self.root.video_id = -1
 
     def play_pause(self):
         print(self.player.eos)
         if self.player.eos:
             self.player.seek(0)
             self.start_playback()
-        elif self.player.state == "pause":
-            self.start_playback()
-        else:
+        elif self.player.state == "play":
             self.pause_playback()
+        else:
+            self.start_playback()
     
     def start_playback(self):
         if self.video_id != -1:
@@ -348,33 +344,31 @@ class VideoPlayer:
             self.player.state = "pause"
     
     def stop_playback(self):
-        self.video_id = -1
-        self.root.video_id = -1
         self.show_preview()
 
     def play_video(self, id):
         print(id)
-        if len(self.available_videos) == 0:
-            return
-        id = id % len(self.available_videos)
-        self.player.camera = False
-        self.video_id = id
-        self.player.unload()
-        while self.player.loaded:
-            pass
-        self.player.source = list(self.available_videos)[id]
-        self.start_playback()
-        self.load_metadata()
-        self.root.video_id = id
+        
+        id = (id + 1) % (len(self.available_videos) + 1) - 1
+        
+        if id == -1:
+            self.show_preview()
+        else:
+            self.player.camera = False
+            self.player.unload()
+            while self.player.loaded:
+                pass
+            self.player.source = list(self.available_videos)[id]
+            self.start_playback()
+            self.load_metadata()
+            self.video_id = id
+            self.root.video_id = id
 
     def play_next_video(self):
         self.play_video(self.video_id + 1)
 
     def play_previous_video(self):
-        if self.video_id == -1:
-            self.play_video(self.video_id)
-        else:
-            self.play_video(self.video_id - 1)
+        self.play_video(self.video_id - 1)
 
     def rewind_video(self, s):
         if self.video_id != -1 and self.root.ids.video_player.loaded:

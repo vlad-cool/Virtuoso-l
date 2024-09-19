@@ -7,7 +7,7 @@ import base64
 import bz2
 
 clip_duration = 10  # seconds
-post_record = 2  # seconds
+post_record = 2 # seconds
 
 enabled = False
 
@@ -48,6 +48,7 @@ def stop_recording(metadata):
     try:
         recorder_proc.stdin.write("q")
         recorder_proc.stdin.flush()
+        recorder_proc.stdin.write(f"{time.clock_gettime(time.CLOCK_BOOTTIME)}\n")
         split_video(metadata)
         name += 1
     except Exception as e:
