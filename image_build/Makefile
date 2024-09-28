@@ -5,7 +5,7 @@ RESOLUTIONS := 1920x360_notouch 1920x480_notouch 1920x550_notouch
 all: Virtuoso_1920x360_notouch.img Virtuoso_1920x480_notouch.img Virtuoso_1920x550_notouch.img 
 
 UMOUNT:
-	umount mnt
+	-umount mnt
 
 Virtuoso_1920x360_notouch.img: UMOUNT
 	cp --preserve=ownership base_image.img Virtuoso_1920x360_notouch.img

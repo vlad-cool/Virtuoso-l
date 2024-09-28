@@ -50,8 +50,6 @@ do
 
     echo $VIDEO -hr-edl-seek -edl EDL -endpos $CLIP_DURATION -ovc x264 -info comment="$CLIP_METADATA" -o $VIDEO_CUT > $CUTTER_LOG_OUT.COMMAND
     mencoder $VIDEO -hr-edl-seek -edl EDL -endpos $CLIP_DURATION -ovc x264 -info comment="$CLIP_METADATA" -o $VIDEO_CUT > $CUTTER_LOG_OUT 2> $CUTTER_LOG_ERR
-
-    mv $VIDEO_CUT $VIDEO_PATH/$j.mp4
 done
 
 max=$j

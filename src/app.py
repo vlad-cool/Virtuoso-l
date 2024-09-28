@@ -10,7 +10,6 @@ import shutil
 import pathlib
 import subprocess
 import system_info
-from enum import Enum
 from collections import OrderedDict
 from kivy.app import App
 from kivy.clock import Clock
@@ -34,7 +33,7 @@ else:
 
 kivy.require("2.1.0")
 
-class IrKeys(Enum):
+class IrKeys:
     CHANGE_TIME = 7
     TOGGLE_RECORDING = 24
     PLAY_PAUSE = 24
@@ -47,7 +46,7 @@ class IrKeys(Enum):
     AUTO_TIMER = 1
     LEFT_PASSIVE = 17
     RIGHT_PASSIVE = 18
-    UPDATE_BTN = 18
+    UPDATE_BTN = 24
 
 class Updater:
     def __init__(self):
@@ -317,9 +316,6 @@ class VideoPlayer:
             self.player.state = "stop"
             self.player.source = ""
         else:
-            self.player.unload()
-            while self.player.loaded:
-                pass
             self.player.state = "play"
             self.player.source = system_info.camera_path
         self.video_id = -1
@@ -346,10 +342,9 @@ class VideoPlayer:
     def stop_playback(self):
         self.show_preview()
 
-    def play_video(self, id):
-        print(id)
-        
+    def play_video(self, id):        
         id = (id + 1) % (len(self.available_videos) + 1) - 1
+        self.root.video_info = False
         
         if id == -1:
             self.show_preview()
@@ -359,10 +354,10 @@ class VideoPlayer:
             while self.player.loaded:
                 pass
             self.player.source = list(self.available_videos)[id]
-            self.start_playback()
-            self.load_metadata()
             self.video_id = id
             self.root.video_id = id
+            self.start_playback()
+            self.load_metadata()
 
     def play_next_video(self):
         self.play_video(self.video_id + 1)
@@ -385,11 +380,8 @@ class VideoPlayer:
             for video in self.available_videos:
                 if video not in videos:
                     self.available_videos.pop(video)
-            if (len(videos) == 0):
-                return
-        
-        if self.video_id == -1:
-            self.show_preview()
+            if self.video_id == -1:
+                self.show_preview()
 
     def load_metadata(self):
         path = self.player.source
@@ -448,7 +440,7 @@ class VideoPlayer:
     def update_metadata(self):
         if self.player.state == "play" and self.video_id != -1 and self.current_metadata is not None:
             for i in range(len(self.current_metadata) - 1):
-                if float(self.current_metadata[i + 1].boottime) > self.video_start_time + self.root.ids.video_player.position:
+                if float(self.current_metadata[i + 1].boottime) > self.video_start_time + 10 - self.root.ids.video_player.duration + self.root.ids.video_player.position:
                     print(f"Processing {i} metadata")
                     self.root.video_info_score_l_l = self.current_metadata[i].score_l_l
                     self.root.video_info_score_l_r = self.current_metadata[i].score_l_r
@@ -462,7 +454,7 @@ class VideoPlayer:
                     self.root.video_info_warning_l = self.current_metadata[i].warning_l
                     self.root.video_info_warning_r = self.current_metadata[i].warning_r
                     self.root.video_info_passive_size = self.current_metadata[i].passive_size
-                    self.root.video_info_passive_coun = self.current_metadata[i].passive_coun
+                    self.root.video_info_passive_coun = self.current_metadata[i].passive_coun + " "
                     self.root.video_info_passive_1_state = self.current_metadata[i].passive_1_state
                     self.root.video_info_passive_2_state = self.current_metadata[i].passive_2_state
                     self.root.video_info_passive_3_state = self.current_metadata[i].passive_3_state
@@ -470,6 +462,7 @@ class VideoPlayer:
                     self.root.video_info_epee5 = self.current_metadata[i].epee5
                     self.root.video_info_weapon = self.current_metadata[i].weapon
                     self.root.video_info_color_passive = self.current_metadata[i].color_passive
+                    self.root.video_info_color_timer = self.current_metadata[i].color_timer
                     self.root.video_info = True
                     return
 
@@ -498,6 +491,8 @@ class VideoMetadata:
             self.epee5 = src.epee5
             self.weapon = src.weapon
             self.color_passive = src.color_passive
+            self.color_timer = src.color_timer
+            # self.color_timer = 
         elif isinstance(src, str):
             # match src[0]:
             #     case "v1":
@@ -523,12 +518,11 @@ class VideoMetadata:
             self.passive_4_state = src[18]
             self.epee5 = src[19]
             self.weapon = src[20]
-            self.color_passive = [float(src[21].replace("[", "")), float(src[22]), float(src[23].replace("]", ""))]
-                # case _:
-                #     print("Unknown metadata version")
+            self.color_passive = [float(src[21].replace("[", "")), float(src[22]), float(src[23]), float(src[24].replace("]", ""))]
+            self.color_timer = [float(src[25].replace("[", "")), float(src[26]), float(src[27]), float(src[28].replace("]", ""))]
     
     def to_str(self):
-        return f"{self.version},{self.boottime},{self.score_l_l},{self.score_l_r},{self.score_r_l},{self.score_r_r},{self.timer_0},{self.timer_2},{self.timer_3},{self.period},{self.priority},{self.warning_l},{self.warning_r},{self.passive_size},{self.passive_coun},{self.passive_1_state},{self.passive_2_state},{self.passive_3_state},{self.passive_4_state},{self.epee5},{self.weapon},{self.color_passive}"
+        return f"{self.version},{self.boottime},{self.score_l_l},{self.score_l_r},{self.score_r_l},{self.score_r_r},{self.timer_0},{self.timer_2},{self.timer_3},{self.period},{self.priority},{self.warning_l},{self.warning_r},{self.passive_size},{self.passive_coun},{self.passive_1_state},{self.passive_2_state},{self.passive_3_state},{self.passive_4_state},{self.epee5},{self.weapon},{self.color_passive},{self.color_timer}"
 
 class KivyApp(App):
     def toggle_recording(self):
@@ -792,31 +786,6 @@ class KivyApp(App):
         # -----------------
         if system_info.video_support:
             if (video_control.recorder_proc is not None) and (video_control.recorder_proc.poll() is None):
-                # boottime = time.clock_gettime(time.CLOCK_BOOTTIME)
-                # clip_data = ""
-                # clip_data += f"boottime:{boottime}"
-                # clip_data += f"score_l_l:{root.score_l_l};"
-                # clip_data += f"score_l_r:{root.score_l_r};"
-                # clip_data += f"score_r_l:{root.score_r_l};"
-                # clip_data += f"score_r_r:{root.score_r_r};"
-                # clip_data += f"timer_0:{root.timer_0};"
-                # clip_data += f"timer_2:{root.timer_2};"
-                # clip_data += f"timer_3:{root.timer_3};"
-                # clip_data += f"period:{root.period};"
-                # clip_data += f"priority:{root.priority};"
-                # clip_data += f"warning_l:{root.warning_l};"
-                # clip_data += f"warning_r:{root.warning_r};"
-                # clip_data += f"passive_size:{root.passive_size};"
-                # clip_data += f"passive_coun:{root.passive_coun};"
-                # clip_data += f"passive_1_state:{root.passive_1_state};"
-                # clip_data += f"passive_2_state:{root.passive_2_state};"
-                # clip_data += f"passive_3_state:{root.passive_3_state};"
-                # clip_data += f"passive_4_state:{root.passive_4_state};"
-                # clip_data += f"epee5:{root.epee5};"
-                # clip_data += f"weapon:{root.weapon};"
-                # clip_data += f"color_passive:{root.color_passive};"
-                # self.clip_data_dict[boottime] = clip_data
-            
                 metadata = VideoMetadata(root)
                 self.clip_data_dict[metadata.boottime] = metadata.to_str()
             
@@ -861,15 +830,20 @@ class KivyApp(App):
                         self.update_config()
         
         for cmd in cmds:
+            print(cmd)
             if cmd[0] != self.config["rc5_address"]:
+                print("ABC")
                 continue
             if cmd[2] == False:
+                print("CBA")
                 continue
             
             if not system_info.input_support and pins_data.weapon_btn == 0 and cmd[1] == IrKeys.UPDATE_BTN:
                 self.root.index = 2
                 self.root.ids["settings_update"].state = "down"
                 self.updater.update(self.root.ids["update_btn"])
+            
+            print(f"{root.index}, {cmd[1]}")
             
             match root.index:
                 case 0:

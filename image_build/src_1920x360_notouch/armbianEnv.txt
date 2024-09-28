@@ -2,6 +2,7 @@ verbosity=0
 bootlogo=true
 console=both
 overlay_prefix=sun8i-h3
+disp_mode=1920x1080p60
 rootdev=UUID=a27460ab-a2e0-4e92-914b-ae7131795ab0
 rootfstype=ext4
 extraargs=video=HDMI-A-1:1920x360@60
