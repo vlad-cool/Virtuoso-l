@@ -46,7 +46,7 @@ class IrKeys:
     AUTO_TIMER = 1
     LEFT_PASSIVE = 17
     RIGHT_PASSIVE = 18
-    UPDATE_BTN = 24
+    UPDATE_BTN = 5
 
 class Updater:
     def __init__(self):
@@ -526,14 +526,15 @@ class VideoMetadata:
 
 class KivyApp(App):
     def toggle_recording(self):
-        if not self.root.timer_running:
+        if system_info.video_support and not self.root.timer_running:
             self.root.recording_enabled = video_control.toggle_recording()
 
     def on_position_change(self, player, pos):
-        if (self.old_pos > 2 and player.duration - pos <= 2):
-            self.video_player.pause_playback()
-            Clock.schedule_once(lambda _: self.video_player.start_playback(), 1)
-        self.old_pos = player.duration - pos
+        if system_info.video_support:
+            if (self.old_pos > 2 and player.duration - pos <= 2):
+                self.video_player.pause_playback()
+                Clock.schedule_once(lambda _: self.video_player.start_playback(), 1)
+            self.old_pos = player.duration - pos
 
     def sync_new_remote(self, btn):
         if system_info.input_support:
@@ -745,7 +746,8 @@ class KivyApp(App):
     def get_data(self, _):
         self.auto_status.update_state()
         self.updater.check_download()
-        self.video_player.update_metadata()
+        if system_info.video_support:
+            self.video_player.update_metadata()
 
         root = self.root
         root.current_time = time.time()
@@ -872,23 +874,26 @@ class KivyApp(App):
                                     root.passive_4_state = "normal"
                                     root.passive_3_state = "normal"
                         case IrKeys.TOGGLE_RECORDING:
-                            self.toggle_recording()
+                            if system_info.video_support:
+                                self.toggle_recording()
                         case IrKeys.CHANGE_MODE:
-                            root.index = 1
+                            if system_info.video_support:
+                                root.index = 1
                 case 1:
-                    match cmd[1]:
-                        case IrKeys.PLAY_PAUSE:
-                            self.video_player.play_pause()
-                        case IrKeys.PREVIOUS_VIDEO:
-                            self.video_player.play_previous_video()
-                        case IrKeys.NEXT_VIDEO:
-                            self.video_player.play_next_video()
-                        case IrKeys.REWIND:
-                            self.video_player.rewind_video(-1)
-                        case IrKeys.FAST_FORWARD:
-                            self.video_player.rewind_video(1)
-                        case IrKeys.CHANGE_MODE:
-                            root.index = 0
+                    if system_info.video_support:
+                        match cmd[1]:
+                            case IrKeys.PLAY_PAUSE:
+                                self.video_player.play_pause()
+                            case IrKeys.PREVIOUS_VIDEO:
+                                self.video_player.play_previous_video()
+                            case IrKeys.NEXT_VIDEO:
+                                self.video_player.play_next_video()
+                            case IrKeys.REWIND:
+                                self.video_player.rewind_video(-1)
+                            case IrKeys.FAST_FORWARD:
+                                self.video_player.rewind_video(1)
+                            case IrKeys.CHANGE_MODE:
+                                root.index = 0
                 case 2:
                     pass
             if cmd[1] == IrKeys.AUTO_SCORE:
@@ -978,8 +983,9 @@ class KivyApp(App):
         return Builder.load_file(system_info.kivy_file)
 
     def on_start(self):
-        self.video_player = VideoPlayer(self.root.ids["video_player"], self.root)
-        self.video_player.load_videos()
+        if system_info.video_support:
+            self.video_player = VideoPlayer(self.root.ids["video_player"], self.root)
+            self.video_player.load_videos()
         
         self.get_data(0)
         self.set_weapon(0, False)
@@ -990,10 +996,11 @@ class KivyApp(App):
         self.root.flash_timer  = time.time()
         self.root.current_time = time.time()
         
-        self.root.video_path = os.environ["VIDEO_PATH"]
-        self.root.ids["video_player"].bind(
-            position=self.on_position_change
-        )
+        if system_info.video_support:
+            self.root.video_path = os.environ["VIDEO_PATH"]
+            self.root.ids["video_player"].bind(
+                position=self.on_position_change
+            )
 
     def on_stop(self):
         if self.data_rx is not None:

@@ -1,4 +1,4 @@
-BANANA_IP := 192.168.1.108
+BANANA_IP := 192.168.1.135
 DRIVER_EXECS := send_pin send_rc5 get_pin get_rc5
 
 .PHONY: release ssh upload clean
@@ -8,7 +8,7 @@ release: Virtuoso_update.zip
 ssh:
 	ssh-add ~/.ssh/bananapi
 
-Virtuoso_update.zip: src/* assets/* bin/* src/*/*
+Virtuoso_update.zip: src/* assets/* bin/* src/*/* VERSION
 	cd src/template && make
 	rm -f Virtuoso_update.zip
 	mkdir -p app

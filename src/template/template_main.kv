@@ -86,7 +86,7 @@ Carousel:
     video_info_color_timer: [0, 0, 0, 0]
     video_info_weapon: 0
 
-    on_index: app.video_player.load_videos()
+    on_index: app.video_player.load_videos() if hasattr(app, "video_player") else lambda: None
 
     recording_enabled: False
     recording: False
@@ -119,7 +119,11 @@ Carousel:
             ToggleButton:
                 id: weapon_0
                 markup: True
+                {% if data.get("epee5") %}
                 text: "epee [color=" + {{ colors['weapon']['text_dark'] }} + "]5[/color]" if root.epee5 == 0 else "epee 5"
+                {% else %}
+                text: "epee"
+                {% endif %}    
                 state: "down" if root.weapon == 3 else "normal"
                 font_size: {{ data["weapon_selector"]["font_size"] }}
                 font_name: "agencyb"
@@ -672,6 +676,7 @@ Carousel:
                     size: self.size
                     radius: [{{ data["card"]["radius"] }},]
 
+{% if data.get("video") %}
         Label:
             id: recording_indicator
             size: {{ data["recording_indicator"]["size"] }}, {{ data["recording_indicator"]["size"] }}
@@ -700,9 +705,9 @@ Carousel:
             halign: "right"
 
     FloatLayout:
-
 {% include "video_player.kv" %}
 {% include "video_info.kv" %}
+{% endif %}
 
     FloatLayout:
         BoxLayout:

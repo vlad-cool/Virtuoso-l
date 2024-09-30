@@ -1,0 +1,806 @@
+#:kivy 2.1.0
+
+Carousel:
+    loop: True
+
+    weapon: 0
+    weapon_connection_type: 0
+
+    score_l_l: "0"
+    score_l_r: " "
+    score_r_l: " "
+    score_r_r: "0"
+
+    timer_0: "-"
+    timer_1: ":"
+    timer_2: "-"
+    timer_3: "-"
+
+    timer_text: ""
+
+    timer_running: 0
+
+    period: 1
+    priority: 0
+    warning_l: 0
+    warning_r: 0
+
+    passive_time: 0
+    passive_size: 0
+    passive_coun: "60"
+
+    passive_1_state: "normal"
+    passive_2_state: "normal"
+    passive_3_state: "normal"
+    passive_4_state: "normal"
+    epee5: 0
+
+    flash_timer: 0
+    current_time: 0
+
+    time_updated: True
+
+    color_invis: [0, 0, 0, 0]
+    
+    color_timer_white: [0.8745098039215686, 0.8745098039215686, 0.8745098039215686, 1.0]
+    color_timer_orange: [0.9372549019607843, 0.4980392156862745, 0.10196078431372549, 1.0]
+    color_timer_blue: [0.0, 0.6274509803921569, 0.8901960784313725, 1.0]
+    
+    color_passive_yel: [0.8, 0.8, 0.0, 1.0]
+    color_passive_red: [0.8901960784313725, 0.11764705882352941, 0.1411764705882353, 1.0]
+    
+    color_timer: [0.9372549019607843, 0.4980392156862745, 0.10196078431372549, 1.0]
+    color_passive: [0, 0, 0, 0]
+    
+    video_playing: False
+    video_path: ""
+    video_id: -1
+    max_video_id: -1
+    min_video_id: -1
+
+    video_info: False
+
+    video_info_score_l_l: "0"
+    video_info_score_l_r: " "
+    video_info_score_r_l: " "
+    video_info_score_r_r: "0"
+    video_info_timer_0: "-"
+    video_info_timer_1: ":"
+    video_info_timer_2: "-"
+    video_info_timer_3: "-"
+    video_info_timer_text: ""
+    video_info_timer_running: 0
+    video_info_period: 1
+    video_info_priority: 0
+    video_info_warning_l: 0
+    video_info_warning_r: 0
+    video_info_passive_time: 0
+    video_info_passive_size: 0
+    video_info_passive_coun: "60"
+    video_info_passive_1_state: "normal"
+    video_info_passive_2_state: "normal"
+    video_info_passive_3_state: "normal"
+    video_info_passive_4_state: "normal"
+    video_info_epee5: 0
+    video_info_color_passive: [0, 0, 0, 0]
+    video_info_color_timer: [0, 0, 0, 0]
+    video_info_weapon: 0
+
+    on_index: app.video_player.load_videos() if hasattr(app, "video_player") else lambda: None
+
+    recording_enabled: False
+    recording: False
+
+    wired_ip: "No connection"
+    wireless_ip: "No connection"
+
+    auto_score_status: "Auto score\noff"
+    auto_timer_status: "Auto timer\noff"
+
+    FloatLayout:
+        BoxLayout:
+            id: weapon_selector
+            orientation: "horizontal"
+            size: 600, 70
+            size_hint: None, None
+            pos: 660, 0
+
+            ToggleButton:
+                id: weapon_2
+                text: "fleuret"
+                state: "down" if root.weapon == 2 else "normal"
+                font_size: 60
+                font_name: "agencyb"
+                group: "weapon"
+                color: "4c4c4cff" if root.weapon != 2 else "dfdfdfff"
+                background_color: root.color_invis
+                on_press: app.set_weapon(2)
+
+            ToggleButton:
+                id: weapon_0
+                markup: True
+                
+                text: "epee"
+                    
+                state: "down" if root.weapon == 3 else "normal"
+                font_size: 60
+                font_name: "agencyb"
+                group: "weapon"
+                color: "4c4c4cff" if root.weapon != 3 else "dfdfdfff"
+                background_color: root.color_invis
+                on_press: app.set_weapon(0)
+
+            ToggleButton:
+                id: weapon_1
+                text: "sabre"
+                state: "down" if root.weapon == 1 else "normal"
+                font_size: 60
+                font_name: "agencyb"
+                group: "weapon"
+                color: "4c4c4cff" if root.weapon != 1 else "dfdfdfff"
+                background_color: root.color_invis
+                on_press: app.set_weapon(1)
+
+        Carousel:
+            id: left_score_carousel
+            direction: "top"
+            loop: True
+            size: 420, 360
+            size_hint: None, None
+            pos: 20, 0
+            min_move: 0.05
+
+            old_index: 0
+            on_index: app.carousel_handler(0, self.old_index, self.index, [3, 2]); self.old_index = self.index
+
+            Button:
+                on_press: app.send_handler(2)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+            Button:
+                on_press: app.send_handler(2)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+            Button:
+                on_press: app.send_handler(2)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+        Label:
+            id: score_l_l
+            text: root.score_l_l
+            font_size: 430
+            font_name: "agencyb"
+            size: 210, 360
+            size_hint: None, None
+            pos: 20, 0
+            color: "e31e24ff"
+
+        Label:
+            id: score_l_r
+            text: root.score_l_r
+            font_size: 430
+            font_name: "agencyb"
+            size: 210, 360
+            size_hint: None, None
+            pos: 230, 0
+            color: "e31e24ff"
+
+        Carousel:
+            id: right_score_carousel
+            direction: "top"
+            loop: True
+            size: 420, 360
+            size_hint: None, None
+            pos: 1480, 0
+            min_move: 0.05
+
+            old_index: 0
+            on_index: app.carousel_handler(0, self.old_index, self.index, [15, 9]); self.old_index = self.index
+
+            Button:
+                on_press: app.send_handler(9)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+            Button:
+                on_press: app.send_handler(9)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+            Button:
+                on_press: app.send_handler(9)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+        Label:
+            id: score_r_l
+            text: root.score_r_l
+            font_size: 430
+            font_name: "agencyb"
+            size: 210, 360
+            size_hint: None, None
+            pos: 1480, 0
+            color: "009846ff"
+
+        Label:
+            id: score_r_r
+            text: root.score_r_r
+            font_size: 430
+            font_name: "agencyb"
+            size: 210, 360
+            size_hint: None, None
+            pos: 1690, 0
+            color: "009846ff"
+
+        Carousel:
+            id: timer_carousel
+            direction: "top"
+            loop: True
+            size: 460, 280
+            size_hint: None, None
+            pos: 740, 70
+            min_move: 0.05
+
+            old_index: 0
+            on_index: app.carousel_handler(0, self.old_index, self.index, [6, 14]); self.old_index = self.index
+
+            Button:
+                on_press: app.send_handler(13)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+            Button:
+                on_press: app.send_handler(13)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+            Button:
+                on_press: app.send_handler(13)
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+
+        Label:
+            id: timer_min
+            text: root.timer_0
+            font_size: 300
+            font_name: "agencyb"
+            size: 140, 280
+            size_hint: None, None
+            pos: 740, 70
+            color: root.color_timer
+
+        Label:
+            id: timer_dot
+            text: root.timer_1 if root.timer_running == 0 or root.current_time - root.flash_timer < 0.5 else " "
+            font_size: 300
+            font_name: "agencyb"
+            size: 40, 280
+            size_hint: None, None
+            pos: 880, 70
+            color: root.color_timer
+
+        Label:
+            id: timer_dec
+            text: root.timer_2
+            font_size: 300
+            font_name: "agencyb"
+            size: 140, 280
+            size_hint: None, None
+            pos: 920, 70
+            color: root.color_timer
+
+        Label:
+            id: timer_sec
+            text: root.timer_3
+            font_size: 300
+            font_name: "agencyb"
+            size: 140, 280
+            size_hint: None, None
+            pos: 1060, 70
+            color: root.color_timer
+
+        Label:
+            id: timer_text
+            text: root.timer_text
+            font_size: 90
+            font_name: "agencyb"
+            size: 460, 280
+            size_hint: None, None
+            pos: 740, 70
+            color: root.color_timer
+
+        Label:
+            id: passive
+            size: root.passive_size * 1000, 0 if root.passive_time > 50 and root.passive_time < 60 and root.current_time - root.flash_timer > 0.5 and root.timer_running == 1 else -16
+            size_hint: None, None
+            pos: 960 - root.passive_size * 500, 360
+
+            canvas:
+                Color:
+                    rgba: root.color_passive
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+        Button:
+            id: period
+            text: str(root.period)
+            font_size: 140
+            font_name: "agencyb"
+            size: 120, 200
+            size_hint: None, None
+            pos: 580, 80
+            color: "00a0e3ff"
+
+            on_press: app.send_handler(8)
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+
+        Label:
+            id: passive_counter_2_1
+            text: root.passive_coun[0] if root.time_updated or root.timer_running == 0 else self.text
+            font_size: 100
+            font_name: "agencyb"
+            size: 60, 75
+            size_hint: None, None
+            pos: 585, 265
+            color: "dfdfdfff" if root.weapon != 1 else "4c4c4cff"
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+
+        Label:
+            id: passive_counter_2_2
+            text: root.passive_coun[1] if root.time_updated or root.timer_running == 0 else self.text
+            font_size: 100
+            font_name: "agencyb"
+            size: 60, 75
+            size_hint: None, None
+            pos: 645, 265
+            color: "dfdfdfff" if root.weapon != 1 else "4c4c4cff"
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+
+        Label:
+            id: warning_top_l
+            text: "penalty"
+            font_size: 24
+            font_name: "agencyb"
+            size: 100, 30
+            size_hint: None, None
+            pos: 460, 220
+
+            color: "e6e6e6ff" if root.warning_l >= 2 else "666666ff"
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: [0.8901960784313725, 0.11764705882352941, 0.1411764705882353, 0.2] if root.warning_l < 2 else [0.8901960784313725, 0.11764705882352941, 0.1411764705882353, 1.0]
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [10,]
+
+        Label:
+            id: warning_bot_l
+            text: "caution"
+            font_size: 24
+            font_name: "agencyb"
+            size: 100, 30
+            size_hint: None, None
+            pos: 460, 180
+
+            color: "e6e6e6ff" if root.warning_l >= 1 else "666666ff"
+            
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: [0.8, 0.8, 0.0, 0.2] if root.warning_l < 1 else [0.8, 0.8, 0.0, 1.0]
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [10,]
+
+        Button:
+            id: left_warning_button
+            size: 100, 70
+            size_hint: None, None
+            pos: 460, 180
+
+            on_press: app.send_handler(4)
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+
+        Label:
+            id: warning_top_r
+            text: "penalty"
+            font_size: 24
+            font_name: "agencyb"
+            size: 100, 30
+            size_hint: None, None
+            pos: 1360, 220
+
+            color: "e6e6e6ff" if root.warning_r >= 2 else "666666ff"
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: [0.8901960784313725, 0.11764705882352941, 0.1411764705882353, 0.2] if root.warning_r < 2 else [0.8901960784313725, 0.11764705882352941, 0.1411764705882353, 1.0]
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [10,]
+
+        Label:
+            id: warning_bot_r
+            text: "caution"
+            font_size: 24
+            font_name: "agencyb"
+            size: 100, 30
+            size_hint: None, None
+            pos: 1360, 180
+
+            color: "e6e6e6ff" if root.warning_r >= 1 else "666666ff"
+            
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: [0.8, 0.8, 0.0, 0.2] if root.warning_r < 1 else [0.8, 0.8, 0.0, 1.0]
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [10,]
+
+        Button:
+            id: left_warning_button
+            size: 100, 70
+            size_hint: None, None
+            pos: 1360, 180
+
+            on_press: app.send_handler(11)
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+
+        Label:
+            id: priority_l_cap
+            text: "P"
+            font_size: 100
+            font_name: "agencyb"
+            size: 100, 60
+            size_hint: None, None
+            pos: 425, 100
+            color: "e31e24ff" if root.priority == -1 else "e31e2433"
+
+        Label:
+            id: priority_l_word
+            text: "priority"
+            font_size: 30
+            font_name: "agencyb"
+            size: 100, 100
+            size_hint: None, None
+            pos: 463, 55
+            color: "e6e6e6ff" if root.priority == -1 else "666666ff"
+        
+        Button:
+            text: root.auto_score_status
+            font_size: 32
+            font_name: "agencyb"
+            size: 100, 80
+            size_hint: None, None
+            pos: 471, 0
+            color: "dfdfdfff" if root.auto_score_status == "Auto score\non" else "4c4c4cff"
+            halign: "center"
+            background_color: root.color_invis
+            on_press: app.send_handler(16); app.auto_status.switch_changed(1)
+
+        Label:
+            id: priority_r_cap
+            text: "P"
+            font_size: 100
+            font_name: "agencyb"
+            size: 100, 60
+            size_hint: None, None
+            pos: 1325, 100
+            color: "009846ff" if root.priority == +1 else "00984633"
+
+        Label:
+            id: priority_r_word
+            text: "priority"
+            font_size: 30
+            font_name: "agencyb"
+            size: 100, 100
+            size_hint: None, None
+            pos: 1363, 55
+            color: "e6e6e6ff" if root.priority == +1 else "666666ff"
+        
+        Button:
+            text: root.auto_timer_status
+            font_size: 32
+            font_name: "agencyb"
+            size: 100, 80
+            size_hint: None, None
+            pos: 1371, 0
+            color: "dfdfdfff" if root.auto_timer_status == "Auto timer\non" else "4c4c4cff"
+            halign: "center"
+            background_color: root.color_invis
+            on_press: app.send_handler(1); app.auto_status.switch_changed(0)
+
+        ToggleButton:
+            id: passive_1
+            text: "Pcard"
+            font_size: 24
+            font_name: "agencyb"
+            state: root.passive_1_state
+            color: "e6e6e6ff" if self.state == "down" else "666666ff"
+            size: 100, 30
+            size_hint: None, None
+            pos: 460, 300
+            on_press: app.passive_stop_card(self.state, 1)
+            disabled: root.timer_running == 1
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: [0.8901960784313725, 0.11764705882352941, 0.1411764705882353, 0.2] if self.state == "normal" else [0.8901960784313725, 0.11764705882352941, 0.1411764705882353, 1.0]
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [10,]
+
+        ToggleButton:
+            id: passive_2
+            text: "Pcard"
+            font_size: 24
+            font_name: "agencyb"
+            state: root.passive_2_state
+            color: "e6e6e6ff" if self.state == "down" else "666666ff"
+            size: 100, 30
+            size_hint: None, None
+            pos: 460, 260
+            on_press: app.passive_stop_card(self.state, 2)
+            disabled: root.timer_running == 1
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: [0.8, 0.8, 0.0, 0.2] if self.state == "normal" else [0.8, 0.8, 0.0, 1.0]
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [10,]
+
+        ToggleButton:
+            id: passive_3
+            text: "Pcard"
+            font_size: 24
+            font_name: "agencyb"
+            state: root.passive_3_state
+            color: "e6e6e6ff" if self.state == "down" else "666666ff"
+            size: 100, 30
+            size_hint: None, None
+            pos: 1360, 300
+            on_press: app.passive_stop_card(self.state, 3)
+            disabled: root.timer_running == 1
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: [0.8901960784313725, 0.11764705882352941, 0.1411764705882353, 0.2] if self.state == "normal" else [0.8901960784313725, 0.11764705882352941, 0.1411764705882353, 1.0]
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [10,]
+
+        ToggleButton:
+            id: passive_4
+            text: "Pcard"
+            font_size: 24
+            font_name: "agencyb"
+            state: root.passive_4_state
+            color: "e6e6e6ff" if self.state == "down" else "666666ff"
+            size: 100, 30
+            size_hint: None, None
+            pos: 1360, 260
+            on_press: app.passive_stop_card(self.state, 4)
+            disabled: root.timer_running == 1
+
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: [0.8, 0.8, 0.0, 0.2] if self.state == "normal" else [0.8, 0.8, 0.0, 1.0]
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [10,]
+
+
+
+    FloatLayout:
+        BoxLayout:
+            orientation: "vertical"
+            size: 480, 360
+            size_hint: None, None
+            pos: 0, 0
+
+            ToggleButton:
+                id: settings_system
+                group: "settings"
+                text: "System"
+                font_size: 60
+                font_name: "agencyb"
+
+            ToggleButton:
+                id: settings_remote
+                group: "settings"
+                text: "Remote"
+                font_size: 60
+                font_name: "agencyb"
+            
+            ToggleButton:
+                id: settings_video
+                group: "settings"
+                text: "Video"
+                font_size: 60
+                font_name: "agencyb"
+                disabled: True
+        
+        BoxLayout:
+            orientation: "vertical"
+            size: 480, 360
+            size_hint: None, None
+            pos: 1440, 0
+
+            ToggleButton:
+                id: settings_ethernet
+                group: "settings"
+                text: "Ethernet"
+                font_size: 60
+                font_name: "agencyb"
+
+            ToggleButton:
+                id: settings_wifi
+                group: "settings"
+                text: "Wifi"
+                font_size: 60
+                font_name: "agencyb"
+
+            ToggleButton:
+                id: settings_update
+                group: "settings"
+                text: "Update"
+                font_size: 60
+                font_name: "agencyb"
+
+        BoxLayout:
+            pos: (780.0, 0) if settings_system.state == "down" else (480, 1920)
+            size: 360, 360
+
+            Button:
+                size: 360, 360
+                size_hint: None, None
+                background_normal: "assets/poweroff_button.png"
+                background_down: "assets/poweroff_button.png"
+                on_press: app.system_poweroff()
+
+        BoxLayout:
+            pos: (780.0, 0) if settings_remote.state == "down" else (480, 1920)
+            size: 360, 360
+
+            Button:
+                id: sync_remote
+                size: 360, 360
+                size_hint: None, None
+                font_size: 40
+                font_name: "agencyb"
+                text: "Sync new remote"
+                sync_state: "no_sync"
+                on_press: app.sync_new_remote(self)
+
+        BoxLayout:
+            pos: (780.0, 180.0) if settings_ethernet.state == "down" else (480, 1920)
+            size: 360, 180.0
+            size_hint: None, None
+            orientation: "vertical"       
+
+            Label:
+                text: "Wired"
+                font_size: 60
+                font_name: "agencyb"
+
+            Label:
+                text: root.wired_ip
+                font_size: 40
+                font_name: "agencyb"
+
+        BoxLayout:
+            pos: (780.0, 180.0) if settings_wifi.state == "down" else (480, 1920)
+            size: 360, 180.0
+            size_hint: None, None
+            orientation: "vertical"       
+
+            Label:
+                text: "Wireless"
+                font_size: 60
+                font_name: "agencyb"
+
+            Label:
+                text: root.wireless_ip
+                font_size: 40
+                font_name: "agencyb"
+        
+
+
+        BoxLayout:
+            pos: (780.0, 0) if settings_update.state == "down" else (480, 1920)
+            size: 360, 360
+
+            Button:
+                id: update_btn
+                size: 360, 360
+                size_hint: None, None
+                font_size: 40
+                font_name: "agencyb"
+                text: "Check for updates"
+                update_state: "no_update"
+                on_press: app.updater.update(self)
