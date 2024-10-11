@@ -25,6 +25,11 @@ Carousel:
     warning_l: 0
     warning_r: 0
 
+    led_red_state: False
+    led_green_state: False
+    led_red_white_state: False
+    led_green_white_state: False
+
     passive_time: 0
     passive_size: 0
     passive_coun: "60"
@@ -491,6 +496,86 @@ Carousel:
                     pos: self.pos
                     size: self.size
                     radius: [{{ data["card"]["radius"] }},]
+
+        Label:
+            id: led_red_indicator
+            size: {{ data["color_labels"]["width"] }}, {{ data["color_labels"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["color_labels"]["x"] }}, {{ data["color_labels"]["y"] }}
+            
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: {{ hex_to_rgba(colors["color_labels"]["red"]) }} if root.led_red_state else {{ hex_to_rgba(darker(colors["color_labels"]["red"])) }}
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [{{ data["color_labels"]["radius"] }},]
+
+        Label:
+            id: led_green_indicator
+            size: {{ data["color_labels"]["width"] }}, {{ data["color_labels"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["width"] - data["color_labels"]["x"] - data["color_labels"]["width"] }}, {{ data["color_labels"]["y"] }}
+            
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: {{ hex_to_rgba(colors["color_labels"]["green"]) }} if root.led_green_state else {{ hex_to_rgba(darker(colors["color_labels"]["green"])) }}
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [{{ data["color_labels"]["radius"] }},]
+
+        Label:
+            id: led_red_white_indicator
+            size: {{ data["white_labels"]["width"] }}, {{ data["white_labels"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["white_labels"]["x"] }}, {{ data["white_labels"]["y"] }}
+            
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: {{ hex_to_rgba(colors["white_labels"]["light"]) }} if root.led_red_white_state else {{ hex_to_rgba(colors["white_labels"]["dark"]) }}
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [{{ data["white_labels"]["radius"] }},]
+
+        Label:
+            id: led_red_white_indicator
+            size: {{ data["white_labels"]["width"] }}, {{ data["white_labels"]["height"] }}
+            size_hint: None, None
+            pos: {{ data["width"] - data["white_labels"]["x"] - data["white_labels"]["width"] }}, {{ data["white_labels"]["y"] }}
+            
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: {{ hex_to_rgba(colors["white_labels"]["light"]) }} if root.led_green_white_state else {{ hex_to_rgba(colors["white_labels"]["dark"]) }}
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [{{ data["white_labels"]["radius"] }},]
 
         Button:
             id: left_warning_button

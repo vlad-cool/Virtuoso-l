@@ -13,10 +13,10 @@
     "score":
     {
         "width": 210,
-        "height": 360,
+        "height": 340,
         "delta_x": 20,
         "y": 0,
-        "font_size": 430
+        "font_size": 410
     },
     "timer":
     {
@@ -34,6 +34,20 @@
         "height": 16,
         "x": 960,
         "y": 360
+    },
+    "color_labels": {
+        "width": 200,
+        "height": 16,
+        "x": 10,
+        "y": 340,
+        "radius": 10
+    },
+    "white_labels": {
+        "width": 200,
+        "height": 16,
+        "x": 220,
+        "y": 340,
+        "radius": 10
     },
     "period": {
         "width": 120,

@@ -110,9 +110,19 @@ def read_pins():
     return ret_val
 
 
+counter = 0
+
 def read_rc5():
+    global counter
+    print(counter)
     global input_rc5
     with lock:
         ret_val = input_rc5.copy()
-
+    counter += 1
+    
     return ret_val
+
+    # if counter != 50:
+    #     return ret_val
+    # else:
+    #     return [(-1, 5, True)]

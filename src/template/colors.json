@@ -21,6 +21,16 @@
         "text_light": "#dfdfdfff",
         "text_dark": "#4c4c4cff"
     },
+    "color_labels":
+    {
+        "red": "#e31e24ff",
+        "green": "#009846ff"
+    },
+    "white_labels":
+    {
+        "light": "#e6e6e6ff",
+        "dark": "#222222ff"
+    },
     "priority": {
         "left": "#e31e24ff",
         "right": "#009846ff",

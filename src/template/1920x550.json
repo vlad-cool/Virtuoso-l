@@ -1,6 +1,7 @@
 {
     "width": 1920,
     "height": 550,
+    "video": true,
     "weapon_selector":
     {
         "width": 650,
@@ -12,7 +13,7 @@
     "score":
     {
         "width": 250,
-        "height": 420,
+        "height": 400,
         "delta_x": 20,
         "y": 45,
         "font_size": 600
@@ -33,6 +34,20 @@
         "height": 16,
         "x": 960,
         "y": 515
+    },
+    "color_labels": {
+        "width": 200,
+        "height": 16,
+        "x": 10,
+        "y": 510,
+        "radius": 10
+    },
+    "white_labels": {
+        "width": 200,
+        "height": 16,
+        "x": 220,
+        "y": 510,
+        "radius": 10
     },
     "period": {
         "width": 120,

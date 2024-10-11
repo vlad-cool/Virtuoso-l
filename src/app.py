@@ -169,7 +169,7 @@ class Updater:
 
 class UartData:
     def __init__(self, data):
-        self.yellow_white  = data[0][4]
+        self.yellow_red    = data[0][4]
         self.red           = data[0][3]
         self.white_green   = data[0][2]
         self.yellow_green  = data[0][1]
@@ -652,6 +652,34 @@ class KivyApp(App):
         timer_d = uart_data.timer_d
         timer_s = uart_data.timer_s
 
+        if uart_data.red:
+            gpio_control.set(29, 1)
+            root.led_red_state = True
+        elif self.led_schedule is None and root.priority == -1:
+            gpio_control.set(29, 0)
+            root.led_red_state = False
+        
+        if uart_data.green:
+            gpio_control.set(35, 1)
+            root.led_green_state = True
+        elif self.led_schedule is None and root.priority == +1:
+            gpio_control.set(35, 0)
+            root.led_green_state = False
+            
+        if uart_data.white_green:
+            gpio_control.set(38, 1)
+            root.led_green_white_state = True
+        else:
+            gpio_control.set(38, 0)
+            root.led_green_white_state = False
+        
+        if uart_data.white_red:
+            gpio_control.set(31, 1)
+            root.led_red_white_state = True
+        else:
+            gpio_control.set(31, 0)
+            root.led_red_white_state = False
+
         if uart_data.period == 15:
             if root.priority != 1:
                 root.priority = 1 # GREEN
@@ -830,7 +858,7 @@ class KivyApp(App):
                     if cmd[1] == IrKeys.CHANGE_TIME:
                         self.config["rc5_address"] = cmd[0]
                         self.update_config()
-        
+                
         for cmd in cmds:
             print(cmd)
             if cmd[0] != self.config["rc5_address"]:
@@ -841,7 +869,7 @@ class KivyApp(App):
                 continue
             
             if not system_info.input_support and pins_data.weapon_btn == 0 and cmd[1] == IrKeys.UPDATE_BTN:
-                self.root.index = 2
+                self.root.index = 2 if system_info.video_support else 1
                 self.root.ids["settings_update"].state = "down"
                 self.updater.update(self.root.ids["update_btn"])
             

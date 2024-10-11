@@ -9,9 +9,7 @@
 /src/__pycache__
 /test_videos
 Virtuoso_update.zip
-src/main1920x360.kv
-src/main1920x480.kv
-src/main1920x550.kv
+src/main*.kv
 image_build/*.img
 image_build/*.z*
 image_build/mnt/*
