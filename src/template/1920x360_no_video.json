@@ -36,18 +36,18 @@
         "y": 360
     },
     "color_labels": {
-        "width": 200,
-        "height": 16,
+        "width": 266,
+        "height": 30,
         "x": 10,
-        "y": 340,
-        "radius": 10
+        "y": 326,
+        "radius": 3
     },
     "white_labels": {
-        "width": 200,
-        "height": 16,
-        "x": 220,
-        "y": 340,
-        "radius": 10
+        "width": 133,
+        "height": 30,
+        "x": 286,
+        "y": 326,
+        "radius": 3
     },
     "period": {
         "width": 120,

@@ -25,6 +25,11 @@ Carousel:
     warning_l: 0
     warning_r: 0
 
+    led_red_state: False
+    led_green_state: False
+    led_red_white_state: False
+    led_green_white_state: False
+
     passive_time: 0
     passive_size: 0
     passive_coun: "60"
@@ -145,7 +150,7 @@ Carousel:
             id: left_score_carousel
             direction: "top"
             loop: True
-            size: 420, 360
+            size: 420, 340
             size_hint: None, None
             pos: 20, 0
             min_move: 0.05
@@ -174,9 +179,9 @@ Carousel:
         Label:
             id: score_l_l
             text: root.score_l_l
-            font_size: 430
+            font_size: 410
             font_name: "agencyb"
-            size: 210, 360
+            size: 210, 340
             size_hint: None, None
             pos: 20, 0
             color: "e31e24ff"
@@ -184,9 +189,9 @@ Carousel:
         Label:
             id: score_l_r
             text: root.score_l_r
-            font_size: 430
+            font_size: 410
             font_name: "agencyb"
-            size: 210, 360
+            size: 210, 340
             size_hint: None, None
             pos: 230, 0
             color: "e31e24ff"
@@ -195,7 +200,7 @@ Carousel:
             id: right_score_carousel
             direction: "top"
             loop: True
-            size: 420, 360
+            size: 420, 340
             size_hint: None, None
             pos: 1480, 0
             min_move: 0.05
@@ -224,9 +229,9 @@ Carousel:
         Label:
             id: score_r_l
             text: root.score_r_l
-            font_size: 430
+            font_size: 410
             font_name: "agencyb"
-            size: 210, 360
+            size: 210, 340
             size_hint: None, None
             pos: 1480, 0
             color: "009846ff"
@@ -234,9 +239,9 @@ Carousel:
         Label:
             id: score_r_r
             text: root.score_r_r
-            font_size: 430
+            font_size: 410
             font_name: "agencyb"
-            size: 210, 360
+            size: 210, 340
             size_hint: None, None
             pos: 1690, 0
             color: "009846ff"
@@ -489,6 +494,86 @@ Carousel:
                     pos: self.pos
                     size: self.size
                     radius: [10,]
+
+        Label:
+            id: led_red_indicator
+            size: 266, 30
+            size_hint: None, None
+            pos: 10, 326
+            
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: [0.8901960784313725, 0.11764705882352941, 0.1411764705882353, 1.0] if root.led_red_state else [0.8901960784313725, 0.11764705882352941, 0.1411764705882353, 0.2]
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [3,]
+
+        Label:
+            id: led_green_indicator
+            size: 266, 30
+            size_hint: None, None
+            pos: 1644, 326
+            
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: [0.0, 0.596078431372549, 0.27450980392156865, 1.0] if root.led_green_state else [0.0, 0.596078431372549, 0.27450980392156865, 0.2]
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [3,]
+
+        Label:
+            id: led_red_white_indicator
+            size: 133, 30
+            size_hint: None, None
+            pos: 286, 326
+            
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: [0.9019607843137255, 0.9019607843137255, 0.9019607843137255, 1.0] if root.led_red_white_state else [0.13333333333333333, 0.13333333333333333, 0.13333333333333333, 1.0]
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [3,]
+
+        Label:
+            id: led_red_white_indicator
+            size: 133, 30
+            size_hint: None, None
+            pos: 1501, 326
+            
+            background_color: root.color_invis
+            background_down: ""
+            background_normal: ""
+            background_disabled_down: ""
+            background_disabled_normal: ""
+
+            canvas.before:
+                Color:
+                    rgba: [0.9019607843137255, 0.9019607843137255, 0.9019607843137255, 1.0] if root.led_green_white_state else [0.13333333333333333, 0.13333333333333333, 0.13333333333333333, 1.0]
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [3,]
 
         Button:
             id: left_warning_button

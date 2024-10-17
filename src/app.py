@@ -99,20 +99,26 @@ class Updater:
                     btn.text = f"New version found\n{old_version}->{new_version}"
                     btn.update_state = "wait_for_update"            
                     if not system_info.input_support:
-                        self.update(self.btn)
+                        Clock.schedule_once(lambda _ : self.update(self.btn), 2)
                     return
         btn.text = "No update candidate"
         btn.update_state = "no_update"
+        if not system_info.input_support:
+            Clock.schedule_once(lambda _: app.carousel("main"), 2)
 
     def update_failed(self, btn, req, result):
-        btn.text = "Couldn't get version information"
+        btn.text = "Couldn't get\nversion information"
         Clock.schedule_once(lambda _: self.update_sync_btn_text(btn, "Check for updates"), 10)
         btn.update_state = "no_update"
+        if not system_info.input_support:
+            Clock.schedule_once(lambda _: app.carousel("main"), 2)
 
     def download_failed(self, btn, req, result):
         btn.text = "Download failed"
         Clock.schedule_once(lambda _: self.update_sync_btn_text(btn, "Check for updates"), 10)
         btn.update_state = "no_update"
+        if not system_info.input_support:
+            Clock.schedule_once(lambda _: app.carousel("main"), 2)
 
     def update_downloaded(self, btn, req, result):
         btn.text = "Update downloaded\nPress to install"
@@ -525,6 +531,11 @@ class VideoMetadata:
         return f"{self.version},{self.boottime},{self.score_l_l},{self.score_l_r},{self.score_r_l},{self.score_r_r},{self.timer_0},{self.timer_2},{self.timer_3},{self.period},{self.priority},{self.warning_l},{self.warning_r},{self.passive_size},{self.passive_coun},{self.passive_1_state},{self.passive_2_state},{self.passive_3_state},{self.passive_4_state},{self.epee5},{self.weapon},{self.color_passive},{self.color_timer}"
 
 class KivyApp(App):
+    def carousel(self, name):
+        match name:
+            case "main":
+                self.root.index = 0
+        
     def toggle_recording(self):
         if system_info.video_support and not self.root.timer_running:
             self.root.recording_enabled = video_control.toggle_recording()
@@ -652,18 +663,18 @@ class KivyApp(App):
         timer_d = uart_data.timer_d
         timer_s = uart_data.timer_s
 
-        if uart_data.red:
-            gpio_control.set(29, 1)
-            root.led_red_state = True
-        elif self.led_schedule is None and root.priority == -1:
-            gpio_control.set(29, 0)
-            root.led_red_state = False
-        
         if uart_data.green:
             gpio_control.set(35, 1)
-            root.led_green_state = True
-        elif self.led_schedule is None and root.priority == +1:
+            root.led_red_state = True
+        elif self.led_schedule is None or root.priority != +1:
             gpio_control.set(35, 0)
+            root.led_red_state = False
+        
+        if uart_data.red:
+            gpio_control.set(29, 1)
+            root.led_green_state = True
+        elif self.led_schedule is None or root.priority != -1:
+            gpio_control.set(29, 0)
             root.led_green_state = False
             
         if uart_data.white_green:
@@ -680,29 +691,45 @@ class KivyApp(App):
             gpio_control.set(31, 0)
             root.led_red_white_state = False
 
-        if uart_data.period == 15:
-            if root.priority != 1:
-                root.priority = 1 # GREEN
-                gpio_control.set(29, 0)
-                gpio_control.set(35, 1)
-                if self.led_schedule is not None:
-                    self.led_schedule.cancel()
-                    self.led_schedule = None
-                self.led_schedule = Clock.schedule_once(lambda dt: gpio_control.set(35, 0), 2)
-        elif uart_data.period == 14:
+        def turn_green_off(_):
+            root.led_green_state = False
+            gpio_control.set(29, 0)
+            self.led_schedule = None
+
+        def turn_red_off(_):
+            root.led_red_state = False
+            gpio_control.set(35, 0)
+            self.led_schedule = None
+
+        if uart_data.period == 14:
             if root.priority != -1:
-                root.priority = -1 # RED
-                gpio_control.set(35, 0)
-                gpio_control.set(29, 1)
+                root.priority = -1 # GREEN
+                gpio_control.set(35, 1)
+                gpio_control.set(29, 0)
+                root.led_green_state = False
+                root.led_red_state = True
                 if self.led_schedule is not None:
                     self.led_schedule.cancel()
                     self.led_schedule = None
-                self.led_schedule = Clock.schedule_once(lambda dt: gpio_control.set(29, 0), 2)
+                self.led_schedule = Clock.schedule_once(turn_red_off, 2)
+        elif uart_data.period == 15:
+            if root.priority != +1:
+                root.priority = +1 # RED
+                gpio_control.set(29, 1)
+                gpio_control.set(35, 0)
+                root.led_green_state = True
+                root.led_red_state = False
+                if self.led_schedule is not None:
+                    self.led_schedule.cancel()
+                    self.led_schedule = None
+                self.led_schedule = Clock.schedule_once(turn_green_off, 2)
         elif uart_data.period == 13:
             if root.priority != 0:
                 root.priority = 0
-                gpio_control.set(35, 0)
                 gpio_control.set(29, 0)
+                gpio_control.set(35, 0)
+                root.led_green_state = False
+                root.led_red_state = False
                 if self.led_schedule is not None:
                     self.led_schedule.cancel()
                     self.led_schedule = None
@@ -862,10 +889,8 @@ class KivyApp(App):
         for cmd in cmds:
             print(cmd)
             if cmd[0] != self.config["rc5_address"]:
-                print("ABC")
                 continue
             if cmd[2] == False:
-                print("CBA")
                 continue
             
             if not system_info.input_support and pins_data.weapon_btn == 0 and cmd[1] == IrKeys.UPDATE_BTN:
