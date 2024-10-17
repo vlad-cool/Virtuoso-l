@@ -165,7 +165,7 @@ class Updater:
             btn.text = "Downloading update"
             btn.update_state = "downloading_update"
             self.download_proc = subprocess.run(["rm", f"{system_info.update_dir}/Virtuoso_update.zip"])
-            self.download_proc = subprocess.Popen(["wget", "-P", f"{system_info.update_dir}/Virtuoso", self.update_url])
+            self.download_proc = subprocess.Popen(["wget", "-P", f"{system_info.update_dir}", self.update_url])
             return
 
         if btn.update_state == "wait_for_reboot":
