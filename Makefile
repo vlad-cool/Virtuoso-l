@@ -1,4 +1,4 @@
-BANANA_IP := 192.168.1.135
+BANANA_IP := 192.168.2.12
 DRIVER_EXECS := send_pin send_rc5 get_pin get_rc5
 
 .PHONY: release ssh upload clean

@@ -14,3 +14,4 @@ image_build/*.img
 image_build/*.z*
 image_build/mnt/*
 logs
+video/*

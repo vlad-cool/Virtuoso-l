@@ -233,17 +233,20 @@ class PassiveTimer:
         self.running = False
 
     def start(self):
+        if self.clear_timer is not None:
+            self.clear()
         if not self.running:
             self.prev_time = time.time()
             self.running = True
 
     def clear(self):
         self.stop()
-        self.running   = False
-        self.size      = 0
-        self.time      = 0
-        self.coun      = "60"
-        self.prev_time = 0
+        self.running     = False
+        self.size        = 0
+        self.time        = 0
+        self.coun        = "60"
+        self.prev_time   = 0
+        self.clear_timer = None
 
     def get_time(self):
         return int(self.time)
@@ -254,22 +257,27 @@ class PassiveTimer:
     def get_coun(self):
         return self.coun
 
-    def update(self):
-        if not self.running:
-            return
+    def update(self, timer_running):
+        if self.running:
+            cur_time = time.time()
+            delta = cur_time - self.prev_time
+            self.size += 1 * delta / 50
+            self.size = min(self.size, 1)
+            self.time += delta
+            self.prev_time = cur_time
 
-        cur_time = time.time()
-        delta = cur_time - self.prev_time
-        self.size += 1 * delta / 50
-        self.size = min(self.size, 1)
-        self.time += delta
         if self.time < 60.0:
-            self.coun = str(60 - int(self.time) - 0.0001)
-            if len(self.coun) == 1:
-                self.coun = " " + self.coun
+            if self.running:
+                self.coun = str(60 - int(self.time - 0.0001))
+                if len(self.coun) == 1:
+                    self.coun = " " + self.coun[0]
         else:
             self.coun = " 0"
-        self.prev_time = cur_time
+            if not timer_running:
+                if self.clear_timer is None:
+                    self.clear_timer = time.time()
+                elif time.time() - self.clear_timer > 4:
+                    self.clear()
 
     def __init__(self):
         self.clear()
@@ -611,7 +619,7 @@ class KivyApp(App):
             gpio_control.button_emu(27, 1)
 
     def passive_stop_card(self, state, btn_id):
-        if self.root.timer_running != 1 and state == "down":
+        if self.root.timer_running != 1 and (self.passive_timer.time == 0 or self.passive_timer.time >= 60.0) and state == "down":
             self.passive_timer.clear()
         match btn_id:
             case 1:
@@ -866,7 +874,7 @@ class KivyApp(App):
         
         root.weapon_connection_type = pins_data.wireless
 
-        self.passive_timer.update()
+        self.passive_timer.update(self.root.timer_running)
         root.passive_size = self.passive_timer.get_size()
         root.passive_time = self.passive_timer.get_time()
         root.passive_coun = self.passive_timer.get_coun()
@@ -907,7 +915,7 @@ class KivyApp(App):
                             if self.root.timer_running != 1:
                                 self.passive_timer.clear()
                         case IrKeys.LEFT_PASSIVE:
-                            if self.root.timer_running != 1:
+                            if self.root.timer_running != 1 and (self.passive_timer.time == 0 or self.passive_timer.time >= 60.0):
                                 self.passive_timer.clear()
                                 if root.passive_2_state == "normal":
                                     root.passive_2_state = "down"
@@ -917,7 +925,7 @@ class KivyApp(App):
                                     root.passive_2_state = "normal"
                                     root.passive_1_state = "normal"
                         case IrKeys.RIGHT_PASSIVE:
-                            if self.root.timer_running != 1:
+                            if self.root.timer_running != 1 and (self.passive_timer.time == 0 or self.passive_timer.time >= 60.0):
                                 self.passive_timer.clear()
                                 if root.passive_4_state == "normal":
                                     root.passive_4_state = "down"
