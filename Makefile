@@ -5,6 +5,17 @@ DRIVER_EXECS := send_pin send_rc5 get_pin get_rc5
 
 release: Virtuoso_update.zip 
 
+layouts: src/template/1920x360_gen.json src/template/1920x480_gen.json src/template/1920x550_gen.json
+
+src/template/1920x360_gen.json: scripts/parse_svg.py prototypes/1920x360.svg
+	python scripts/parse_svg.py prototypes/1920x360.svg src/template/1920x360_gen.json
+
+src/template/1920x480_gen.json: scripts/parse_svg.py prototypes/1920x480.svg
+	python scripts/parse_svg.py prototypes/1920x480.svg src/template/1920x480_gen.json
+
+src/template/1920x550_gen.json: scripts/parse_svg.py prototypes/1920x550.svg
+	python scripts/parse_svg.py prototypes/1920x550.svg src/template/1920x550_gen.json
+
 ssh:
 	ssh-add ~/.ssh/bananapi
 

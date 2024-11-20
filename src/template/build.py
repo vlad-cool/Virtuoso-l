@@ -39,6 +39,21 @@ if len(sys.argv) <= 1:
 
 with open(sys.argv[1]) as f:
     data = json.load(f)
+    
+if len(sys.argv) > 2:
+    with open(sys.argv[2]) as f:
+        gen_dict = json.load(f)
+        
+        for key in gen_dict.keys():
+            if "y" in gen_dict[key]:
+                pass
+                print(gen_dict[key]["y"], end=" -> ")
+                gen_dict[key]["y"] = gen_dict["background"]["height"] - gen_dict[key]["y"] - gen_dict[key]["height"]
+                print(gen_dict[key]["y"])
+        
+        data.update(gen_dict)
+        
+print(data)
 
 resized_data = resize(copy.deepcopy(data))
 

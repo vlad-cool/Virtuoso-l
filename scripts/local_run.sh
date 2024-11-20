@@ -61,6 +61,8 @@ export UPDATE_DIR=~/Downloads
 
 set -e
 
+make layouts
+
 cd src/template
 make
 

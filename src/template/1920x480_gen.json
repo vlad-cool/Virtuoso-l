@@ -1,0 +1,404 @@
+{
+    "background": {
+        "name": "background",
+        "type": "rect",
+        "x": 0,
+        "y": 0,
+        "rx": 0,
+        "ry": 0,
+        "width": 1920,
+        "height": 480
+    },
+    "score_l_l": {
+        "name": "score_l_l",
+        "type": "text",
+        "x": 0,
+        "y": 48,
+        "width": 240,
+        "height": 432,
+        "font_size": 500
+    },
+    "score_l_r": {
+        "name": "score_l_r",
+        "type": "text",
+        "x": 240,
+        "y": 48,
+        "width": 240,
+        "height": 432,
+        "font_size": 500
+    },
+    "score_r_l": {
+        "name": "score_r_l",
+        "type": "text",
+        "x": 1440,
+        "y": 48,
+        "width": 240,
+        "height": 432,
+        "font_size": 500
+    },
+    "score_r_r": {
+        "name": "score_r_r",
+        "type": "text",
+        "x": 1681,
+        "y": 48,
+        "width": 240,
+        "height": 432,
+        "font_size": 500
+    },
+    "epee": {
+        "name": "epee",
+        "type": "text",
+        "x": 860,
+        "y": 380,
+        "width": 200,
+        "height": 100,
+        "font_size": 80
+    },
+    "sabre": {
+        "name": "sabre",
+        "type": "text",
+        "x": 1060,
+        "y": 380,
+        "width": 200,
+        "height": 100,
+        "font_size": 80
+    },
+    "fleuret": {
+        "name": "fleuret",
+        "type": "text",
+        "x": 660,
+        "y": 380,
+        "width": 200,
+        "height": 100,
+        "font_size": 80
+    },
+    "auto_score_status": {
+        "name": "auto_score_status",
+        "type": "text",
+        "x": 486,
+        "y": 400,
+        "width": 120,
+        "height": 80,
+        "font_size": 32
+    },
+    "auto_timer_status": {
+        "name": "auto_timer_status",
+        "type": "text",
+        "x": 1314,
+        "y": 400,
+        "width": 120,
+        "height": 80,
+        "font_size": 32
+    },
+    "prioriry_l_cap": {
+        "name": "prioriry_l_cap",
+        "type": "text",
+        "x": 501,
+        "y": 276,
+        "width": 55,
+        "height": 144,
+        "font_size": 120
+    },
+    "priority_l_text": {
+        "name": "priority_l_text",
+        "type": "text",
+        "x": 526,
+        "y": 360,
+        "width": 80,
+        "height": 44,
+        "font_size": 36
+    },
+    "priority_r_cap": {
+        "name": "priority_r_cap",
+        "type": "text",
+        "x": 1329,
+        "y": 276,
+        "width": 55,
+        "height": 144,
+        "font_size": 120
+    },
+    "priority_r_text": {
+        "name": "priority_r_text",
+        "type": "text",
+        "x": 1354,
+        "y": 360,
+        "width": 80,
+        "height": 44,
+        "font_size": 36
+    },
+    "caution_l_rect": {
+        "name": "caution_l_rect",
+        "type": "rect",
+        "x": 496,
+        "y": 244,
+        "rx": 10,
+        "ry": 10,
+        "width": 100,
+        "height": 44
+    },
+    "caution_l_text": {
+        "name": "caution_l_text",
+        "type": "text",
+        "x": 496,
+        "y": 244,
+        "width": 100,
+        "height": 44,
+        "font_size": 36
+    },
+    "penalty_l_rect": {
+        "name": "penalty_l_rect",
+        "type": "rect",
+        "x": 496,
+        "y": 192,
+        "rx": 10,
+        "ry": 10,
+        "width": 100,
+        "height": 44
+    },
+    "penalty_l_text": {
+        "name": "penalty_l_text",
+        "type": "text",
+        "x": 496,
+        "y": 192,
+        "width": 100,
+        "height": 44,
+        "font_size": 36
+    },
+    "passive_l_bot_rect": {
+        "name": "passive_l_bot_rect",
+        "type": "rect",
+        "x": 496,
+        "y": 132,
+        "rx": 10,
+        "ry": 10,
+        "width": 100,
+        "height": 44
+    },
+    "passive_l_bot_text": {
+        "name": "passive_l_bot_text",
+        "type": "text",
+        "x": 496,
+        "y": 132,
+        "width": 100,
+        "height": 44,
+        "font_size": 36
+    },
+    "passive_l_top_rect": {
+        "name": "passive_l_top_rect",
+        "type": "rect",
+        "x": 496,
+        "y": 80,
+        "rx": 10,
+        "ry": 10,
+        "width": 100,
+        "height": 44
+    },
+    "passive_l_top_text": {
+        "name": "passive_l_top_text",
+        "type": "text",
+        "x": 496,
+        "y": 80,
+        "width": 100,
+        "height": 44,
+        "font_size": 36
+    },
+    "caution_r_rect": {
+        "name": "caution_r_rect",
+        "type": "rect",
+        "x": 1324,
+        "y": 244,
+        "rx": 10,
+        "ry": 10,
+        "width": 100,
+        "height": 44
+    },
+    "caution_r_text": {
+        "name": "caution_r_text",
+        "type": "text",
+        "x": 1324,
+        "y": 244,
+        "width": 100,
+        "height": 44,
+        "font_size": 36
+    },
+    "penalty_r_rect": {
+        "name": "penalty_r_rect",
+        "type": "rect",
+        "x": 1324,
+        "y": 192,
+        "rx": 10,
+        "ry": 10,
+        "width": 100,
+        "height": 44
+    },
+    "penalty_r_text": {
+        "name": "penalty_r_text",
+        "type": "text",
+        "x": 1324,
+        "y": 192,
+        "width": 100,
+        "height": 44,
+        "font_size": 36
+    },
+    "passive_r_bot_rect": {
+        "name": "passive_r_bot_rect",
+        "type": "rect",
+        "x": 1324,
+        "y": 132,
+        "rx": 10,
+        "ry": 10,
+        "width": 100,
+        "height": 44
+    },
+    "passive_r_bot_text": {
+        "name": "passive_r_bot_text",
+        "type": "text",
+        "x": 1324,
+        "y": 132,
+        "width": 100,
+        "height": 44,
+        "font_size": 36
+    },
+    "passive_r_top_rect": {
+        "name": "passive_r_top_rect",
+        "type": "rect",
+        "x": 1324,
+        "y": 80,
+        "rx": 10,
+        "ry": 10,
+        "width": 100,
+        "height": 44
+    },
+    "passive_r_top_text": {
+        "name": "passive_r_top_text",
+        "type": "text",
+        "x": 1324,
+        "y": 80,
+        "width": 100,
+        "height": 44,
+        "font_size": 36
+    },
+    "Rectangle": {
+        "name": "Rectangle",
+        "type": "rect",
+        "x": 1424,
+        "y": 43,
+        "rx": 0,
+        "ry": 0,
+        "width": 16,
+        "height": 54
+    },
+    "period": {
+        "name": "period",
+        "type": "text",
+        "x": 604,
+        "y": 207,
+        "width": 152,
+        "height": 171,
+        "font_size": 200
+    },
+    "passive_counter_dec": {
+        "name": "passive_counter_dec",
+        "type": "text",
+        "x": 604,
+        "y": 69,
+        "width": 76,
+        "height": 140,
+        "font_size": 160
+    },
+    "passive_counter_sec": {
+        "name": "passive_counter_sec",
+        "type": "text",
+        "x": 680,
+        "y": 69,
+        "width": 76,
+        "height": 140,
+        "font_size": 160
+    },
+    "timer_m": {
+        "name": "timer_m",
+        "type": "text",
+        "x": 765,
+        "y": 80,
+        "width": 160,
+        "height": 292,
+        "font_size": 320
+    },
+    "timer_colon": {
+        "name": "timer_colon",
+        "type": "text",
+        "x": 925,
+        "y": 80,
+        "width": 63,
+        "height": 292,
+        "font_size": 330
+    },
+    "timer_d": {
+        "name": "timer_d",
+        "type": "text",
+        "x": 988,
+        "y": 80,
+        "width": 160,
+        "height": 292,
+        "font_size": 330
+    },
+    "timer_s": {
+        "name": "timer_s",
+        "type": "text",
+        "x": 1148,
+        "y": 80,
+        "width": 160,
+        "height": 292,
+        "font_size": 330
+    },
+    "passive_indicator": {
+        "name": "passive_indicator",
+        "type": "rect",
+        "x": 496,
+        "y": 24,
+        "rx": 3,
+        "ry": 3,
+        "width": 928,
+        "height": 32
+    },
+    "left_color_indicator": {
+        "name": "left_color_indicator",
+        "type": "rect",
+        "x": 27,
+        "y": 24,
+        "rx": 3,
+        "ry": 3,
+        "width": 268,
+        "height": 32
+    },
+    "right_color_indicator": {
+        "name": "right_color_indicator",
+        "type": "rect",
+        "x": 1625,
+        "y": 24,
+        "rx": 3,
+        "ry": 3,
+        "width": 268,
+        "height": 32
+    },
+    "left_white_indicator": {
+        "name": "left_white_indicator",
+        "type": "rect",
+        "x": 319,
+        "y": 24,
+        "rx": 3,
+        "ry": 3,
+        "width": 134,
+        "height": 32
+    },
+    "right_white_indicator": {
+        "name": "right_white_indicator",
+        "type": "rect",
+        "x": 1467,
+        "y": 24,
+        "rx": 3,
+        "ry": 3,
+        "width": 134,
+        "height": 32
+    }
+}
