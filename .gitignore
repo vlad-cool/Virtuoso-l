@@ -15,3 +15,5 @@ image_build/*.z*
 image_build/mnt/*
 logs
 video/*
+prototypes/colors.json
+src/main1920x360_no_video.kv
