@@ -242,9 +242,9 @@ Carousel:
 
         Label:
             id: passive
-            size: root.passive_size * {{ data["passive_indicator"]["width"] }}, 0 if root.passive_time > 50 and root.passive_time < 60 and root.current_time - root.flash_timer > 0.5 and root.timer_running == 1 else {{ -data["passive_indicator"]["height"] }}
+            size: root.passive_size * {{ data["passive_indicator"]["width"] }}, 0 if root.passive_time > 50 and root.passive_time < 60 and root.current_time - root.flash_timer > 0.5 and root.timer_running == 1 else {{ data["passive_indicator"]["height"] }}
             size_hint: None, None
-            pos: {{ data["passive_indicator"]["x"] }} - root.passive_size * {{ data["passive_indicator"]["width"] // 2 }}, {{ data["passive_indicator"]["y"] }}
+            pos: {{ data["passive_indicator"]["x"] }} + (1 - root.passive_size) * {{ data["passive_indicator"]["width"] // 2 }}, {{ data["passive_indicator"]["y"] }}
 
             canvas:
                 Color:

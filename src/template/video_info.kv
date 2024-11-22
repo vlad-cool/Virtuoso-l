@@ -1,7 +1,7 @@
         FloatLayout:
             id: video_info_layout
 
-            opacity: 1 if root.video_info_video_info else 0
+            opacity: 1 if root.video_info else 0
 
             ToggleButton:
                 id: weapon_2
@@ -14,7 +14,7 @@
                 pos: {{ resized_data["fleuret"]["x"] }}, {{ resized_data["fleuret"]["y"] }}
                 group: "weapon"
                 color: {{ colors["weapon"]["text_dark"] }} if root.video_info_weapon != 2 else {{ colors["weapon"]["text_light"] }}
-                background_color: root.video_info_color_invis
+                background_color: root.color_invis
                 on_press: app.set_weapon(2)
 
             ToggleButton:
@@ -33,7 +33,7 @@
                 pos: {{ resized_data["epee"]["x"] }}, {{ resized_data["epee"]["y"] }}
                 group: "weapon"
                 color: {{ colors["weapon"]["text_dark"] }} if root.video_info_weapon != 3 else {{ colors["weapon"]["text_light"] }}
-                background_color: root.video_info_color_invis
+                background_color: root.color_invis
                 on_press: app.set_weapon(0)
 
             ToggleButton:
@@ -47,7 +47,7 @@
                 size_hint: None, None
                 pos: {{ resized_data["sabre"]["x"] }}, {{ resized_data["sabre"]["y"] }}
                 color: {{ colors["weapon"]["text_dark"] }} if root.video_info_weapon != 1 else {{ colors["weapon"]["text_light"] }}
-                background_color: root.video_info_color_invis
+                background_color: root.color_invis
                 on_press: app.set_weapon(1)
 
             Label:
@@ -105,7 +105,7 @@
                 text: root.video_info_timer_1 if root.video_info_timer_running == 0 or root.video_info_current_time - root.video_info_flash_timer < 0.5 else " "
                 font_size: {{ resized_data["timer_colon"]["font_size"] }}
                 font_name: "agencyb"
-                size: {{ resized_data["timer_colon"]["dot_width"] }}, {{ resized_data["timer_colon"]["height"] }}
+                size: {{ resized_data["timer_colon"]["width"] }}, {{ resized_data["timer_colon"]["height"] }}
                 size_hint: None, None
                 pos: {{ resized_data["timer_colon"]["x"] }}, {{ resized_data["timer_colon"]["y"] }}
                 color: {{ colors["timer"]["orange"] }}
@@ -125,7 +125,7 @@
                 text: root.video_info_timer_3
                 font_size: {{ resized_data["timer_s"]["font_size"] }}
                 font_name: "agencyb"
-                size: {{ resized_data["timer_s"]["number_width"] }}, {{ resized_data["timer_s"]["height"] }}
+                size: {{ resized_data["timer_s"]["width"] }}, {{ resized_data["timer_s"]["height"] }}
                 size_hint: None, None
                 pos: {{ resized_data["timer_s"]["x"] }}, {{ resized_data["timer_s"]["y"] }}
                 color: {{ colors["timer"]["orange"] }}
@@ -134,7 +134,7 @@
                 id: passive
                 size: root.video_info_passive_size * {{ resized_data["passive_indicator"]["width"] }}, 0 if root.video_info_passive_time > 50 and root.video_info_passive_time < 60 and root.video_info_current_time - root.video_info_flash_timer > 0.5 and root.video_info_timer_running == 1 else {{ -resized_data["passive_indicator"]["height"] }}
                 size_hint: None, None
-                pos: {{ resized_data["passive_indicator"]["x"] }} - root.video_info_passive_size * {{ resized_data["passive_indicator"]["width"] // 2 }}, {{ resized_data["passive_indicator"]["y"] }}
+                pos: {{ resized_data["passive_indicator"]["x"] }} + (1 - root.video_info_passive_size) * {{ resized_data["passive_indicator"]["width"] // 2 }}, {{ resized_data["passive_indicator"]["y"] }}
 
                 canvas:
                     Color:
@@ -303,7 +303,7 @@
             #     size_hint: None, None
             #     pos: {{ resized_data["right_color_indicator"]["x"] }}, {{ resized_data["right_color_indicator"]["y"] }}
             #     
-            #     background_color: root.video_info_color_invis
+            #     background_color: root.color_invis
             #     background_down: ""
             #     background_normal: ""
             #     background_disabled_down: ""
@@ -323,7 +323,7 @@
             #     size_hint: None, None
             #     pos: {{ resized_data["left_white_indicator"]["x"] }}, {{ resized_data["left_white_indicator"]["y"] }}
             #     
-            #     background_color: root.video_info_color_invis
+            #     background_color: root.color_invis
             #     background_down: ""
             #     background_normal: ""
             #     background_disabled_down: ""
@@ -343,7 +343,7 @@
             #     size_hint: None, None
             #     pos: {{ resized_data["right_white_indicator"]["x"] }}, {{ resized_data["right_white_indicator"]["y"] }}
             #     
-            #     background_color: root.video_info_color_invis
+            #     background_color: root.color_invis
             #     background_down: ""
             #     background_normal: ""
             #     background_disabled_down: ""
