@@ -29,7 +29,7 @@
                 pos: {{ data["player_controls"]["x"] }}, {{ data["player_controls"]["y"] }}
 
                 Label:
-                    text: str(root.video_id + 1) if root.video_id != -1 else "--"
+                    text: str(root.video_id + 1) if root.video_id > -1 else "--"
                     font_size: {{ data["player_controls"]["font_size"] }}
                     font_name: "agencyb"
 
