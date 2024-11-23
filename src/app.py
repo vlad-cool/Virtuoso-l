@@ -373,6 +373,15 @@ class VideoPlayer:
             self.start_playback()
             self.load_metadata()
 
+    def fix_camera(self):
+        self.player.camera = False
+        self.player.unload()
+        while self.player.loaded:
+            pass
+        self.player.source = ""
+        self.video_id = -2
+        self.root.video_id = -2
+
     def play_next_video(self):
         self.play_video(self.video_id + 1)
 
@@ -384,6 +393,8 @@ class VideoPlayer:
             self.root.ids.video_player.seek((self.root.ids.video_player.position + s) / self.root.ids.video_player.duration, True)
 
     def load_videos(self):
+        # print("Loading videos")
+        print(self.available_videos, flush=True)
         if system_info.video_support:
             videos = glob.glob(os.environ["VIDEO_PATH"] + "/*.mp4")
             for video in videos:
@@ -399,12 +410,15 @@ class VideoPlayer:
 
     def load_metadata(self):
         path = self.player.source
+        print("#" * 50)
+        print(path, flush=True)
+        print("#" * 50)
         if path == system_info.camera_path:
             return
-        if path not in self.available_videos:
+        if isinstance(self.available_videos[path], subprocess.Popen) and self.available_videos[path].poll() == 0:
+                self.available_videos[path] = self.available_videos[path].stdout.readline().decode()
+        else:
             self.available_videos[path] = subprocess.run(["./get_comment_metadata.sh", path], capture_output=True).stdout.decode()
-        elif isinstance(self.available_videos[path], subprocess.Popen):
-            self.available_videos[path] = self.available_videos[path].stdout.readline().decode()
 
         result = self.available_videos[path]
 
@@ -539,6 +553,10 @@ class VideoMetadata:
         return f"{self.version},{self.boottime},{self.score_l_l},{self.score_l_r},{self.score_r_l},{self.score_r_r},{self.timer_0},{self.timer_2},{self.timer_3},{self.period},{self.priority},{self.warning_l},{self.warning_r},{self.passive_size},{self.passive_coun},{self.passive_1_state},{self.passive_2_state},{self.passive_3_state},{self.passive_4_state},{self.epee5},{self.weapon},{self.color_passive},{self.color_timer}"
 
 class KivyApp(App):
+    def load_videos(self, _):
+        if system_info.video_support and video_control.recorder_proc is None or video_control.recorder_proc.poll() is not None:
+            self.video_player.load_videos()
+
     def carousel(self, name):
         match name:
             case "main":
@@ -864,8 +882,6 @@ class KivyApp(App):
             elif self.prev_pins_data is not None and self.prev_pins_data.recording == 1 and pins_data.recording == 0:
                 video_control.save_clip()
                 self.stop_recording_scheduler = Clock.schedule_once(lambda _: (video_control.stop_recording(self.clip_data_dict), self.video_player.recording_stopped()), 4)
-            if video_control.recorder_proc is not None and video_control.recorder_proc.poll() is None:
-                self.video_player.load_videos()
         # -----------------
 
         root.weapon = pins_data.weapon
@@ -1052,6 +1068,7 @@ class KivyApp(App):
         self.set_weapon(0, False)
         
         self.read_timer = Clock.schedule_interval(self.get_data, read_interval)
+        self.video_loader_timer = Clock.schedule_interval(self.load_videos, 2)
         Clock.schedule_interval(self.update_network_data, 2)
         
         self.root.flash_timer  = time.time()
@@ -1062,6 +1079,9 @@ class KivyApp(App):
             self.root.ids["video_player"].bind(
                 position=self.on_position_change
             )
+
+            Clock.schedule_once(lambda _ : self.video_player.fix_camera(), 1)
+            Clock.schedule_once(lambda _ : self.video_player.play_video(-1), 2)
 
     def on_stop(self):
         if self.data_rx is not None:

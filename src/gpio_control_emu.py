@@ -80,26 +80,27 @@ def setup():
     flask_thread = threading.Thread(target=run_emulator)
     flask_thread.start()
     
-    print("Setted up!")
+    # print("Setted up!")
     
 
 def set(pin, value):
     global input_pins
     with lock:
         input_pins[pin] = value
-    print(f"Setted pin {pin} to value {value}")
+    # print(f"Setted pin {pin} to value {value}")
 
 
 def button_emu(pin, times):
     for _ in range(times):
-        print(f"Pressed button on pin {pin} {times} times")
+        pass
+        # print(f"Pressed button on pin {pin} {times} times")
 
 
 def ir_emu(address, command):
     global output_rc5
     with lock:
         output_rc5.append((address, command))
-    print(f"Pressed {command} button on remote with address {address}")
+    # print(f"Pressed {command} button on remote with address {address}")
 
 
 def read_pins():
@@ -114,7 +115,7 @@ counter = 0
 
 def read_rc5():
     global counter
-    print(counter)
+    # print(counter)
     global input_rc5
     with lock:
         ret_val = input_rc5.copy()
