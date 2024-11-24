@@ -47,6 +47,7 @@ class IrKeys:
     LEFT_PASSIVE = 17
     RIGHT_PASSIVE = 18
     UPDATE_BTN = 5
+    SWAP_SIDES = 0
 
 class Updater:
     def __init__(self):
@@ -491,6 +492,10 @@ class VideoPlayer:
                     self.root.video_info_weapon = self.current_metadata[i].weapon
                     self.root.video_info_color_passive = self.current_metadata[i].color_passive
                     self.root.video_info_color_timer = self.current_metadata[i].color_timer
+                    self.root.video_info_led_red_state = self.current_metadata[i].led_red_state
+                    self.root.video_info_led_red_white_state = self.current_metadata[i].led_red_white_state
+                    self.root.video_info_led_green_state = self.current_metadata[i].led_green_state
+                    self.root.video_info_led_green_white_state = self.current_metadata[i].led_green_white_state
                     self.root.video_info = True
                     return
 
@@ -520,6 +525,10 @@ class VideoMetadata:
             self.weapon = src.weapon
             self.color_passive = src.color_passive
             self.color_timer = src.color_timer
+            self.led_red_state = src.led_red_state
+            self.led_red_white_state = src.led_red_white_state
+            self.led_green_state = src.led_green_state
+            self.led_green_white_state = src.led_green_white_state
             # self.color_timer = 
         elif isinstance(src, str):
             # match src[0]:
@@ -548,9 +557,20 @@ class VideoMetadata:
             self.weapon = src[20]
             self.color_passive = [float(src[21].replace("[", "")), float(src[22]), float(src[23]), float(src[24].replace("]", ""))]
             self.color_timer = [float(src[25].replace("[", "")), float(src[26]), float(src[27]), float(src[28].replace("]", ""))]
-    
+            
+            try:
+                self.led_red_state = src[29]
+                self.led_red_white_state = src[30]
+                self.led_green_state = src[31]
+                self.led_green_white_state = src[32]
+            except:
+                self.led_red_state = 0
+                self.led_red_white_state = 0
+                self.led_green_state = 0
+                self.led_green_white_state = 0
+            
     def to_str(self):
-        return f"{self.version},{self.boottime},{self.score_l_l},{self.score_l_r},{self.score_r_l},{self.score_r_r},{self.timer_0},{self.timer_2},{self.timer_3},{self.period},{self.priority},{self.warning_l},{self.warning_r},{self.passive_size},{self.passive_coun},{self.passive_1_state},{self.passive_2_state},{self.passive_3_state},{self.passive_4_state},{self.epee5},{self.weapon},{self.color_passive},{self.color_timer}"
+        return f"{self.version},{self.boottime},{self.score_l_l},{self.score_l_r},{self.score_r_l},{self.score_r_r},{self.timer_0},{self.timer_2},{self.timer_3},{self.period},{self.priority},{self.warning_l},{self.warning_r},{self.passive_size},{self.passive_coun},{self.passive_1_state},{self.passive_2_state},{self.passive_3_state},{self.passive_4_state},{self.epee5},{self.weapon},{self.color_passive},{self.color_timer},{self.led_red_state},{self.led_red_white_state},{self.led_green_state},{self.led_green_white_state}"
 
 class KivyApp(App):
     def load_videos(self, _):
@@ -691,39 +711,39 @@ class KivyApp(App):
 
         if uart_data.green:
             gpio_control.set(35, 1)
-            root.led_red_state = True
+            root.led_red_state = 1
         elif self.led_schedule is None or root.priority != +1:
             gpio_control.set(35, 0)
-            root.led_red_state = False
+            root.led_red_state = 0
         
         if uart_data.red:
             gpio_control.set(29, 1)
-            root.led_green_state = True
+            root.led_green_state = 1
         elif self.led_schedule is None or root.priority != -1:
             gpio_control.set(29, 0)
-            root.led_green_state = False
+            root.led_green_state = 0
             
         if uart_data.white_green:
             gpio_control.set(38, 1)
-            root.led_green_white_state = True
+            root.led_green_white_state = 1
         else:
             gpio_control.set(38, 0)
-            root.led_green_white_state = False
+            root.led_green_white_state = 0
         
         if uart_data.white_red:
             gpio_control.set(31, 1)
-            root.led_red_white_state = True
+            root.led_red_white_state = 1
         else:
             gpio_control.set(31, 0)
-            root.led_red_white_state = False
+            root.led_red_white_state = 0
 
         def turn_green_off(_):
-            root.led_green_state = False
+            root.led_green_state = 0
             gpio_control.set(29, 0)
             self.led_schedule = None
 
         def turn_red_off(_):
-            root.led_red_state = False
+            root.led_red_state = 0
             gpio_control.set(35, 0)
             self.led_schedule = None
 
@@ -732,8 +752,8 @@ class KivyApp(App):
                 root.priority = -1 # GREEN
                 gpio_control.set(35, 1)
                 gpio_control.set(29, 0)
-                root.led_green_state = False
-                root.led_red_state = True
+                root.led_green_state = 0
+                root.led_red_state = 1
                 if self.led_schedule is not None:
                     self.led_schedule.cancel()
                     self.led_schedule = None
@@ -743,8 +763,8 @@ class KivyApp(App):
                 root.priority = +1 # RED
                 gpio_control.set(29, 1)
                 gpio_control.set(35, 0)
-                root.led_green_state = True
-                root.led_red_state = False
+                root.led_green_state = 1
+                root.led_red_state = 0
                 if self.led_schedule is not None:
                     self.led_schedule.cancel()
                     self.led_schedule = None
@@ -754,8 +774,8 @@ class KivyApp(App):
                 root.priority = 0
                 gpio_control.set(29, 0)
                 gpio_control.set(35, 0)
-                root.led_green_state = False
-                root.led_red_state = False
+                root.led_green_state = 0
+                root.led_red_state = 0
                 if self.led_schedule is not None:
                     self.led_schedule.cancel()
                     self.led_schedule = None
@@ -973,6 +993,9 @@ class KivyApp(App):
                                 root.index = 0
                 case 2:
                     pass
+            if cmd[1] == IrKeys.SWAP_SIDES:
+                root.passive_1_state, root.passive_3_state = root.passive_3_state, root.passive_1_state
+                root.passive_2_state, root.passive_4_state = root.passive_4_state, root.passive_2_state
             if cmd[1] == IrKeys.AUTO_SCORE:
                 self.auto_status.switch_changed(1)
             if cmd[1] == IrKeys.AUTO_TIMER:
@@ -1081,7 +1104,8 @@ class KivyApp(App):
             )
 
             Clock.schedule_once(lambda _ : self.video_player.fix_camera(), 1)
-            Clock.schedule_once(lambda _ : self.video_player.play_video(-1), 2)
+            Clock.schedule_once(lambda _ : self.video_player.play_video(1), 2)
+            Clock.schedule_once(lambda _ : self.video_player.play_video(-1), 3)
 
     def on_stop(self):
         if self.data_rx is not None:

@@ -278,84 +278,84 @@
                         size: {{ resized_data["caution_r_rect"]["width"] }}, {{ resized_data["caution_r_rect"]["height"] }}
                         radius: [{{ resized_data["caution_r_rect"]["rx"] }},]
 
-            # Label:
-            #     id: led_red_indicator
-            #     size: {{ resized_data["left_color_indicator"]["width"] }}, {{ resized_data["left_color_indicator"]["height"] }}
-            #     size_hint: None, None
-            #     pos: {{ resized_data["left_color_indicator"]["x"] }}, {{ resized_data["left_color_indicator"]["y"] }}
-            #     
-            #     background_down: ""
-            #     background_normal: ""
-            #     background_disabled_down: ""
-            #     background_disabled_normal: ""
-# 
-            #     canvas.before:
-            #         Color:
-            #             rgba: {{ hex_to_rgba(colors["color_labels"]["red"]) }} if root.video_info_led_red_state else {{ hex_to_rgba(darker(colors["color_labels"]["red"])) }}
-            #         RoundedRectangle:
-            #             pos: self.pos
-            #             size: self.size
-            #             radius: [{{ resized_data["left_color_indicator"]["rx"] }},]
-# 
-            # Label:
-            #     id: led_green_indicator
-            #     size: {{ resized_data["right_color_indicator"]["width"] }}, {{ resized_data["right_color_indicator"]["height"] }}
-            #     size_hint: None, None
-            #     pos: {{ resized_data["right_color_indicator"]["x"] }}, {{ resized_data["right_color_indicator"]["y"] }}
-            #     
-            #     background_color: root.color_invis
-            #     background_down: ""
-            #     background_normal: ""
-            #     background_disabled_down: ""
-            #     background_disabled_normal: ""
-# 
-            #     canvas.before:
-            #         Color:
-            #             rgba: {{ hex_to_rgba(colors["color_labels"]["green"]) }} if root.video_info_led_green_state else {{ hex_to_rgba(darker(colors["color_labels"]["green"])) }}
-            #         RoundedRectangle:
-            #             pos: self.pos
-            #             size: self.size
-            #             radius: [{{ resized_data["right_color_indicator"]["rx"] }},]
-# 
-            # Label:
-            #     id: led_red_white_indicator
-            #     size: {{ resized_data["left_white_indicator"]["width"] }}, {{ resized_data["left_white_indicator"]["height"] }}
-            #     size_hint: None, None
-            #     pos: {{ resized_data["left_white_indicator"]["x"] }}, {{ resized_data["left_white_indicator"]["y"] }}
-            #     
-            #     background_color: root.color_invis
-            #     background_down: ""
-            #     background_normal: ""
-            #     background_disabled_down: ""
-            #     background_disabled_normal: ""
-# 
-            #     canvas.before:
-            #         Color:
-            #             rgba: {{ hex_to_rgba(colors["white_labels"]["light"]) }} if root.video_info_led_red_white_state else {{ hex_to_rgba(colors["white_labels"]["dark"]) }}
-            #         RoundedRectangle:
-            #             pos: self.pos
-            #             size: self.size
-            #             radius: [{{ resized_data["left_white_indicator"]["rx"] }},]
-# 
-            # Label:
-            #     id: led_red_white_indicator
-            #     size: {{ resized_data["right_white_indicator"]["width"] }}, {{ resized_data["right_white_indicator"]["height"] }}
-            #     size_hint: None, None
-            #     pos: {{ resized_data["right_white_indicator"]["x"] }}, {{ resized_data["right_white_indicator"]["y"] }}
-            #     
-            #     background_color: root.color_invis
-            #     background_down: ""
-            #     background_normal: ""
-            #     background_disabled_down: ""
-            #     background_disabled_normal: ""
-# 
-            #     canvas.before:
-            #         Color:
-            #             rgba: {{ hex_to_rgba(colors["white_labels"]["light"]) }} if root.video_info_led_green_white_state else {{ hex_to_rgba(colors["white_labels"]["dark"]) }}
-            #         RoundedRectangle:
-            #             pos: self.pos
-            #             size: self.size
-            #             radius: [{{ resized_data["right_white_indicator"]["rx"] }},]
+            Label:
+                id: led_red_indicator
+                size: {{ resized_data["left_color_indicator"]["width"] }}, {{ resized_data["left_color_indicator"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["left_color_indicator"]["x"] }}, {{ resized_data["left_color_indicator"]["y"] }}
+                
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+
+                canvas.before:
+                    Color:
+                        rgba: {{ hex_to_rgba(colors["color_labels"]["red"]) }} if root.video_info_led_red_state else {{ hex_to_rgba(darker(colors["color_labels"]["red"])) }}
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [{{ resized_data["left_color_indicator"]["rx"] }},]
+
+            Label:
+                id: led_green_indicator
+                size: {{ resized_data["right_color_indicator"]["width"] }}, {{ resized_data["right_color_indicator"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["right_color_indicator"]["x"] }}, {{ resized_data["right_color_indicator"]["y"] }}
+                
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+
+                canvas.before:
+                    Color:
+                        rgba: {{ hex_to_rgba(colors["color_labels"]["green"]) }} if root.video_info_led_green_state else {{ hex_to_rgba(darker(colors["color_labels"]["green"])) }}
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [{{ resized_data["right_color_indicator"]["rx"] }},]
+
+            Label:
+                id: led_red_white_indicator
+                size: {{ resized_data["left_white_indicator"]["width"] }}, {{ resized_data["left_white_indicator"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["left_white_indicator"]["x"] }}, {{ resized_data["left_white_indicator"]["y"] }}
+                
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+
+                canvas.before:
+                    Color:
+                        rgba: {{ hex_to_rgba(colors["white_labels"]["light"]) }} if root.video_info_led_red_white_state else {{ hex_to_rgba(colors["white_labels"]["dark"]) }}
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [{{ resized_data["left_white_indicator"]["rx"] }},]
+
+            Label:
+                id: led_red_white_indicator
+                size: {{ resized_data["right_white_indicator"]["width"] }}, {{ resized_data["right_white_indicator"]["height"] }}
+                size_hint: None, None
+                pos: {{ resized_data["right_white_indicator"]["x"] }}, {{ resized_data["right_white_indicator"]["y"] }}
+                
+                background_color: root.color_invis
+                background_down: ""
+                background_normal: ""
+                background_disabled_down: ""
+                background_disabled_normal: ""
+
+                canvas.before:
+                    Color:
+                        rgba: {{ hex_to_rgba(colors["white_labels"]["light"]) }} if root.video_info_led_green_white_state else {{ hex_to_rgba(colors["white_labels"]["dark"]) }}
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [{{ resized_data["right_white_indicator"]["rx"] }},]
 
             Label:
                 id: priority_l_cap
