@@ -110,20 +110,6 @@
         "y": 35,
         "font_size": 32
     },
-    "recording_indicator":
-    {
-        "size": 32,
-        "x": 1880,
-        "y": 475
-    },
-    "recording_status":
-    {
-        "width": 320,
-        "height": 48,
-        "x": 1560,
-        "y": 475,
-        "font_size": 40
-    },
     "video_player":
     {
         "width": 640,

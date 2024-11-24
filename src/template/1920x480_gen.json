@@ -400,5 +400,15 @@
         "ry": 3,
         "width": 134,
         "height": 32
+    },
+    "recording_indicator": {
+        "name": "recording_indicator",
+        "type": "rect",
+        "x": 1258,
+        "y": 64,
+        "rx": 16,
+        "ry": 16,
+        "width": 32,
+        "height": 32
     }
 }

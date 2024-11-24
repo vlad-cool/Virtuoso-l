@@ -25,10 +25,10 @@ Carousel:
     warning_l: 0
     warning_r: 0
 
-    led_red_state: False
-    led_green_state: False
-    led_red_white_state: False
-    led_green_white_state: False
+    led_red_state: 0
+    led_green_state: 0
+    led_red_white_state: 0
+    led_green_white_state: 0
 
     passive_time: 0
     passive_size: 0
@@ -91,6 +91,11 @@ Carousel:
     video_info_color_timer: [0, 0, 0, 0]
     video_info_weapon: 0
 
+    video_info_led_red_state: 0
+    video_info_led_green_state: 0
+    video_info_led_red_white_state: 0
+    video_info_led_green_white_state: 0
+    
     on_index: app.video_player.load_videos() if hasattr(app, "video_player") else lambda: None
 
     recording_enabled: False
@@ -651,31 +656,32 @@ Carousel:
 
 {% if data.get("video") %}
         Label:
-            id: recording_indicator
-            size: {{ data["recording_indicator"]["size"] }}, {{ data["recording_indicator"]["size"] }}
+            id: recording_status
+            size: {{ data["recording_indicator"]["width"] }}, {{ data["recording_indicator"]["height"] }}
             size_hint: None, None
             pos: {{ data["recording_indicator"]["x"] }}, {{ data["recording_indicator"]["y"] }}
 
             canvas:
                 Color:
-                    rgba: {{ hex_to_rgba(colors["recording"]) }} if root.recording else root.color_invis
+                    rgba: (0, 0, 0, 1) if not root.recording_enabled else {{ hex_to_rgba(colors["recording"]) }}
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
                     radius: self.size
 
-        Button:
-            text: "Video on" if root.recording_enabled else "Video off"
-            size: {{ data["recording_status"]["width"] }}, {{ data["recording_status"]["height"] }}
+        Label:
+            id: recording_indicator
+            size: {{ data["recording_indicator"]["width"] - 4 }}, {{ data["recording_indicator"]["height"] - 4 }}
             size_hint: None, None
-            pos: {{ data["recording_indicator"]["x"] - data["recording_status"]["width"] - data["recording_indicator"]["size"] / 2 }}, {{ data["recording_status"]["y"] }}
-            font_size: {{ data["recording_status"]["font_size"] }}
-            font_name: "agencyb"
-            color: {{ colors["auto_status"]["text_light"] }} if root.recording_enabled else {{ colors["auto_status"]["text_dark"] }}
-            background_color: root.color_invis
-            on_press: app.toggle_recording()
-            text_size: self.size
-            halign: "right"
+            pos: {{ data["recording_indicator"]["x"] + 2 }}, {{ data["recording_indicator"]["y"] + 2 }}
+
+            canvas:
+                Color:
+                    rgba: (0, 0, 0, 1) if not root.recording else {{ hex_to_rgba(colors["recording"]) }}
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: self.size
 
     FloatLayout:
 {% include "video_player.kv" %}
