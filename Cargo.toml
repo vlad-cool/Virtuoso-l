@@ -1,0 +1,25 @@
+[package]
+name = "Virtuoso-l"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+env_logger = "0.11.7"
+gpio-cdev = { version = "0.4", optional = true }
+log = "0.4.26"
+serial = { version = "0.4.0", optional = true }
+slint = { version = "1.10.0", default-features = false, features = ["backend-winit", "renderer-femtovg", "compat-1-2", "std"], optional = true }
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.7"
+
+[features]
+default = ["console_backend", "slint_frontend", "cyrano_server"]
+legacy_backend = ["serial", "gpio-cdev"]
+console_backend = []
+cyrano_server = []
+slint_frontend = ["slint"]
+video_recorder = []
+
+[[bin]]
+name = "Virtuoso"
+path = "src/main.rs"

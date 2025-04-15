@@ -1,0 +1,58 @@
+{
+    "background": "#000000",
+    "score": {
+        "left": "#e31e24",
+        "right": "#009846"
+    },
+    "period": "#00a0e3",
+    "timer": {
+        "white": "#dfdfdf",
+        "orange": "#ef7f1a",
+        "blue": "#00a0e3"
+    },
+    "warning": {
+        "yellow": "#cccc00",
+        "dark_yellow": "#292900",
+        "red": "#e31e24",
+        "dark_red": "#2d0607",
+        "text_light": "#e6e6e6",
+        "text_dark": "#666666"
+    },
+    "passive": {
+        "yellow": "#cccc00",
+        "dark_yellow": "#292900",
+        "red": "#e31e24",
+        "dark_red": "#2d0607",
+        "text_light": "#dfdfdf",
+        "text_dark": "#4c4c4c"
+    },
+    "color_labels":
+    {
+        "red": "#e31e24",
+        "dark_red": "#2d0607",
+        "green": "#009846",
+        "dark_green": "#001e0e"
+    },
+    "white_labels":
+    {
+        "light": "#e6e6e6",
+        "dark": "#222222"
+    },
+    "priority": {
+        "red": "#e31e24",
+        "dark_red": "#2d0607",
+        "green": "#009846",
+        "dark_green": "#001e0e",
+        "text_light": "#e6e6e6",
+        "text_dark": "#666666"
+    },
+    "weapon": {
+        "text_light": "#dfdfdf",
+        "text_dark": "#4c4c4c"
+    },
+    "auto_status": {
+        "text_light": "#dfdfdf",
+        "text_dark": "#4c4c4c"
+    },
+    "recording": "#ff0000"
+}

@@ -1,0 +1,600 @@
+import { LineEdit, Button, ComboBox, GridBox } from "std-widgets.slint";
+
+import "../../assets/AGENCYB.ttf";
+
+export struct TextProperties {
+    x: int,
+    y: int,
+    width: int,
+    height: int,
+    font_size: int,
+}
+
+export struct RectangleProperties {
+    x: int,
+    y: int,
+    width: int,
+    height: int,
+    radius: int,
+}
+
+export struct Layout  {
+    background: RectangleProperties,
+    score_l_l: TextProperties,
+    score_l_r: TextProperties,
+    score_r_l: TextProperties,
+    score_r_r: TextProperties,
+    epee: TextProperties,
+    sabre: TextProperties,
+    fleuret: TextProperties,
+    auto_score_status: TextProperties,
+    auto_timer_status: TextProperties,
+    prioriry_l_cap: TextProperties,
+    priority_l_text: TextProperties,
+    priority_r_cap: TextProperties,
+    priority_r_text: TextProperties,
+    caution_l_rect: RectangleProperties,
+    caution_l_text: TextProperties,
+    penalty_l_rect: RectangleProperties,
+    penalty_l_text: TextProperties,
+    passive_l_bot_rect: RectangleProperties,
+    passive_l_bot_text: TextProperties,
+    passive_l_top_rect: RectangleProperties,
+    passive_l_top_text: TextProperties,
+    caution_r_rect: RectangleProperties,
+    caution_r_text: TextProperties,
+    penalty_r_rect: RectangleProperties,
+    penalty_r_text: TextProperties,
+    passive_r_bot_rect: RectangleProperties,
+    passive_r_bot_text: TextProperties,
+    passive_r_top_rect: RectangleProperties,
+    passive_r_top_text: TextProperties,
+    period: TextProperties,
+    passive_counter_dec: TextProperties,
+    passive_counter_sec: TextProperties,
+    timer_m: TextProperties,
+    timer_colon: TextProperties,
+    timer_d: TextProperties,
+    timer_s: TextProperties,
+    passive_indicator: RectangleProperties,
+    left_color_indicator: RectangleProperties,
+    right_color_indicator: RectangleProperties,
+    left_white_indicator: RectangleProperties,
+    right_white_indicator: RectangleProperties,
+    recording_indicator: RectangleProperties,
+}
+
+export global Palette {
+    out property <brush> background: #000000;
+    out property <brush> score_left: #e31e24;
+    out property <brush> score_right: #009846;
+    out property <brush> period: #00a0e3;
+    out property <brush> timer_white: #dfdfdf;
+    out property <brush> timer_orange: #ef7f1a;
+    out property <brush> timer_blue: #00a0e3;
+    out property <brush> warning_yellow: #cccc00;
+    out property <brush> warning_dark_yellow: #292900;
+    out property <brush> warning_red: #e31e24;
+    out property <brush> warning_dark_red: #2d0607;
+    out property <brush> warning_text_light: #e6e6e6;
+    out property <brush> warning_text_dark: #666666;
+    out property <brush> passive_yellow: #cccc00;
+    out property <brush> passive_dark_yellow: #292900;
+    out property <brush> passive_red: #e31e24;
+    out property <brush> passive_dark_red: #2d0607;
+    out property <brush> passive_text_light: #dfdfdf;
+    out property <brush> passive_text_dark: #4c4c4c;
+    out property <brush> color_labels_red: #e31e24;
+    out property <brush> color_labels_dark_red: #2d0607;
+    out property <brush> color_labels_green: #009846;
+    out property <brush> color_labels_dark_green: #001e0e;
+    out property <brush> white_labels_light: #e6e6e6;
+    out property <brush> white_labels_dark: #222222;
+    out property <brush> priority_red: #e31e24;
+    out property <brush> priority_dark_red: #2d0607;
+    out property <brush> priority_green: #009846;
+    out property <brush> priority_dark_green: #001e0e;
+    out property <brush> priority_text_light: #e6e6e6;
+    out property <brush> priority_text_dark: #666666;
+    out property <brush> weapon_text_light: #dfdfdf;
+    out property <brush> weapon_text_dark: #4c4c4c;
+    out property <brush> auto_status_text_light: #dfdfdf;
+    out property <brush> auto_status_text_dark: #4c4c4c;
+    out property <brush> recording: #ff0000;
+}
+
+export component Virtuoso inherits Window {
+    in property <Layout> layout;
+
+    in property <int> weapon;
+    in property <int> left_score;
+    in property <int> right_score;
+    in property <int> timer;
+    in property <bool> last_ten_seconds;
+    in property <bool> timer_running;
+    in property <int> period;
+    in property <int> priority;
+    in property <int> passive_indicator;
+    in property <int> passive_counter;
+
+    in property <bool> left_caution;
+    in property <bool> left_penalty;
+    in property <bool> right_caution;
+    in property <bool> right_penalty;
+
+    in property <bool> auto_score_on;
+    in property <bool> auto_timer_on;
+
+    in property <bool> left_color_led_on;
+    in property <bool> left_white_led_on;
+    in property <bool> right_color_led_on;
+    in property <bool> right_white_led_on;
+
+    in property <bool> left_bot_pcard;
+    in property <bool> left_top_pcard;
+    in property <bool> right_bot_pcard;
+    in property <bool> right_top_pcard;
+
+    in property <bool> is_online;
+
+    in property <bool> timer_flashing;
+
+    default-font-family: "Agency FB";
+    width: 1px * layout.background.width;
+    height: 1px * layout.background.height;
+    background: Palette.background;
+
+    property <[{name: string, layout: TextProperties, index: int}]> weapon_elements: [
+        { name: "epee", layout: layout.epee, index: 1 },
+        { name: "sabre", layout: layout.sabre, index: 2 },
+        { name: "fleuret", layout: layout.fleuret, index: 3 },
+    ];
+
+    for weapon_element in weapon_elements: Text {
+        x: 1px * weapon_element.layout.x;
+        y: 1px * weapon_element.layout.y;
+        width: 1px * weapon_element.layout.width;
+        height: 1px * weapon_element.layout.height;
+        font-size: 1px * weapon_element.layout.font_size;
+        text: weapon_element.name;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: weapon == weapon_element.index ? Palette.weapon_text_light : Palette.weapon_text_dark;
+    }
+
+    property <[{text: string, layout: TextProperties, index: int, color_disabled: brush, color_enabled: brush}]> priority_elements: [
+        {
+            text: "P",
+            layout: layout.prioriry-l-cap,
+            index: -1,
+            color_disabled: Palette.priority_dark_red,
+            color_enabled: Palette.priority_red
+        },
+        {
+            text: "riority",
+            layout: layout.priority-l-text,
+            index: -1,
+            color_disabled: Palette.priority_text_dark,
+            color_enabled: Palette.priority_text_light
+        },
+        {
+            text: "P",
+            layout: layout.priority-r-cap,
+            index: 1,
+            color_disabled: Palette.priority_dark_green,
+            color_enabled: Palette.priority_green
+        },
+        {
+            text: "riority",
+            layout: layout.priority-r-text,
+            index: 1,
+            color_disabled: Palette.priority_text_dark,
+            color_enabled: Palette.priority_text_light
+        },
+    ];
+
+    for priority_element in priority_elements: Text {
+        x: 1px * priority_element.layout.x;
+        y: 1px * priority_element.layout.y;
+        width: 1px * priority_element.layout.width;
+        height: 1px * priority_element.layout.height;
+        font-size: 1px * priority_element.layout.font_size;
+        text: priority_element.text;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: priority == priority_element.index ? priority-element.color_enabled : priority-element.color-disabled;
+    }
+
+    Text {
+        x: 1px * layout.score-l-l.x;
+        y: 1px * layout.score-l-l.y;
+        width: 1px * layout.score-l-l.width;
+        height: 1px * layout.score-l-l.height;
+
+        font-size: 1px * layout.score-l-l.font_size;
+        text: left_score > 9 ? Math.floor(left_score / 10) : Math.mod(left_score, 10);
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: Palette.score_left;
+    }
+
+    Text {
+        x: 1px * layout.score-l-r.x;
+        y: 1px * layout.score-l-r.y;
+        width: 1px * layout.score-l-r.width;
+        height: 1px * layout.score-l-r.height;
+        font-size: 1px * layout.score-l-r.font_size;
+        text: left_score > 9 ? Math.mod(left_score, 10) : " ";
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: Palette.score_left;
+    }
+
+    Text {
+        x: 1px * layout.score-r-l.x;
+        y: 1px * layout.score-r-l.y;
+        width: 1px * layout.score-r-l.width;
+        height: 1px * layout.score-r-l.height;
+        font-size: 1px * layout.score-r-l.font_size;
+        text: right_score > 9 ? Math.floor(right_score / 10) : " ";
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: Palette.score_right;
+    }
+
+    Text {
+        x: 1px * layout.score-r-r.x;
+        y: 1px * layout.score-r-r.y;
+        width: 1px * layout.score-r-r.width;
+        height: 1px * layout.score-r-r.height;
+        font-size: 1px * layout.score-r-r.font_size;
+        text: Math.mod(right_score, 10);
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: Palette.score_right;
+    }
+
+    Text {
+        x: 1px * layout.period.x;
+        y: 1px * layout.period.y;
+        width: 1px * layout.period.width;
+        height: 1px * layout.period.height;
+        font-size: 1px * layout.period.font_size;
+        text: period;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: Palette.period;
+    }
+
+    Text {
+        x: 1px * layout.timer-m.x;
+        y: 1px * layout.timer-m.y;
+        width: 1px * layout.timer-m.width;
+        height: 1px * layout.timer-m.height;
+        font-size: 1px * layout.timer-m.font_size;
+        text: Math.mod(Math.floor(timer / 100), 10);
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: timer_running ? (last_ten_seconds ? Palette.timer_blue : Palette.timer_white) : Palette.timer_orange;
+    }
+
+    Text {
+        x: 1px * layout.timer-colon.x;
+        y: 1px * layout.timer-colon.y;
+        width: 1px * layout.timer-colon.width;
+        height: 1px * layout.timer-colon.height;
+        font-size: 1px * layout.timer-colon.font_size;
+        text: ":";
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: timer_running ? (last_ten_seconds ? Palette.timer_blue : Palette.timer_white) : Palette.timer_orange;
+    }
+
+    Text {
+        x: 1px * layout.timer-d.x;
+        y: 1px * layout.timer-d.y;
+        width: 1px * layout.timer-d.width;
+        height: 1px * layout.timer-d.height;
+        font-size: 1px * layout.timer-d.font_size;
+        text: Math.mod(Math.floor(timer / 10), 10);
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: timer_running ? (last_ten_seconds ? Palette.timer_blue : Palette.timer_white) : Palette.timer_orange;
+    }
+
+    Text {
+        x: 1px * layout.timer-s.x;
+        y: 1px * layout.timer-s.y;
+        width: 1px * layout.timer-s.width;
+        height: 1px * layout.timer-s.height;
+        font-size: 1px * layout.timer-s.font_size;
+        text: Math.mod(timer, 10);
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: timer_running ? (last_ten_seconds ? Palette.timer_blue : Palette.timer_white) : Palette.timer_orange;
+    }
+
+    Rectangle {
+        x: 1px * layout.left-color-indicator.x;
+        y: 1px * layout.left-color-indicator.y;
+        width: 1px * layout.left-color-indicator.width;
+        height: 1px * layout.left-color-indicator.height;
+        border-radius: 1px * layout.left-color-indicator.radius;
+
+        background: left_color_led_on ? Palette.color_labels_red : Palette.color_labels_dark_red;
+    }
+
+    Rectangle {
+        x: 1px * layout.left-white-indicator.x;
+        y: 1px * layout.left-white-indicator.y;
+        width: 1px * layout.left-white-indicator.width;
+        height: 1px * layout.left-white-indicator.height;
+        border-radius: 1px * layout.left-white-indicator.radius;
+
+        background: left_white_led_on ? Palette.white_labels_light : Palette.white_labels_dark;
+    }
+
+    Rectangle {
+        x: 1px * layout.right-color-indicator.x;
+        y: 1px * layout.right-color-indicator.y;
+        width: 1px * layout.right-color-indicator.width;
+        height: 1px * layout.right-color-indicator.height;
+        border-radius: 1px * layout.right-color-indicator.radius;
+
+        background: right_color_led_on ? Palette.color_labels_green : Palette.color_labels_dark_green;
+    }
+
+    Rectangle {
+        x: 1px * layout.right-white-indicator.x;
+        y: 1px * layout.right-white-indicator.y;
+        width: 1px * layout.right-white-indicator.width;
+        height: 1px * layout.right-white-indicator.height;
+        border-radius: 1px * layout.right-white-indicator.radius;
+
+        background: right_white_led_on ? Palette.white_labels_light : Palette.white_labels_dark;
+    }
+
+    Rectangle {
+        x: 1px * layout.caution-l-rect.x;
+        y: 1px * layout.caution-l-rect.y;
+        width: 1px * layout.caution-l-rect.width;
+        height: 1px * layout.caution-l-rect.height;
+        border-radius: 1px * layout.caution-l-rect.radius;
+
+        background: left_caution ? Palette.warning_yellow : Palette.warning_dark_yellow;
+    }
+
+    Text {
+        x: 1px * layout.caution-l-text.x;
+        y: 1px * layout.caution-l-text.y;
+        width: 1px * layout.caution-l-text.width;
+        height: 1px * layout.caution-l-text.height;
+        font-size: 1px * layout.caution-l-text.font_size;
+        text: "caution";
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: left_caution ? Palette.warning_text_light : Palette.weapon_text_dark;
+    }
+
+    Rectangle {
+        x: 1px * layout.penalty-l-rect.x;
+        y: 1px * layout.penalty-l-rect.y;
+        width: 1px * layout.penalty-l-rect.width;
+        height: 1px * layout.penalty-l-rect.height;
+        border-radius: 1px * layout.penalty-l-rect.radius;
+
+        background: left_penalty ? Palette.warning_red : Palette.warning_dark_red;
+    }
+
+    Text {
+        x: 1px * layout.penalty-l-text.x;
+        y: 1px * layout.penalty-l-text.y;
+        width: 1px * layout.penalty-l-text.width;
+        height: 1px * layout.penalty-l-text.height;
+        font-size: 1px * layout.penalty-l-text.font_size;
+        text: "penalty";
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: left_penalty ? Palette.warning_text_light : Palette.weapon_text_dark;
+    }
+
+    Rectangle {
+        x: 1px * layout.caution-r-rect.x;
+        y: 1px * layout.caution-r-rect.y;
+        width: 1px * layout.caution-r-rect.width;
+        height: 1px * layout.caution-r-rect.height;
+        border-radius: 1px * layout.caution-r-rect.radius;
+
+        background: right_caution ? Palette.warning_yellow : Palette.warning_dark_yellow;
+    }
+
+    Text {
+        x: 1px * layout.caution-r-text.x;
+        y: 1px * layout.caution-r-text.y;
+        width: 1px * layout.caution-r-text.width;
+        height: 1px * layout.caution-r-text.height;
+        font-size: 1px * layout.caution-r-text.font_size;
+        text: "caution";
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: right_caution ? Palette.warning_text_light : Palette.weapon_text_dark;
+    }
+
+    Rectangle {
+        x: 1px * layout.penalty-r-rect.x;
+        y: 1px * layout.penalty-r-rect.y;
+        width: 1px * layout.penalty-r-rect.width;
+        height: 1px * layout.penalty-r-rect.height;
+        border-radius: 1px * layout.penalty-r-rect.radius;
+
+        background: right_penalty ? Palette.warning_red : Palette.warning_dark_red;
+    }
+
+    Text {
+        x: 1px * layout.penalty-r-text.x;
+        y: 1px * layout.penalty-r-text.y;
+        width: 1px * layout.penalty-r-text.width;
+        height: 1px * layout.penalty-r-text.height;
+        font-size: 1px * layout.penalty-r-text.font_size;
+        text: "penalty";
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: right_penalty ? Palette.warning_text_light : Palette.weapon_text_dark;
+    }
+
+    Rectangle {
+        x: 1px * layout.passive-l-bot-rect.x;
+        y: 1px * layout.passive-l-bot-rect.y;
+        width: 1px * layout.passive-l-bot-rect.width;
+        height: 1px * layout.passive-l-bot-rect.height;
+        border-radius: 1px * layout.passive-l-bot-rect.radius;
+
+        background: left_bot_pcard ? Palette.passive_yellow : Palette.passive_dark_yellow;
+    }
+
+    Text {
+        x: 1px * layout.passive-l-bot-text.x;
+        y: 1px * layout.passive-l-bot-text.y;
+        width: 1px * layout.passive-l-bot-text.width;
+        height: 1px * layout.passive-l-bot-text.height;
+        font-size: 1px * layout.passive-l-bot-text.font_size;
+        text: "Pcard";
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: left_bot_pcard ? Palette.passive_text_light : Palette.passive_text_dark;
+    }
+
+    Rectangle {
+        x: 1px * layout.passive-l-top-rect.x;
+        y: 1px * layout.passive-l-top-rect.y;
+        width: 1px * layout.passive-l-top-rect.width;
+        height: 1px * layout.passive-l-top-rect.height;
+        border-radius: 1px * layout.passive-l-top-rect.radius;
+
+        background: left_top_pcard ? Palette.passive_red : Palette.passive_dark_red;
+    }
+
+    Text {
+        x: 1px * layout.passive-l-top-text.x;
+        y: 1px * layout.passive-l-top-text.y;
+        width: 1px * layout.passive-l-top-text.width;
+        height: 1px * layout.passive-l-top-text.height;
+        font-size: 1px * layout.passive-l-top-text.font_size;
+        text: "Pcard";
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: left_top_pcard ? Palette.passive_text_light : Palette.passive_text_dark;
+    }
+
+    Rectangle {
+        x: 1px * layout.passive-r-bot-rect.x;
+        y: 1px * layout.passive-r-bot-rect.y;
+        width: 1px * layout.passive-r-bot-rect.width;
+        height: 1px * layout.passive-r-bot-rect.height;
+        border-radius: 1px * layout.passive-r-bot-rect.radius;
+
+        background: right_bot_pcard ? Palette.passive_yellow : Palette.passive_dark_yellow;
+    }
+
+    Text {
+        x: 1px * layout.passive-r-bot-text.x;
+        y: 1px * layout.passive-r-bot-text.y;
+        width: 1px * layout.passive-r-bot-text.width;
+        height: 1px * layout.passive-r-bot-text.height;
+        font-size: 1px * layout.passive-r-bot-text.font_size;
+        text: "Pcard";
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: right_bot_pcard ? Palette.passive_text_light : Palette.passive_text_dark;
+    }
+
+    Rectangle {
+        x: 1px * layout.passive-r-top-rect.x;
+        y: 1px * layout.passive-r-top-rect.y;
+        width: 1px * layout.passive-r-top-rect.width;
+        height: 1px * layout.passive-r-top-rect.height;
+        border-radius: 1px * layout.passive-r-top-rect.radius;
+
+        background: right_top_pcard ? Palette.passive_red : Palette.passive_dark_red;
+    }
+
+    Text {
+        x: 1px * layout.passive-r-top-text.x;
+        y: 1px * layout.passive-r-top-text.y;
+        width: 1px * layout.passive-r-top-text.width;
+        height: 1px * layout.passive-r-top-text.height;
+        font-size: 1px * layout.passive-r-top-text.font_size;
+        text: "Pcard";
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: right_top_pcard ? Palette.passive_text_light : Palette.passive_text_dark;
+    }
+
+    Text {
+        x: 1px * layout.auto-score-status.x;
+        y: 1px * layout.auto-score-status.y;
+        width: 1px * layout.auto-score-status.width;
+        height: 1px * layout.auto-score-status.height;
+        font-size: 1px * layout.auto-score-status.font_size;
+        text: auto_score_on ? "auto score\non" : "auto score\noff";
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: auto_score_on ? Palette.auto_status_text_light : Palette.auto_status_text_dark;
+    }
+
+    Text {
+        x: 1px * layout.auto-timer-status.x;
+        y: 1px * layout.auto-timer-status.y;
+        width: 1px * layout.auto-timer-status.width;
+        height: 1px * layout.auto-timer-status.height;
+        font-size: 1px * layout.auto-timer-status.font_size;
+        text: auto_timer_on ? "auto timer\non" : "auto timer\noff";
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: auto_timer_on ? Palette.auto_status_text_light : Palette.auto_status_text_dark;
+    }
+
+    Text {
+        x: 1px * layout.passive-counter-dec.x;
+        y: 1px * layout.passive-counter-dec.y;
+        width: 1px * layout.passive-counter-dec.width;
+        height: 1px * layout.passive-counter-dec.height;
+        font-size: 1px * layout.passive-counter-dec.font_size;
+        text: passive_counter >= 0 ? Math.floor(passive_counter / 10) : 6;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: passive_counter >= 0 ? Palette.passive_text_light : Palette.passive_text_dark;
+    }
+
+    Text {
+        x: 1px * layout.passive-counter-sec.x;
+        y: 1px * layout.passive-counter-sec.y;
+        width: 1px * layout.passive-counter-sec.width;
+        height: 1px * layout.passive-counter-sec.height;
+        font-size: 1px * layout.passive-counter-sec.font_size;
+        text: passive_counter >= 0 ? Math.mod(passive_counter, 10) : 0;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: passive_counter >= 0 ? Palette.passive_text_light : Palette.passive_text_dark;
+    }
+
+    Rectangle {
+        x: 1px * (layout.passive-indicator.x + layout.passive-indicator.width / 2 - layout.passive-indicator.width * passive_indicator / 2000);
+        y: 1px * layout.passive-indicator.y;
+        width: 1px * (layout.passive-indicator.width * passive_indicator / 1000);
+        height: 1px * layout.passive-indicator.height;
+        border-radius: 1px * layout.passive-indicator.radius;
+
+        background: passive_counter > 10 ? Palette.passive_yellow : ((passive_counter == 0 || timer_flashing) ? Palette.passive_red : Palette.background);
+    }
+
+    Rectangle {
+        x: 1px * layout.recording-indicator.x;
+        y: 1px * layout.recording-indicator.y;
+        width: 1px * layout.recording-indicator.width;
+        height: 1px * layout.recording-indicator.height;
+        border-radius: 1px * layout.recording-indicator.radius;
+
+        background: is_online ? Palette.color_labels_green : Palette.weapon_text_dark;
+    }
+}
