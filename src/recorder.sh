@@ -48,7 +48,7 @@ do
     
     VIDEO_CUT=$VIDEO_PATH/$j.mp4
 
-    echo $VIDEO -hr-edl-seek -edl EDL -endpos $CLIP_DURATION -ovc x264 -info comment="$CLIP_METADATA" -o $VIDEO_CUT > $CUTTER_LOG_OUT.COMMAND
+    # echo $VIDEO -hr-edl-seek -edl EDL -endpos $CLIP_DURATION -ovc x264 -info comment="$CLIP_METADATA" -o $VIDEO_CUT > $CUTTER_LOG_OUT.COMMAND
     mencoder $VIDEO -hr-edl-seek -edl EDL -endpos $CLIP_DURATION -ovc x264 -info comment="$CLIP_METADATA" -o $VIDEO_CUT > $CUTTER_LOG_OUT 2> $CUTTER_LOG_ERR
 done
 
