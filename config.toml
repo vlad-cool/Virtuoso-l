@@ -1,0 +1,5 @@
+[legacy_backend]
+rc5_address = 32
+
+[cyrano_server]
+cyrano_port = 50100

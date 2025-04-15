@@ -1,7 +1,6 @@
 #!env python3
 from lxml import etree
 from sys import argv
-import json
 import re
 
 tree = etree.parse(argv[1])
@@ -71,64 +70,42 @@ def parse_layout(parent, offset=0):
 
 parse_layout(root)
 
-layout = {}
-
 for key, element in elements.items():
+    if element.name == "Rectangle":
+        continue
     match element.type:
         case "text":
             print(f"    {element.name}: TextProperties,")
         case "rect":
             print(f"    {element.name}: RectangleProperties,")
-        
-    layout[element.name] = vars(element)
 
 print()
 print("--------------------------------------------")
 print()
 
-for key, element in elements.items():
-    # if element.type == "text":
-    #     print(
-    #         element.name,
-    #         element.type,
-    #         element.x,
-    #         element.y,
-    #         element.widht,
-    #         element.height
-    #     )
-    # if element.type == "rect":
-    #     print(
-    #         element.name,
-    #         element.type,
-    #         element.x,
-    #         element.y,
-    #         element.rx,
-    #         element.ry,
-    #         element.widht,
-    #         element.height
-    #     )
-    match element.type:
-        case "text":
-            print(
-                f"""{element.name}: TextProperties{{
-                    x: {element.x},
-                    y: {element.y},
-                    width: {element.width},
-                    height: {element.height},
-                    font_size: {element.font_size},
-                }},"""
-            )
-        case "rect":
-            print(
-                f"""{element.name}: RectangleProperties{{
-                    x: {element.x},
-                    y: {element.y},
-                    width: {element.width},
-                    height: {element.height},
-                    radius: {element.rx},
-                }},"""
-            )
-
-if len(argv) > 2:
-    with open(argv[2], "w") as f:
-        json.dump(layout, f)
+with open("src/layouts.rs", "w") as f:
+    f.write('// Genetated file\n')
+    f.write('slint::slint!(export { Virtuoso } from "src/slint/main.slint";);\n')
+    f.write('\n')
+    f.write('pub const LAYOUT_1920X480: Layout = Layout {\n')
+    for key, element in elements.items():
+        if element.name == "Rectangle":
+            continue
+        if element.type == "text":
+            f.write(f"    {element.name}: TextProperties {{\n")
+            f.write(f"        x: {element.x - 100},\n")
+            f.write(f"        y: {element.y - 100},\n")
+            f.write(f"        width: {element.width + 200},\n")
+            f.write(f"        height: {element.height + 200},\n")
+            f.write(f"        font_size: {element.font_size // 2 * 2 - 1},\n")
+            # f.write(f"        font_size: {element.font_size},\n")
+            f.write(f"    }},\n")
+        if element.type == "rect":
+            f.write(f"    {element.name}: RectangleProperties {{\n")
+            f.write(f"        x: {element.x},\n")
+            f.write(f"        y: {element.y},\n")
+            f.write(f"        width: {element.width},\n")
+            f.write(f"        height: {element.height},\n")
+            f.write(f"        radius: {element.rx},\n")
+            f.write(f"    }},\n")
+    f.write("};\n")
