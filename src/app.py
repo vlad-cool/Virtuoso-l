@@ -70,9 +70,6 @@ class Updater:
                 shutil.rmtree(version_path)
             old_version = "v0.0.0"
 
-
-        print(req, result, flush=True)
-
         new_version = result["tag_name"]
         if old_version[0] == 'v':
             old_version = old_version[1:]
@@ -157,7 +154,6 @@ class Updater:
 
         if btn.update_state == "no_update":
             self.update_request = UrlRequest(url, req_headers={"User-Agent": "Virtuoso-l"}, on_redirect = lambda req, result: self.update_redirect_handler(btn, req, result), on_success=lambda req, result: self.check_version(btn, req, result), on_failure=lambda req, result: self.update_failed(btn, req, result), on_error=lambda req, result: self.update_failed(btn, req, result))
-            print(self.update_request)
             btn.text = "Checking for updates..."
             btn.update_state = "waiting"
             return
@@ -337,7 +333,6 @@ class VideoPlayer:
         self.root.video_id = -1
 
     def play_pause(self):
-        print(self.player.eos)
         if self.player.eos:
             self.player.seek(0)
             self.start_playback()
@@ -394,8 +389,6 @@ class VideoPlayer:
             self.root.ids.video_player.seek((self.root.ids.video_player.position + s) / self.root.ids.video_player.duration, True)
 
     def load_videos(self):
-        # print("Loading videos")
-        print(self.available_videos, flush=True)
         if system_info.video_support:
             videos = glob.glob(os.environ["VIDEO_PATH"] + "/*.mp4")
             for video in videos:
@@ -411,9 +404,6 @@ class VideoPlayer:
 
     def load_metadata(self):
         path = self.player.source
-        print("#" * 50)
-        print(path, flush=True)
-        print("#" * 50)
         if path == system_info.camera_path:
             return
         if isinstance(self.available_videos[path], subprocess.Popen) and self.available_videos[path].poll() == 0:
@@ -446,7 +436,6 @@ class VideoPlayer:
             self.current_metadata = list(map(VideoMetadata, result.split("v1")[1:]))
 
         except (ValueError, KeyError) as e:
-            print(f"An error occurred: {e}")
             self.root.video_info = False
             self.current_metadata = None
     
@@ -469,8 +458,7 @@ class VideoPlayer:
     def update_metadata(self):
         if self.player.state == "play" and self.video_id != -1 and self.current_metadata is not None:
             for i in range(len(self.current_metadata) - 1):
-                if float(self.current_metadata[i + 1].boottime) > self.video_start_time + 10 - self.root.ids.video_player.duration + self.root.ids.video_player.position:
-                    print(f"Processing {i} metadata")
+                if float(self.current_metadata[i + 1].boottime) - 0.05 > self.video_start_time + 10 - self.root.ids.video_player.duration + self.root.ids.video_player.position:
                     self.root.video_info_score_l_l = self.current_metadata[i].score_l_l
                     self.root.video_info_score_l_r = self.current_metadata[i].score_l_r
                     self.root.video_info_score_r_l = self.current_metadata[i].score_r_l
@@ -478,8 +466,8 @@ class VideoPlayer:
                     self.root.video_info_timer_0 = self.current_metadata[i].timer_0
                     self.root.video_info_timer_2 = self.current_metadata[i].timer_2
                     self.root.video_info_timer_3 = self.current_metadata[i].timer_3
-                    self.root.video_info_period = self.current_metadata[i].period
-                    self.root.video_info_priority = self.current_metadata[i].priority
+                    self.root.video_info_period = int(self.current_metadata[i].period)
+                    self.root.video_info_priority = int(self.current_metadata[i].priority)
                     self.root.video_info_warning_l = self.current_metadata[i].warning_l
                     self.root.video_info_warning_r = self.current_metadata[i].warning_r
                     self.root.video_info_passive_size = self.current_metadata[i].passive_size
@@ -931,7 +919,6 @@ class KivyApp(App):
                         self.update_config()
                 
         for cmd in cmds:
-            print(cmd)
             if cmd[0] != self.config["rc5_address"]:
                 continue
             if cmd[2] == False:
@@ -941,9 +928,7 @@ class KivyApp(App):
                 self.root.index = 2 if system_info.video_support else 1
                 self.root.ids["settings_update"].state = "down"
                 self.updater.update(self.root.ids["update_btn"])
-            
-            print(f"{root.index}, {cmd[1]}")
-            
+                        
             match root.index:
                 case 0:
                     match cmd[1]:
@@ -1071,7 +1056,6 @@ class KivyApp(App):
                 try:
                     self.config = json.load(config_file)
                 except (ValueError, KeyError) as e:
-                    print(f"An error occurred when loading config file: {e}")
                     self.update_config()
         else:
             if config_path.is_dir():
@@ -1103,9 +1087,9 @@ class KivyApp(App):
                 position=self.on_position_change
             )
 
-            Clock.schedule_once(lambda _ : self.video_player.fix_camera(), 1)
-            Clock.schedule_once(lambda _ : self.video_player.play_video(1), 2)
-            Clock.schedule_once(lambda _ : self.video_player.play_video(-1), 3)
+            # Clock.schedule_once(lambda _ : self.video_player.fix_camera(), 1)
+            Clock.schedule_once(lambda _ : self.video_player.play_video(1), 3)
+            Clock.schedule_once(lambda _ : self.video_player.show_preview(), 2)
 
     def on_stop(self):
         if self.data_rx is not None:
