@@ -1,5 +1,4 @@
 #[allow(dead_code)]
-
 #[derive(Clone, PartialEq)]
 pub enum Modules {
     #[cfg(feature = "cyrano_server")]
