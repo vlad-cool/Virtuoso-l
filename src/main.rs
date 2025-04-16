@@ -30,15 +30,7 @@ mod slint_frontend;
 fn main() {
     #[cfg(feature = "video_recorder")]
     todo!();
-    // let config = virtuoso_config::VirtuosoConfig::load_config(None);
-    // println!("{:?}", config);
-
-    // // config.load_config(None);
-
-    // println!("{:?}", config);
-
-    // // config.write_config(None);
-
+    
     let match_info: Arc<Mutex<MatchInfo>> = Arc::new(Mutex::new(MatchInfo::new()));
     let config: Arc<Mutex<VirtuosoConfig>> =
         Arc::new(Mutex::new(VirtuosoConfig::load_config(None)));
