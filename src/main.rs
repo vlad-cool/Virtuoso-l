@@ -30,7 +30,7 @@ mod slint_frontend;
 fn main() {
     #[cfg(feature = "video_recorder")]
     todo!();
-    
+
     let match_info: Arc<Mutex<MatchInfo>> = Arc::new(Mutex::new(MatchInfo::new()));
     let config: Arc<Mutex<VirtuosoConfig>> =
         Arc::new(Mutex::new(VirtuosoConfig::load_config(None)));
@@ -58,17 +58,16 @@ fn main() {
     let legacy_backend_thread = thread::spawn(move || {
         legacy_backend.run();
     });
-    
+
     #[cfg(feature = "cyrano_server")]
     let cyrano_server_thread = thread::spawn(move || {
         cyrano_server.run();
     });
-    
-    
+
     #[cfg(feature = "slint_frontend")]
     #[cfg(target_os = "macos")]
     slint_frontend.run();
-    
+
     #[cfg(feature = "slint_frontend")]
     #[cfg(not(target_os = "macos"))]
     let slint_frontend_thread = thread::spawn(move || {
@@ -81,7 +80,7 @@ fn main() {
     #[cfg(feature = "slint_frontend")]
     #[cfg(not(target_os = "macos"))]
     slint_frontend_thread.join().unwrap();
-    
+
     #[cfg(feature = "console_backend")]
     console_backend_thread.join().unwrap();
 

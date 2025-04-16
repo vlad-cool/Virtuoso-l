@@ -39,7 +39,7 @@ impl modules::VirtuosoModule for SlintFrontend {
                     let seconds_updated: bool;
                     (match_info_modified_count, seconds_updated) =
                         update_data(&match_info_clone, &app, match_info_modified_count);
-                    
+
                     if seconds_updated {
                         app.set_timer_flashing(true);
                         let weak_app_3 = weak_app_2.clone();

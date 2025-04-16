@@ -29,7 +29,7 @@ pub struct LegacyBackend {
     auto_status_controller: AutoStatusController,
     passive_controller: PassiveTimer,
 
-    last_seconds_value: Option::<u32>,
+    last_seconds_value: Option<u32>,
 }
 
 // impl modules::VirtuosoModule for LegacyBackend {
@@ -142,13 +142,11 @@ impl LegacyBackend {
                 msg.seconds
             };
 
-            if secs == None
-            {
+            if secs == None {
                 secs = Some(self.last_seconds_value);
             }
 
-            if secs.unwrap() != self.last_seconds_value
-            {
+            if secs.unwrap() != self.last_seconds_value {
                 self.last_seconds_value = Some(secs);
                 self.passive_controller.tick();
             }
