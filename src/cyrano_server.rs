@@ -138,7 +138,6 @@ impl FencerInfo {
 pub struct CyranoServer {
     match_info: Arc<Mutex<match_info::MatchInfo>>,
     match_info_modified_count: u32,
-    config: Arc<Mutex<VirtuosoConfig>>,
 
     udp_socket: UdpSocket,
 
@@ -235,10 +234,8 @@ impl CyranoServer {
     ) -> Self {
         let port: u16 = config.lock().unwrap().cyrano_server.cyrano_port;
         Self {
-            match_info: match_info,
+            match_info,
             match_info_modified_count: 0,
-
-            config: config,
 
             state: State::Waiting,
 

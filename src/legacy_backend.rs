@@ -20,6 +20,8 @@ use crate::modules;
 use crate::virtuoso_config::VirtuosoConfig;
 
 const AUTO_STATUS_WAIT_THRESHOLD: std::time::Duration = std::time::Duration::from_millis(200);
+const AUTO_STATUS_ON: u32 = 196;
+const AUTO_STATUS_OFF: u32 = 17;
 
 pub struct LegacyBackend {
     match_info: Arc<Mutex<match_info::MatchInfo>>,
@@ -32,27 +34,23 @@ pub struct LegacyBackend {
     last_seconds_value: Option<u32>,
 }
 
-// impl modules::VirtuosoModule for LegacyBackend {
-impl LegacyBackend {
-    const MODULE_TYPE: modules::Modules = modules::Modules::LegacyBackend;
-
-    pub fn run(&mut self) {
+impl modules::VirtuosoModule for LegacyBackend {
+    fn run(&mut self) {
         let (tx, rx) = mpsc::channel::<InputData>();
 
-        let tx_1 = tx.clone();
-        let tx_2 = tx.clone();
-        let tx_3 = tx.clone();
-
+        let tx_cloned = tx.clone();
         thread::spawn(move || {
-            uart_handler(tx_1);
+            uart_handler(tx_cloned);
         });
 
+        let tx_cloned = tx.clone();
         thread::spawn(move || {
-            pins_handler(tx_2);
+            pins_handler(tx_cloned);
         });
 
+        let tx_cloned = tx.clone();
         thread::spawn(move || {
-            rc5_reciever(tx_3);
+            rc5_reciever(tx_cloned);
         });
 
         loop {
@@ -72,6 +70,10 @@ impl LegacyBackend {
             }
         }
     }
+
+    fn get_module_type(&self) -> Modules {
+        modules::Modules::LegacyBackend
+    }
 }
 
 impl LegacyBackend {
@@ -87,7 +89,7 @@ impl LegacyBackend {
             rc5_address,
             auto_status_controller: AutoStatusController::new(),
             passive_controller: PassiveTimer::new(),
-            last_seconds_value: Mone,
+            last_seconds_value: None,
         }
     }
 
@@ -102,27 +104,20 @@ impl LegacyBackend {
             let symbol = msg.dec_seconds * 16 + msg.seconds;
 
             let (modified_field, new_state) = self.auto_status_controller.set_state(match symbol {
-                17 => AutoStatusStates::Off,
-                196 => AutoStatusStates::On,
+                AUTO_STATUS_OFF => AutoStatusStates::Off,
+                AUTO_STATUS_ON => AutoStatusStates::On,
                 _ => AutoStatusStates::Unknown,
             });
 
-            if modified_field != AutoStatusFields::Unknown && new_state != AutoStatusStates::Unknown
-            {
+            if new_state != AutoStatusStates::Unknown {
                 match modified_field {
                     AutoStatusFields::Timer => match_info_data.auto_timer_on = new_state.to_bool(),
                     AutoStatusFields::Score => match_info_data.auto_score_on = new_state.to_bool(),
-                    _ => {}
+                    AutoStatusFields::Unknown => {},
                 }
             }
-
-            match symbol {
-                17 => println!("Got off"),
-                196 => println!("Got on"),
-                _ => println!("Got Unknown ({})", symbol),
-            };
         } else {
-            match_info_data.timer = if msg.period & 0b00001111 == 0b1100 {
+            match_info_data.timer = if msg.period == 0b1100 {
                 4
             } else {
                 msg.minutes
@@ -131,25 +126,26 @@ impl LegacyBackend {
                 + msg.seconds;
 
             if msg.minutes == 0 && msg.dec_seconds == 0 {
-                match_info_data.last_10_seconds = true;
+                match_info_data.last_ten_seconds = true;
             } else if msg.minutes != 0 {
-                match_info_data.last_10_seconds = false;
+                match_info_data.last_ten_seconds = false;
             }
 
-            let secs = if last_10_seconds {
+            let secs = if match_info_data.last_ten_seconds {
                 msg.minutes
             } else {
                 msg.seconds
             };
+            // let secs = msg.seconds;
 
-            if secs == None {
-                secs = Some(self.last_seconds_value);
-            }
+            // if secs == None {
+            //     secs = Some(self.last_seconds_value);
+            // }
 
-            if secs.unwrap() != self.last_seconds_value {
-                self.last_seconds_value = Some(secs);
-                self.passive_controller.tick();
-            }
+            // if secs != self.last_seconds_value.unwrap_or(11111) {
+            //     self.last_seconds_value = Some(secs);
+            //     self.passive_controller.tick();
+            // }
         }
         match_info_data.period = if msg.period > 0 && msg.period < 10 {
             msg.period

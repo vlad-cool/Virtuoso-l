@@ -13,7 +13,7 @@ pub struct SlintFrontend {
 impl SlintFrontend {
     pub fn new(match_info: Arc<Mutex<match_info::MatchInfo>>) -> Self {
         Self {
-            match_info: match_info,
+            match_info,
         }
     }
 }

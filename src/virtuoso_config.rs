@@ -51,7 +51,7 @@ pub struct LegacyBackendConfig {
 
 impl Default for LegacyBackendConfig {
     fn default() -> Self {
-        Self { rc5_address: 32 }
+        Self { rc5_address: 0 }
     }
 }
 
