@@ -276,8 +276,4 @@ impl modules::VirtuosoModule for ConsoleBackend {
             }
         }
     }
-
-    fn get_module_type(&self) -> modules::Modules {
-        modules::Modules::ConsoleBackend
-    }
 }

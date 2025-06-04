@@ -63,10 +63,6 @@ impl modules::VirtuosoModule for SlintFrontend {
         let mut match_info_data = self.match_info.lock().unwrap();
         match_info_data.program_state = match_info::ProgramState::Exiting;
     }
-
-    fn get_module_type(&self) -> modules::Modules {
-        modules::Modules::SlintFrontend
-    }
 }
 
 fn update_data(
