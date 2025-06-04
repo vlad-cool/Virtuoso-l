@@ -1,18 +1,15 @@
-#[allow(dead_code)]
-#[allow(unused_variables)]
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-use match_info::MatchInfo;
-
 mod modules;
 mod virtuoso_config;
-
-mod console_backend;
 mod match_info;
+mod virtuoso_logger;
 
 use crate::modules::VirtuosoModule;
 use crate::virtuoso_config::VirtuosoConfig;
+use match_info::MatchInfo;
+use log::{info, warn, error, debug, trace};
 
 #[cfg(feature = "cyrano_server")]
 mod cyrano_server;
@@ -22,12 +19,16 @@ mod gpio;
 #[cfg(feature = "legacy_backend")]
 mod legacy_backend;
 
+#[cfg(feature = "console_backend")]
+mod console_backend;
+
 #[cfg(feature = "slint_frontend")]
 mod layouts;
 #[cfg(feature = "slint_frontend")]
 mod slint_frontend;
 
 fn main() {
+    env_logger::init();
     #[cfg(feature = "video_recorder")]
     todo!();
 
