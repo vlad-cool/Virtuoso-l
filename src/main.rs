@@ -1,9 +1,9 @@
 use std::sync::{Arc, Mutex};
 use std::thread;
 
+mod match_info;
 mod modules;
 mod virtuoso_config;
-mod match_info;
 mod virtuoso_logger;
 
 use crate::modules::VirtuosoModule;
@@ -36,19 +36,13 @@ fn main() {
     let config: Arc<Mutex<VirtuosoConfig>> =
         Arc::new(Mutex::new(VirtuosoConfig::load_config(None)));
 
-    let mut virtuoso_logger = virtuoso_logger::VirtuosoLogger::new(Arc::clone(&config));
-    
+    let virtuoso_logger = virtuoso_logger::VirtuosoLogger::new(Arc::clone(&config));
+
     let logger: virtuoso_logger::Logger = virtuoso_logger.get_logger("Main thread".to_string());
-    
+
     let logger_thread = thread::spawn(move || {
         virtuoso_logger.run();
     });
-
-    logger.info("Started logging!".to_string());
-    logger.debug("Started logging!".to_string());
-    logger.error("Started logging!".to_string());
-    logger.warning("Started logging!".to_string());
-    logger.critical_error("Started logging!".to_string());
 
     #[cfg(feature = "console_backend")]
     let mut console_backend = console_backend::ConsoleBackend::new(Arc::clone(&match_info));
@@ -68,37 +62,68 @@ fn main() {
     let console_backend_thread = thread::spawn(move || {
         console_backend.run();
     });
+    #[cfg(feature = "console_backend")]
+    logger.info("Console backend started".to_string());
 
     #[cfg(feature = "legacy_backend")]
     let legacy_backend_thread = thread::spawn(move || {
         legacy_backend.run();
     });
+    #[cfg(feature = "legacy_backend")]
+    logger.info("Legacy backend started".to_string());
 
     #[cfg(feature = "cyrano_server")]
     let cyrano_server_thread = thread::spawn(move || {
         cyrano_server.run();
     });
+    #[cfg(feature = "cyrano_server")]
+    logger.info("Cyrano server started".to_string());
 
     #[cfg(feature = "slint_frontend")]
     #[cfg(target_os = "macos")]
+    logger.info("Slint frontend started in main thread".to_string());
+    #[cfg(feature = "slint_frontend")]
+    #[cfg(target_os = "macos")]
     slint_frontend.run();
+    #[cfg(feature = "slint_frontend")]
+    #[cfg(target_os = "macos")]
+    logger.info("Slint frontend stopped in main thread".to_string());
 
     #[cfg(feature = "slint_frontend")]
     #[cfg(not(target_os = "macos"))]
     let slint_frontend_thread = thread::spawn(move || {
         slint_frontend.run();
     });
+    #[cfg(feature = "slint_frontend")]
+    #[cfg(not(target_os = "macos"))]
+    logger.info("Slint frontend started".to_string());
 
     #[cfg(feature = "legacy_backend")]
     legacy_backend_thread.join().unwrap();
+    #[cfg(feature = "legacy_backend")]
+    logger.info("Legacy backend stopped".to_string());
 
     #[cfg(feature = "slint_frontend")]
     #[cfg(not(target_os = "macos"))]
     slint_frontend_thread.join().unwrap();
 
+    #[cfg(feature = "slint_frontend")]
+    #[cfg(not(target_os = "macos"))]
+    logger.info("Slint frontend stopped".to_string());
+
     #[cfg(feature = "console_backend")]
     console_backend_thread.join().unwrap();
+    #[cfg(feature = "console_backend")]
+    logger.info("Console backend stopped".to_string());
 
     #[cfg(feature = "cyrano_server")]
-    cyrano_server_thread.join().unwrap();
+    {
+        cyrano_server_thread.join().unwrap();
+        logger.info("Cyrano server stopped".to_string());
+    }
+
+    logger.info("Exiting program".to_string());
+
+    logger.stop_logger();
+    logger_thread.join().unwrap();
 }

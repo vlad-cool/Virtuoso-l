@@ -53,6 +53,7 @@ pub struct Logger {
 }
 
 impl Logger {
+    #[allow(dead_code)]
     fn send_log(&self, level: LogLevel, message: String) {
         if !self.log_levels.contains(&level) {
             return;
@@ -62,30 +63,38 @@ impl Logger {
             source: self.source.clone(),
             message,
         };
-        // let msg = LogCommand::LogMessage(msg);
         self.tx
             .send(LogCommand::LogMessage(msg.clone()))
             .expect(format!("logger failed to send following message: {msg}").as_str());
     }
 
+    #[allow(dead_code)]
     pub fn debug(&self, message: String) {
         self.send_log(LogLevel::Debug, message);
     }
 
+    #[allow(dead_code)]
     pub fn info(&self, message: String) {
         self.send_log(LogLevel::Info, message);
     }
 
+    #[allow(dead_code)]
     pub fn warning(&self, message: String) {
         self.send_log(LogLevel::Warning, message);
     }
 
+    #[allow(dead_code)]
     pub fn error(&self, message: String) {
         self.send_log(LogLevel::Error, message);
     }
 
+    #[allow(dead_code)]
     pub fn critical_error(&self, message: String) {
         self.send_log(LogLevel::CriticalError, message);
+    }
+
+    pub fn stop_logger(&self) {
+        let _ = self.tx.send(LogCommand::Exit);
     }
 }
 
@@ -117,13 +126,7 @@ impl VirtuosoLogger {
             None
         };
 
-        // if let Some(mut file) = file.as_ref() {
-        //     let _ = file.write_all(b"Logging started!");
-        // }
-
         let socket: Option<UdpSocket> = if config.udp {
-            //
-
             let socket: Result<UdpSocket, std::io::Error> = UdpSocket::bind("0.0.0.0:0");
             if let Ok(socket) = socket {
                 Some(socket)
