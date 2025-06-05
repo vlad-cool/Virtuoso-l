@@ -1,10 +1,14 @@
 use serde;
 use toml;
 
-#[derive(Default, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Default, Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct VirtuosoConfig {
+    #[serde(default)]
     pub legacy_backend: LegacyBackendConfig,
+    #[serde(default)]
     pub cyrano_server: CyranoServerConfig,
+    #[serde(default)]
+    pub logger_config: LoggerConfig,
 }
 
 impl VirtuosoConfig {
@@ -44,7 +48,7 @@ impl VirtuosoConfig {
     }
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct LegacyBackendConfig {
     pub rc5_address: u32,
 }
@@ -55,7 +59,7 @@ impl Default for LegacyBackendConfig {
     }
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CyranoServerConfig {
     pub cyrano_port: u16,
 }
@@ -63,5 +67,27 @@ pub struct CyranoServerConfig {
 impl Default for CyranoServerConfig {
     fn default() -> Self {
         Self { cyrano_port: 50100 }
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct LoggerConfig {
+    pub log_level: Option<String>,
+    pub log_path: Option<String>,
+    #[serde(default)]
+    pub udp: bool,
+    pub udp_port: Option<u16>,
+    pub udp_ip: Option<String>,
+}
+
+impl Default for LoggerConfig {
+    fn default() -> Self {
+        Self {
+            log_level: None,
+            log_path: None,
+            udp: false,
+            udp_port: None,
+            udp_ip: None,
+        }
     }
 }

@@ -9,7 +9,7 @@ mod virtuoso_logger;
 use crate::modules::VirtuosoModule;
 use crate::virtuoso_config::VirtuosoConfig;
 use match_info::MatchInfo;
-use log::{info, warn, error, debug, trace};
+// use log::{info, warn, error, debug, trace};
 
 #[cfg(feature = "cyrano_server")]
 mod cyrano_server;
@@ -28,13 +28,27 @@ mod layouts;
 mod slint_frontend;
 
 fn main() {
-    env_logger::init();
+    // env_logger::init();
     #[cfg(feature = "video_recorder")]
     todo!();
 
     let match_info: Arc<Mutex<MatchInfo>> = Arc::new(Mutex::new(MatchInfo::new()));
     let config: Arc<Mutex<VirtuosoConfig>> =
         Arc::new(Mutex::new(VirtuosoConfig::load_config(None)));
+
+    let mut virtuoso_logger = virtuoso_logger::VirtuosoLogger::new(Arc::clone(&config));
+    
+    let logger: virtuoso_logger::Logger = virtuoso_logger.get_logger("Main thread".to_string());
+    
+    let logger_thread = thread::spawn(move || {
+        virtuoso_logger.run();
+    });
+
+    logger.info("Started logging!".to_string());
+    logger.debug("Started logging!".to_string());
+    logger.error("Started logging!".to_string());
+    logger.warning("Started logging!".to_string());
+    logger.critical_error("Started logging!".to_string());
 
     #[cfg(feature = "console_backend")]
     let mut console_backend = console_backend::ConsoleBackend::new(Arc::clone(&match_info));

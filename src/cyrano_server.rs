@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use log::{debug, error, info, trace, warn};
+// use log::{debug, error, info, trace, warn};
 
 use crate::match_info;
 use crate::modules::VirtuosoModule;
@@ -231,7 +231,7 @@ impl CyranoServer {
         let msg: Result<&str, Utf8Error> = std::str::from_utf8(buf);
         let msg: String = match msg {
             Err(_) => {
-                error!("Error in CyranoServer::parse_hello function: bad buffer");
+                // error!("Error in CyranoServer::parse_hello function: bad buffer");
                 return Err(CyranoError::BadRawMessage);
             }
             Ok(msg) => msg.to_string(),
@@ -248,63 +248,63 @@ impl CyranoServer {
         };
 
         if general_area_parts[2] != "HELLO" {
-            error!("Error in CyranoServer::parse_hello function: bad message struct: expected \"HELLO\", got \"{}\"", general_area_parts[1]);
+            // error!("Error in CyranoServer::parse_hello function: bad message struct: expected \"HELLO\", got \"{}\"", general_area_parts[1]);
             return Err(CyranoError::BadMessageStruct);
         }
 
         let piste: &str = general_area_parts[3];
         if piste.len() > 8 {
-            error!("Error in CyranoServer::parse_hello function: bad message struct: length of piste field is {} > 8", piste.len());
+            // error!("Error in CyranoServer::parse_hello function: bad message struct: length of piste field is {} > 8", piste.len());
             return Err(CyranoError::BadMessageStruct);
         }
 
         let compe: &str = general_area_parts[4];
         if compe.len() > 8 {
-            error!("Error in CyranoServer::parse_hello function: bad message struct: length of compe field is {} > 8", compe.len());
+            // error!("Error in CyranoServer::parse_hello function: bad message struct: length of compe field is {} > 8", compe.len());
             return Err(CyranoError::BadMessageStruct);
         }
 
         let phase: &str = general_area_parts[5];
         if phase.len() > 2 {
-            error!("Error in CyranoServer::parse_hello function: bad message struct: length of phase field is {} > 2", phase.len());
+            // error!("Error in CyranoServer::parse_hello function: bad message struct: length of phase field is {} > 2", phase.len());
             return Err(CyranoError::BadMessageStruct);
         }
         let phase: u32 = match phase.parse::<u32>() {
             Ok(n) => n,
             Err(e) => {
-                error!("Error in CyranoServer::parse_hello function: bad message struct: failed parsing phase number from {}, error: {}", phase, e);
+                // error!("Error in CyranoServer::parse_hello function: bad message struct: failed parsing phase number from {}, error: {}", phase, e);
                 return Err(CyranoError::BadMessageStruct);
             }
         };
 
         let poul_tab: &str = general_area_parts[6];
         if poul_tab.len() > 8 {
-            error!("Error in CyranoServer::parse_hello function: bad message struct: length of poul_tab field is {} > 8", poul_tab.len());
+            // error!("Error in CyranoServer::parse_hello function: bad message struct: length of poul_tab field is {} > 8", poul_tab.len());
             return Err(CyranoError::BadMessageStruct);
         }
 
         let match_number: &str = general_area_parts[7];
         if match_number.len() > 3 {
-            error!("Error in CyranoServer::parse_hello function: bad message struct: length of match number field is {} > 3", match_number.len());
+            // error!("Error in CyranoServer::parse_hello function: bad message struct: length of match number field is {} > 3", match_number.len());
             return Err(CyranoError::BadMessageStruct);
         }
         let match_number: u32 = match match_number.parse::<u32>() {
             Ok(n) => n,
             Err(e) => {
-                error!("Error in CyranoServer::parse_hello function: bad message struct: failed parsing match number from {}, error: {}", match_number, e);
+                // error!("Error in CyranoServer::parse_hello function: bad message struct: failed parsing match number from {}, error: {}", match_number, e);
                 return Err(CyranoError::BadMessageStruct);
             }
         };
 
         let round_number: &str = general_area_parts[7];
         if round_number.len() > 2 {
-            error!("Error in CyranoServer::parse_hello function: bad message struct: length of round number field is {} > 2", round_number.len());
+            // error!("Error in CyranoServer::parse_hello function: bad message struct: length of round number field is {} > 2", round_number.len());
             return Err(CyranoError::BadMessageStruct);
         }
         let round_number: u32 = match round_number.parse::<u32>() {
             Ok(n) => n,
             Err(e) => {
-                error!("Error in CyranoServer::parse_hello function: bad message struct: failed parsing match number from {}, error: {}", round_number, e);
+                // error!("Error in CyranoServer::parse_hello function: bad message struct: failed parsing match number from {}, error: {}", round_number, e);
                 return Err(CyranoError::BadMessageStruct);
             }
         };

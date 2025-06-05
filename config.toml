@@ -1,5 +1,12 @@
 [legacy_backend]
-rc5_address = 32
+rc5_address = 0
 
 [cyrano_server]
 cyrano_port = 50100
+
+[logger_config]
+log_level = "DEBUG"
+log_path = "log.txt"
+udp = true
+udp_port = 57179
+udp_ip = "127.0.0.1"
