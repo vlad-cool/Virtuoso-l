@@ -1,7 +1,7 @@
 use std::io;
 use std::sync::{Arc, Mutex};
 
-use crate::match_info;
+use crate::match_info::{self, ProgramState};
 use crate::modules;
 
 pub struct ConsoleBackend {
@@ -262,6 +262,10 @@ impl modules::VirtuosoModule for ConsoleBackend {
                 .expect("Failed to read line");
 
             input = input.trim().to_ascii_lowercase();
+
+            if self.match_info.lock().unwrap().program_state == ProgramState::Exiting {
+                break;
+            }
 
             if input == "" {
                 continue;

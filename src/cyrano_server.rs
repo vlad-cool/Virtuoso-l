@@ -6,7 +6,7 @@ use std::time::{Duration, Instant};
 
 // use log::{debug, error, info, trace, warn};
 
-use crate::match_info;
+use crate::match_info::{self, ProgramState};
 use crate::modules::VirtuosoModule;
 use crate::virtuoso_config::VirtuosoConfig;
 
@@ -170,6 +170,10 @@ impl VirtuosoModule for CyranoServer {
                     }
                 }
                 Err(_e) => {}
+            }
+
+            if self.match_info.lock().unwrap().program_state == ProgramState::Exiting {
+                break;
             }
 
             let data_updated: bool;

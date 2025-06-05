@@ -34,6 +34,7 @@ impl std::fmt::Display for Weapon {
     }
 }
 
+#[derive(PartialEq, Clone, Copy)]
 pub enum ProgramState {
     Running,
     Exiting,
