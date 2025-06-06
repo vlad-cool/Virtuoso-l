@@ -6,6 +6,7 @@ cyrano_port = 50100
 
 [logger_config]
 log_level = "DEBUG"
+stderr = true
 log_path = "log.txt"
 udp = true
 udp_port = 57179
