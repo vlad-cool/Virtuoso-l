@@ -75,6 +75,8 @@ pub struct LoggerConfig {
     pub log_level: Option<String>,
     pub log_path: Option<String>,
     #[serde(default)]
+    pub stderr: bool,
+    #[serde(default)]
     pub udp: bool,
     pub udp_port: Option<u16>,
     pub udp_ip: Option<String>,
@@ -85,6 +87,7 @@ impl Default for LoggerConfig {
         Self {
             log_level: None,
             log_path: None,
+            stderr: false,
             udp: false,
             udp_port: None,
             udp_ip: None,

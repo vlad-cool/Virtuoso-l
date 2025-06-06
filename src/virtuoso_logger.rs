@@ -102,6 +102,7 @@ pub struct VirtuosoLogger {
     tx: std::sync::mpsc::Sender<LogCommand>,
     rx: std::sync::mpsc::Receiver<LogCommand>,
     log_levels: std::vec::Vec<LogLevel>,
+    stderr: bool,
     file: Option<File>,
     socket: Option<UdpSocket>,
 }
@@ -110,6 +111,8 @@ impl VirtuosoLogger {
     pub fn new(config: Arc<Mutex<VirtuosoConfig>>) -> Self {
         let config: crate::virtuoso_config::LoggerConfig =
             config.lock().unwrap().logger_config.clone();
+
+        let stderr = config.stderr;
 
         let file: Option<File> = if let Some(log_path) = config.log_path {
             match File::create(log_path) {
@@ -206,6 +209,7 @@ impl VirtuosoLogger {
             tx,
             rx,
             log_levels,
+            stderr,
             file,
             socket,
         }
@@ -219,6 +223,9 @@ impl VirtuosoLogger {
                 Ok(msg) => match msg {
                     LogCommand::Exit => break,
                     LogCommand::LogMessage(msg) => {
+                        if self.stderr {
+                            eprint!("{}\n", msg);
+                        }
                         if let Some(mut file) = self.file.as_ref() {
                             let _ = file.write_all(format!("{}\n", msg).as_bytes());
                         }
