@@ -84,8 +84,8 @@ fn update_data(
             seconds_updated = false;
         }
 
-        app.set_left_score(match_info_data.left_score as i32);
-        app.set_right_score(match_info_data.right_score as i32);
+        app.set_left_score(match_info_data.left_fencer.score as i32);
+        app.set_right_score(match_info_data.right_fencer.score as i32);
         app.set_timer(match_info_data.timer as i32);
         app.set_last_ten_seconds(match_info_data.last_ten_seconds);
         app.set_timer_running(match_info_data.timer_running);
@@ -104,20 +104,22 @@ fn update_data(
             match_info::Priority::Right => 1,
         });
 
-        app.set_left_color_led_on(match_info_data.left_red_led_on);
-        app.set_left_white_led_on(match_info_data.left_white_led_on);
-        app.set_right_color_led_on(match_info_data.right_green_led_on);
-        app.set_right_white_led_on(match_info_data.right_white_led_on);
+        app.set_left_color_led_on(match_info_data.left_fencer.color_light);
+        app.set_left_white_led_on(match_info_data.left_fencer.white_light);
+        app.set_right_color_led_on(match_info_data.right_fencer.color_light);
+        app.set_right_white_led_on(match_info_data.right_fencer.white_light);
 
-        app.set_left_caution(match_info_data.left_caution);
-        app.set_left_penalty(match_info_data.left_penalty);
-        app.set_right_caution(match_info_data.right_caution);
-        app.set_right_penalty(match_info_data.right_penalty);
+        // TODO make actual caution and penalty cards
+        app.set_left_caution(match_info_data.left_fencer.yellow_card > 0);
+        app.set_left_penalty(match_info_data.left_fencer.red_card > 0);
+        app.set_right_caution(match_info_data.right_fencer.yellow_card > 0);
+        app.set_right_penalty(match_info_data.right_fencer.red_card > 0);
 
-        app.set_left_bot_pcard(match_info_data.left_pcard_bot);
-        app.set_left_top_pcard(match_info_data.left_pcard_top);
-        app.set_right_bot_pcard(match_info_data.right_pcard_bot);
-        app.set_right_top_pcard(match_info_data.right_pcard_top);
+        // TODO make actual passive cards
+        app.set_left_bot_pcard(match_info_data.left_fencer.p_card > 0);
+        app.set_left_top_pcard(match_info_data.left_fencer.p_card > 1);
+        app.set_right_bot_pcard(match_info_data.right_fencer.p_card > 0);
+        app.set_right_top_pcard(match_info_data.right_fencer.p_card > 1);
 
         app.set_auto_score_on(match_info_data.auto_score_on);
         app.set_auto_timer_on(match_info_data.auto_timer_on);
