@@ -89,6 +89,7 @@ impl std::fmt::Display for Field {
 enum Command {
     Set(Field, u32),
     Get(Field),
+    Show,
     Unknown,
 }
 
@@ -145,6 +146,9 @@ fn parse_command(input: &str) -> Command {
             Field::Unknown => Command::Unknown,
             field => Command::Get(field),
         },
+        ["show"] => {
+            Command::Show
+        }
         _ => Command::Unknown,
     }
 }
@@ -276,6 +280,7 @@ impl modules::VirtuosoModule for ConsoleBackend {
             match command {
                 Command::Set(field, value) => self.set_field(field, value),
                 Command::Get(field) => self.print_field(field),
+                Command::Show => println!("{:?}", self.match_info.lock().unwrap()),
                 Command::Unknown => println!("Unknown command or invalid format"),
             }
         }

@@ -36,13 +36,9 @@ fn main() {
     let config: Arc<Mutex<VirtuosoConfig>> =
         Arc::new(Mutex::new(VirtuosoConfig::load_config(None)));
 
-    let virtuoso_logger = virtuoso_logger::VirtuosoLogger::new(Arc::clone(&config));
+    let virtuoso_logger: virtuoso_logger::VirtuosoLogger = virtuoso_logger::VirtuosoLogger::new(Arc::clone(&config));
 
     let logger: virtuoso_logger::Logger = virtuoso_logger.get_logger("Main thread".to_string());
-
-    let logger_thread = thread::spawn(move || {
-        virtuoso_logger.run();
-    });
 
     #[cfg(feature = "console_backend")]
     let mut console_backend = console_backend::ConsoleBackend::new(Arc::clone(&match_info));
@@ -56,8 +52,12 @@ fn main() {
 
     #[cfg(feature = "cyrano_server")]
     let mut cyrano_server =
-        cyrano_server::CyranoServer::new(Arc::clone(&match_info), Arc::clone(&config));
+        cyrano_server::CyranoServer::new(Arc::clone(&match_info), Arc::clone(&config), virtuoso_logger.get_logger("Cyrano server".to_string()));
 
+    let logger_thread = thread::spawn(move || {
+        virtuoso_logger.run();
+    });
+        
     #[cfg(feature = "console_backend")]
     let console_backend_thread = thread::spawn(move || {
         console_backend.run();
