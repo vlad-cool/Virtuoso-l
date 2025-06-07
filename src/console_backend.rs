@@ -31,10 +31,8 @@ enum Field {
     RightCaution,
     RightPenalty,
 
-    LeftPCardBot,
-    LeftPCardTop,
-    RightPCardBot,
-    RightPCardTop,
+    LeftPCard,
+    RightPCard,
 
     AutoScore,
     AutoTimer,
@@ -69,10 +67,8 @@ impl std::fmt::Display for Field {
             Field::RightCaution => write!(f, "Right Caution"),
             Field::RightPenalty => write!(f, "Right Penalty"),
 
-            Field::LeftPCardBot => write!(f, "Left Bottom PCard"),
-            Field::LeftPCardTop => write!(f, "Left Top PCard"),
-            Field::RightPCardBot => write!(f, "Right Bottom PCard"),
-            Field::RightPCardTop => write!(f, "Right Top PCard"),
+            Field::LeftPCard => write!(f, "Left PCard"),
+            Field::RightPCard => write!(f, "Right PCard"),
 
             Field::AutoScore => write!(f, "Auto Score"),
             Field::AutoTimer => write!(f, "Auto Timer"),
@@ -116,10 +112,8 @@ fn parse_field(input: &str) -> Field {
         "rightcaution" => Field::RightCaution,
         "rightpenalty" => Field::RightPenalty,
 
-        "leftbotpcard" => Field::LeftPCardBot,
-        "lefttoppcard" => Field::LeftPCardTop,
-        "rightbotpcard" => Field::RightPCardBot,
-        "righttoppcard" => Field::RightPCardTop,
+        "leftpcard" => Field::LeftPCard,
+        "rightpcard" => Field::RightPCard,
 
         "passivecounter" => Field::PassiveCounter,
         "passiveindicator" => Field::PassiveIndicator,
@@ -162,8 +156,8 @@ impl ConsoleBackend {
         let mut match_info_data = self.match_info.lock().unwrap();
 
         match field {
-            Field::LeftScore => match_info_data.left_score = value,
-            Field::RightScore => match_info_data.right_score = value,
+            Field::LeftScore => match_info_data.left_fencer.score = value,
+            Field::RightScore => match_info_data.right_fencer.score = value,
             Field::Time => match_info_data.timer = value,
             Field::LastTenSeconds => match_info_data.last_ten_seconds = value > 0,
             Field::TimerRunning => match_info_data.timer_running = value > 0,
@@ -186,20 +180,18 @@ impl ConsoleBackend {
                 }
             }
 
-            Field::LeftColorLed => match_info_data.left_red_led_on = value > 0,
-            Field::LeftWhiteLed => match_info_data.left_white_led_on = value > 0,
-            Field::RightColorLed => match_info_data.right_green_led_on = value > 0,
-            Field::RightWhiteLed => match_info_data.right_white_led_on = value > 0,
+            Field::LeftColorLed => match_info_data.left_fencer.color_light = value > 0,
+            Field::LeftWhiteLed => match_info_data.left_fencer.white_light = value > 0,
+            Field::RightColorLed => match_info_data.right_fencer.color_light = value > 0,
+            Field::RightWhiteLed => match_info_data.right_fencer.white_light = value > 0,
 
-            Field::LeftCaution => match_info_data.left_caution = value > 0,
-            Field::LeftPenalty => match_info_data.left_penalty = value > 0,
-            Field::RightCaution => match_info_data.right_caution = value > 0,
-            Field::RightPenalty => match_info_data.right_penalty = value > 0,
+            Field::LeftCaution => match_info_data.left_fencer.yellow_card = value as u8,
+            Field::LeftPenalty => match_info_data.left_fencer.red_card = value as u8,
+            Field::RightCaution => match_info_data.right_fencer.yellow_card = value as u8,
+            Field::RightPenalty => match_info_data.right_fencer.red_card = value as u8,
 
-            Field::LeftPCardBot => match_info_data.left_pcard_bot = value > 0,
-            Field::LeftPCardTop => match_info_data.left_pcard_top = value > 0,
-            Field::RightPCardBot => match_info_data.right_pcard_bot = value > 0,
-            Field::RightPCardTop => match_info_data.right_pcard_top = value > 0,
+            Field::LeftPCard => match_info_data.left_fencer.p_card = value as u8,
+            Field::RightPCard => match_info_data.right_fencer.p_card = value as u8,
 
             Field::AutoScore => match_info_data.auto_score_on = value > 0,
             Field::AutoTimer => match_info_data.auto_timer_on = value > 0,
@@ -220,8 +212,8 @@ impl ConsoleBackend {
         let match_info_data = self.match_info.lock().unwrap();
 
         match field {
-            Field::LeftScore => println!("{}", match_info_data.left_score),
-            Field::RightScore => println!("{}", match_info_data.right_score),
+            Field::LeftScore => println!("{}", match_info_data.left_fencer.score),
+            Field::RightScore => println!("{}", match_info_data.right_fencer.score),
             Field::Time => println!("{}", match_info_data.timer),
             Field::LastTenSeconds => println!("{}", match_info_data.last_ten_seconds),
             Field::TimerRunning => println!("{}", match_info_data.timer_running),
@@ -231,20 +223,18 @@ impl ConsoleBackend {
 
             Field::Priority => println!("{}", match_info_data.priority),
 
-            Field::LeftColorLed => println!("{}", match_info_data.left_red_led_on),
-            Field::LeftWhiteLed => println!("{}", match_info_data.left_white_led_on),
-            Field::RightColorLed => println!("{}", match_info_data.right_green_led_on),
-            Field::RightWhiteLed => println!("{}", match_info_data.right_white_led_on),
+            Field::LeftColorLed => println!("{}", match_info_data.left_fencer.color_light),
+            Field::LeftWhiteLed => println!("{}", match_info_data.left_fencer.white_light),
+            Field::RightColorLed => println!("{}", match_info_data.right_fencer.color_light),
+            Field::RightWhiteLed => println!("{}", match_info_data.right_fencer.white_light),
 
-            Field::LeftCaution => println!("{}", match_info_data.left_caution),
-            Field::LeftPenalty => println!("{}", match_info_data.left_penalty),
-            Field::RightCaution => println!("{}", match_info_data.right_caution),
-            Field::RightPenalty => println!("{}", match_info_data.right_penalty),
+            Field::LeftCaution => println!("{}", match_info_data.left_fencer.yellow_card),
+            Field::LeftPenalty => println!("{}", match_info_data.left_fencer.red_card),
+            Field::RightCaution => println!("{}", match_info_data.right_fencer.yellow_card),
+            Field::RightPenalty => println!("{}", match_info_data.right_fencer.red_card),
 
-            Field::LeftPCardBot => println!("{}", match_info_data.left_pcard_bot),
-            Field::LeftPCardTop => println!("{}", match_info_data.left_pcard_top),
-            Field::RightPCardBot => println!("{}", match_info_data.right_pcard_bot),
-            Field::RightPCardTop => println!("{}", match_info_data.right_pcard_top),
+            Field::LeftPCard => println!("{}", match_info_data.left_fencer.p_card),
+            Field::RightPCard => println!("{}", match_info_data.right_fencer.p_card),
 
             Field::AutoScore => println!("{}", match_info_data.auto_score_on),
             Field::AutoTimer => println!("{}", match_info_data.auto_timer_on),

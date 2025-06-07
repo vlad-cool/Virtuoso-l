@@ -41,6 +41,23 @@ pub enum ProgramState {
 }
 
 #[derive(Debug)]
+pub struct RefereeInfo {
+    pub id: u32,
+    pub name: String,
+    pub nation: String,
+}
+
+impl RefereeInfo {
+    pub fn new() -> Self {
+        Self {
+            id: 0,
+            name: "".to_string(),
+            nation: "".to_string(),
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct FencerInfo {
     pub id: u32,
     pub name: String,   // 20
@@ -49,8 +66,8 @@ pub struct FencerInfo {
     pub status: u8,
     pub yellow_card: u8,
     pub red_card: u8,
-    pub light: u8,
-    pub white_light: u8,
+    pub color_light: bool,
+    pub white_light: bool,
     pub medical_interventions: u8,
     pub reserve_introduction: u8,
     pub p_card: u8,
@@ -66,8 +83,8 @@ impl FencerInfo {
             status: 0,
             yellow_card: 0,
             red_card: 0,
-            light: 0,
-            white_light: 0,
+            color_light: false,
+            white_light: false,
             medical_interventions: 0,
             reserve_introduction: 0,
             p_card: 0,
@@ -77,13 +94,10 @@ impl FencerInfo {
 
 #[derive(Debug)]
 pub struct MatchInfo {
+    pub program_state: ProgramState,
     pub modified_count: u32,
 
-    pub program_state: ProgramState,
-
     pub weapon: Weapon,
-    pub left_score: u32,
-    pub right_score: u32,
     pub timer: u32,
     pub last_ten_seconds: bool,
     pub timer_running: bool,
@@ -95,21 +109,6 @@ pub struct MatchInfo {
     pub auto_score_on: bool,
     pub auto_timer_on: bool,
 
-    pub left_red_led_on: bool,
-    pub left_white_led_on: bool,
-    pub right_green_led_on: bool,
-    pub right_white_led_on: bool,
-
-    pub left_caution: bool,
-    pub left_penalty: bool,
-    pub right_caution: bool,
-    pub right_penalty: bool,
-
-    pub left_pcard_bot: bool,
-    pub left_pcard_top: bool,
-    pub right_pcard_bot: bool,
-    pub right_pcard_top: bool,
-
     pub cyrano_online: bool,
 
     pub piste: String,
@@ -119,6 +118,7 @@ pub struct MatchInfo {
     pub match_number: u32,
     pub round_number: u32,
 
+    pub referee: RefereeInfo,
     pub left_fencer: FencerInfo,
     pub right_fencer: FencerInfo,
 }
@@ -128,9 +128,10 @@ impl MatchInfo {
         Self {
             program_state: ProgramState::Running,
             modified_count: 0,
+
             weapon: Weapon::Epee,
-            left_score: 0,
-            right_score: 0,
+            // left_score: 0,
+            // right_score: 0,
             timer: 300,
             last_ten_seconds: false,
             timer_running: false,
@@ -142,21 +143,6 @@ impl MatchInfo {
             auto_score_on: false,
             auto_timer_on: false,
 
-            left_red_led_on: false,
-            left_white_led_on: false,
-            right_green_led_on: false,
-            right_white_led_on: false,
-
-            left_caution: false,
-            left_penalty: false,
-            right_caution: false,
-            right_penalty: false,
-
-            left_pcard_bot: false,
-            left_pcard_top: false,
-            right_pcard_bot: false,
-            right_pcard_top: false,
-
             cyrano_online: false,
 
             piste: "".to_string(),
@@ -166,6 +152,7 @@ impl MatchInfo {
             match_number: 0,
             round_number: 0,
 
+            referee: RefereeInfo::new(),
             left_fencer: FencerInfo::new(),
             right_fencer: FencerInfo::new(),
         }

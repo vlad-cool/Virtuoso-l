@@ -1,11 +1,8 @@
-use std::fmt::format;
 use std::net::{SocketAddr, UdpSocket};
 use std::str::{FromStr, Utf8Error};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
-
-use slint::BackendSelector;
 
 use crate::match_info::{self, FencerInfo, ProgramState};
 use crate::modules::VirtuosoModule;
@@ -54,7 +51,7 @@ impl FencerInfo {
             self.status,
             self.yellow_card,
             self.red_card,
-            self.light,
+            self.color_light,
             self.white_light,
             self.medical_interventions,
             self.reserve_introduction
@@ -71,7 +68,7 @@ impl FencerInfo {
             self.status,
             self.yellow_card,
             self.red_card,
-            self.light,
+            self.color_light,
             self.white_light,
             self.medical_interventions,
             self.reserve_introduction,
@@ -94,8 +91,8 @@ pub struct CyranoServer {
     last_hello: Option<Instant>,
     online: bool,
 
-    left_fencer: FencerInfo,
-    right_fencer: FencerInfo,
+    // left_fencer: FencerInfo,
+    // right_fencer: FencerInfo,
     logger: Logger,
 }
 
@@ -192,8 +189,8 @@ impl CyranoServer {
             software_ip: None,
             last_hello: None,
             online: false,
-            left_fencer: FencerInfo::new(),
-            right_fencer: FencerInfo::new(),
+            // left_fencer: FencerInfo::new(),
+            // right_fencer: FencerInfo::new(),
             logger,
         }
     }
@@ -261,60 +258,11 @@ impl CyranoServer {
             return Err(CyranoError::BadMessageStruct);
         }
 
-        // let phase: &str = general_area[5];
-        // if phase.len() > 2 {
-        //     self.logger.error(format!("Error in {function_name} function: bad message struct: length of phase field is {} > 2", phase.len()));
-        //     return Err(CyranoError::BadMessageStruct);
-        // }
-        // let phase: u32 = match phase.parse::<u32>() {
-        //     Ok(n) => n,
-        //     Err(e) => {
-        //         self.logger.error(format!("Error in {function_name} function: bad message struct: failed parsing phase number from {}, error: {}", phase, e));
-        //         return Err(CyranoError::BadMessageStruct);
-        //     }
-        // };
-
-        // let poul_tab: &str = general_area[6];
-        // if poul_tab.len() > 8 {
-        //     self.logger.error(format!("Error in {function_name} function: bad message struct: length of poul_tab field is {} > 8", poul_tab.len()));
-        //     return Err(CyranoError::BadMessageStruct);
-        // }
-
-        // let match_number: &str = general_area[7];
-        // if match_number.len() > 3 {
-        //     self.logger.error(format!("Error in {function_name} function: bad message struct: length of match number field is {} > 3", match_number.len()));
-        //     return Err(CyranoError::BadMessageStruct);
-        // }
-        // let match_number: u32 = match match_number.parse::<u32>() {
-        //     Ok(n) => n,
-        //     Err(e) => {
-        //         self.logger.error(format!("Error in {function_name} function: bad message struct: failed parsing match number from {}, error: {}", match_number, e));
-        //         return Err(CyranoError::BadMessageStruct);
-        //     }
-        // };
-
-        // let round_number: &str = general_area[7];
-        // if round_number.len() > 2 {
-        //     self.logger.error(format!("Error in {function_name} function: bad message struct: length of round number field is {} > 2", round_number.len()));
-        //     return Err(CyranoError::BadMessageStruct);
-        // }
-        // let round_number: u32 = match round_number.parse::<u32>() {
-        //     Ok(n) => n,
-        //     Err(e) => {
-        //         self.logger.error(format!("Error in {function_name} function: bad message struct: failed parsing match number from {}, error: {}", round_number, e));
-        //         return Err(CyranoError::BadMessageStruct);
-        //     }
-        // };
-
         self.protocol = protocol;
 
         let mut match_info = self.match_info.lock().unwrap();
         match_info.piste = piste.to_string();
         match_info.competition_id = competition_id.to_string();
-        // match_info.phase = phase;
-        // match_info.poul_tab = poul_tab.to_string();
-        // match_info.match_number = match_number;
-        // match_info.round_number = round_number;
 
         Ok(())
     }
@@ -466,8 +414,8 @@ impl CyranoServer {
     fn send_full_info(&mut self) {
         let match_info_data = self.match_info.lock().unwrap();
 
-        self.left_fencer.score = match_info_data.left_score;
-        self.right_fencer.score = match_info_data.right_score;
+        // self.left_fencer.score = match_info_data.left_fencer.score;
+        // self.right_fencer.score = match_info_data.right_fencer.score;
 
         let buf = format!(
             "|{}|INFO|7|aboba|2|7|8|2||{}||{}|{}|E||||%{}%{}",
@@ -477,13 +425,13 @@ impl CyranoServer {
             match_info_data.priority,
             match self.protocol {
                 Protocol::Unknown => String::from(""),
-                Protocol::Cyrano10 => self.right_fencer.to_1_0_string(),
-                Protocol::Cyrano11 => self.right_fencer.to_1_1_string(),
+                Protocol::Cyrano10 => match_info_data.right_fencer.to_1_0_string(),
+                Protocol::Cyrano11 => match_info_data.right_fencer.to_1_1_string(),
             },
             match self.protocol {
                 Protocol::Unknown => String::from(""),
-                Protocol::Cyrano10 => self.left_fencer.to_1_0_string(),
-                Protocol::Cyrano11 => self.left_fencer.to_1_1_string(),
+                Protocol::Cyrano10 => match_info_data.left_fencer.to_1_0_string(),
+                Protocol::Cyrano11 => match_info_data.left_fencer.to_1_1_string(),
             },
         );
         println!("{}", buf);
