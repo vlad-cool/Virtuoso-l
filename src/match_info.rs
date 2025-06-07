@@ -1,4 +1,4 @@
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum Priority {
     Left,
     None,
@@ -15,7 +15,7 @@ impl std::fmt::Display for Priority {
     }
 }
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum Weapon {
     Unknown,
     Epee,
@@ -34,14 +34,52 @@ impl std::fmt::Display for Weapon {
     }
 }
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum ProgramState {
     Running,
     Exiting,
 }
 
+#[derive(Debug)]
+pub struct FencerInfo {
+    pub id: u32,
+    pub name: String,   // 20
+    pub nation: String, // 3
+    pub score: u32,
+    pub status: u8,
+    pub yellow_card: u8,
+    pub red_card: u8,
+    pub light: u8,
+    pub white_light: u8,
+    pub medical_interventions: u8,
+    pub reserve_introduction: u8,
+    pub p_card: u8,
+}
+
+impl FencerInfo {
+    pub fn new() -> Self {
+        Self {
+            id: 0,
+            name: "".to_string(),
+            nation: "".to_string(),
+            score: 0,
+            status: 0,
+            yellow_card: 0,
+            red_card: 0,
+            light: 0,
+            white_light: 0,
+            medical_interventions: 0,
+            reserve_introduction: 0,
+            p_card: 0,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct MatchInfo {
     pub modified_count: u32,
+
+    pub program_state: ProgramState,
 
     pub weapon: Weapon,
     pub left_score: u32,
@@ -74,12 +112,21 @@ pub struct MatchInfo {
 
     pub cyrano_online: bool,
 
-    pub program_state: ProgramState,
+    pub piste: String,
+    pub competition_id: String,
+    pub phase: u32,
+    pub poul_tab: String,
+    pub match_number: u32,
+    pub round_number: u32,
+
+    pub left_fencer: FencerInfo,
+    pub right_fencer: FencerInfo,
 }
 
 impl MatchInfo {
     pub fn new() -> Self {
         Self {
+            program_state: ProgramState::Running,
             modified_count: 0,
             weapon: Weapon::Epee,
             left_score: 0,
@@ -112,7 +159,15 @@ impl MatchInfo {
 
             cyrano_online: false,
 
-            program_state: ProgramState::Running,
+            piste: "".to_string(),
+            competition_id: "".to_string(),
+            phase: 0,
+            poul_tab: "".to_string(),
+            match_number: 0,
+            round_number: 0,
+
+            left_fencer: FencerInfo::new(),
+            right_fencer: FencerInfo::new(),
         }
     }
 }
