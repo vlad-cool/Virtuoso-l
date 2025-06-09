@@ -140,9 +140,7 @@ fn parse_command(input: &str) -> Command {
             Field::Unknown => Command::Unknown,
             field => Command::Get(field),
         },
-        ["show"] => {
-            Command::Show
-        }
+        ["show"] => Command::Show,
         _ => Command::Unknown,
     }
 }

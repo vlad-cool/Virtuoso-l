@@ -5,12 +5,28 @@ pub enum Priority {
     Right,
 }
 
+impl std::str::FromStr for Priority {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "l" => Ok(Self::Left),
+            "left" => Ok(Self::Left),
+            "n" => Ok(Self::None),
+            "none" => Ok(Self::None),
+            "r" => Ok(Self::Right),
+            "right" => Ok(Self::Right),
+            _ => Err(format!("Unknown weapon type: {}", s))
+        }
+    }
+}
+
 impl std::fmt::Display for Priority {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Priority::Left => write!(f, "Left"),
-            Priority::None => write!(f, "None"),
-            Priority::Right => write!(f, "Right"),
+            Self::Left => write!(f, "Left"),
+            Self::None => write!(f, "None"),
+            Self::Right => write!(f, "Right"),
         }
     }
 }
@@ -23,6 +39,22 @@ pub enum Weapon {
     Fleuret,
 }
 
+impl std::str::FromStr for Weapon {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "f" => Ok(Self::Fleuret),
+            "fleuret" => Ok(Self::Fleuret),
+            "e" => Ok(Self::Epee),
+            "epee" => Ok(Self::Epee),
+            "s" => Ok(Self::Sabre),
+            "sabre" => Ok(Self::Sabre),
+            _ => Err(format!("Unknown weapon type: {}", s))
+        }
+    }
+}
+
 impl std::fmt::Display for Weapon {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -30,6 +62,35 @@ impl std::fmt::Display for Weapon {
             Weapon::Epee => write!(f, "Epee"),
             Weapon::Sabre => write!(f, "Sabre"),
             Weapon::Fleuret => write!(f, "Fleuret"),
+        }
+    }
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+pub enum CompetitionType {
+    Individual,
+    Team,
+}
+
+impl std::str::FromStr for CompetitionType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "i" => Ok(Self::Individual),
+            "individual" => Ok(Self::Individual),
+            "t" => Ok(Self::Team),
+            "team" => Ok(Self::Team),
+            _ => Err(format!("Unknown competition type: {}", s))
+        }
+    }
+}
+
+impl std::fmt::Display for CompetitionType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CompetitionType::Individual => write!(f, "Individual"),
+            CompetitionType::Team => write!(f, "Team"),
         }
     }
 }

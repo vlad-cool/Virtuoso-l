@@ -9,7 +9,6 @@ mod virtuoso_logger;
 use crate::modules::VirtuosoModule;
 use crate::virtuoso_config::VirtuosoConfig;
 use match_info::MatchInfo;
-// use log::{info, warn, error, debug, trace};
 
 #[cfg(feature = "cyrano_server")]
 mod cyrano_server;
@@ -28,15 +27,15 @@ mod layouts;
 mod slint_frontend;
 
 fn main() {
-    // env_logger::init();
     #[cfg(feature = "video_recorder")]
-    todo!();
+    compile_error!("Video recorder feature is not implemented yet");
 
     let match_info: Arc<Mutex<MatchInfo>> = Arc::new(Mutex::new(MatchInfo::new()));
     let config: Arc<Mutex<VirtuosoConfig>> =
         Arc::new(Mutex::new(VirtuosoConfig::load_config(None)));
 
-    let virtuoso_logger: virtuoso_logger::VirtuosoLogger = virtuoso_logger::VirtuosoLogger::new(Arc::clone(&config));
+    let virtuoso_logger: virtuoso_logger::VirtuosoLogger =
+        virtuoso_logger::VirtuosoLogger::new(Arc::clone(&config));
 
     let logger: virtuoso_logger::Logger = virtuoso_logger.get_logger("Main thread".to_string());
 
@@ -51,13 +50,16 @@ fn main() {
     let mut slint_frontend = slint_frontend::SlintFrontend::new(Arc::clone(&match_info));
 
     #[cfg(feature = "cyrano_server")]
-    let mut cyrano_server =
-        cyrano_server::CyranoServer::new(Arc::clone(&match_info), Arc::clone(&config), virtuoso_logger.get_logger("Cyrano server".to_string()));
+    let mut cyrano_server = cyrano_server::CyranoServer::new(
+        Arc::clone(&match_info),
+        Arc::clone(&config),
+        virtuoso_logger.get_logger("Cyrano server".to_string()),
+    );
 
     let logger_thread = thread::spawn(move || {
         virtuoso_logger.run();
     });
-        
+
     #[cfg(feature = "console_backend")]
     let console_backend_thread = thread::spawn(move || {
         console_backend.run();
@@ -99,31 +101,44 @@ fn main() {
     logger.info("Slint frontend started".to_string());
 
     #[cfg(feature = "legacy_backend")]
-    legacy_backend_thread.join().unwrap();
-    #[cfg(feature = "legacy_backend")]
-    logger.info("Legacy backend stopped".to_string());
+    if let Err(e) = legacy_backend_thread.join() {
+        logger.error(format!(
+            "Failed to join legacy backend thread, error: {e:?}"
+        ));
+    } else {
+        logger.info("Legacy backend stopped".to_string());
+    }
 
     #[cfg(feature = "slint_frontend")]
     #[cfg(not(target_os = "macos"))]
-    slint_frontend_thread.join().unwrap();
-
-    #[cfg(feature = "slint_frontend")]
-    #[cfg(not(target_os = "macos"))]
-    logger.info("Slint frontend stopped".to_string());
+    if let Err(e) = slint_frontend_thread.join() {
+        logger.error(format!(
+            "Failed to join slint frontend thread, error: {e:?}"
+        ));
+    } else {
+        logger.info("Slint frontend stopped".to_string());
+    }
 
     #[cfg(feature = "console_backend")]
-    console_backend_thread.join().unwrap();
-    #[cfg(feature = "console_backend")]
-    logger.info("Console backend stopped".to_string());
+    if let Err(e) = console_backend_thread.join() {
+        logger.error(format!(
+            "Failed to join console backend thread, error: {e:?}"
+        ));
+    } else {
+        logger.info("Console backend stopped".to_string());
+    }
 
     #[cfg(feature = "cyrano_server")]
-    {
-        cyrano_server_thread.join().unwrap();
+    if let Err(e) = cyrano_server_thread.join() {
+        logger.error(format!("Failed to join cyrano server thread, error: {e:?}"));
+    } else {
         logger.info("Cyrano server stopped".to_string());
     }
 
     logger.info("Exiting program".to_string());
 
     logger.stop_logger();
-    logger_thread.join().unwrap();
+    if let Err(e) = logger_thread.join() {
+        eprintln!("Failed to join logger thread server thread, error: {e:?}");
+    }
 }

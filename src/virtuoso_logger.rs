@@ -6,7 +6,7 @@ use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
 use std::sync::{mpsc, Arc, Mutex};
 
-#[derive(Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq)]
 enum LogLevel {
     Debug,
     Info,
@@ -215,7 +215,7 @@ impl VirtuosoLogger {
         }
     }
 
-    pub fn run(&self) {
+    pub fn run(self) {
         eprintln!("Logger running");
         loop {
             match self.rx.recv() {

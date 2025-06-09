@@ -113,15 +113,11 @@ impl LegacyBackend {
                 match modified_field {
                     AutoStatusFields::Timer => match_info_data.auto_timer_on = new_state.to_bool(),
                     AutoStatusFields::Score => match_info_data.auto_score_on = new_state.to_bool(),
-                    AutoStatusFields::Unknown => {},
+                    AutoStatusFields::Unknown => {}
                 }
             }
         } else {
-            match_info_data.timer = if msg.period == 0b1100 {
-                4
-            } else {
-                msg.minutes
-            } * 100
+            match_info_data.timer = if msg.period == 0b1100 { 4 } else { msg.minutes } * 100
                 + msg.dec_seconds * 10
                 + msg.seconds;
 
