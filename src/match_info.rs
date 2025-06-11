@@ -16,24 +16,31 @@ impl std::str::FromStr for Priority {
             "none" => Ok(Self::None),
             "r" => Ok(Self::Right),
             "right" => Ok(Self::Right),
-            _ => Err(format!("Unknown weapon type: {}", s))
+            _ => Err(format!("Unknown weapon type: {}", s)),
         }
     }
 }
 
 impl std::fmt::Display for Priority {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Left => write!(f, "Left"),
-            Self::None => write!(f, "None"),
-            Self::Right => write!(f, "Right"),
+        if f.width() == Some(1) {
+            match self {
+                Self::Left => write!(f, "L"),
+                Self::None => write!(f, "N"),
+                Self::Right => write!(f, "R"),
+            }
+        } else {
+            match self {
+                Self::Left => write!(f, "Left"),
+                Self::None => write!(f, "None"),
+                Self::Right => write!(f, "Right"),
+            }
         }
     }
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum Weapon {
-    Unknown,
     Epee,
     Sabre,
     Fleuret,
@@ -50,18 +57,25 @@ impl std::str::FromStr for Weapon {
             "epee" => Ok(Self::Epee),
             "s" => Ok(Self::Sabre),
             "sabre" => Ok(Self::Sabre),
-            _ => Err(format!("Unknown weapon type: {}", s))
+            _ => Err(format!("Unknown weapon type: {}", s)),
         }
     }
 }
 
 impl std::fmt::Display for Weapon {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Weapon::Unknown => write!(f, "Unknown"),
-            Weapon::Epee => write!(f, "Epee"),
-            Weapon::Sabre => write!(f, "Sabre"),
-            Weapon::Fleuret => write!(f, "Fleuret"),
+        if f.width() == Some(1) {
+            match self {
+                Weapon::Epee => write!(f, "E"),
+                Weapon::Sabre => write!(f, "S"),
+                Weapon::Fleuret => write!(f, "F"),
+            }
+        } else {
+            match self {
+                Weapon::Epee => write!(f, "Epee"),
+                Weapon::Sabre => write!(f, "Sabre"),
+                Weapon::Fleuret => write!(f, "Fleuret"),
+            }
         }
     }
 }
@@ -81,16 +95,74 @@ impl std::str::FromStr for CompetitionType {
             "individual" => Ok(Self::Individual),
             "t" => Ok(Self::Team),
             "team" => Ok(Self::Team),
-            _ => Err(format!("Unknown competition type: {}", s))
+            _ => Err(format!("Unknown competition type: {}", s)),
         }
     }
 }
 
 impl std::fmt::Display for CompetitionType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            CompetitionType::Individual => write!(f, "Individual"),
-            CompetitionType::Team => write!(f, "Team"),
+        if f.width() == Some(1) {
+            match self {
+                CompetitionType::Individual => write!(f, "I"),
+                CompetitionType::Team => write!(f, "T"),
+            }
+        } else {
+            match self {
+                CompetitionType::Individual => write!(f, "Individual"),
+                CompetitionType::Team => write!(f, "Team"),
+            }
+        }
+    }
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+pub enum FencerStatus {
+    Undefined,
+    Victorie,
+    Defaite,
+    Abandonment,
+    Exclusion,
+}
+
+impl std::str::FromStr for FencerStatus {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "u" => Ok(Self::Undefined),
+            "undefined" => Ok(Self::Undefined),
+            "v" => Ok(Self::Victorie),
+            "victorie" => Ok(Self::Victorie),
+            "d" => Ok(Self::Defaite),
+            "defaite" => Ok(Self::Defaite),
+            "a" => Ok(Self::Abandonment),
+            "abandonment" => Ok(Self::Abandonment),
+            "e" => Ok(Self::Exclusion),
+            "exclusion" => Ok(Self::Exclusion),
+            _ => Err(format!("Unknown fencer status: {}", s)),
+        }
+    }
+}
+
+impl std::fmt::Display for FencerStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if f.width() == Some(1) {
+            match self {
+                FencerStatus::Undefined => write!(f, "U"),
+                FencerStatus::Victorie => write!(f, "V"),
+                FencerStatus::Defaite => write!(f, "D"),
+                FencerStatus::Abandonment => write!(f, "A"),
+                FencerStatus::Exclusion => write!(f, "E"),
+            }
+        } else {
+            match self {
+                FencerStatus::Undefined => write!(f, "Undefined"),
+                FencerStatus::Victorie => write!(f, "Victorie"),
+                FencerStatus::Defaite => write!(f, "Defaite"),
+                FencerStatus::Abandonment => write!(f, "Abandonment"),
+                FencerStatus::Exclusion => write!(f, "Exclusion"),
+            }
         }
     }
 }

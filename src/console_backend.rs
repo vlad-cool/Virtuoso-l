@@ -166,7 +166,7 @@ impl ConsoleBackend {
                     1 => match_info::Weapon::Epee,
                     2 => match_info::Weapon::Sabre,
                     3 => match_info::Weapon::Fleuret,
-                    _ => match_info::Weapon::Unknown,
+                    _ => match_info_data.weapon,
                 }
             }
 

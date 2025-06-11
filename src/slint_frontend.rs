@@ -90,7 +90,6 @@ fn update_data(
         app.set_period(match_info_data.period as i32);
 
         app.set_weapon(match match_info_data.weapon {
-            match_info::Weapon::Unknown => 0,
             match_info::Weapon::Epee => 1,
             match_info::Weapon::Sabre => 2,
             match_info::Weapon::Fleuret => 3,
