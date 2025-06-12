@@ -173,7 +173,7 @@ pub enum ProgramState {
     Exiting,
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub struct RefereeInfo {
     pub id: u32,
     pub name: String,
@@ -190,20 +190,20 @@ impl RefereeInfo {
     }
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub struct FencerInfo {
     pub id: u32,
     pub name: String,   // 20
     pub nation: String, // 3
     pub score: u32,
-    pub status: u8,
-    pub yellow_card: u8,
-    pub red_card: u8,
+    pub status: FencerStatus,
+    pub yellow_card: u32,
+    pub red_card: u32,
     pub color_light: bool,
     pub white_light: bool,
-    pub medical_interventions: u8,
-    pub reserve_introduction: u8,
-    pub p_card: u8,
+    pub medical_interventions: u32,
+    pub reserve_introduction: bool,
+    pub p_card: u32,
 }
 
 impl FencerInfo {
@@ -213,19 +213,19 @@ impl FencerInfo {
             name: "".to_string(),
             nation: "".to_string(),
             score: 0,
-            status: 0,
+            status: FencerStatus::Undefined,
             yellow_card: 0,
             red_card: 0,
             color_light: false,
             white_light: false,
             medical_interventions: 0,
-            reserve_introduction: 0,
+            reserve_introduction: false,
             p_card: 0,
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub struct MatchInfo {
     pub program_state: ProgramState,
     pub modified_count: u32,
@@ -250,6 +250,9 @@ pub struct MatchInfo {
     pub poul_tab: String,
     pub match_number: u32,
     pub round_number: u32,
+    pub time: String,
+    pub stopwatch: String,
+    pub competition_type: Option<CompetitionType>,
 
     pub referee: RefereeInfo,
     pub left_fencer: FencerInfo,
@@ -284,6 +287,10 @@ impl MatchInfo {
             poul_tab: "".to_string(),
             match_number: 0,
             round_number: 0,
+
+            time: "".to_string(),
+            stopwatch: "".to_string(),
+            competition_type: None,
 
             referee: RefereeInfo::new(),
             left_fencer: FencerInfo::new(),

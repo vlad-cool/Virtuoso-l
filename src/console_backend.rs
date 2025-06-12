@@ -183,13 +183,13 @@ impl ConsoleBackend {
             Field::RightColorLed => match_info_data.right_fencer.color_light = value > 0,
             Field::RightWhiteLed => match_info_data.right_fencer.white_light = value > 0,
 
-            Field::LeftCaution => match_info_data.left_fencer.yellow_card = value as u8,
-            Field::LeftPenalty => match_info_data.left_fencer.red_card = value as u8,
-            Field::RightCaution => match_info_data.right_fencer.yellow_card = value as u8,
-            Field::RightPenalty => match_info_data.right_fencer.red_card = value as u8,
+            Field::LeftCaution => match_info_data.left_fencer.yellow_card = value,
+            Field::LeftPenalty => match_info_data.left_fencer.red_card = value,
+            Field::RightCaution => match_info_data.right_fencer.yellow_card = value,
+            Field::RightPenalty => match_info_data.right_fencer.red_card = value,
 
-            Field::LeftPCard => match_info_data.left_fencer.p_card = value as u8,
-            Field::RightPCard => match_info_data.right_fencer.p_card = value as u8,
+            Field::LeftPCard => match_info_data.left_fencer.p_card = value,
+            Field::RightPCard => match_info_data.right_fencer.p_card = value,
 
             Field::AutoScore => match_info_data.auto_score_on = value > 0,
             Field::AutoTimer => match_info_data.auto_timer_on = value > 0,
