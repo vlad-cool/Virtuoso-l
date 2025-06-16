@@ -22,8 +22,7 @@ impl modules::VirtuosoModule for SlintFrontend {
 
         app.set_layout(LAYOUT_1920X480);
 
-        let weak_app_1 = app.as_weak();
-        let weak_app_2 = app.as_weak();
+        let weak_app_1: slint::Weak<Virtuoso> = app.as_weak();
 
         let match_info_clone = self.match_info.clone();
         let mut match_info_modified_count = 0u32;
@@ -34,31 +33,31 @@ impl modules::VirtuosoModule for SlintFrontend {
             std::time::Duration::from_millis(50),
             move || {
                 if let Some(app) = weak_app_1.upgrade() {
-                    let seconds_updated: bool;
-                    (match_info_modified_count, seconds_updated) =
+                    match_info_modified_count =
                         update_data(&match_info_clone, &app, match_info_modified_count);
 
-                    if seconds_updated {
-                        app.set_timer_flashing(true);
-                        let weak_app_3 = weak_app_2.clone();
-                        let flash_timer = Timer::default();
-                        flash_timer.start(
-                            TimerMode::SingleShot,
-                            std::time::Duration::from_millis(500),
-                            move || {
-                                if let Some(app) = weak_app_3.upgrade() {
-                                    app.set_timer_flashing(false);
-                                }
-                            },
-                        );
-                    }
+                    // if seconds_updated {
+                    //     app.set_timer_flashing(true);
+                    //     let weak_app_3 = weak_app_2.clone();
+                    //     let flash_timer = Timer::default();
+                    //     flash_timer.start(
+                    //         TimerMode::SingleShot,
+                    //         std::time::Duration::from_millis(500),
+                    //         move || {
+                    //             if let Some(app) = weak_app_3.upgrade() {
+                    //                 app.set_timer_flashing(false);
+                    //             }
+                    //         },
+                    //     );
+                    // }
                 }
             },
         );
 
         app.run().unwrap();
 
-        let mut match_info_data = self.match_info.lock().unwrap();
+        let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
+            self.match_info.lock().unwrap();
         match_info_data.program_state = match_info::ProgramState::Exiting;
     }
 }
@@ -67,9 +66,15 @@ fn update_data(
     match_info: &Arc<Mutex<match_info::MatchInfo>>,
     app: &Virtuoso,
     match_info_modified_count: u32,
-) -> (u32, bool) {
+) -> u32 {
     let match_info_data: MutexGuard<'_, match_info::MatchInfo> = match_info.lock().unwrap();
     let time: i32 = match_info_data.timer_controller.get_millis() as i32;
+
+    if time % 1000 > 500 {
+        app.set_timer_flashing(true);
+    } else {
+        app.set_timer_flashing(false);
+    }
 
     if time >= 10000 {
         let time: i32 = (time + 999) / 1000;
@@ -90,7 +95,7 @@ fn update_data(
     if match_info_data.modified_count == match_info_modified_count {
         std::mem::drop(match_info_data);
 
-        return (match_info_modified_count, false);
+        match_info_modified_count
     } else {
         // let seconds_updated: bool;
         // if (app.get_timer() % 10) as u32 != match_info_data.timer % 10 {
@@ -148,9 +153,7 @@ fn update_data(
         app.set_passive_indicator(match_info_data.passive_timer.get_counter() as i32);
 
         app.set_is_online(match_info_data.cyrano_online);
-        return (
-            match_info_data.modified_count,
-            match_info_data.timer_controller.get_second_changed(),
-        );
+
+        match_info_data.modified_count
     }
 }

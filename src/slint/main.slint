@@ -286,7 +286,7 @@ export component Virtuoso inherits Window {
         width: 1px * layout.timer-colon.width;
         height: 1px * layout.timer-colon.height;
         font-size: 1px * layout.timer-colon.font_size;
-        text: ":";
+        text: timer_running ? (timer_flashing ? ":" : "") : ":";
         horizontal-alignment: center;
         vertical-alignment: center;
         color: timer_running ? (last_ten_seconds ? Palette.timer_blue : Palette.timer_white) : Palette.timer_orange;
