@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum Priority {
     Left,
@@ -92,6 +94,7 @@ impl std::str::FromStr for CompetitionType {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.trim().to_ascii_lowercase().as_str() {
             "i" => Ok(Self::Individual),
+            "1" => Ok(Self::Individual), // WTF? Not as in documentation, but in test software
             "individual" => Ok(Self::Individual),
             "t" => Ok(Self::Team),
             "team" => Ok(Self::Team),
@@ -168,6 +171,138 @@ impl std::fmt::Display for FencerStatus {
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
+pub struct PassiveTimer {
+    enabled: bool,
+    passive_counter: u32,
+}
+
+impl PassiveTimer {
+    pub fn new() -> PassiveTimer {
+        Self {
+            enabled: false,
+            passive_counter: 60,
+        }
+    }
+
+    pub fn tick(&mut self) {
+        if self.enabled && self.passive_counter != 0 {
+            self.passive_counter -= 1;
+
+            println!("{}", self.passive_counter);
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.enabled = false;
+        self.passive_counter = 60;
+    }
+
+    pub fn enable(&mut self) {
+        self.enabled = true;
+    }
+
+    pub fn disable(&mut self) {
+        self.enabled = false;
+    }
+
+    pub fn get_counter(&self) -> u32 {
+        self.passive_counter
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct TimerController {
+    last_second: bool,
+    time: u32,
+    timer_running: bool,
+    prev_second_value: u32,
+    second_changed: bool,
+    last_updated: Instant,
+    last_updated_freezed: u32,
+}
+
+impl PartialEq for TimerController {
+    fn eq(&self, other: &Self) -> bool {
+        self.time == other.time && self.timer_running == other.timer_running
+    }
+}
+
+impl TimerController {
+    pub fn new() -> Self {
+        Self {
+            last_second: false,
+            time: 3 * 60 * 1000,
+            timer_running: false,
+            prev_second_value: 0,
+            second_changed: false,
+            last_updated: Instant::now(),
+            last_updated_freezed: 0,
+        }
+    }
+
+    pub fn set_time(&mut self, timer_m: u32, timer_d: u32, timer_s: u32) {
+        self.last_updated = Instant::now();
+
+        if timer_d >= 6 {
+            self.last_second = true;
+        }
+        if timer_m > 0 {
+            self.last_second = false;
+        }
+
+        if self.last_second {
+            if timer_m != self.prev_second_value {
+                self.second_changed = true;
+            } else {
+                self.second_changed = false;
+            }
+            self.prev_second_value = timer_m;
+
+            self.time = timer_d * 100 + timer_s * 10;
+        } else {
+            if timer_s != self.prev_second_value {
+                self.second_changed = true;
+            } else {
+                self.second_changed = false;
+            }
+            self.prev_second_value = timer_s;
+
+            self.time = (timer_m * 60 + timer_d * 10 + timer_s) * 1000;
+        }
+    }
+
+    pub fn stop_timer(&mut self) {
+        self.last_updated_freezed = self.last_updated.elapsed().as_millis() as u32;
+        self.timer_running = false;
+    }
+
+    pub fn start_timer(&mut self) {
+        self.timer_running = true;
+        self.last_updated = Instant::now();
+    }
+
+    pub fn get_millis(&self) -> u32 {
+        if self.timer_running {
+            if self.time > self.last_updated.elapsed().as_millis() as u32 {
+                self.time - self.last_updated.elapsed().as_millis() as u32
+            } else {
+                0
+            }
+        } else {
+            if self.time > self.last_updated_freezed {
+                self.time - self.last_updated_freezed
+            } else {
+                0
+            }
+        }
+    }
+
+    pub fn get_second_changed(&self) -> bool {
+        self.second_changed
+    }
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum ProgramState {
     Running,
     Exiting,
@@ -231,14 +366,13 @@ pub struct MatchInfo {
     pub modified_count: u32,
 
     pub weapon: Weapon,
-    pub timer: u32,
+    // pub timer: u32,
     pub last_ten_seconds: bool,
     pub timer_running: bool,
     pub period: u32,
     pub priority: Priority,
-    pub passive_indicator: u32,
-    pub passive_counter: u32,
-
+    // pub passive_indicator: u32,
+    // pub passive_counter: u32,
     pub auto_score_on: bool,
     pub auto_timer_on: bool,
 
@@ -251,8 +385,11 @@ pub struct MatchInfo {
     pub match_number: u32,
     pub round_number: u32,
     pub time: String,
-    pub stopwatch: String,
+    // pub stopwatch: String,
     pub competition_type: Option<CompetitionType>,
+
+    pub timer_controller: TimerController,
+    pub passive_timer: PassiveTimer,
 
     pub referee: RefereeInfo,
     pub left_fencer: FencerInfo,
@@ -268,14 +405,13 @@ impl MatchInfo {
             weapon: Weapon::Epee,
             // left_score: 0,
             // right_score: 0,
-            timer: 300,
+            // timer: 300,
             last_ten_seconds: false,
             timer_running: false,
             period: 1,
             priority: Priority::None,
-            passive_indicator: 0,
-            passive_counter: 60,
-
+            // passive_indicator: 0,
+            // passive_counter: 60,
             auto_score_on: false,
             auto_timer_on: false,
 
@@ -289,8 +425,11 @@ impl MatchInfo {
             round_number: 0,
 
             time: "".to_string(),
-            stopwatch: "".to_string(),
+            // stopwatch: "".to_string(),
             competition_type: None,
+
+            timer_controller: TimerController::new(),
+            passive_timer: PassiveTimer::new(),
 
             referee: RefereeInfo::new(),
             left_fencer: FencerInfo::new(),

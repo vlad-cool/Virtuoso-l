@@ -3,11 +3,10 @@
 use gpio_cdev;
 use serial::{self, SerialPort};
 use std::sync::mpsc::RecvError;
-use std::sync::Arc;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex, MutexGuard, mpsc};
 use std::thread;
 use std::time::Duration;
-use std::{io::Read, sync::mpsc};
+use std::io::Read;
 
 /*
 TODO Passive counter / indicator
@@ -29,7 +28,6 @@ pub struct LegacyBackend {
     weapon_select_btn_pressed: bool,
     rc5_address: u32,
     auto_status_controller: AutoStatusController,
-    passive_controller: PassiveTimer,
 
     last_seconds_value: Option<u32>,
 }
@@ -70,10 +68,6 @@ impl modules::VirtuosoModule for LegacyBackend {
             }
         }
     }
-
-    fn get_module_type(&self) -> Modules {
-        modules::Modules::LegacyBackend
-    }
 }
 
 impl LegacyBackend {
@@ -88,20 +82,19 @@ impl LegacyBackend {
             weapon_select_btn_pressed: false,
             rc5_address,
             auto_status_controller: AutoStatusController::new(),
-            passive_controller: PassiveTimer::new(),
             last_seconds_value: None,
         }
     }
 
     fn apply_uart_data(&mut self, msg: UartData) {
-        let mut match_info_data = self.match_info.lock().unwrap();
+        let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> = self.match_info.lock().unwrap();
 
-        match_info_data.left_score = msg.score_left;
-        match_info_data.right_score = msg.score_right;
+        match_info_data.left_fencer.score = msg.score_left;
+        match_info_data.right_fencer.score = msg.score_right;
         match_info_data.timer_running = msg.on_timer;
 
         if msg.symbol {
-            let symbol = msg.dec_seconds * 16 + msg.seconds;
+            let symbol: u32 = msg.dec_seconds * 16 + msg.seconds;
 
             let (modified_field, new_state) = self.auto_status_controller.set_state(match symbol {
                 AUTO_STATUS_OFF => AutoStatusStates::Off,
@@ -117,31 +110,26 @@ impl LegacyBackend {
                 }
             }
         } else {
-            match_info_data.timer = if msg.period == 0b1100 { 4 } else { msg.minutes } * 100
-                + msg.dec_seconds * 10
-                + msg.seconds;
+            let timer_m: u32 = if msg.period == 0b1100 {
+                4
+            }
+            else {
+                msg.minutes
+            };
+            let timer_d: u32 = msg.dec_seconds;
+            let timer_s: u32 = msg.seconds;
 
-            if msg.minutes == 0 && msg.dec_seconds == 0 {
-                match_info_data.last_ten_seconds = true;
-            } else if msg.minutes != 0 {
-                match_info_data.last_ten_seconds = false;
+            match_info_data.timer_controller.set_time(timer_m, timer_d, timer_s);
+            if msg.on_timer {
+                match_info_data.timer_controller.start_timer();
+            }
+            else {
+                match_info_data.timer_controller.stop_timer();
             }
 
-            let secs = if match_info_data.last_ten_seconds {
-                msg.minutes
-            } else {
-                msg.seconds
-            };
-            // let secs = msg.seconds;
-
-            // if secs == None {
-            //     secs = Some(self.last_seconds_value);
-            // }
-
-            // if secs != self.last_seconds_value.unwrap_or(11111) {
-            //     self.last_seconds_value = Some(secs);
-            //     self.passive_controller.tick();
-            // }
+            if match_info_data.timer_controller.get_second_changed() {
+                match_info_data.passive_timer.tick();
+            }
         }
         match_info_data.period = if msg.period > 0 && msg.period < 10 {
             msg.period
@@ -159,10 +147,10 @@ impl LegacyBackend {
             },
         };
 
-        match_info_data.left_caution = msg.yellow_card_left || msg.red_card_left;
-        match_info_data.left_penalty = msg.red_card_left;
-        match_info_data.right_caution = msg.yellow_card_right || msg.red_card_right;
-        match_info_data.right_penalty = msg.red_card_right;
+        match_info_data.left_fencer.yellow_card = (msg.yellow_card_left || msg.red_card_left) as u32;
+        match_info_data.left_fencer.red_card = msg.red_card_left as u32;
+        match_info_data.right_fencer.yellow_card = (msg.yellow_card_right || msg.red_card_right) as u32;
+        match_info_data.right_fencer.red_card = msg.red_card_right as u32;
 
         match_info_data.modified_count += 1;
     }
@@ -174,7 +162,7 @@ impl LegacyBackend {
             3 => match_info::Weapon::Epee,
             1 => match_info::Weapon::Sabre,
             2 => match_info::Weapon::Fleuret,
-            _ => match_info::Weapon::Unknown,
+            _ => match_info_data.weapon,
         };
 
         match_info_data.modified_count += 1;
@@ -196,36 +184,41 @@ impl LegacyBackend {
                 IrCommands::LeftPassiveCard => {
                     let mut match_info_data = self.match_info.lock().unwrap();
 
-                    (
-                        match_info_data.left_pcard_bot,
-                        match_info_data.left_pcard_top,
-                    ) = match (
-                        match_info_data.left_pcard_bot,
-                        match_info_data.left_pcard_top,
-                    ) {
-                        (false, false) => (true, false),
-                        (true, false) => (true, true),
-                        (false, true) => (true, true),
-                        (true, true) => (false, false),
-                    };
+                    // (
+                    //     match_info_data.left_pcard_bot,
+                    //     match_info_data.left_pcard_top,
+                    // ) = match (
+                    //     match_info_data.left_pcard_bot,
+                    //     match_info_data.left_pcard_top,
+                    // ) {
+                    //     (false, false) => (true, false),
+                    //     (true, false) => (true, true),
+                    //     (false, true) => (true, true),
+                    //     (true, true) => (false, false),
+                    // };
+
+                    match_info_data.left_fencer.p_card += 1;
+                    match_info_data.left_fencer.p_card %= 4;
 
                     match_info_data.modified_count += 1;
                 }
                 IrCommands::RightPassiveCard => {
                     let mut match_info_data = self.match_info.lock().unwrap();
 
-                    (
-                        match_info_data.right_pcard_bot,
-                        match_info_data.right_pcard_top,
-                    ) = match (
-                        match_info_data.right_pcard_bot,
-                        match_info_data.right_pcard_top,
-                    ) {
-                        (false, false) => (true, false),
-                        (true, false) => (true, true),
-                        (false, true) => (true, true),
-                        (true, true) => (false, false),
-                    };
+                    // (
+                    //     match_info_data.right_pcard_bot,
+                    //     match_info_data.right_pcard_top,
+                    // ) = match (
+                    //     match_info_data.right_pcard_bot,
+                    //     match_info_data.right_pcard_top,
+                    // ) {
+                    //     (false, false) => (true, false),
+                    //     (true, false) => (true, true),
+                    //     (false, true) => (true, true),
+                    //     (true, true) => (false, false),
+                    // };
+                    match_info_data.right_fencer.p_card += 1;
+                    match_info_data.right_fencer.p_card %= 4;
 
                     match_info_data.modified_count += 1;
                 }
@@ -365,41 +358,6 @@ impl AutoStatusController {
         } else {
             return (AutoStatusFields::Unknown, AutoStatusStates::Unknown);
         }
-    }
-}
-
-struct PassiveTimer {
-    enabled: bool,
-    passive_counter: u32,
-}
-
-impl PassiveTimer {
-    pub fn new() -> PassiveTimer {
-        Self {
-            enabled: false,
-            passive_counter: 60,
-        }
-    }
-
-    pub fn tick(&mut self) {
-        if self.enabled && self.passive_counter != 0 {
-            self.passive_counter -= 1;
-
-            println!("{}", self.passive_counter);
-        }
-    }
-
-    pub fn reset(&mut self) {
-        self.enabled = false;
-        self.passive_counter = 60;
-    }
-
-    pub fn enable(&mut self) {
-        self.enabled = true;
-    }
-
-    pub fn disable(&mut self) {
-        self.enabled = false;
     }
 }
 
@@ -696,7 +654,7 @@ struct PinsData {
 }
 
 fn pins_handler(tx: mpsc::Sender<InputData>) {
-    let mut chips = Vec::<gpio_cdev::Chip>::new();
+    let mut chips: Vec<gpio_cdev::Chip> = Vec::<gpio_cdev::Chip>::new();
 
     for path in &["/dev/gpiochip0", "/dev/gpiochip1"] {
         if let Ok(chip) = gpio_cdev::Chip::new(path) {
@@ -706,41 +664,41 @@ fn pins_handler(tx: mpsc::Sender<InputData>) {
         }
     }
 
-    let gpio_pin_wireless = crate::gpio::get_pin_by_phys_number(7).unwrap();
-    let gpio_line_wireless = chips[gpio_pin_wireless.chip as usize]
+    let gpio_pin_wireless: crate::gpio::PinLocation = crate::gpio::get_pin_by_phys_number(7).unwrap();
+    let gpio_line_wireless: gpio_cdev::Line = chips[gpio_pin_wireless.chip as usize]
         .get_line(gpio_pin_wireless.line)
         .unwrap();
-    let gpio_handle_wireless = gpio_line_wireless
+    let gpio_handle_wireless: gpio_cdev::LineHandle = gpio_line_wireless
         .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read-input")
         .unwrap();
 
-    let gpio_pin_weapon_0 = crate::gpio::get_pin_by_phys_number(32).unwrap();
-    let gpio_line_weapon_0 = chips[gpio_pin_weapon_0.chip as usize]
+    let gpio_pin_weapon_0: crate::gpio::PinLocation = crate::gpio::get_pin_by_phys_number(32).unwrap();
+    let gpio_line_weapon_0: gpio_cdev::Line = chips[gpio_pin_weapon_0.chip as usize]
         .get_line(gpio_pin_weapon_0.line)
         .unwrap();
-    let gpio_handle_weapon_0 = gpio_line_weapon_0
+    let gpio_handle_weapon_0: gpio_cdev::LineHandle = gpio_line_weapon_0
         .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read-input")
         .unwrap();
-    let gpio_pin_weapon_1 = crate::gpio::get_pin_by_phys_number(36).unwrap();
-    let gpio_line_weapon_1 = chips[gpio_pin_weapon_1.chip as usize]
+    let gpio_pin_weapon_1: crate::gpio::PinLocation = crate::gpio::get_pin_by_phys_number(36).unwrap();
+    let gpio_line_weapon_1: gpio_cdev::Line = chips[gpio_pin_weapon_1.chip as usize]
         .get_line(gpio_pin_weapon_1.line)
         .unwrap();
-    let gpio_handle_weapon_1 = gpio_line_weapon_1
+    let gpio_handle_weapon_1: gpio_cdev::LineHandle = gpio_line_weapon_1
         .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read-input")
         .unwrap();
 
-    let gpio_pin_weapon_btn = crate::gpio::get_pin_by_phys_number(37).unwrap();
-    let gpio_line_weapon_btn = chips[gpio_pin_weapon_btn.chip as usize]
+    let gpio_pin_weapon_btn: crate::gpio::PinLocation = crate::gpio::get_pin_by_phys_number(37).unwrap();
+    let gpio_line_weapon_btn: gpio_cdev::Line = chips[gpio_pin_weapon_btn.chip as usize]
         .get_line(gpio_pin_weapon_btn.line)
         .unwrap();
-    let gpio_handle_weapon_btn = gpio_line_weapon_btn
+    let gpio_handle_weapon_btn: gpio_cdev::LineHandle = gpio_line_weapon_btn
         .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read-input")
         .unwrap();
 
-    let mut old_pins_data = Option::None;
+    let mut old_pins_data: Option<PinsData> = Option::None;
 
     loop {
-        let new_pins_data = PinsData {
+        let new_pins_data: PinsData = PinsData {
             weapon: gpio_handle_weapon_0.get_value().unwrap() * 2
                 + gpio_handle_weapon_1.get_value().unwrap(),
             weapon_select_btn: gpio_handle_weapon_btn.get_value().unwrap() == 0u8,

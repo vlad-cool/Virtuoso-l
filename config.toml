@@ -10,4 +10,4 @@ stderr = true
 log_path = "log.txt"
 udp = true
 udp_port = 57179
-udp_ip = "127.0.0.1"
+udp_print_ip = true

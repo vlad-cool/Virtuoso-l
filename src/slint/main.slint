@@ -109,7 +109,9 @@ export component Virtuoso inherits Window {
     in property <int> weapon;
     in property <int> left_score;
     in property <int> right_score;
-    in property <int> timer;
+    in property <int> timer_m;
+    in property <int> timer_d;
+    in property <int> timer_s;
     in property <bool> last_ten_seconds;
     in property <bool> timer_running;
     in property <int> period;
@@ -272,7 +274,7 @@ export component Virtuoso inherits Window {
         width: 1px * layout.timer-m.width;
         height: 1px * layout.timer-m.height;
         font-size: 1px * layout.timer-m.font_size;
-        text: Math.mod(Math.floor(timer / 100), 10);
+        text: timer_m;
         horizontal-alignment: center;
         vertical-alignment: center;
         color: timer_running ? (last_ten_seconds ? Palette.timer_blue : Palette.timer_white) : Palette.timer_orange;
@@ -296,7 +298,7 @@ export component Virtuoso inherits Window {
         width: 1px * layout.timer-d.width;
         height: 1px * layout.timer-d.height;
         font-size: 1px * layout.timer-d.font_size;
-        text: Math.mod(Math.floor(timer / 10), 10);
+        text: timer_d;
         horizontal-alignment: center;
         vertical-alignment: center;
         color: timer_running ? (last_ten_seconds ? Palette.timer_blue : Palette.timer_white) : Palette.timer_orange;
@@ -308,7 +310,7 @@ export component Virtuoso inherits Window {
         width: 1px * layout.timer-s.width;
         height: 1px * layout.timer-s.height;
         font-size: 1px * layout.timer-s.font_size;
-        text: Math.mod(timer, 10);
+        text: timer_s;
         horizontal-alignment: center;
         vertical-alignment: center;
         color: timer_running ? (last_ten_seconds ? Palette.timer_blue : Palette.timer_white) : Palette.timer_orange;

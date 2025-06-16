@@ -80,6 +80,8 @@ pub struct LoggerConfig {
     pub udp: bool,
     pub udp_port: Option<u16>,
     pub udp_ip: Option<String>,
+    #[serde(default)]
+    pub udp_print_ip: bool,
 }
 
 impl Default for LoggerConfig {
@@ -91,6 +93,7 @@ impl Default for LoggerConfig {
             udp: false,
             udp_port: None,
             udp_ip: None,
+            udp_print_ip: false,
         }
     }
 }

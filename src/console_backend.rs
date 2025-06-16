@@ -156,7 +156,7 @@ impl ConsoleBackend {
         match field {
             Field::LeftScore => match_info_data.left_fencer.score = value,
             Field::RightScore => match_info_data.right_fencer.score = value,
-            Field::Time => match_info_data.timer = value,
+            Field::Time => match_info_data.timer_controller.set_time(0, 0, value / 1000),
             Field::LastTenSeconds => match_info_data.last_ten_seconds = value > 0,
             Field::TimerRunning => match_info_data.timer_running = value > 0,
             Field::Period => match_info_data.period = value,
@@ -194,8 +194,8 @@ impl ConsoleBackend {
             Field::AutoScore => match_info_data.auto_score_on = value > 0,
             Field::AutoTimer => match_info_data.auto_timer_on = value > 0,
 
-            Field::PassiveCounter => match_info_data.passive_counter = value,
-            Field::PassiveIndicator => match_info_data.passive_indicator = value,
+            Field::PassiveCounter => println!("Setting paassive counter is not implemented yet"),
+            Field::PassiveIndicator => println!("Setting paassive indicator is not implemented yet"),
 
             Field::Unknown => {
                 println!("Unknown field");
@@ -212,7 +212,7 @@ impl ConsoleBackend {
         match field {
             Field::LeftScore => println!("{}", match_info_data.left_fencer.score),
             Field::RightScore => println!("{}", match_info_data.right_fencer.score),
-            Field::Time => println!("{}", match_info_data.timer),
+            Field::Time => println!("{}", match_info_data.timer_controller.get_millis() / 1000),
             Field::LastTenSeconds => println!("{}", match_info_data.last_ten_seconds),
             Field::TimerRunning => println!("{}", match_info_data.timer_running),
             Field::Period => println!("{}", match_info_data.period),
@@ -237,8 +237,8 @@ impl ConsoleBackend {
             Field::AutoScore => println!("{}", match_info_data.auto_score_on),
             Field::AutoTimer => println!("{}", match_info_data.auto_timer_on),
 
-            Field::PassiveCounter => println!("{}", match_info_data.passive_counter),
-            Field::PassiveIndicator => println!("{}", match_info_data.passive_indicator),
+            Field::PassiveCounter => println!("not final {}", match_info_data.passive_timer.get_counter()),
+            Field::PassiveIndicator => println!("not final {}", match_info_data.passive_timer.get_counter()),
 
             Field::Unknown => println!("Unknown field"),
         }

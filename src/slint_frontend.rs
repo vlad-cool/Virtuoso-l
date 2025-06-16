@@ -1,5 +1,5 @@
 use slint::{Timer, TimerMode};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 use crate::match_info;
 use crate::modules;
@@ -31,7 +31,7 @@ impl modules::VirtuosoModule for SlintFrontend {
         let timer = Timer::default();
         timer.start(
             TimerMode::Repeated,
-            std::time::Duration::from_millis(100),
+            std::time::Duration::from_millis(50),
             move || {
                 if let Some(app) = weak_app_1.upgrade() {
                     let seconds_updated: bool;
@@ -68,23 +68,42 @@ fn update_data(
     app: &Virtuoso,
     match_info_modified_count: u32,
 ) -> (u32, bool) {
-    let match_info_data = match_info.lock().unwrap();
+    let match_info_data: MutexGuard<'_, match_info::MatchInfo> = match_info.lock().unwrap();
+    let time: i32 = match_info_data.timer_controller.get_millis() as i32;
+
+    if time >= 10000 {
+        let time: i32 = (time + 999) / 1000;
+        let timer_m: i32 = time / 60;
+        let time: i32 = time % 60;
+        let timer_d: i32 = time / 10;
+        let timer_s: i32 = time % 10;
+        app.set_timer_m(timer_m);
+        app.set_timer_d(timer_d);
+        app.set_timer_s(timer_s);
+    } else {
+        app.set_timer_m(time / 1000);
+        let time: i32 = time % 1000;
+        app.set_timer_d(time / 100);
+        app.set_timer_s((time % 100) / 10);
+    }
 
     if match_info_data.modified_count == match_info_modified_count {
+        std::mem::drop(match_info_data);
+
         return (match_info_modified_count, false);
     } else {
-        let seconds_updated: bool;
-        if (app.get_timer() % 10) as u32 != match_info_data.timer % 10 {
-            // TODO Add last ten seconds support
-            seconds_updated = true;
-            println!("Seconds updated");
-        } else {
-            seconds_updated = false;
-        }
+        // let seconds_updated: bool;
+        // if (app.get_timer() % 10) as u32 != match_info_data.timer % 10 {
+        //     // TODO Add last ten seconds support
+        //     seconds_updated = true;
+        //     println!("Seconds updated");
+        // } else {
+        //     seconds_updated = false;
+        // }
 
         app.set_left_score(match_info_data.left_fencer.score as i32);
         app.set_right_score(match_info_data.right_fencer.score as i32);
-        app.set_timer(match_info_data.timer as i32);
+
         app.set_last_ten_seconds(match_info_data.last_ten_seconds);
         app.set_timer_running(match_info_data.timer_running);
         app.set_period(match_info_data.period as i32);
@@ -121,14 +140,17 @@ fn update_data(
         app.set_auto_score_on(match_info_data.auto_score_on);
         app.set_auto_timer_on(match_info_data.auto_timer_on);
 
-        app.set_passive_counter(if match_info_data.passive_counter <= 60 {
-            match_info_data.passive_counter as i32
+        app.set_passive_counter(if match_info_data.passive_timer.get_counter() <= 60 {
+            match_info_data.passive_timer.get_counter() as i32
         } else {
             -1
         });
-        app.set_passive_indicator(match_info_data.passive_indicator as i32);
+        app.set_passive_indicator(match_info_data.passive_timer.get_counter() as i32);
 
         app.set_is_online(match_info_data.cyrano_online);
-        return (match_info_data.modified_count, seconds_updated);
+        return (
+            match_info_data.modified_count,
+            match_info_data.timer_controller.get_second_changed(),
+        );
     }
 }

@@ -105,6 +105,7 @@ pub struct VirtuosoLogger {
     stderr: bool,
     file: Option<File>,
     socket: Option<UdpSocket>,
+    print_ip: bool,
 }
 
 impl VirtuosoLogger {
@@ -212,6 +213,7 @@ impl VirtuosoLogger {
             stderr,
             file,
             socket,
+            print_ip: config.udp_print_ip,
         }
     }
 
@@ -230,7 +232,17 @@ impl VirtuosoLogger {
                             let _ = file.write_all(format!("{}\n", msg).as_bytes());
                         }
                         if let Some(socket) = self.socket.as_ref() {
-                            let _ = socket.send(format!("{}\n", msg).as_bytes());
+                            if self.print_ip {
+                                if let Ok(local_addr) = socket.local_addr() {
+                                    let _ = socket.send(format!("from: {}; {}\n", local_addr, msg).as_bytes());
+                                }
+                                else {
+                                    let _ = socket.send(format!("from: unknown; {}\n", msg).as_bytes());
+                                }
+                            }
+                            else {
+                                let _ = socket.send(format!("{}\n", msg).as_bytes());
+                            }
                         }
                     }
                 },
