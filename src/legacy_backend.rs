@@ -17,6 +17,7 @@ TODO Leds
 use crate::match_info;
 use crate::modules;
 use crate::virtuoso_config::VirtuosoConfig;
+use crate::virtuoso_logger::Logger;
 
 const AUTO_STATUS_WAIT_THRESHOLD: std::time::Duration = std::time::Duration::from_millis(200);
 const AUTO_STATUS_ON: u32 = 196;
@@ -30,6 +31,8 @@ pub struct LegacyBackend {
     auto_status_controller: AutoStatusController,
 
     last_seconds_value: Option<u32>,
+
+    logger: Logger,
 }
 
 impl modules::VirtuosoModule for LegacyBackend {
@@ -74,6 +77,7 @@ impl LegacyBackend {
     pub fn new(
         match_info: Arc<Mutex<match_info::MatchInfo>>,
         config: Arc<Mutex<VirtuosoConfig>>,
+        logger: Logger,
     ) -> Self {
         let rc5_address: u32 = config.lock().unwrap().legacy_backend.rc5_address;
         Self {
@@ -83,6 +87,7 @@ impl LegacyBackend {
             rc5_address,
             auto_status_controller: AutoStatusController::new(),
             last_seconds_value: None,
+            logger,
         }
     }
 
@@ -122,11 +127,13 @@ impl LegacyBackend {
             match_info_data.timer_controller.set_time(timer_m, timer_d, timer_s);
             if msg.on_timer {
                 match_info_data.timer_controller.start_timer();
+                match_info_data.passive_timer.enable();
             }
             else {
                 match_info_data.timer_controller.stop_timer();
+                match_info_data.passive_timer.disable();
             }
-
+            
             if match_info_data.timer_controller.get_second_changed() {
                 match_info_data.passive_timer.tick();
             }

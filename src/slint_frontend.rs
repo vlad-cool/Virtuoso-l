@@ -69,43 +69,11 @@ fn update_data(
 ) -> u32 {
     let match_info_data: MutexGuard<'_, match_info::MatchInfo> = match_info.lock().unwrap();
     let time: i32 = match_info_data.timer_controller.get_millis() as i32;
+    let passive_indicator: i32 = match_info_data.passive_timer.get_indicator() as i32;
 
-    if time % 1000 > 500 {
-        app.set_timer_flashing(true);
-    } else {
-        app.set_timer_flashing(false);
-    }
-
-    if time >= 10000 {
-        let time: i32 = (time + 999) / 1000;
-        let timer_m: i32 = time / 60;
-        let time: i32 = time % 60;
-        let timer_d: i32 = time / 10;
-        let timer_s: i32 = time % 10;
-        app.set_timer_m(timer_m);
-        app.set_timer_d(timer_d);
-        app.set_timer_s(timer_s);
-    } else {
-        app.set_timer_m(time / 1000);
-        let time: i32 = time % 1000;
-        app.set_timer_d(time / 100);
-        app.set_timer_s((time % 100) / 10);
-    }
-
-    if match_info_data.modified_count == match_info_modified_count {
-        std::mem::drop(match_info_data);
-
+    let modified_count: u32 = if match_info_data.modified_count == match_info_modified_count {
         match_info_modified_count
     } else {
-        // let seconds_updated: bool;
-        // if (app.get_timer() % 10) as u32 != match_info_data.timer % 10 {
-        //     // TODO Add last ten seconds support
-        //     seconds_updated = true;
-        //     println!("Seconds updated");
-        // } else {
-        //     seconds_updated = false;
-        // }
-
         app.set_left_score(match_info_data.left_fencer.score as i32);
         app.set_right_score(match_info_data.right_fencer.score as i32);
 
@@ -150,10 +118,34 @@ fn update_data(
         } else {
             -1
         });
-        app.set_passive_indicator(match_info_data.passive_timer.get_counter() as i32);
 
         app.set_is_online(match_info_data.cyrano_online);
 
         match_info_data.modified_count
+    };
+    std::mem::drop(match_info_data);
+
+    if time % 1000 > 500 {
+        app.set_timer_flashing(true);
+    } else {
+        app.set_timer_flashing(false);
     }
+
+    if time >= 10000 {
+        let time: i32 = (time + 999) / 1000;
+        let timer_m: i32 = time / 60;
+        let time: i32 = time % 60;
+        let timer_d: i32 = time / 10;
+        let timer_s: i32 = time % 10;
+        app.set_timer_m(timer_m);
+        app.set_timer_d(timer_d);
+        app.set_timer_s(timer_s);
+    } else {
+        app.set_timer_m(time / 1000);
+        let time: i32 = time % 1000;
+        app.set_timer_d(time / 100);
+        app.set_timer_s((time % 100) / 10);
+    }
+    app.set_passive_indicator(passive_indicator);
+    modified_count
 }

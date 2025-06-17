@@ -43,8 +43,11 @@ fn main() {
     let mut console_backend = console_backend::ConsoleBackend::new(Arc::clone(&match_info));
 
     #[cfg(feature = "legacy_backend")]
-    let mut legacy_backend =
-        legacy_backend::LegacyBackend::new(Arc::clone(&match_info), Arc::clone(&config));
+    let mut legacy_backend = legacy_backend::LegacyBackend::new(
+        Arc::clone(&match_info),
+        Arc::clone(&config),
+        virtuoso_logger.get_logger("Legacy backend".to_string()),
+    );
 
     #[cfg(feature = "slint_frontend")]
     let mut slint_frontend = slint_frontend::SlintFrontend::new(Arc::clone(&match_info));

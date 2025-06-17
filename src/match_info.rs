@@ -174,6 +174,7 @@ impl std::fmt::Display for FencerStatus {
 pub struct PassiveTimer {
     enabled: bool,
     passive_counter: u32,
+    last_updated: Instant,
 }
 
 impl PassiveTimer {
@@ -181,32 +182,50 @@ impl PassiveTimer {
         Self {
             enabled: false,
             passive_counter: 60,
+            last_updated: Instant::now(),
         }
     }
 
     pub fn tick(&mut self) {
         if self.enabled && self.passive_counter != 0 {
             self.passive_counter -= 1;
-
-            println!("{}", self.passive_counter);
+            self.last_updated = Instant::now();
         }
     }
 
     pub fn reset(&mut self) {
         self.enabled = false;
         self.passive_counter = 60;
+        self.last_updated = Instant::now();
     }
 
     pub fn enable(&mut self) {
         self.enabled = true;
+        self.last_updated = Instant::now();
     }
 
     pub fn disable(&mut self) {
         self.enabled = false;
+        self.last_updated = Instant::now();
     }
 
     pub fn get_counter(&self) -> u32 {
         self.passive_counter
+    }
+
+    pub fn get_indicator(&self) -> u32 {
+        if self.enabled {
+            let res: u32 = ((60 - self.passive_counter) * 1000 + self.last_updated.elapsed().as_millis() as u32) / 50;
+            if res > 1000 {
+                1000
+            }
+            else {
+                res
+            }
+        }
+        else {
+            (60 - self.passive_counter) * 1000 / 50 
+        }
     }
 }
 
@@ -284,7 +303,17 @@ impl TimerController {
     pub fn get_millis(&self) -> u32 {
         if self.timer_running {
             if self.time > self.last_updated.elapsed().as_millis() as u32 {
-                self.time - self.last_updated.elapsed().as_millis() as u32
+                let time: u32 = self.time - self.last_updated.elapsed().as_millis() as u32;
+
+                
+
+                if (time / 1000 + 1) % 10 != self.prev_second_value {
+                    time - time % 1000 
+                }
+                else {
+                    time
+                }
+                // time
             } else {
                 0
             }
