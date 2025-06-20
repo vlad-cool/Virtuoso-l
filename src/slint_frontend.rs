@@ -18,13 +18,13 @@ impl SlintFrontend {
 
 impl modules::VirtuosoModule for SlintFrontend {
     fn run(&mut self) {
-        let app = Virtuoso::new().unwrap();
+        let app: Virtuoso = Virtuoso::new().unwrap();
 
         app.set_layout(LAYOUT_1920X480);
 
         let weak_app_1: slint::Weak<Virtuoso> = app.as_weak();
 
-        let match_info_clone = self.match_info.clone();
+        let match_info_clone: Arc<Mutex<match_info::MatchInfo>> = self.match_info.clone();
         let mut match_info_modified_count = 0u32;
 
         let timer = Timer::default();

@@ -17,6 +17,7 @@ console_backend = []
 cyrano_server = []
 slint_frontend = ["slint"]
 video_recorder = []
+gpio_frontend = ["gpio-cdev"]
 
 [[bin]]
 name = "Virtuoso"

@@ -26,6 +26,9 @@ mod layouts;
 #[cfg(feature = "slint_frontend")]
 mod slint_frontend;
 
+#[cfg(feature = "gpio_frontend")]
+mod gpio_frontend;
+
 fn main() {
     #[cfg(feature = "video_recorder")]
     compile_error!("Video recorder feature is not implemented yet");
@@ -47,6 +50,12 @@ fn main() {
         Arc::clone(&match_info),
         Arc::clone(&config),
         virtuoso_logger.get_logger("Legacy backend".to_string()),
+    );
+
+    #[cfg(feature = "gpio_frontend")]
+    let mut gpio_frontend = gpio_frontend::GpioFrontend::new(
+        Arc::clone(&match_info),
+        virtuoso_logger.get_logger("Gpio frontend".to_string()),
     );
 
     #[cfg(feature = "slint_frontend")]
@@ -77,6 +86,13 @@ fn main() {
     #[cfg(feature = "legacy_backend")]
     logger.info("Legacy backend started".to_string());
 
+    #[cfg(feature = "gpio_frontend")]
+    let gpio_frontend_thread = thread::spawn(move || {
+        gpio_frontend.run();
+    });
+    #[cfg(feature = "gpio_frontend")]
+    logger.info("Gpio frontend started".to_string());
+
     #[cfg(feature = "cyrano_server")]
     let cyrano_server_thread = thread::spawn(move || {
         cyrano_server.run();
@@ -105,6 +121,15 @@ fn main() {
 
     #[cfg(feature = "legacy_backend")]
     if let Err(e) = legacy_backend_thread.join() {
+        logger.error(format!(
+            "Failed to join legacy backend thread, error: {e:?}"
+        ));
+    } else {
+        logger.info("Legacy backend stopped".to_string());
+    }
+
+    #[cfg(feature = "gpio_frontend")]
+    if let Err(e) = gpio_frontend_thread.join() {
         logger.error(format!(
             "Failed to join legacy backend thread, error: {e:?}"
         ));

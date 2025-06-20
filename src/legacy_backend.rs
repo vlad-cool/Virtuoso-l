@@ -159,6 +159,11 @@ impl LegacyBackend {
         match_info_data.right_fencer.yellow_card = (msg.yellow_card_right || msg.red_card_right) as u32;
         match_info_data.right_fencer.red_card = msg.red_card_right as u32;
 
+        match_info_data.left_fencer.color_light = msg.red;
+        match_info_data.left_fencer.white_light = msg.white_red;
+        match_info_data.right_fencer.color_light = msg.green;
+        match_info_data.right_fencer.white_light = msg.white_green;
+        
         match_info_data.modified_count += 1;
     }
 
@@ -577,7 +582,7 @@ fn rc5_reciever(tx: mpsc::Sender<InputData>) {
         .events(
             gpio_cdev::LineRequestFlags::INPUT,
             gpio_cdev::EventRequestFlags::BOTH_EDGES,
-            "gpioevents",
+            "read ir remote",
         )
         .unwrap()
     {
@@ -671,27 +676,27 @@ fn pins_handler(tx: mpsc::Sender<InputData>) {
         }
     }
 
-    let gpio_pin_wireless: crate::gpio::PinLocation = crate::gpio::get_pin_by_phys_number(7).unwrap();
-    let gpio_line_wireless: gpio_cdev::Line = chips[gpio_pin_wireless.chip as usize]
-        .get_line(gpio_pin_wireless.line)
-        .unwrap();
-    let gpio_handle_wireless: gpio_cdev::LineHandle = gpio_line_wireless
-        .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read-input")
-        .unwrap();
+    // let gpio_pin_wireless: crate::gpio::PinLocation = crate::gpio::get_pin_by_phys_number(7).unwrap();
+    // let gpio_line_wireless: gpio_cdev::Line = chips[gpio_pin_wireless.chip as usize]
+    //     .get_line(gpio_pin_wireless.line)
+    //     .unwrap();
+    // let gpio_handle_wireless: gpio_cdev::LineHandle = gpio_line_wireless
+    //     .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read-input")
+    //     .unwrap();
 
     let gpio_pin_weapon_0: crate::gpio::PinLocation = crate::gpio::get_pin_by_phys_number(32).unwrap();
     let gpio_line_weapon_0: gpio_cdev::Line = chips[gpio_pin_weapon_0.chip as usize]
         .get_line(gpio_pin_weapon_0.line)
         .unwrap();
     let gpio_handle_weapon_0: gpio_cdev::LineHandle = gpio_line_weapon_0
-        .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read-input")
+        .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read weapon 1")
         .unwrap();
     let gpio_pin_weapon_1: crate::gpio::PinLocation = crate::gpio::get_pin_by_phys_number(36).unwrap();
     let gpio_line_weapon_1: gpio_cdev::Line = chips[gpio_pin_weapon_1.chip as usize]
         .get_line(gpio_pin_weapon_1.line)
         .unwrap();
     let gpio_handle_weapon_1: gpio_cdev::LineHandle = gpio_line_weapon_1
-        .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read-input")
+        .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read weapon 2")
         .unwrap();
 
     let gpio_pin_weapon_btn: crate::gpio::PinLocation = crate::gpio::get_pin_by_phys_number(37).unwrap();
@@ -699,7 +704,7 @@ fn pins_handler(tx: mpsc::Sender<InputData>) {
         .get_line(gpio_pin_weapon_btn.line)
         .unwrap();
     let gpio_handle_weapon_btn: gpio_cdev::LineHandle = gpio_line_weapon_btn
-        .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read-input")
+        .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read weapon button")
         .unwrap();
 
     let mut old_pins_data: Option<PinsData> = Option::None;
