@@ -10,6 +10,12 @@ slint = { version = "1.11.0", default-features = false, features = ["backend-win
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.7"
 
+[build-dependencies]
+zip = "4.1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.140"
+glob = "0.3.2"
+
 [features]
 default = ["console_backend", "slint_frontend", "cyrano_server"]
 legacy_backend = ["serial", "gpio-cdev"]
