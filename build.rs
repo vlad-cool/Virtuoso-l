@@ -1,7 +1,7 @@
 use glob::glob;
 use serde::{Deserialize, Serialize};
-use std::fs::{self, File};
-use std::io::BufReader;
+use std::fs::{self, File, OpenOptions};
+use std::io::{BufReader, BufWriter, Write};
 use std::path::Path;
 use std::vec::Vec;
 
@@ -39,6 +39,7 @@ struct PenpotNode {
     height: f64,
     #[serde(default)]
     rx: f64,
+    #[serde(default)]
     shapes: Vec<String>,
 }
 
@@ -48,7 +49,7 @@ struct Color {
     name: String,
 }
 
-fn parse_layout(main_id: &String, path: String) {
+fn parse_layout(main_id: &String, path: String, writer: &mut BufWriter<File>) {
     let file: File =
         File::open(format!("mockup/extracted/files/{main_id}/pages/{path}.json").as_str())
             .expect("cargo::error=Failed to open page file");
@@ -57,7 +58,6 @@ fn parse_layout(main_id: &String, path: String) {
         serde_json::from_reader(reader).expect("cargo::error=Failed to parse page file");
 
     let name: String = page.name;
-    // println!("cargo::warning=OPENING mockup/extracted/files/{main_id}/pages/{path}/00000000-0000-0000-0000-000000000000.json");
 
     let file: File = File::open(format!("mockup/extracted/files/{main_id}/pages/{path}/00000000-0000-0000-0000-000000000000.json").as_str())
         .expect("cargo::error=Failed to open root node file");
@@ -65,7 +65,78 @@ fn parse_layout(main_id: &String, path: String) {
     let root_node: PenpotNode =
         serde_json::from_reader(reader).expect("cargo::error=Failed to parse root node file");
 
-    // println!("cargo::warning={:?}", root_node.shapes);
+    writer
+        .write(
+            format!(
+                "pub const {}: Layout = Layout {{\n\n",
+                name.to_ascii_uppercase()
+            )
+            .as_bytes(),
+        )
+        .expect("Failed to write to file");
+
+    for node_id in root_node.shapes {
+        let file: File = File::open(format!("mockup/extracted/files/{main_id}/pages/{path}/{node_id}.json").as_str())
+        .expect("cargo::error=Failed to open child node file");
+        let reader: BufReader<File> = BufReader::new(file);
+        let node: PenpotNode =
+            serde_json::from_reader(reader).expect("cargo::error=Failed to parse child node file");
+
+        let node_type: &str = node.node_type.as_str();
+
+        match node_type {
+            "text" => {
+                writer
+                    .write(
+                        format!(
+                            "   {}: TextProperties {{
+        x: {},
+        u: {},
+        width: {},
+        height: {},
+        font_size: {},
+    }},
+",
+                            node.name.to_ascii_uppercase(),
+                            node.x,
+                            node.y,
+                            node.width,
+                            node.height,
+                            0,
+                        )
+                        .as_bytes(),
+                    )
+                    .expect("Failed to write to file");
+            }
+            "rect" => {
+                writer
+                    .write(
+                        format!(
+                            "   {}: TextProperties {{
+        x: {},
+        u: {},
+        width: {},
+        height: {},
+        radius: {},
+    }},
+",
+                            name.to_ascii_uppercase(),
+                            node.x,
+                            node.y,
+                            node.width,
+                            node.height,
+                            node.rx,
+                        )
+                        .as_bytes(),
+                    )
+                    .expect("Failed to write to file");
+            }
+
+            t => {
+                println!("cargo::warning=Unknown node type: {t}")
+            }
+        }
+    }
 }
 
 fn main() {
@@ -104,6 +175,18 @@ fn main() {
         panic!()
     };
 
+    let file: File = File::create("src/__layouts.rs").expect("Failed to open file for writing");
+
+    let mut writer: BufWriter<File> = BufWriter::new(file);
+
+    let header: &'static str = r###"// Generated file
+slint::slint!(export { Virtuoso } from "src/slint/main.slint";);
+"###;
+
+    writer
+        .write(header.as_bytes())
+        .expect("Failed to write to file");
+
     for entry in glob(format!("mockup/extracted/files/{virtuoso_file_id}/pages/*.json").as_str())
         .expect("Failed to read glob pattern")
     {
@@ -112,7 +195,7 @@ fn main() {
                 let name: std::borrow::Cow<'_, str> = path.file_name().unwrap().to_string_lossy();
                 let name: String = name.split(".").next().unwrap().to_string();
 
-                parse_layout(&virtuoso_file_id, name);
+                parse_layout(&virtuoso_file_id, name, &mut writer);
             }
             Err(e) => {
                 println!("cargo::error=Error processing json file: {:?}", e);
