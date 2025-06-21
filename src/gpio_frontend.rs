@@ -7,7 +7,7 @@ use crate::match_info;
 use crate::modules;
 use crate::virtuoso_logger::Logger;
 
-const PRIORITY_LED_DELAY: Duration = Duration::from_millis(2000);
+// const PRIORITY_LED_DELAY: Duration = Duration::from_millis(2000);
 
 const LEFT_COLOR_LED: u8 = 29;
 const LEFT_WHITE_LED: u8 = 31;

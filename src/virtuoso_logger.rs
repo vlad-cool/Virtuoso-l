@@ -64,8 +64,8 @@ impl Logger {
             message,
         };
         self.tx
-            .send(LogCommand::LogMessage(msg.clone()))
-            .expect(format!("logger failed to send following message: {msg}").as_str());
+            .send(LogCommand::LogMessage(msg))
+            .expect("logger failed to send message");
     }
 
     #[allow(dead_code)]
@@ -234,13 +234,14 @@ impl VirtuosoLogger {
                         if let Some(socket) = self.socket.as_ref() {
                             if self.print_ip {
                                 if let Ok(local_addr) = socket.local_addr() {
-                                    let _ = socket.send(format!("from: {}; {}\n", local_addr, msg).as_bytes());
+                                    let _ = socket.send(
+                                        format!("from: {}; {}\n", local_addr, msg).as_bytes(),
+                                    );
+                                } else {
+                                    let _ =
+                                        socket.send(format!("from: unknown; {}\n", msg).as_bytes());
                                 }
-                                else {
-                                    let _ = socket.send(format!("from: unknown; {}\n", msg).as_bytes());
-                                }
-                            }
-                            else {
+                            } else {
                                 let _ = socket.send(format!("{}\n", msg).as_bytes());
                             }
                         }
