@@ -1,6 +1,6 @@
 use glob::glob;
 use serde::{Deserialize, Serialize};
-use std::fs::{self, File, OpenOptions};
+use std::fs::{self, File};
 use std::io::{BufReader, BufWriter, Write};
 use std::path::Path;
 use std::vec::Vec;
@@ -28,6 +28,12 @@ struct PenpotManifest {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+struct PositionData {
+    #[serde(rename = "fontSize")]
+    font_size: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 struct PenpotNode {
     id: String,
     name: String,
@@ -41,6 +47,8 @@ struct PenpotNode {
     rx: f64,
     #[serde(default)]
     shapes: Vec<String>,
+    #[serde(rename = "positionData")]
+    position_data: Option<Vec<PositionData>>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -68,15 +76,18 @@ fn parse_layout(main_id: &String, path: String, writer: &mut BufWriter<File>) {
     writer
         .write(
             format!(
-                "pub const {}: Layout = Layout {{\n\n",
+                "
+pub const {}: Layout = Layout {{\n",
                 name.to_ascii_uppercase()
             )
             .as_bytes(),
         )
-        .expect("Failed to write to file");
+        .expect("cargo::error=Failed to write to file");
 
     for node_id in root_node.shapes {
-        let file: File = File::open(format!("mockup/extracted/files/{main_id}/pages/{path}/{node_id}.json").as_str())
+        let file: File = File::open(
+            format!("mockup/extracted/files/{main_id}/pages/{path}/{node_id}.json").as_str(),
+        )
         .expect("cargo::error=Failed to open child node file");
         let reader: BufReader<File> = BufReader::new(file);
         let node: PenpotNode =
@@ -84,12 +95,21 @@ fn parse_layout(main_id: &String, path: String, writer: &mut BufWriter<File>) {
 
         let node_type: &str = node.node_type.as_str();
 
+        // let node_name = if node.name == root_node.name {
+        //     "background".to_string()
+        // }
+        // else {
+        //     node.name
+        // }
+
+        let position_data: Option<Vec<PositionData>> = node.position_data.clone();
+
         match node_type {
             "text" => {
                 writer
                     .write(
                         format!(
-                            "   {}: TextProperties {{
+                            "    {}: TextProperties {{
         x: {},
         u: {},
         width: {},
@@ -97,22 +117,29 @@ fn parse_layout(main_id: &String, path: String, writer: &mut BufWriter<File>) {
         font_size: {},
     }},
 ",
-                            node.name.to_ascii_uppercase(),
-                            node.x,
-                            node.y,
-                            node.width,
-                            node.height,
-                            0,
+                            node.name,
+                            node.x as u32,
+                            node.y as u32,
+                            node.width as u32,
+                            node.height as u32,
+                            position_data
+                                .clone()
+                                .expect("cargo::error=No position data in text node")
+                                .first()
+                                .cloned()
+                                .expect("cargo::error=Position data is empty in text node")
+                                .font_size
+                                .expect("cargo::error=No font size in position data").replace("px", ""),
                         )
                         .as_bytes(),
                     )
-                    .expect("Failed to write to file");
+                    .expect("cargo::error=Failed to write to file");
             }
             "rect" => {
                 writer
                     .write(
                         format!(
-                            "   {}: TextProperties {{
+                            "    {}: RectangleProperties {{
         x: {},
         u: {},
         width: {},
@@ -120,23 +147,28 @@ fn parse_layout(main_id: &String, path: String, writer: &mut BufWriter<File>) {
         radius: {},
     }},
 ",
-                            name.to_ascii_uppercase(),
-                            node.x,
-                            node.y,
-                            node.width,
-                            node.height,
+                            node.name,
+                            node.x as u32,
+                            node.y as u32,
+                            node.width as u32,
+                            node.height as u32,
                             node.rx,
                         )
                         .as_bytes(),
                     )
-                    .expect("Failed to write to file");
+                    .expect("cargo::error=Failed to write to file");
             }
+            "frame" => {}
 
             t => {
                 println!("cargo::warning=Unknown node type: {t}")
             }
         }
     }
+
+    writer
+        .write("};\n".as_bytes())
+        .expect("cargo::error=Failed to write to file");
 }
 
 fn main() {
@@ -159,8 +191,6 @@ fn main() {
     let manifest: PenpotManifest =
         serde_json::from_reader(reader).expect("cargo::error=Failed to parse manifest file");
 
-    println!("cargo::warning={manifest:?}");
-
     let mut virtuoso_file_id: Option<String> = None;
     for file in manifest.files {
         if file.name == "Virtuoso" {
@@ -179,22 +209,26 @@ fn main() {
 
     let mut writer: BufWriter<File> = BufWriter::new(file);
 
-    let header: &'static str = r###"// Generated file
-slint::slint!(export { Virtuoso } from "src/slint/main.slint";);
-"###;
+    let header: String = format!(
+        "// Generated file
+slint::slint!{}export {} Virtuoso {} from {}src/slint/main.slint{};);
+",
+        '(', '{', '}', '"', '"'
+    );
 
     writer
         .write(header.as_bytes())
-        .expect("Failed to write to file");
+        .expect("cargo::error=Failed to write to file");
 
     for entry in glob(format!("mockup/extracted/files/{virtuoso_file_id}/pages/*.json").as_str())
-        .expect("Failed to read glob pattern")
+        .expect("cargo::error=Failed to read glob pattern")
     {
         match entry {
             Ok(path) => {
                 let name: std::borrow::Cow<'_, str> = path.file_name().unwrap().to_string_lossy();
                 let name: String = name.split(".").next().unwrap().to_string();
 
+                // writer.write(buf);
                 parse_layout(&virtuoso_file_id, name, &mut writer);
             }
             Err(e) => {
