@@ -67,6 +67,10 @@ fn parse_layout(main_id: &String, path: String, writer: &mut BufWriter<File>) {
 
     let name: String = page.name;
 
+    if name == "layout_480x320" {
+        return;
+    }
+
     let file: File = File::open(format!("mockup/extracted/files/{main_id}/pages/{path}/00000000-0000-0000-0000-000000000000.json").as_str())
         .expect("cargo::error=Failed to open root node file");
     let reader: BufReader<File> = BufReader::new(file);
@@ -95,12 +99,9 @@ pub const {}: Layout = Layout {{\n",
 
         let node_type: &str = node.node_type.as_str();
 
-        // let node_name = if node.name == root_node.name {
-        //     "background".to_string()
-        // }
-        // else {
-        //     node.name
-        // }
+        if node.name == "Rectangle" {
+            continue;
+        }
 
         let position_data: Option<Vec<PositionData>> = node.position_data.clone();
 
@@ -111,17 +112,17 @@ pub const {}: Layout = Layout {{\n",
                         format!(
                             "    {}: TextProperties {{
         x: {},
-        u: {},
+        y: {},
         width: {},
         height: {},
         font_size: {},
     }},
 ",
                             node.name,
-                            node.x as u32,
-                            node.y as u32,
-                            node.width as u32,
-                            node.height as u32,
+                            node.x as i32 - 100,
+                            node.y as i32 - 100,
+                            node.width as i32 + 200,
+                            node.height as i32 + 200,
                             position_data
                                 .clone()
                                 .expect("cargo::error=No position data in text node")
@@ -129,7 +130,8 @@ pub const {}: Layout = Layout {{\n",
                                 .cloned()
                                 .expect("cargo::error=Position data is empty in text node")
                                 .font_size
-                                .expect("cargo::error=No font size in position data").replace("px", ""),
+                                .expect("cargo::error=No font size in position data")
+                                .replace("px", ""),
                         )
                         .as_bytes(),
                     )
@@ -141,7 +143,7 @@ pub const {}: Layout = Layout {{\n",
                         format!(
                             "    {}: RectangleProperties {{
         x: {},
-        u: {},
+        y: {},
         width: {},
         height: {},
         radius: {},
@@ -205,7 +207,7 @@ fn main() {
         panic!()
     };
 
-    let file: File = File::create("src/__layouts.rs").expect("Failed to open file for writing");
+    let file: File = File::create("src/layouts.rs").expect("Failed to open file for writing");
 
     let mut writer: BufWriter<File> = BufWriter::new(file);
 

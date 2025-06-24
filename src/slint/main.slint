@@ -29,7 +29,7 @@ export struct Layout  {
     fleuret: TextProperties,
     auto_score_status: TextProperties,
     auto_timer_status: TextProperties,
-    prioriry_l_cap: TextProperties,
+    priority_l_cap: TextProperties,
     priority_l_text: TextProperties,
     priority_r_cap: TextProperties,
     priority_r_text: TextProperties,
@@ -167,7 +167,7 @@ export component Virtuoso inherits Window {
     property <[{text: string, layout: TextProperties, index: int, color_disabled: brush, color_enabled: brush}]> priority_elements: [
         {
             text: "P",
-            layout: layout.prioriry-l-cap,
+            layout: layout.priority-l-cap,
             index: -1,
             color_disabled: Palette.priority_dark_red,
             color_enabled: Palette.priority_red
