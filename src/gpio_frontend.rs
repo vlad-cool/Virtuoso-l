@@ -156,13 +156,13 @@ impl modules::VirtuosoModule for GpioFrontend {
 
             std::mem::drop(match_info_data);
 
-            self.logger.debug(format!(
-                "{}, {}, {}, {}",
-                left_color_led_state,
-                left_white_led_state,
-                right_color_led_state,
-                right_white_led_state
-            ));
+            // self.logger.debug(format!(
+            //     "{}, {}, {}, {}",
+            //     left_color_led_state,
+            //     left_white_led_state,
+            //     right_color_led_state,
+            //     right_white_led_state
+            // ));
 
             gpio_left_color_led
                 .set_value(left_color_led_state as u8)
@@ -200,9 +200,6 @@ impl modules::VirtuosoModule for GpioFrontend {
 
 impl GpioFrontend {
     pub fn new(match_info: Arc<Mutex<match_info::MatchInfo>>, logger: Logger) -> Self {
-        logger.debug("Creating gpio frontend".to_string());
-        logger.error("Creating gpio frontend".to_string());
-
         Self {
             match_info: Arc::clone(&match_info),
             logger,

@@ -53,23 +53,26 @@ impl modules::VirtuosoModule for LegacyBackend {
         loop {
             match rx.recv() {
                 Err(RecvError) => {}
-                Ok(msg) => match msg {
-                    InputData::UartData(msg) => {
-                        self.logger
-                            .info(format!("Got following IR sequence: {:?}", msg));
-                        self.apply_uart_data(msg);
-                    }
-                    InputData::PinsData(msg) => {
-                        self.logger
-                            .info(format!("Got following IR sequence: {:?}", msg));
-                        self.apply_pins_data(msg);
-                    }
-                    InputData::IrCommand(msg) => {
-                        self.logger
-                            .info(format!("Got following IR sequence: {:?}", msg));
-                        self.apply_ir_data(msg);
-                    }
-                },
+                Ok(msg) => {
+                    match msg {
+                        InputData::UartData(msg) => {
+                            // self.logger
+                            //     .debug(format!("Got following IR sequence: {:?}", msg));
+                            self.apply_uart_data(msg);
+                        }
+                        InputData::PinsData(msg) => {
+                            // self.logger
+                            //     .debug(format!("Got following pins data: {:?}", msg));
+                            self.apply_pins_data(msg);
+                        }
+                        InputData::IrCommand(msg) => {
+                            // self.logger
+                            //     .debug(format!("Got following IR sequence: {:?}", msg));
+                            self.apply_ir_data(msg);
+                        }
+                    };
+                    self.set_auto_statuses();
+                }
             }
         }
     }
@@ -103,19 +106,11 @@ impl LegacyBackend {
         if msg.symbol {
             let symbol: u32 = msg.dec_seconds * 16 + msg.seconds;
 
-            let (modified_field, new_state) = self.auto_status_controller.set_state(match symbol {
+            self.auto_status_controller.set_state(match symbol {
                 AUTO_STATUS_OFF => AutoStatusStates::Off,
                 AUTO_STATUS_ON => AutoStatusStates::On,
                 _ => AutoStatusStates::Unknown,
             });
-
-            if new_state != AutoStatusStates::Unknown {
-                match modified_field {
-                    AutoStatusFields::Timer => match_info_data.auto_timer_on = new_state.to_bool(),
-                    AutoStatusFields::Score => match_info_data.auto_score_on = new_state.to_bool(),
-                    AutoStatusFields::Unknown => {}
-                }
-            }
         } else {
             let timer_m: u32 = if msg.period == 0b1100 { 4 } else { msg.minutes };
             let timer_d: u32 = msg.dec_seconds;
@@ -249,52 +244,12 @@ impl LegacyBackend {
                     }
                 }
                 IrCommands::AutoScoreOnOff => {
-                    let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-                        self.match_info.lock().unwrap();
-
-                    let (modified_field, new_state) = self
-                        .auto_status_controller
+                    self.auto_status_controller
                         .set_field(AutoStatusFields::Score);
-
-                    if modified_field != AutoStatusFields::Unknown
-                        && new_state != AutoStatusStates::Unknown
-                    {
-                        match modified_field {
-                            AutoStatusFields::Timer => {
-                                match_info_data.auto_timer_on = new_state.to_bool()
-                            }
-                            AutoStatusFields::Score => {
-                                match_info_data.auto_score_on = new_state.to_bool()
-                            }
-                            _ => {}
-                        }
-                    };
-
-                    match_info_data.modified_count += 1;
-                }
+     }
                 IrCommands::AutoTimerOnOff => {
-                    let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-                        self.match_info.lock().unwrap();
-
-                    let (modified_field, new_state) = self
-                        .auto_status_controller
+                    self.auto_status_controller
                         .set_field(AutoStatusFields::Timer);
-
-                    if modified_field != AutoStatusFields::Unknown
-                        && new_state != AutoStatusStates::Unknown
-                    {
-                        match modified_field {
-                            AutoStatusFields::Timer => {
-                                match_info_data.auto_timer_on = new_state.to_bool()
-                            }
-                            AutoStatusFields::Score => {
-                                match_info_data.auto_score_on = new_state.to_bool()
-                            }
-                            _ => {}
-                        }
-                    }
-
-                    match_info_data.modified_count += 1;
                 }
                 IrCommands::SetTime => {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
@@ -314,16 +269,55 @@ impl LegacyBackend {
             }
         }
     }
+
+    fn set_auto_statuses(&mut self) {
+        self.logger.debug(format!(
+            "Setting state of {:?} to {:?}",
+            self.auto_status_controller.modified_field, self.auto_status_controller.new_state
+        ));
+
+        let new_state = match self.auto_status_controller.new_state {
+            AutoStatusStates::Unknown => {
+                return;
+            }
+            new_state => new_state,
+        };
+
+        let modified_field = match self.auto_status_controller.modified_field {
+            AutoStatusFields::Unknown => {
+                return;
+            }
+            modified_field => modified_field,
+        };
+
+        self.auto_status_controller.reset();
+
+        self.logger.info(format!(
+            "Setting state of {:?} to {:?}",
+            modified_field, new_state
+        ));
+
+        let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
+            self.match_info.lock().unwrap();
+
+        match modified_field {
+            AutoStatusFields::Score => match_info_data.auto_score_on = new_state.to_bool(),
+            AutoStatusFields::Timer => match_info_data.auto_timer_on = new_state.to_bool(),
+            _ => {}
+        }
+
+        match_info_data.modified_count += 1;
+    }
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 enum AutoStatusFields {
     Timer,
     Score,
     Unknown,
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 enum AutoStatusStates {
     On,
     Off,
@@ -359,47 +353,19 @@ impl AutoStatusController {
         }
     }
 
-    fn return_new_status(&mut self) -> (AutoStatusFields, AutoStatusStates) {
-        let ret_val = (self.modified_field.clone(), self.new_state.clone());
-
-        println!("{:?} - {:?}", self.modified_field, self.new_state);
-
+    pub fn reset(&mut self) {
         self.new_state = AutoStatusStates::Unknown;
         self.modified_field = AutoStatusFields::Unknown;
-
-        ret_val
     }
 
-    pub fn set_state(
-        &mut self,
-        new_state: AutoStatusStates,
-    ) -> (AutoStatusFields, AutoStatusStates) {
+    pub fn set_state(&mut self, new_state: AutoStatusStates) {
         self.new_state = new_state;
         self.previous_setting_state = std::time::Instant::now();
-        if self.new_state != AutoStatusStates::Unknown
-            && self.modified_field != AutoStatusFields::Unknown
-            && self.previous_setting_field.elapsed() < AUTO_STATUS_WAIT_THRESHOLD
-        {
-            return self.return_new_status();
-        } else {
-            return (AutoStatusFields::Unknown, AutoStatusStates::Unknown);
-        }
     }
 
-    pub fn set_field(
-        &mut self,
-        modified_field: AutoStatusFields,
-    ) -> (AutoStatusFields, AutoStatusStates) {
+    pub fn set_field(&mut self, modified_field: AutoStatusFields) {
         self.modified_field = modified_field;
         self.previous_setting_field = std::time::Instant::now();
-        if self.new_state != AutoStatusStates::Unknown
-            && self.modified_field != AutoStatusFields::Unknown
-            && self.previous_setting_state.elapsed() < AUTO_STATUS_WAIT_THRESHOLD
-        {
-            return self.return_new_status();
-        } else {
-            return (AutoStatusFields::Unknown, AutoStatusStates::Unknown);
-        }
     }
 }
 

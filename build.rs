@@ -115,7 +115,7 @@ pub const {}: Layout = Layout {{\n",
         y: {},
         width: {},
         height: {},
-        font_size: {},
+        font_size: {} + 1,
     }},
 ",
                             node.name,
@@ -131,7 +131,7 @@ pub const {}: Layout = Layout {{\n",
                                 .expect("cargo::error=Position data is empty in text node")
                                 .font_size
                                 .expect("cargo::error=No font size in position data")
-                                .replace("px", ""),
+                                .replace("px", "")
                         )
                         .as_bytes(),
                     )
