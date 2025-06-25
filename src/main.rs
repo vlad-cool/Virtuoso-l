@@ -5,6 +5,7 @@ mod match_info;
 mod modules;
 mod virtuoso_config;
 mod virtuoso_logger;
+// mod hw_config;
 
 use crate::modules::VirtuosoModule;
 use crate::virtuoso_config::VirtuosoConfig;

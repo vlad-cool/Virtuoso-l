@@ -56,12 +56,19 @@ export struct Layout  {
     timer_colon: TextProperties,
     timer_d: TextProperties,
     timer_s: TextProperties,
+    timer_text: TextProperties,
     passive_indicator: RectangleProperties,
     left_color_indicator: RectangleProperties,
     right_color_indicator: RectangleProperties,
     left_white_indicator: RectangleProperties,
     right_white_indicator: RectangleProperties,
     recording_indicator: RectangleProperties,
+    right_nation: TextProperties,
+    right_flag: RectangleProperties,
+    right_name: TextProperties,
+    left_nation: TextProperties,
+    left_flag: RectangleProperties,
+    left_name: TextProperties,
 }
 
 export global Palette {
@@ -112,6 +119,7 @@ export component Virtuoso inherits Window {
     in property <int> timer_m;
     in property <int> timer_d;
     in property <int> timer_s;
+    in property <string> timer_text;
     in property <bool> last_ten_seconds;
     in property <bool> timer_running;
     in property <int> period;
@@ -274,7 +282,7 @@ export component Virtuoso inherits Window {
         width: 1px * layout.timer-m.width;
         height: 1px * layout.timer-m.height;
         font-size: 1px * layout.timer-m.font_size;
-        text: timer_m;
+        text: timer_text == "" ? timer_m : "";
         horizontal-alignment: center;
         vertical-alignment: center;
         color: timer_running ? (last_ten_seconds ? Palette.timer_blue : Palette.timer_white) : Palette.timer_orange;
@@ -286,7 +294,7 @@ export component Virtuoso inherits Window {
         width: 1px * layout.timer-colon.width;
         height: 1px * layout.timer-colon.height;
         font-size: 1px * layout.timer-colon.font_size;
-        text: timer_running ? (timer_flashing ? ":" : "") : ":";
+        text: timer_text == "" ? (timer_running ? (timer_flashing ? ":" : "") : ":") : "";
         horizontal-alignment: center;
         vertical-alignment: center;
         color: timer_running ? (last_ten_seconds ? Palette.timer_blue : Palette.timer_white) : Palette.timer_orange;
@@ -298,7 +306,7 @@ export component Virtuoso inherits Window {
         width: 1px * layout.timer-d.width;
         height: 1px * layout.timer-d.height;
         font-size: 1px * layout.timer-d.font_size;
-        text: timer_d;
+        text: timer_text == "" ? timer_d : "";
         horizontal-alignment: center;
         vertical-alignment: center;
         color: timer_running ? (last_ten_seconds ? Palette.timer_blue : Palette.timer_white) : Palette.timer_orange;
@@ -310,7 +318,19 @@ export component Virtuoso inherits Window {
         width: 1px * layout.timer-s.width;
         height: 1px * layout.timer-s.height;
         font-size: 1px * layout.timer-s.font_size;
-        text: timer_s;
+        text: timer_text == "" ? timer_s : "";
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: timer_running ? (last_ten_seconds ? Palette.timer_blue : Palette.timer_white) : Palette.timer_orange;
+    }
+    
+    Text {
+        x: 1px * layout.timer-text.x;
+        y: 1px * layout.timer-text.y;
+        height: 1px * layout.timer-text.height;
+        width: 1px * layout.timer-text.width;
+        font-size: 1px * layout.timer-text.font-size;
+        text: timer_text;
         horizontal-alignment: center;
         vertical-alignment: center;
         color: timer_running ? (last_ten_seconds ? Palette.timer_blue : Palette.timer_white) : Palette.timer_orange;

@@ -6,7 +6,7 @@ use std::io::Read;
 use std::sync::mpsc::RecvError;
 use std::sync::{mpsc, Arc, Mutex, MutexGuard};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 /*
 TODO Properly swap sides
@@ -246,7 +246,7 @@ impl LegacyBackend {
                 IrCommands::AutoScoreOnOff => {
                     self.auto_status_controller
                         .set_field(AutoStatusFields::Score);
-     }
+                }
                 IrCommands::AutoTimerOnOff => {
                     self.auto_status_controller
                         .set_field(AutoStatusFields::Timer);
@@ -276,14 +276,16 @@ impl LegacyBackend {
             self.auto_status_controller.modified_field, self.auto_status_controller.new_state
         ));
 
-        let new_state = match self.auto_status_controller.new_state {
+        let (modified_field, new_state) = self.auto_status_controller.get_data();
+
+        let new_state = match new_state {
             AutoStatusStates::Unknown => {
                 return;
             }
             new_state => new_state,
         };
 
-        let modified_field = match self.auto_status_controller.modified_field {
+        let modified_field = match modified_field {
             AutoStatusFields::Unknown => {
                 return;
             }
@@ -306,6 +308,9 @@ impl LegacyBackend {
             _ => {}
         }
 
+        match_info_data.display_message = format!("{} {}", modified_field, new_state);
+        match_info_data.display_message_updated = Instant::now();
+
         match_info_data.modified_count += 1;
     }
 }
@@ -317,11 +322,31 @@ enum AutoStatusFields {
     Unknown,
 }
 
+impl std::fmt::Display for AutoStatusFields {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AutoStatusFields::Timer => write!(f, "Auto timer"),
+            AutoStatusFields::Score => write!(f, "Auto score"),
+            AutoStatusFields::Unknown => write!(f, ""),
+        }
+    }
+}
+
 #[derive(PartialEq, Debug, Copy, Clone)]
 enum AutoStatusStates {
     On,
     Off,
     Unknown,
+}
+
+impl std::fmt::Display for AutoStatusStates {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AutoStatusStates::On => write!(f, "on"),
+            AutoStatusStates::Off => write!(f, "off"),
+            AutoStatusStates::Unknown => write!(f, ""),
+        }
+    }
 }
 
 impl AutoStatusStates {
@@ -350,6 +375,16 @@ impl AutoStatusController {
 
             previous_setting_state: std::time::Instant::now(),
             previous_setting_field: std::time::Instant::now(),
+        }
+    }
+
+    pub fn get_data(&self) -> (AutoStatusFields, AutoStatusStates) {
+        if self.previous_setting_field.elapsed() > AUTO_STATUS_WAIT_THRESHOLD
+            || self.previous_setting_state.elapsed() > AUTO_STATUS_WAIT_THRESHOLD
+        {
+            (AutoStatusFields::Unknown, AutoStatusStates::Unknown)
+        } else {
+            (self.modified_field, self.new_state)
         }
     }
 

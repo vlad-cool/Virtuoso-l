@@ -417,6 +417,8 @@ pub struct MatchInfo {
     pub match_number: u32,
     pub round_number: u32,
     pub time: String,
+    pub display_message: String,
+    pub display_message_updated: Instant,
     // pub stopwatch: String,
     pub competition_type: Option<CompetitionType>,
 
@@ -458,6 +460,8 @@ impl MatchInfo {
             round_number: 0,
 
             time: "".to_string(),
+            display_message: "".to_string(),
+            display_message_updated: Instant::now(),
             // stopwatch: "".to_string(),
             competition_type: None,
 

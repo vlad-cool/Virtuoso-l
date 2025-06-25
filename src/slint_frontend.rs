@@ -1,10 +1,13 @@
-use slint::{Timer, TimerMode};
+use slint::{Timer, TimerMode, ToSharedString};
 use std::sync::{Arc, Mutex, MutexGuard};
+use std::time::Duration;
 
 use crate::match_info;
 use crate::modules;
 
 use crate::layouts::*;
+
+const MESSAGE_DISPLAY_TIME: Duration = Duration::from_secs(2);
 
 pub struct SlintFrontend {
     match_info: Arc<Mutex<match_info::MatchInfo>>,
@@ -71,6 +74,10 @@ fn update_data(
     let time: i32 = match_info_data.timer_controller.get_millis() as i32;
     let passive_indicator: i32 = match_info_data.passive_timer.get_indicator() as i32;
 
+    if match_info_data.display_message_updated.elapsed() > MESSAGE_DISPLAY_TIME {
+        app.set_timer_text("".to_shared_string())
+    }
+
     let modified_count: u32 = if match_info_data.modified_count == match_info_modified_count {
         match_info_modified_count
     } else {
@@ -120,6 +127,10 @@ fn update_data(
         });
 
         app.set_is_online(match_info_data.cyrano_online);
+
+        if match_info_data.display_message_updated.elapsed() < MESSAGE_DISPLAY_TIME {
+            app.set_timer_text(match_info_data.display_message.to_shared_string())
+        }
 
         match_info_data.modified_count
     };
