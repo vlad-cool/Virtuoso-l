@@ -143,6 +143,7 @@ impl std::str::FromStr for FencerStatus {
             "abandonment" => Ok(Self::Abandonment),
             "e" => Ok(Self::Exclusion),
             "exclusion" => Ok(Self::Exclusion),
+            "n" => Ok(Self::Undefined),
             _ => Err(format!("Unknown fencer status: {}", s)),
         }
     }

@@ -149,6 +149,11 @@ export component Virtuoso inherits Window {
 
     in property <bool> timer_flashing;
 
+    in property <string> left_fencer_name;
+    in property <string> left_fencer_nation;
+    in property <string> right_fencer_name;
+    in property <string> right_fencer_nation;
+
     default-font-family: "Agency FB";
     width: 1px * layout.background.width;
     height: 1px * layout.background.height;
@@ -618,5 +623,65 @@ export component Virtuoso inherits Window {
         border-radius: 1px * layout.recording-indicator.radius;
 
         background: is_online ? Palette.color_labels_green : Palette.weapon_text_dark;
+    }
+
+    Text {
+        x: 1px * layout.left-name.x;
+        y: 1px * layout.left-name.y;
+        width: 1px * layout.left-name.width;
+        height: 1px * layout.left-name.height;
+        font-size: 1px * layout.left-name.font_size;
+        text: left_fencer_name;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    Text {
+        x: 1px * layout.left-nation.x;
+        y: 1px * layout.left-nation.y;
+        width: 1px * layout.left-nation.width;
+        height: 1px * layout.left-nation.height;
+        font-size: 1px * layout.left-nation.font_size;
+        text: left_fencer_nation;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    Rectangle {
+        x: 1px * layout.left-flag.x;
+        y: 1px * layout.left-flag.y;
+        width: 1px * layout.left-flag.width;
+        height: 1px * layout.left-flag.height;
+        background: Palette.score_left;
+    }
+
+    Text {
+        x: 1px * layout.right-name.x;
+        y: 1px * layout.right-name.y;
+        width: 1px * layout.right-name.width;
+        height: 1px * layout.right-name.height;
+        font-size: 1px * layout.right-name.font_size;
+        text: right_fencer_name;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    Text {
+        x: 1px * layout.right-nation.x;
+        y: 1px * layout.right-nation.y;
+        width: 1px * layout.right-nation.width;
+        height: 1px * layout.right-nation.height;
+        font-size: 1px * layout.right-nation.font_size;
+        text: right_fencer_nation;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    Rectangle {
+        x: 1px * layout.right-flag.x;
+        y: 1px * layout.right-flag.y;
+        width: 1px * layout.right-flag.width;
+        height: 1px * layout.right-flag.height;
+        background: Palette.score_left;
     }
 }

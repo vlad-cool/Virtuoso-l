@@ -23,7 +23,8 @@ impl modules::VirtuosoModule for SlintFrontend {
     fn run(&mut self) {
         let app: Virtuoso = Virtuoso::new().unwrap();
 
-        app.set_layout(LAYOUT_1920X480);
+        // app.set_layout(LAYOUT_1920X480);
+        app.set_layout(LAYOUT_1920X1080);
 
         let weak_app_1: slint::Weak<Virtuoso> = app.as_weak();
 
@@ -38,21 +39,6 @@ impl modules::VirtuosoModule for SlintFrontend {
                 if let Some(app) = weak_app_1.upgrade() {
                     match_info_modified_count =
                         update_data(&match_info_clone, &app, match_info_modified_count);
-
-                    // if seconds_updated {
-                    //     app.set_timer_flashing(true);
-                    //     let weak_app_3 = weak_app_2.clone();
-                    //     let flash_timer = Timer::default();
-                    //     flash_timer.start(
-                    //         TimerMode::SingleShot,
-                    //         std::time::Duration::from_millis(500),
-                    //         move || {
-                    //             if let Some(app) = weak_app_3.upgrade() {
-                    //                 app.set_timer_flashing(false);
-                    //             }
-                    //         },
-                    //     );
-                    // }
                 }
             },
         );
@@ -119,6 +105,11 @@ fn update_data(
 
         app.set_auto_score_on(match_info_data.auto_score_on);
         app.set_auto_timer_on(match_info_data.auto_timer_on);
+
+        app.set_left_fencer_name(match_info_data.left_fencer.name.to_shared_string());
+        app.set_left_fencer_nation(match_info_data.left_fencer.nation.to_shared_string());
+        app.set_right_fencer_name(match_info_data.right_fencer.name.to_shared_string());
+        app.set_right_fencer_nation(match_info_data.right_fencer.nation.to_shared_string());
 
         app.set_passive_counter(if match_info_data.passive_timer.get_counter() <= 60 {
             match_info_data.passive_timer.get_counter() as i32
