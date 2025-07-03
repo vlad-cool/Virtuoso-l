@@ -18,7 +18,7 @@ pub const LAYOUT_1920X550: Layout = Layout {
     },
     left_flag: RectangleProperties {
         x: 118,
-        y: 0,
+        y: -281,
         width: 72,
         height: 47,
         radius: 0,
@@ -39,7 +39,7 @@ pub const LAYOUT_1920X550: Layout = Layout {
     },
     right_flag: RectangleProperties {
         x: 1558,
-        y: 0,
+        y: -281,
         width: 72,
         height: 47,
         radius: 0,
@@ -717,7 +717,7 @@ pub const LAYOUT_1920X360: Layout = Layout {
     },
     left_flag: RectangleProperties {
         x: 118,
-        y: 0,
+        y: -281,
         width: 72,
         height: 48,
         radius: 0,
@@ -738,7 +738,7 @@ pub const LAYOUT_1920X360: Layout = Layout {
     },
     right_flag: RectangleProperties {
         x: 1558,
-        y: 0,
+        y: -281,
         width: 72,
         height: 48,
         radius: 0,
@@ -1077,7 +1077,7 @@ pub const LAYOUT_1920X480: Layout = Layout {
     },
     left_flag: RectangleProperties {
         x: 118,
-        y: 0,
+        y: -281,
         width: 72,
         height: 48,
         radius: 0,
@@ -1098,7 +1098,7 @@ pub const LAYOUT_1920X480: Layout = Layout {
     },
     right_flag: RectangleProperties {
         x: 1558,
-        y: 0,
+        y: -281,
         width: 72,
         height: 48,
         radius: 0,

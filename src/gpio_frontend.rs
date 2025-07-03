@@ -6,6 +6,7 @@ use std::time::Duration;
 use crate::match_info;
 use crate::modules;
 use crate::virtuoso_logger::Logger;
+use crate::gpio::PinLocation;
 
 // const PRIORITY_LED_DELAY: Duration = Duration::from_millis(2000);
 
@@ -33,8 +34,8 @@ impl modules::VirtuosoModule for GpioFrontend {
             }
         }
 
-        let gpio_left_color_led: crate::gpio::PinLocation =
-            crate::gpio::get_pin_by_phys_number(LEFT_COLOR_LED).unwrap();
+        let gpio_left_color_led: PinLocation =
+            PinLocation::from_phys_number(LEFT_COLOR_LED).unwrap();
         let gpio_left_color_led: gpio_cdev::Line =
             match chips[gpio_left_color_led.chip as usize].get_line(gpio_left_color_led.line) {
                 Ok(line) => line,
@@ -59,8 +60,8 @@ impl modules::VirtuosoModule for GpioFrontend {
             }
         };
 
-        let gpio_left_white_led: crate::gpio::PinLocation =
-            crate::gpio::get_pin_by_phys_number(LEFT_WHITE_LED).unwrap();
+        let gpio_left_white_led: PinLocation =
+            PinLocation::from_phys_number(LEFT_WHITE_LED).unwrap();
         let gpio_left_white_led: gpio_cdev::Line =
             match chips[gpio_left_white_led.chip as usize].get_line(gpio_left_white_led.line) {
                 Ok(line) => line,
@@ -85,8 +86,8 @@ impl modules::VirtuosoModule for GpioFrontend {
             }
         };
 
-        let gpio_right_color_led: crate::gpio::PinLocation =
-            crate::gpio::get_pin_by_phys_number(RIGHT_COLOR_LED).unwrap();
+        let gpio_right_color_led: PinLocation =
+            PinLocation::from_phys_number(RIGHT_COLOR_LED).unwrap();
         let gpio_right_color_led: gpio_cdev::Line =
             match chips[gpio_right_color_led.chip as usize].get_line(gpio_right_color_led.line) {
                 Ok(line) => line,
@@ -112,7 +113,7 @@ impl modules::VirtuosoModule for GpioFrontend {
         };
 
         let gpio_right_white_led: crate::gpio::PinLocation =
-            crate::gpio::get_pin_by_phys_number(RIGHT_WHITE_LED).unwrap();
+            PinLocation::from_phys_number(RIGHT_WHITE_LED).unwrap();
         let gpio_right_white_led: gpio_cdev::Line =
             match chips[gpio_right_white_led.chip as usize].get_line(gpio_right_white_led.line) {
                 Ok(line) => line,

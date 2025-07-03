@@ -1,10 +1,12 @@
-use crate::VirtuosoConfig;
 use std::fmt;
 use std::fs::File;
 use std::io::Write;
 use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
 use std::sync::{mpsc, Arc, Mutex};
+
+use crate::VirtuosoConfig;
+use crate::virtuoso_config::LogLevelOption;
 
 #[derive(Copy, Clone, PartialEq)]
 enum LogLevel {
@@ -170,35 +172,31 @@ impl VirtuosoLogger {
 
         let log_levels: Vec<LogLevel> = match config.log_level {
             None => vec![],
-            Some(log_level) => match log_level.to_lowercase().as_str() {
-                "all" => vec![
+            Some(log_level) => match log_level {
+                LogLevelOption::All=> vec![
                     LogLevel::Debug,
                     LogLevel::Info,
                     LogLevel::Warning,
                     LogLevel::Error,
                     LogLevel::CriticalError,
                 ],
-                "debug" => vec![
+                LogLevelOption::Debug => vec![
                     LogLevel::Debug,
                     LogLevel::Info,
                     LogLevel::Warning,
                     LogLevel::Error,
                     LogLevel::CriticalError,
                 ],
-                "info" => vec![
+                LogLevelOption::Info => vec![
                     LogLevel::Info,
                     LogLevel::Warning,
                     LogLevel::Error,
                     LogLevel::CriticalError,
                 ],
-                "warning" => vec![LogLevel::Warning, LogLevel::Error, LogLevel::CriticalError],
-                "error" => vec![LogLevel::Error, LogLevel::CriticalError],
-                "critical_error" => vec![LogLevel::CriticalError],
-                "none" => {
-                    vec![]
-                }
-                _ => {
-                    eprintln!("Unknown log level {}, logs are disabled", log_level);
+                LogLevelOption::Warning => vec![LogLevel::Warning, LogLevel::Error, LogLevel::CriticalError],
+                LogLevelOption::Error => vec![LogLevel::Error, LogLevel::CriticalError],
+                LogLevelOption::Critical => vec![LogLevel::CriticalError],
+                LogLevelOption::None => {
                     vec![]
                 }
             },

@@ -1,12 +1,13 @@
 use std::sync::{Arc, Mutex};
 use std::thread;
 
+mod hw_config;
 mod match_info;
 mod modules;
 mod virtuoso_config;
 mod virtuoso_logger;
-// mod hw_config;
 
+use crate::hw_config::HardwareConfig;
 use crate::modules::VirtuosoModule;
 use crate::virtuoso_config::VirtuosoConfig;
 use match_info::MatchInfo;
@@ -14,8 +15,9 @@ use match_info::MatchInfo;
 #[cfg(feature = "cyrano_server")]
 mod cyrano_server;
 
-#[cfg(feature = "legacy_backend")]
+#[cfg(feature = "gpio-cdev")]
 mod gpio;
+
 #[cfg(feature = "legacy_backend")]
 mod legacy_backend;
 
@@ -34,7 +36,6 @@ fn main() {
     #[cfg(feature = "video_recorder")]
     compile_error!("Video recorder feature is not implemented yet");
 
-    let match_info: Arc<Mutex<MatchInfo>> = Arc::new(Mutex::new(MatchInfo::new()));
     let config: Arc<Mutex<VirtuosoConfig>> =
         Arc::new(Mutex::new(VirtuosoConfig::load_config(None)));
 
@@ -42,6 +43,10 @@ fn main() {
         virtuoso_logger::VirtuosoLogger::new(Arc::clone(&config));
 
     let logger: virtuoso_logger::Logger = virtuoso_logger.get_logger("Main thread".to_string());
+
+    let match_info: Arc<Mutex<MatchInfo>> = Arc::new(Mutex::new(MatchInfo::new()));
+
+    let hw_config: HardwareConfig = HardwareConfig::get_config(&logger);
 
     #[cfg(feature = "console_backend")]
     let mut console_backend = console_backend::ConsoleBackend::new(Arc::clone(&match_info));
@@ -60,7 +65,7 @@ fn main() {
     );
 
     #[cfg(feature = "slint_frontend")]
-    let mut slint_frontend = slint_frontend::SlintFrontend::new(Arc::clone(&match_info));
+    let mut slint_frontend = slint_frontend::SlintFrontend::new(Arc::clone(&match_info), hw_config);
 
     #[cfg(feature = "cyrano_server")]
     let mut cyrano_server = cyrano_server::CyranoServer::new(

@@ -12,6 +12,7 @@ use std::time::{Duration, Instant};
 TODO Properly swap sides
 */
 
+use crate::gpio::PinLocation;
 use crate::match_info;
 use crate::modules;
 use crate::virtuoso_config::VirtuosoConfig;
@@ -603,7 +604,7 @@ struct IrFrame {
 }
 
 fn rc5_reciever(tx: mpsc::Sender<InputData>) {
-    let line: crate::gpio::PinLocation = crate::gpio::get_pin_by_phys_number(3).unwrap();
+    let line: crate::gpio::PinLocation = PinLocation::from_phys_number(3).unwrap();
     let mut chip: gpio_cdev::Chip =
         gpio_cdev::Chip::new(format!("/dev/gpiochip{}", line.chip)).unwrap();
 
@@ -624,13 +625,13 @@ fn rc5_reciever(tx: mpsc::Sender<InputData>) {
         )
         .unwrap()
     {
-        let event = event.unwrap();
+        let event: gpio_cdev::LineEvent = event.unwrap();
 
-        let val = match event.event_type() {
+        let val: i32 = match event.event_type() {
             gpio_cdev::EventType::RisingEdge => 0,
             gpio_cdev::EventType::FallingEdge => 1,
         };
-        let mut count = 0;
+        let mut count: i32 = 0;
 
         if event.timestamp() - last_interrupt_time > 889 * 1000 * 5 / 2 {
             recieve_buf[0] = val;
@@ -714,7 +715,7 @@ fn pins_handler(tx: mpsc::Sender<InputData>) {
         }
     }
 
-    // let gpio_pin_wireless: crate::gpio::PinLocation = crate::gpio::get_pin_by_phys_number(7).unwrap();
+    // let gpio_pin_wireless: crate::gpio::PinLocation = crate::gpio::from_phys_number(7).unwrap();
     // let gpio_line_wireless: gpio_cdev::Line = chips[gpio_pin_wireless.chip as usize]
     //     .get_line(gpio_pin_wireless.line)
     //     .unwrap();
@@ -723,7 +724,7 @@ fn pins_handler(tx: mpsc::Sender<InputData>) {
     //     .unwrap();
 
     let gpio_pin_weapon_0: crate::gpio::PinLocation =
-        crate::gpio::get_pin_by_phys_number(32).unwrap();
+        PinLocation::from_phys_number(32).unwrap();
     let gpio_line_weapon_0: gpio_cdev::Line = chips[gpio_pin_weapon_0.chip as usize]
         .get_line(gpio_pin_weapon_0.line)
         .unwrap();
@@ -731,7 +732,7 @@ fn pins_handler(tx: mpsc::Sender<InputData>) {
         .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read weapon 1")
         .unwrap();
     let gpio_pin_weapon_1: crate::gpio::PinLocation =
-        crate::gpio::get_pin_by_phys_number(36).unwrap();
+        PinLocation::from_phys_number(36).unwrap();
     let gpio_line_weapon_1: gpio_cdev::Line = chips[gpio_pin_weapon_1.chip as usize]
         .get_line(gpio_pin_weapon_1.line)
         .unwrap();
@@ -740,7 +741,7 @@ fn pins_handler(tx: mpsc::Sender<InputData>) {
         .unwrap();
 
     let gpio_pin_weapon_btn: crate::gpio::PinLocation =
-        crate::gpio::get_pin_by_phys_number(37).unwrap();
+        PinLocation::from_phys_number(37).unwrap();
     let gpio_line_weapon_btn: gpio_cdev::Line = chips[gpio_pin_weapon_btn.chip as usize]
         .get_line(gpio_pin_weapon_btn.line)
         .unwrap();

@@ -2,8 +2,9 @@ use slint::{Timer, TimerMode, ToSharedString};
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::Duration;
 
-use crate::match_info;
+use crate::hw_config::{HardwareConfig, Resolution};
 use crate::modules;
+use crate::match_info;
 
 use crate::layouts::*;
 
@@ -11,11 +12,15 @@ const MESSAGE_DISPLAY_TIME: Duration = Duration::from_secs(2);
 
 pub struct SlintFrontend {
     match_info: Arc<Mutex<match_info::MatchInfo>>,
+    hw_config: HardwareConfig,
 }
 
 impl SlintFrontend {
-    pub fn new(match_info: Arc<Mutex<match_info::MatchInfo>>) -> Self {
-        Self { match_info }
+    pub fn new(match_info: Arc<Mutex<match_info::MatchInfo>>, hw_config: HardwareConfig) -> Self {
+        Self {
+            match_info,
+            hw_config,
+        }
     }
 }
 
@@ -23,8 +28,12 @@ impl modules::VirtuosoModule for SlintFrontend {
     fn run(&mut self) {
         let app: Virtuoso = Virtuoso::new().unwrap();
 
-        // app.set_layout(LAYOUT_1920X480);
-        app.set_layout(LAYOUT_1920X1080);
+        match self.hw_config.display.resolution {
+            Resolution::Res1920X1080 => app.set_layout(LAYOUT_1920X1080),
+            Resolution::Res1920X550 => app.set_layout(LAYOUT_1920X550),
+            Resolution::Res1920X480 => app.set_layout(LAYOUT_1920X480),
+            Resolution::Res1920X360 => app.set_layout(LAYOUT_1920X360),
+        }
 
         let weak_app_1: slint::Weak<Virtuoso> = app.as_weak();
 
