@@ -1,6 +1,7 @@
-use std::time::Instant;
+use serde::{Serialize, Deserialize, Serializer, Deserializer};
+use std::time::{Instant, Duration};
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum Priority {
     Left,
     None,
@@ -41,7 +42,7 @@ impl std::fmt::Display for Priority {
     }
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum Weapon {
     Epee,
     Sabre,
@@ -82,7 +83,7 @@ impl std::fmt::Display for Weapon {
     }
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum CompetitionType {
     Individual,
     Team,
@@ -119,7 +120,7 @@ impl std::fmt::Display for CompetitionType {
     }
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum FencerStatus {
     Undefined,
     Victorie,
@@ -171,10 +172,14 @@ impl std::fmt::Display for FencerStatus {
     }
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct PassiveTimer {
     enabled: bool,
     passive_counter: u32,
+    #[serde(
+        serialize_with = "serialize_instant_as_elapsed",
+        deserialize_with = "deserialize_duration_to_instant"
+    )]
     last_updated: Instant,
 }
 
@@ -235,13 +240,17 @@ impl PassiveTimer {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct TimerController {
     last_second: bool,
     time: u32,
     timer_running: bool,
     prev_second_value: u32,
     second_changed: bool,
+    #[serde(
+        serialize_with = "serialize_instant_as_elapsed",
+        deserialize_with = "deserialize_duration_to_instant"
+    )]
     last_updated: Instant,
     last_updated_freezed: u32,
 }
@@ -334,13 +343,13 @@ impl TimerController {
     }
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum ProgramState {
     Running,
     Exiting,
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct RefereeInfo {
     pub id: u32,
     pub name: String,
@@ -357,7 +366,7 @@ impl RefereeInfo {
     }
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct FencerInfo {
     pub id: u32,
     pub name: String,   // 20
@@ -392,7 +401,7 @@ impl FencerInfo {
     }
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MatchInfo {
     pub program_state: ProgramState,
     pub modified_count: u32,
@@ -403,6 +412,10 @@ pub struct MatchInfo {
     pub timer_running: bool,
     pub period: u32,
     pub priority: Priority,
+    #[serde(
+        serialize_with = "serialize_instant_as_elapsed",
+        deserialize_with = "deserialize_duration_to_instant"
+    )]
     pub priority_updated: Instant,
     // pub passive_indicator: u32,
     // pub passive_counter: u32,
@@ -419,6 +432,10 @@ pub struct MatchInfo {
     pub round_number: u32,
     pub time: String,
     pub display_message: String,
+    #[serde(
+        serialize_with = "serialize_instant_as_elapsed",
+        deserialize_with = "deserialize_duration_to_instant"
+    )]
     pub display_message_updated: Instant,
     // pub stopwatch: String,
     pub competition_type: Option<CompetitionType>,
@@ -474,4 +491,20 @@ impl MatchInfo {
             right_fencer: FencerInfo::new(),
         }
     }
+}
+
+fn serialize_instant_as_elapsed<S>(instant: &Instant, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let duration: Duration = instant.elapsed();
+    duration.serialize(serializer)
+}
+
+fn deserialize_duration_to_instant<'de, D>(deserializer: D) -> Result<Instant, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let duration: Duration = Duration::deserialize(deserializer)?;
+    Ok(Instant::now() - duration)
 }
