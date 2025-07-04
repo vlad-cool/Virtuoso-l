@@ -22,6 +22,17 @@ impl std::fmt::Display for Resolution {
     }
 }
 
+impl Resolution {
+    pub fn to_config_dir(&self) -> String {
+        match self {
+            Resolution::Res1920X1080 => "1920x1080".to_string(),
+            Resolution::Res1920X550 => "1920x550".to_string(),
+            Resolution::Res1920X480 => "1920x480".to_string(),
+            Resolution::Res1920X360 => "1920x360".to_string(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "slint_frontend")]
 pub struct DisplayConfig {
@@ -224,17 +235,15 @@ impl HardwareConfig {
 
                 if force_file {
                     file_config.write_config(logger);
-                }
-                if file_config.reinit || file_config != jumpers_config {
-                    jumpers_config.configure_os(logger);
-                    if !force_file {
-                        jumpers_config.write_config(logger);
+                    if file_config.reinit {
+                        file_config.configure_os(logger);
                     }
-                }
-
-                if force_file {
                     file_config
                 } else {
+                    if file_config != jumpers_config {
+                        jumpers_config.configure_os(logger);
+                        jumpers_config.write_config(logger);
+                    }
                     jumpers_config
                 }
             } else {
@@ -281,11 +290,32 @@ impl HardwareConfig {
     }
 
     fn configure_os(&self, logger: &Logger) {
-        // if let Err(err) = std::fs::write(
-        //     "/home/pi/Virtuoso/app/config.sh",
-        //     format!("export RESOLUTION={}", self.display.resolution).as_bytes(),
-        // ) {
-        //     logger.error(format!("Failed to write config.sh file, error: {err}"))
-        // }
+        #[cfg(feature = "slint_frontend")]
+        {
+            logger.info("Running setup script".to_string());
+
+            let output: Result<std::process::Output, std::io::Error> =
+                std::process::Command::new("sudo")
+                    .arg("/home/pi/setup.sh")
+                    .arg(self.display.resolution.to_config_dir())
+                    .output();
+
+            let output: std::process::Output = match output {
+                Ok(output) => output,
+                Err(err) => {
+                    logger.critical_error(format!("Failed to run setup script, error: {err}"));
+                    return;
+                }
+            };
+
+            if output.status.success() {
+                logger.info("Setup script ran successfully".to_string());
+            } else {
+                logger.critical_error(format!(
+                    "Setup script did not run successfully, stderr: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                ));
+            }
+        }
     }
 }
