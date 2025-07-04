@@ -3,10 +3,10 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread;
 use std::time::Duration;
 
+use crate::gpio::PinLocation;
 use crate::match_info;
 use crate::modules;
 use crate::virtuoso_logger::Logger;
-use crate::gpio::PinLocation;
 
 // const PRIORITY_LED_DELAY: Duration = Duration::from_millis(2000);
 

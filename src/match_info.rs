@@ -1,5 +1,5 @@
-use serde::{Serialize, Deserialize, Serializer, Deserializer};
-use std::time::{Instant, Duration};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::time::{Duration, Instant};
 
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum Priority {

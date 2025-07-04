@@ -72,19 +72,19 @@ impl Default for CyranoServerConfig {
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub enum LogLevelOption {
-    #[serde(alias="ALL", alias="all")]
+    #[serde(alias = "ALL", alias = "all")]
     All,
-    #[serde(alias="DEBUG", alias="debug")]
+    #[serde(alias = "DEBUG", alias = "debug")]
     Debug,
-    #[serde(alias="INFO", alias="info")]
+    #[serde(alias = "INFO", alias = "info")]
     Info,
-    #[serde(alias="WARNING", alias="warning")]
+    #[serde(alias = "WARNING", alias = "warning")]
     Warning,
-    #[serde(alias="ERROR", alias="error")]
+    #[serde(alias = "ERROR", alias = "error")]
     Error,
-    #[serde(alias="CRITICAL", alias="critical")]
+    #[serde(alias = "CRITICAL", alias = "critical")]
     Critical,
-    #[serde(alias="NONE", alias="none")]
+    #[serde(alias = "NONE", alias = "none")]
     None,
 }
 

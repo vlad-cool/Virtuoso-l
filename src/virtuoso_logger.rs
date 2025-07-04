@@ -5,8 +5,8 @@ use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
 use std::sync::{mpsc, Arc, Mutex};
 
-use crate::VirtuosoConfig;
 use crate::virtuoso_config::LogLevelOption;
+use crate::VirtuosoConfig;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 enum LogLevel {
@@ -174,7 +174,7 @@ impl VirtuosoLogger {
         let log_levels: Vec<LogLevel> = match config.log_level {
             None => vec![],
             Some(log_level) => match log_level {
-                LogLevelOption::All=> vec![
+                LogLevelOption::All => vec![
                     LogLevel::Debug,
                     LogLevel::Info,
                     LogLevel::Warning,
@@ -194,7 +194,9 @@ impl VirtuosoLogger {
                     LogLevel::Error,
                     LogLevel::CriticalError,
                 ],
-                LogLevelOption::Warning => vec![LogLevel::Warning, LogLevel::Error, LogLevel::CriticalError],
+                LogLevelOption::Warning => {
+                    vec![LogLevel::Warning, LogLevel::Error, LogLevel::CriticalError]
+                }
                 LogLevelOption::Error => vec![LogLevel::Error, LogLevel::CriticalError],
                 LogLevelOption::Critical => vec![LogLevel::CriticalError],
                 LogLevelOption::None => {

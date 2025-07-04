@@ -41,12 +41,12 @@ impl modules::VirtuosoModule for LegacyBackend {
         thread::spawn(move || {
             uart_handler(tx_cloned, logger_clone);
         });
-        
+
         let tx_cloned: mpsc::Sender<InputData> = tx.clone();
         thread::spawn(move || {
             pins_handler(tx_cloned);
         });
-        
+
         let logger_clone: Logger = self.logger.clone();
         let tx_cloned: mpsc::Sender<InputData> = tx.clone();
         thread::spawn(move || {

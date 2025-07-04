@@ -3,8 +3,8 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::Duration;
 
 use crate::hw_config::{HardwareConfig, Resolution};
-use crate::modules;
 use crate::match_info;
+use crate::modules;
 
 use crate::layouts::*;
 
