@@ -48,13 +48,35 @@ pub struct LegacyBackendConfig {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+#[cfg(feature = "repeater")]
+pub enum RepeaterRole {
+    Transmitter,
+    Receiver,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[cfg(feature = "repeater")]
+pub struct RepeaterConfig {
+    pub role: RepeaterRole,
+    pub uart_path: String,
+    pub uart_speed: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct HardwareConfig {
+    force_file: Option<bool>,
+    #[serde(default)]
+    #[serde(skip_serializing)]
+    reinit: bool,
+
     #[cfg(feature = "slint_frontend")]
     pub display: DisplayConfig,
     #[cfg(feature = "gpio_frontend")]
     pub gpio: GpioFrontendConfig,
     #[cfg(feature = "legacy_backend")]
     pub legacy_backend: LegacyBackendConfig,
+    #[cfg(feature = "repeater")]
+    pub repeater: RepeaterConfig,
 }
 
 impl HardwareConfig {
@@ -151,7 +173,17 @@ impl HardwareConfig {
             (resolution, swap_sides)
         };
 
+        #[cfg(all(feature = "slint_frontend", feature = "repeater"))]
+        let repeater_role: RepeaterRole = match resolution {
+            Resolution::Res1920X1080 => RepeaterRole::Receiver,
+            _ => RepeaterRole::Transmitter,
+        };
+        #[cfg(not(feature = "slint_frontend"))]
+        let repeater_role: RepeaterRole = RepeaterRole::Transmitter;
+
         Self {
+            force_file: None,
+            reinit: false,
             #[cfg(feature = "slint_frontend")]
             display: DisplayConfig {
                 resolution,
@@ -171,6 +203,12 @@ impl HardwareConfig {
                 weapon_btn_pin: PinLocation::from_phys_number(37).unwrap(),
                 ir_pin: PinLocation::from_phys_number(3).unwrap(),
             },
+            #[cfg(feature = "repeater")]
+            repeater: RepeaterConfig {
+                role: repeater_role,
+                uart_path: "/dev/ttyS3".to_string(),
+                uart_speed: 115200,
+            },
         }
     }
 
@@ -182,15 +220,29 @@ impl HardwareConfig {
             let jumpers_config: HardwareConfig = Self::load_jumpers(logger);
 
             if let Some(file_config) = file_config {
-                if file_config != jumpers_config {
+                let force_file: bool = file_config.force_file.unwrap_or(false);
+
+                if force_file {
+                    file_config.write_config(logger);
+                }
+                if file_config.reinit || file_config != jumpers_config {
                     jumpers_config.configure_os(logger);
-                    jumpers_config.write_config(logger);
+                    if !force_file {
+                        jumpers_config.write_config(logger);
+                    }
+                }
+
+                if force_file {
+                    file_config
+                } else {
+                    jumpers_config
                 }
             } else {
                 jumpers_config.configure_os(logger);
                 jumpers_config.write_config(logger);
+
+                jumpers_config
             }
-            jumpers_config
         }
         #[cfg(not(feature = "gpio-cdev"))]
         if let Some(file_config) = file_config {
@@ -229,11 +281,11 @@ impl HardwareConfig {
     }
 
     fn configure_os(&self, logger: &Logger) {
-        if let Err(err) = std::fs::write(
-            "/home/pi/Virtuoso/app/config.sh",
-            format!("export RESOLUTION={}", self.display.resolution).as_bytes(),
-        ) {
-            logger.error(format!("Failed to write config.sh file, error: {err}"))
-        }
+        // if let Err(err) = std::fs::write(
+        //     "/home/pi/Virtuoso/app/config.sh",
+        //     format!("export RESOLUTION={}", self.display.resolution).as_bytes(),
+        // ) {
+        //     logger.error(format!("Failed to write config.sh file, error: {err}"))
+        // }
     }
 }

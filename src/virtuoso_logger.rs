@@ -8,7 +8,7 @@ use std::sync::{mpsc, Arc, Mutex};
 use crate::VirtuosoConfig;
 use crate::virtuoso_config::LogLevelOption;
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 enum LogLevel {
     Debug,
     Info,
@@ -48,6 +48,7 @@ impl fmt::Display for LogMessage {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Logger {
     tx: std::sync::mpsc::Sender<LogCommand>,
     log_levels: std::vec::Vec<LogLevel>,

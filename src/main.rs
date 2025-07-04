@@ -32,6 +32,9 @@ mod slint_frontend;
 #[cfg(feature = "gpio_frontend")]
 mod gpio_frontend;
 
+#[cfg(feature = "repeater")]
+mod repeater;
+
 fn main() {
     #[cfg(feature = "video_recorder")]
     compile_error!("Video recorder feature is not implemented yet");

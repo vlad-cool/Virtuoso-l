@@ -36,19 +36,21 @@ impl modules::VirtuosoModule for LegacyBackend {
     fn run(&mut self) {
         let (tx, rx) = mpsc::channel::<InputData>();
 
-        let tx_cloned = tx.clone();
+        let logger_clone: Logger = self.logger.clone();
+        let tx_cloned: mpsc::Sender<InputData> = tx.clone();
         thread::spawn(move || {
-            uart_handler(tx_cloned);
+            uart_handler(tx_cloned, logger_clone);
         });
-
-        let tx_cloned = tx.clone();
+        
+        let tx_cloned: mpsc::Sender<InputData> = tx.clone();
         thread::spawn(move || {
             pins_handler(tx_cloned);
         });
-
-        let tx_cloned = tx.clone();
+        
+        let logger_clone: Logger = self.logger.clone();
+        let tx_cloned: mpsc::Sender<InputData> = tx.clone();
         thread::spawn(move || {
-            rc5_reciever(tx_cloned);
+            rc5_receiever(tx_cloned, logger_clone);
         });
 
         loop {
@@ -477,8 +479,14 @@ impl UartData {
     }
 }
 
-fn uart_handler(tx: mpsc::Sender<InputData>) {
-    let mut port: serial::unix::TTYPort = serial::open("/dev/ttyS2").unwrap();
+fn uart_handler(tx: mpsc::Sender<InputData>, logger: Logger) {
+    let mut port: serial::unix::TTYPort = match serial::open("/dev/ttyS2") {
+        Ok(port) => port,
+        Err(err) => {
+            logger.critical_error(format!("Failed to open uart port, error: {err}"));
+            return;
+        }
+    };
 
     let settings: serial::PortSettings = serial::PortSettings {
         baud_rate: serial::BaudRate::Baud38400,
@@ -488,8 +496,21 @@ fn uart_handler(tx: mpsc::Sender<InputData>) {
         flow_control: serial::FlowControl::FlowNone,
     };
 
-    port.configure(&settings).unwrap();
-    port.set_timeout(Duration::from_secs(60)).unwrap();
+    match port.configure(&settings) {
+        Ok(()) => {}
+        Err(err) => {
+            logger.critical_error(format!("Failed to configure uart port, error: {err}"));
+            return;
+        }
+    }
+
+    match port.set_timeout(Duration::from_secs(60)) {
+        Ok(()) => {}
+        Err(err) => {
+            logger.critical_error(format!("Failed to set uart port timeout, error: {err}"));
+            return;
+        }
+    }
 
     let mut buf: [u8; 8] = [0; 8];
     let mut ind: usize = 0;
@@ -511,8 +532,6 @@ fn uart_handler(tx: mpsc::Sender<InputData>) {
 
                     if ind == 8 {
                         ind = 0;
-
-                        println!("Sending data from uart_handler");
 
                         tx.send(InputData::UartData(UartData::from_8bytes(buf)))
                             .unwrap();
@@ -603,14 +622,14 @@ struct IrFrame {
     command: IrCommands,
 }
 
-fn rc5_reciever(tx: mpsc::Sender<InputData>) {
+fn rc5_receiever(tx: mpsc::Sender<InputData>, logger: Logger) {
     let line: crate::gpio::PinLocation = PinLocation::from_phys_number(3).unwrap();
     let mut chip: gpio_cdev::Chip =
         gpio_cdev::Chip::new(format!("/dev/gpiochip{}", line.chip)).unwrap();
 
     let mut last_interrupt_time: u64 = 0u64;
 
-    let mut recieve_buf: [i32; 28] = [0; 28];
+    let mut receieve_buf: [i32; 28] = [0; 28];
     let mut index: usize = 0;
 
     let mut last_toggle_value: i32 = -1;
@@ -634,7 +653,7 @@ fn rc5_reciever(tx: mpsc::Sender<InputData>) {
         let mut count: i32 = 0;
 
         if event.timestamp() - last_interrupt_time > 889 * 1000 * 5 / 2 {
-            recieve_buf[0] = val;
+            receieve_buf[0] = val;
             index = 1;
             count = 0;
         } else if event.timestamp() - last_interrupt_time > 889 * 1000 * 3 / 2 {
@@ -644,18 +663,18 @@ fn rc5_reciever(tx: mpsc::Sender<InputData>) {
         }
 
         for _ in 0..count {
-            recieve_buf[index] = val;
+            receieve_buf[index] = val;
             index += 1;
 
             if index == 27 {
-                recieve_buf[index] = 1 - val;
+                receieve_buf[index] = 1 - val;
                 index += 1;
             }
 
             if index == 28 {
                 for i in 0..14 {
-                    if recieve_buf[i * 2] + recieve_buf[i * 2 + 1] != 1 {
-                        println!("Bad buffer");
+                    if receieve_buf[i * 2] + receieve_buf[i * 2 + 1] != 1 {
+                        logger.error("rc 5 receiver got bad buffer".to_string());
                         index = 0;
                         break;
                     }
@@ -663,7 +682,7 @@ fn rc5_reciever(tx: mpsc::Sender<InputData>) {
             }
 
             if index == 28 {
-                let rc5_frame: Vec<i32> = recieve_buf.iter().step_by(2).cloned().collect();
+                let rc5_frame: Vec<i32> = receieve_buf.iter().step_by(2).cloned().collect();
 
                 let toggle_bit = rc5_frame[2];
 
@@ -723,16 +742,14 @@ fn pins_handler(tx: mpsc::Sender<InputData>) {
     //     .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read-input")
     //     .unwrap();
 
-    let gpio_pin_weapon_0: crate::gpio::PinLocation =
-        PinLocation::from_phys_number(32).unwrap();
+    let gpio_pin_weapon_0: crate::gpio::PinLocation = PinLocation::from_phys_number(32).unwrap();
     let gpio_line_weapon_0: gpio_cdev::Line = chips[gpio_pin_weapon_0.chip as usize]
         .get_line(gpio_pin_weapon_0.line)
         .unwrap();
     let gpio_handle_weapon_0: gpio_cdev::LineHandle = gpio_line_weapon_0
         .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read weapon 1")
         .unwrap();
-    let gpio_pin_weapon_1: crate::gpio::PinLocation =
-        PinLocation::from_phys_number(36).unwrap();
+    let gpio_pin_weapon_1: crate::gpio::PinLocation = PinLocation::from_phys_number(36).unwrap();
     let gpio_line_weapon_1: gpio_cdev::Line = chips[gpio_pin_weapon_1.chip as usize]
         .get_line(gpio_pin_weapon_1.line)
         .unwrap();
@@ -740,8 +757,7 @@ fn pins_handler(tx: mpsc::Sender<InputData>) {
         .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read weapon 2")
         .unwrap();
 
-    let gpio_pin_weapon_btn: crate::gpio::PinLocation =
-        PinLocation::from_phys_number(37).unwrap();
+    let gpio_pin_weapon_btn: crate::gpio::PinLocation = PinLocation::from_phys_number(37).unwrap();
     let gpio_line_weapon_btn: gpio_cdev::Line = chips[gpio_pin_weapon_btn.chip as usize]
         .get_line(gpio_pin_weapon_btn.line)
         .unwrap();
