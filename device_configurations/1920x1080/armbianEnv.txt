@@ -5,5 +5,5 @@ overlay_prefix=sun8i-h3
 disp_mode=1920x1080p60
 rootdev=UUID=1a07bdee-389b-414b-987f-c753bc3e44a6
 rootfstype=ext4
-overlays=uart2,uart3
+overlays=uart2 uart3
 usbstoragequirks=0x2537:0x1066:u,0x2537:0x1068:u

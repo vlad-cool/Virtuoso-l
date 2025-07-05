@@ -6,10 +6,20 @@ edition = "2021"
 [dependencies]
 gpio-cdev = { version = "0.4", optional = true }
 serial = { version = "0.4.0", optional = true }
-slint = { version = "1.12.0", default-features = false, features = ["backend-winit", "renderer-femtovg", "compat-1-2", "std"], optional = true }
+slint = { version = "1.12.0", default-features = false, features = [
+    "backend-winit",
+    "renderer-femtovg",
+    "compat-1-2",
+    "std",
+], optional = true }
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.7"
-postcard = { version = "1.1.2", features = ["crc", "use-crc", "use-std"] }
+postcard = { version = "1.1.2", features = [
+    "crc",
+    "use-crc",
+    "use-std",
+], optional = true }
+crc = { version = "3.3.0", optional = true }
 
 [build-dependencies]
 zip = "4.2.0"
@@ -25,7 +35,7 @@ cyrano_server = []
 slint_frontend = ["slint"]
 video_recorder = []
 gpio_frontend = ["gpio-cdev"]
-repeater = ["serial"]
+repeater = ["serial", "crc", "postcard"]
 
 [[bin]]
 name = "Virtuoso"

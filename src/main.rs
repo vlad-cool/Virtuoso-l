@@ -68,7 +68,8 @@ fn main() {
     );
 
     #[cfg(feature = "slint_frontend")]
-    let mut slint_frontend = slint_frontend::SlintFrontend::new(Arc::clone(&match_info), hw_config);
+    let mut slint_frontend =
+        slint_frontend::SlintFrontend::new(Arc::clone(&match_info), hw_config.clone());
 
     #[cfg(feature = "cyrano_server")]
     let mut cyrano_server = cyrano_server::CyranoServer::new(
@@ -76,6 +77,20 @@ fn main() {
         Arc::clone(&config),
         virtuoso_logger.get_logger("Cyrano server".to_string()),
     );
+
+    #[cfg(feature = "repeater")]
+    let repeater = repeater::Repeater::new(
+        Arc::clone(&match_info),
+        virtuoso_logger.get_logger("Repeater".to_string()),
+        hw_config.clone(),
+    );
+    #[cfg(feature = "repeater")]
+    match &repeater {
+        Ok(_) => {},
+        Err(err) => {
+            logger.critical_error(format!("Failed to create repeater, error: {err}"));
+        },
+    }
 
     let logger_thread = thread::spawn(move || {
         virtuoso_logger.run();
@@ -108,6 +123,15 @@ fn main() {
     });
     #[cfg(feature = "cyrano_server")]
     logger.info("Cyrano server started".to_string());
+    
+    #[cfg(feature = "repeater")]
+    let repeater_thread = thread::spawn(move || {
+        if let Ok(mut repeater) = repeater {
+            repeater.run();
+        }
+    });
+    #[cfg(feature = "repeater")]
+    logger.info("Repeater started".to_string());
 
     #[cfg(feature = "slint_frontend")]
     #[cfg(target_os = "macos")]
@@ -168,6 +192,13 @@ fn main() {
     #[cfg(feature = "cyrano_server")]
     if let Err(e) = cyrano_server_thread.join() {
         logger.error(format!("Failed to join cyrano server thread, error: {e:?}"));
+    } else {
+        logger.info("Cyrano server stopped".to_string());
+    }
+    
+    #[cfg(feature = "repeater")]
+    if let Err(e) = repeater_thread.join() {
+        logger.error(format!("Failed to join repeater thread, error: {e:?}"));
     } else {
         logger.info("Cyrano server stopped".to_string());
     }

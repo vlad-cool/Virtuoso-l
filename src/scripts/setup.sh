@@ -11,3 +11,5 @@ rm -f /usr/share/plymouth/themes/Virtuoso/*
 cp splash/* /usr/share/plymouth/themes/Virtuoso/ 
 
 update-initramfs -u -v
+
+reboot

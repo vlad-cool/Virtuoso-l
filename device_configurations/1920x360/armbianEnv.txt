@@ -6,5 +6,5 @@ disp_mode=1920x1080p60
 rootdev=UUID=1a07bdee-389b-414b-987f-c753bc3e44a6
 rootfstype=ext4
 extraargs=video=HDMI-A-1:1920x360@60
-overlays=uart2,uart3
+overlays=uart2 uart3
 usbstoragequirks=0x2537:0x1066:u,0x2537:0x1068:u
