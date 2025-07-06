@@ -3,3 +3,4 @@
 /mockup/extracted
 log.txt
 /.vscode
+src/cyrano_server.rs

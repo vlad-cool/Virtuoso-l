@@ -1,0 +1,3 @@
+[submodule "private_modules/cyrano"]
+	path = private_modules/cyrano
+	url = git@github.com:vlad-cool/Virtuoso-Cyrano.git

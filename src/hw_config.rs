@@ -259,6 +259,9 @@ impl HardwareConfig {
         } else {
             let file_config: HardwareConfig = HardwareConfig {
                 #[cfg(feature = "slint_frontend")]
+                force_file: Some(false),
+                reinit: false,
+
                 display: DisplayConfig {
                     resolution: Resolution::Res1920X1080,
                     swap_sides: false,
