@@ -116,7 +116,7 @@ impl VirtuosoLogger {
         let config: crate::virtuoso_config::LoggerConfig =
             config.lock().unwrap().logger_config.clone();
 
-        let stderr = config.stderr;
+        let stderr: bool = config.stderr;
 
         let file: Option<File> = if let Some(log_path) = config.log_path {
             match File::create(log_path) {

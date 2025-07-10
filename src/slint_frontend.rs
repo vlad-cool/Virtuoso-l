@@ -5,6 +5,7 @@ use std::time::Duration;
 use crate::hw_config::{HardwareConfig, Resolution};
 use crate::match_info;
 use crate::modules;
+use crate::virtuoso_logger::Logger;
 
 use crate::layouts::*;
 
@@ -13,20 +14,35 @@ const MESSAGE_DISPLAY_TIME: Duration = Duration::from_secs(2);
 pub struct SlintFrontend {
     match_info: Arc<Mutex<match_info::MatchInfo>>,
     hw_config: HardwareConfig,
+    logger: Logger,
 }
 
 impl SlintFrontend {
-    pub fn new(match_info: Arc<Mutex<match_info::MatchInfo>>, hw_config: HardwareConfig) -> Self {
+    pub fn new(
+        match_info: Arc<Mutex<match_info::MatchInfo>>,
+        hw_config: HardwareConfig,
+        logger: Logger,
+    ) -> Self {
         Self {
             match_info,
             hw_config,
+            logger,
         }
     }
 }
 
 impl modules::VirtuosoModule for SlintFrontend {
     fn run(&mut self) {
-        let app: Virtuoso = Virtuoso::new().unwrap();
+        let app: Result<Virtuoso, slint::PlatformError> = Virtuoso::new();
+
+        let app: Virtuoso = match app {
+            Ok(app) => app,
+            Err(err) => {
+                self.logger
+                    .critical_error(format!("Failed to create slint frontend, error: {err}"));
+                return;
+            }
+        };
 
         match self.hw_config.display.resolution {
             Resolution::Res1920X1080 => app.set_layout(LAYOUT_1920X1080),
@@ -38,9 +54,9 @@ impl modules::VirtuosoModule for SlintFrontend {
         let weak_app_1: slint::Weak<Virtuoso> = app.as_weak();
 
         let match_info_clone: Arc<Mutex<match_info::MatchInfo>> = self.match_info.clone();
-        let mut match_info_modified_count = 0u32;
+        let mut match_info_modified_count: u32 = 0;
 
-        let timer = Timer::default();
+        let timer: Timer = Timer::default();
         timer.start(
             TimerMode::Repeated,
             std::time::Duration::from_millis(50),
@@ -52,7 +68,11 @@ impl modules::VirtuosoModule for SlintFrontend {
             },
         );
 
-        app.run().unwrap();
+        if let Err(err) = app.run() {
+            self.logger
+                .critical_error(format!("Failed to run slint frontend, error: {err}"));
+            return;
+        }
 
         let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
             self.match_info.lock().unwrap();

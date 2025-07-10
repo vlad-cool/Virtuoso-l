@@ -30,6 +30,7 @@ enum Message {
 }
 
 enum RecvError {
+    BadHeader,
     SerialError,
     DeserializationError,
     Timeout,
@@ -38,6 +39,10 @@ enum RecvError {
 
 impl modules::VirtuosoModule for Repeater {
     fn run(&mut self) {
+        self.logger.debug(format!(
+            "Running repeater in {:?} mode",
+            self.hw_config.repeater.role
+        ));
         match self.hw_config.repeater.role {
             RepeaterRole::Receiver => self.run_receiver(),
             RepeaterRole::Transmitter => self.run_transmitter(),
@@ -99,38 +104,99 @@ impl Repeater {
     }
 
     fn receive(&mut self) -> Result<Message, RecvError> {
+        let mut byte: [u8; 1] = [0];
+        match self.port.read_exact(&mut byte) {
+            Ok(_) => {}
+            Err(err) => {
+                if err.kind() == std::io::ErrorKind::TimedOut {
+                    return Err(RecvError::Timeout);
+                } else {
+                    self.logger
+                        .error(format!("Failed to receive checksum, error: {err:?}"));
+                    return Err(RecvError::SerialError);
+                }
+            }
+        };
+        if byte[0] != 0xAA {
+            return Err(RecvError::BadHeader);
+        }
+        let mut byte: [u8; 1] = [0];
+        match self.port.read_exact(&mut byte) {
+            Ok(_) => {}
+            Err(err) => {
+                if err.kind() == std::io::ErrorKind::TimedOut {
+                    return Err(RecvError::Timeout);
+                } else {
+                    self.logger
+                        .error(format!("Failed to receive checksum, error: {err:?}"));
+                    return Err(RecvError::SerialError);
+                }
+            }
+        };
+        if byte[0] != 0x55 {
+            return Err(RecvError::BadHeader);
+        }
+
         let mut checksum: [u8; 4] = [0; 4];
         match self.port.read_exact(&mut checksum) {
-            Ok(()) => {}
+            Ok(_) => {}
             Err(err) => {
-                self.logger
-                    .error(format!("Failed to receive checksum, error: {err}"));
-                return Err(RecvError::SerialError);
+                if err.kind() == std::io::ErrorKind::TimedOut {
+                    return Err(RecvError::Timeout);
+                } else {
+                    self.logger
+                        .error(format!("Failed to receive checksum, error: {err:?}"));
+                    return Err(RecvError::SerialError);
+                }
             }
         };
 
         self.receive_buffer.clear();
 
+        self.logger.debug(format!("Got checksum: {:?}", checksum));
+
+        let mut i: i32 = 0;
         loop {
             let mut byte: [u8; 1] = [1];
 
             match self.port.read_exact(&mut byte) {
-                Ok(()) => {}
+                Ok(_) => {}
                 Err(err) => {
-                    self.logger
-                        .error(format!("Failed to receive message body, error: {err}"));
-                    return Err(RecvError::SerialError);
+                    if err.kind() == std::io::ErrorKind::TimedOut {
+                    } else {
+                        self.logger
+                            .error(format!("Failed to receive checksum, error: {err:?}"));
+                        return Err(RecvError::SerialError);
+                    }
                 }
             };
 
             let byte: u8 = byte[0];
 
-            self.receive_buffer.push(byte);
+            if i % 2 == 0 {
+
+                self.receive_buffer.push(byte);
+            }
+
+            i += 1;
 
             if byte == 0 {
                 break;
             }
         }
+
+        // self.receive_buffer.clone_from(&self.receive_buffer.iter()
+        // .enumerate()
+        // .filter(|&(index, _)| (index + 1 - 27) % 33 != 0)
+        // .map(|(_, &value)| value)
+        // .collect());
+
+        self.logger.debug(format!(
+            "Got data with length {}",
+            self.receive_buffer.len()
+        ));
+        self.logger
+            .debug(format!("Got data {:02X?}", self.receive_buffer));
 
         if u32::from_le_bytes(Self::calc_checksum(&self.receive_buffer))
             != u32::from_le_bytes(checksum)
@@ -164,6 +230,9 @@ impl Repeater {
                 Ok(Message::Err) => {
                     self.logger.error("Receiver got err message".to_string());
                 }
+                Err(RecvError::BadHeader) => self
+                    .logger
+                    .error("Receiver got wrong magic number in header".to_string()),
                 Err(RecvError::BadChecksum) => {
                     self.logger
                         .error("Receiver got message with bad checksum".to_string());
@@ -175,8 +244,8 @@ impl Repeater {
                     self.logger.error("Receiver cannot get message".to_string());
                 }
                 Err(RecvError::Timeout) => {
-                    self.logger
-                        .error("Receiver did not get message due to timeout".to_string());
+                    // self.logger
+                    //     .error("Receiver did not get message due to timeout".to_string());
                 }
             }
         }
@@ -186,11 +255,29 @@ impl Repeater {
         let match_info: &MatchInfo = &*self.match_info.lock().unwrap();
 
         let serialized_data: Result<Vec<u8>, postcard::Error> =
-            postcard::to_stdvec(&Message::MatchInfo(match_info.clone()));
+            postcard::to_stdvec_cobs(&Message::MatchInfo(match_info.clone()));
+
+        self.logger.debug("Data serialized".to_string());
 
         match serialized_data {
             Ok(buf) => {
+                self.logger
+                    .debug("Data serialized successfully".to_string());
+
+                match self.port.write(&[0xAA, 0x55]) {
+                    Ok(n) => {
+                        self.logger.debug(format!("Transmitted {n} bytes"));
+                    }
+                    Err(err) => {
+                        self.logger
+                            .error(format!("Failed to transmit, error: {err}"));
+                        return Err(());
+                    }
+                }
+
                 let checksum: [u8; 4] = Self::calc_checksum(&buf);
+
+                self.logger.debug(format!("Sent checksum: {:?}", checksum));
 
                 match self.port.write(&checksum) {
                     Ok(n) => {
@@ -203,17 +290,34 @@ impl Repeater {
                     }
                 }
 
-                match self.port.write(buf.as_slice()) {
-                    Ok(n) => {
-                        self.logger.debug(format!("Transmitted {n} bytes"));
-                        Ok(())
-                    }
-                    Err(err) => {
-                        self.logger
-                            .error(format!("Failed to transmit, error: {err}"));
-                        Err(())
+                for byte in &buf {
+                    match self.port.write(&[*byte]) {
+                        Ok(n) => {
+                            // self.logger.debug(format!("Transmitted {n} bytes"));
+                            // self.logger.debug(format!("Sent data {:02X?}", buf));
+                            thread::sleep(Duration::from_millis(2));
+                        }
+                        Err(err) => {
+                            self.logger
+                                .error(format!("Failed to transmit, error: {err}"));
+                            return Err(())
+                        }
                     }
                 }
+                self.logger.debug(format!("Sent data {:02X?}", buf));
+                Ok(())
+                // match self.port.write(buf.as_slice()) {
+                //     Ok(n) => {
+                //         self.logger.debug(format!("Transmitted {n} bytes"));
+                //         self.logger.debug(format!("Sent data {:02X?}", buf));
+                //         Ok(())
+                //     }
+                //     Err(err) => {
+                //         self.logger
+                //             .error(format!("Failed to transmit, error: {err}"));
+                //         Err(())
+                //     }
+                // }
             }
             Err(err) => {
                 self.logger
@@ -230,8 +334,8 @@ impl Repeater {
             let new_modified_count: u32 = self.match_info.lock().unwrap().modified_count;
             if modified_count != new_modified_count {
                 modified_count = match self.transmit() {
-                    Ok(()) => new_modified_count,
-                    Err(()) => modified_count,
+                    Ok(_) => new_modified_count,
+                    Err(_) => modified_count,
                 }
             }
 

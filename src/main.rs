@@ -13,6 +13,7 @@ use crate::virtuoso_config::VirtuosoConfig;
 use match_info::MatchInfo;
 
 #[cfg(feature = "cyrano_server")]
+#[path = "../private_modules/cyrano/cyrano_server.rs"]
 mod cyrano_server;
 
 #[cfg(feature = "gpio-cdev")]
@@ -40,7 +41,7 @@ fn main() {
     compile_error!("Video recorder feature is not implemented yet");
 
     let config: Arc<Mutex<VirtuosoConfig>> =
-        Arc::new(Mutex::new(VirtuosoConfig::load_config(None)));
+        Arc::new(Mutex::new(VirtuosoConfig::load_config()));
 
     let virtuoso_logger: virtuoso_logger::VirtuosoLogger =
         virtuoso_logger::VirtuosoLogger::new(Arc::clone(&config));
@@ -68,8 +69,11 @@ fn main() {
     );
 
     #[cfg(feature = "slint_frontend")]
-    let mut slint_frontend =
-        slint_frontend::SlintFrontend::new(Arc::clone(&match_info), hw_config.clone());
+    let mut slint_frontend = slint_frontend::SlintFrontend::new(
+        Arc::clone(&match_info),
+        hw_config.clone(),
+        virtuoso_logger.get_logger("Slint frontend".to_string()),
+    );
 
     #[cfg(feature = "cyrano_server")]
     let mut cyrano_server = cyrano_server::CyranoServer::new(
@@ -86,10 +90,10 @@ fn main() {
     );
     #[cfg(feature = "repeater")]
     match &repeater {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(err) => {
             logger.critical_error(format!("Failed to create repeater, error: {err}"));
-        },
+        }
     }
 
     let logger_thread = thread::spawn(move || {
@@ -123,15 +127,21 @@ fn main() {
     });
     #[cfg(feature = "cyrano_server")]
     logger.info("Cyrano server started".to_string());
-    
+
     #[cfg(feature = "repeater")]
-    let repeater_thread = thread::spawn(move || {
-        if let Ok(mut repeater) = repeater {
+    let repeater_thread = if let Ok(mut repeater) = repeater {
+        let thread = thread::spawn(move || {
             repeater.run();
-        }
-    });
-    #[cfg(feature = "repeater")]
-    logger.info("Repeater started".to_string());
+        });
+        logger.info("Repeater started".to_string());
+        thread
+    } else {
+        logger.critical_error("Repeater did not start because it did not exist".to_string());
+        thread::spawn(move || {})
+    };
+
+    // };
+    // #[cfg(feature = "repeater")]
 
     #[cfg(feature = "slint_frontend")]
     #[cfg(target_os = "macos")]
@@ -195,7 +205,7 @@ fn main() {
     } else {
         logger.info("Cyrano server stopped".to_string());
     }
-    
+
     #[cfg(feature = "repeater")]
     if let Err(e) = repeater_thread.join() {
         logger.error(format!("Failed to join repeater thread, error: {e:?}"));

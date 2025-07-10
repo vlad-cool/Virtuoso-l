@@ -1,53 +1,3 @@
-use serde;
-use toml;
-
-#[derive(Default, Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct VirtuosoConfig {
-    #[serde(default)]
-    pub legacy_backend: LegacyBackendConfig,
-    #[serde(default)]
-    pub cyrano_server: CyranoServerConfig,
-    #[serde(default)]
-    pub logger_config: LoggerConfig,
-}
-
-impl VirtuosoConfig {
-    const DEFAULT_PATH: &str = "config.toml";
-
-    pub fn load_config(path: Option<String>) -> VirtuosoConfig {
-        let mut loaded: bool = true;
-        let config: VirtuosoConfig =
-            match std::fs::read_to_string(path.clone().unwrap_or(String::from(Self::DEFAULT_PATH)))
-            {
-                Ok(content) => match toml::from_str(&content) {
-                    Ok(config) => config,
-                    Err(err) => {
-                        eprintln!("Error parsing config.toml: {}", err);
-                        loaded = false;
-                        VirtuosoConfig::default()
-                    }
-                },
-                Err(err) => {
-                    eprintln!("Error reading config.toml: {}", err);
-                    loaded = false;
-                    VirtuosoConfig::default()
-                }
-            };
-
-        if !loaded {
-            config.write_config(path);
-        }
-
-        config
-    }
-
-    pub fn write_config(&self, path: Option<String>) {
-        let toml_str: String = toml::to_string(&self).expect("Failed to serialize config");
-        std::fs::write(path.unwrap_or(String::from(Self::DEFAULT_PATH)), toml_str)
-            .expect("Failed to write output.toml");
-    }
-}
-
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct LegacyBackendConfig {
     pub rc5_address: u32,
@@ -113,5 +63,52 @@ impl Default for LoggerConfig {
             udp_ip: None,
             udp_print_ip: false,
         }
+    }
+}
+
+#[derive(Default, Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct VirtuosoConfig {
+    #[serde(default)]
+    pub legacy_backend: LegacyBackendConfig,
+    #[serde(default)]
+    pub cyrano_server: CyranoServerConfig,
+    #[serde(default)]
+    pub logger_config: LoggerConfig,
+}
+
+impl VirtuosoConfig {
+    const DEFAULT_PATH: &str = "config.toml";
+
+    pub fn load_config() -> VirtuosoConfig {
+        let mut loaded: bool = true;
+        let config: VirtuosoConfig =
+            match std::fs::read_to_string(String::from(Self::DEFAULT_PATH))
+            {
+                Ok(content) => match toml::from_str(&content) {
+                    Ok(config) => config,
+                    Err(err) => {
+                        eprintln!("Error parsing config.toml: {}", err);
+                        loaded = false;
+                        VirtuosoConfig::default()
+                    }
+                },
+                Err(err) => {
+                    eprintln!("Error reading config.toml: {}", err);
+                    loaded = false;
+                    VirtuosoConfig::default()
+                }
+            };
+
+        if !loaded {
+            config.write_config();
+        }
+
+        config
+    }
+
+    pub fn write_config(&self) {
+        let toml_str: String = toml::to_string(&self).expect("Failed to serialize config");
+        std::fs::write(Self::DEFAULT_PATH, toml_str)
+            .expect("Failed to write output.toml");
     }
 }

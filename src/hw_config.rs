@@ -11,6 +11,7 @@ pub enum Resolution {
     Res1920X360,
 }
 
+#[cfg(feature = "slint_frontend")]
 impl std::fmt::Display for Resolution {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -22,6 +23,7 @@ impl std::fmt::Display for Resolution {
     }
 }
 
+#[cfg(feature = "slint_frontend")]
 impl Resolution {
     pub fn to_config_dir(&self) -> String {
         match self {

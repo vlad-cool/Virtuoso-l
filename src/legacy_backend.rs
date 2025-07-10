@@ -36,21 +36,22 @@ impl modules::VirtuosoModule for LegacyBackend {
     fn run(&mut self) {
         let (tx, rx) = mpsc::channel::<InputData>();
 
+        let tx_clone: mpsc::Sender<InputData> = tx.clone();
         let logger_clone: Logger = self.logger.clone();
-        let tx_cloned: mpsc::Sender<InputData> = tx.clone();
         thread::spawn(move || {
-            uart_handler(tx_cloned, logger_clone);
+            uart_handler(tx_clone, logger_clone);
         });
 
-        let tx_cloned: mpsc::Sender<InputData> = tx.clone();
+        let tx_clone: mpsc::Sender<InputData> = tx.clone();
+        let logger_clone: Logger = self.logger.clone();
         thread::spawn(move || {
-            pins_handler(tx_cloned);
+            pins_handler(tx_clone, logger_clone);
         });
 
+        let tx_clone: mpsc::Sender<InputData> = tx.clone();
         let logger_clone: Logger = self.logger.clone();
-        let tx_cloned: mpsc::Sender<InputData> = tx.clone();
         thread::spawn(move || {
-            rc5_receiever(tx_cloned, logger_clone);
+            rc5_receiever(tx_clone, logger_clone);
         });
 
         loop {
@@ -170,7 +171,8 @@ impl LegacyBackend {
     }
 
     fn apply_pins_data(&mut self, msg: PinsData) {
-        let mut match_info_data = self.match_info.lock().unwrap();
+        let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
+            self.match_info.lock().unwrap();
 
         match_info_data.weapon = match msg.weapon {
             3 => match_info::Weapon::Epee,
@@ -192,7 +194,7 @@ impl LegacyBackend {
             self.rc5_address = msg.address;
             let mut config = self.config.lock().unwrap();
             config.legacy_backend.rc5_address = msg.address;
-            config.write_config(None);
+            config.write_config();
         } else if msg.new && msg.address == self.rc5_address {
             match msg.command {
                 IrCommands::LeftPassiveCard => {
@@ -521,7 +523,6 @@ fn uart_handler(tx: mpsc::Sender<InputData>, logger: Logger) {
                 thread::sleep(Duration::from_millis(100));
             }
             Ok(byte_val) => {
-                println!("Got byte {:#010b}", byte_val);
                 if byte_val >> 5 == 0 {
                     ind = 0;
                 }
@@ -723,14 +724,17 @@ struct PinsData {
     weapon_select_btn: bool,
 }
 
-fn pins_handler(tx: mpsc::Sender<InputData>) {
+fn pins_handler(tx: mpsc::Sender<InputData>, logger: Logger) {
     let mut chips: Vec<gpio_cdev::Chip> = Vec::<gpio_cdev::Chip>::new();
 
     for path in &["/dev/gpiochip0", "/dev/gpiochip1"] {
-        if let Ok(chip) = gpio_cdev::Chip::new(path) {
-            chips.push(chip);
-        } else {
-            println!("Failed to open chip {}", path);
+        match gpio_cdev::Chip::new(path) {
+            Ok(chip) => {
+                chips.push(chip);
+            },
+            Err(err) => {
+                logger.critical_error(format!("Failed to open chip {path}, error: {err}"));
+            }
         }
     }
 
