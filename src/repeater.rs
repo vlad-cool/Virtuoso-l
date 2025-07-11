@@ -11,15 +11,22 @@ use crate::match_info::MatchInfo;
 use crate::modules;
 use crate::virtuoso_logger::Logger;
 
-const RECV_TIMEOUT: Duration = Duration::from_millis(1);
+const RECV_TIMEOUT: Duration = Duration::from_micros(100);
 const RESERVED_CAPACITY: usize = 256;
+
+const HEADER_BYTE: u8 = 0xA5;
+const MAGIC_BYTE: u8 = 0xFA;
+const END_BYTE: u8 = 0xFB;
+const END_BYTE_REPLACEMENT: u8 = 0xFC;
+const SKIP_BYTE: u8 = 0x01;
 
 pub struct Repeater {
     match_info: Arc<Mutex<MatchInfo>>,
     logger: Logger,
     port: serial::unix::TTYPort,
     hw_config: HardwareConfig,
-    receive_buffer: Vec<u8>,
+    raw_buffer: Vec<u8>,
+    encoded_buffer: Vec<u8>,
 }
 
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
@@ -35,6 +42,7 @@ enum RecvError {
     DeserializationError,
     Timeout,
     BadChecksum,
+    BadStream,
 }
 
 impl modules::VirtuosoModule for Repeater {
@@ -92,121 +100,107 @@ impl Repeater {
             logger,
             port,
             hw_config,
-            receive_buffer: Vec::with_capacity(RESERVED_CAPACITY),
+            raw_buffer: Vec::with_capacity(RESERVED_CAPACITY),
+            encoded_buffer: Vec::with_capacity(RESERVED_CAPACITY),
         })
     }
 
-    fn calc_checksum(data: &Vec<u8>) -> [u8; 4] {
+    fn calc_checksum(data: &[u8]) -> [u8; 4] {
         let crc: crc::Crc<u32> = crc::Crc::<u32>::new(&crc::CRC_32_ISCSI);
         let mut digest: crc::Digest<'_, u32> = crc.digest();
         digest.update(data);
         digest.finalize().to_le_bytes()
     }
 
+    fn decode_buffer(&mut self) {
+        self.raw_buffer.clear();
+
+        let mut i: usize = 0;
+
+        while i < self.encoded_buffer.len() {
+            let byte: u8 = self.encoded_buffer[i];
+
+            match byte {
+                MAGIC_BYTE => {
+                    i += 1;
+                    let byte: u8 = self.encoded_buffer[i];
+                    match byte {
+                        END_BYTE_REPLACEMENT => {
+                            self.raw_buffer.push(END_BYTE);
+                        }
+                        byte => {
+                            self.raw_buffer.push(byte);
+                        }
+                    }
+                }
+                // END_BYTE => {
+                //     break;
+                // }
+                SKIP_BYTE => {}
+                byte => {
+                    self.raw_buffer.push(byte);
+                }
+            }
+
+            i += 1;
+        }
+    }
+
     fn receive(&mut self) -> Result<Message, RecvError> {
         let mut byte: [u8; 1] = [0];
-        match self.port.read_exact(&mut byte) {
-            Ok(_) => {}
-            Err(err) => {
-                if err.kind() == std::io::ErrorKind::TimedOut {
-                    return Err(RecvError::Timeout);
-                } else {
-                    self.logger
-                        .error(format!("Failed to receive checksum, error: {err:?}"));
-                    return Err(RecvError::SerialError);
-                }
-            }
-        };
-        if byte[0] != 0xAA {
-            return Err(RecvError::BadHeader);
-        }
-        let mut byte: [u8; 1] = [0];
-        match self.port.read_exact(&mut byte) {
-            Ok(_) => {}
-            Err(err) => {
-                if err.kind() == std::io::ErrorKind::TimedOut {
-                    return Err(RecvError::Timeout);
-                } else {
-                    self.logger
-                        .error(format!("Failed to receive checksum, error: {err:?}"));
-                    return Err(RecvError::SerialError);
-                }
-            }
-        };
-        if byte[0] != 0x55 {
-            return Err(RecvError::BadHeader);
-        }
 
-        let mut checksum: [u8; 4] = [0; 4];
-        match self.port.read_exact(&mut checksum) {
-            Ok(_) => {}
-            Err(err) => {
-                if err.kind() == std::io::ErrorKind::TimedOut {
-                    return Err(RecvError::Timeout);
-                } else {
-                    self.logger
-                        .error(format!("Failed to receive checksum, error: {err:?}"));
-                    return Err(RecvError::SerialError);
-                }
-            }
-        };
+        self.encoded_buffer.clear();
 
-        self.receive_buffer.clear();
-
-        self.logger.debug(format!("Got checksum: {:?}", checksum));
-
-        let mut i: i32 = 0;
         loop {
-            let mut byte: [u8; 1] = [1];
-
             match self.port.read_exact(&mut byte) {
-                Ok(_) => {}
+                Ok(_) => {
+                    self.encoded_buffer.push(byte[0]);
+                }
                 Err(err) => {
                     if err.kind() == std::io::ErrorKind::TimedOut {
+                        return Err(RecvError::Timeout);
                     } else {
                         self.logger
-                            .error(format!("Failed to receive checksum, error: {err:?}"));
+                            .error(format!("Failed to receive data, error: {err:?}"));
                         return Err(RecvError::SerialError);
                     }
                 }
             };
 
-            let byte: u8 = byte[0];
-
-            if i % 2 == 0 {
-
-                self.receive_buffer.push(byte);
-            }
-
-            i += 1;
-
-            if byte == 0 {
+            if *self.encoded_buffer.last().unwrap() == END_BYTE {
                 break;
             }
         }
 
-        // self.receive_buffer.clone_from(&self.receive_buffer.iter()
-        // .enumerate()
-        // .filter(|&(index, _)| (index + 1 - 27) % 33 != 0)
-        // .map(|(_, &value)| value)
-        // .collect());
-
-        self.logger.debug(format!(
-            "Got data with length {}",
-            self.receive_buffer.len()
-        ));
         self.logger
-            .debug(format!("Got data {:02X?}", self.receive_buffer));
+            .debug(format!("Got raw data: {:02X?}", self.encoded_buffer));
 
-        if u32::from_le_bytes(Self::calc_checksum(&self.receive_buffer))
-            != u32::from_le_bytes(checksum)
-        {
+        self.decode_buffer();
+
+        if self.raw_buffer.len() <= 6 {
+            return Err(RecvError::BadStream);
+        }
+
+        if self.raw_buffer[0] != HEADER_BYTE {
+            return Err(RecvError::BadHeader);
+        }
+
+        let checksum: [u8; 4] = self.raw_buffer[1..5].try_into().unwrap();
+        let data: &[u8] = &self.raw_buffer[5..];
+
+        self.logger.debug(format!("Got checksum: {:?}", checksum));
+        self.logger.debug(format!(
+            "Got data, length: {}, data: {:02X?}",
+            data.len(),
+            data
+        ));
+
+        if u32::from_le_bytes(Self::calc_checksum(&data)) != u32::from_le_bytes(checksum) {
             self.logger.error("Checksum mismatch".to_string());
             return Err(RecvError::BadChecksum);
         }
 
-        let res: Result<Message, postcard::Error> =
-            postcard::from_bytes_cobs(&mut self.receive_buffer);
+        let res: Result<Message, postcard::Error> = postcard::from_bytes(data);
 
         match res {
             Ok(res) => Ok(res),
@@ -237,6 +231,10 @@ impl Repeater {
                     self.logger
                         .error("Receiver got message with bad checksum".to_string());
                 }
+                Err(RecvError::BadStream) => {
+                    self.logger
+                        .error("Receiver did not get enough data to decode".to_string());
+                }
                 Err(RecvError::DeserializationError) => {
                     self.logger.error("Receiver got bad message".to_string());
                 }
@@ -251,80 +249,67 @@ impl Repeater {
         }
     }
 
+    fn encode_buffer(&mut self) {
+        self.encoded_buffer.clear();
+        for byte in &self.raw_buffer {
+            match *byte {
+                MAGIC_BYTE => {
+                    self.encoded_buffer.push(MAGIC_BYTE);
+                    self.encoded_buffer.push(MAGIC_BYTE);
+                }
+                SKIP_BYTE => {
+                    self.encoded_buffer.push(MAGIC_BYTE);
+                    self.encoded_buffer.push(SKIP_BYTE);
+                }
+                END_BYTE => {
+                    self.encoded_buffer.push(MAGIC_BYTE);
+                    self.encoded_buffer.push(END_BYTE_REPLACEMENT);
+                }
+                byte => {
+                    self.encoded_buffer.push(byte);
+                }
+            }
+        }
+        self.encoded_buffer.push(END_BYTE);
+    }
+
     fn transmit(&mut self) -> Result<(), ()> {
-        let match_info: &MatchInfo = &*self.match_info.lock().unwrap();
-
-        let serialized_data: Result<Vec<u8>, postcard::Error> =
-            postcard::to_stdvec_cobs(&Message::MatchInfo(match_info.clone()));
-
-        self.logger.debug("Data serialized".to_string());
-
-        match serialized_data {
-            Ok(buf) => {
+        let match_info: MatchInfo = self.match_info.lock().unwrap().clone();
+        let serialized_data: Vec<u8> = match postcard::to_stdvec(&Message::MatchInfo(match_info)) {
+            Ok(data) => data,
+            Err(err) => {
                 self.logger
-                    .debug("Data serialized successfully".to_string());
+                    .error(format!("Failed to serialize message, error: {err}"));
+                return Err(());
+            }
+        };
 
-                match self.port.write(&[0xAA, 0x55]) {
-                    Ok(n) => {
-                        self.logger.debug(format!("Transmitted {n} bytes"));
-                    }
-                    Err(err) => {
-                        self.logger
-                            .error(format!("Failed to transmit, error: {err}"));
-                        return Err(());
-                    }
-                }
+        let checksum: [u8; 4] = Self::calc_checksum(&serialized_data);
 
-                let checksum: [u8; 4] = Self::calc_checksum(&buf);
+        self.raw_buffer.clear();
+        self.raw_buffer.push(HEADER_BYTE);
+        self.raw_buffer.extend_from_slice(&checksum);
+        self.raw_buffer.extend(serialized_data);
 
-                self.logger.debug(format!("Sent checksum: {:?}", checksum));
+        self.encode_buffer();
 
-                match self.port.write(&checksum) {
-                    Ok(n) => {
-                        self.logger.debug(format!("Transmitted {n} bytes"));
-                    }
-                    Err(err) => {
-                        self.logger
-                            .error(format!("Failed to transmit, error: {err}"));
-                        return Err(());
-                    }
-                }
+        self.logger.debug(format!(
+            "Encoded buffer {:02X?} ready to transmit",
+            self.encoded_buffer
+        ));
 
-                for byte in &buf {
-                    match self.port.write(&[*byte]) {
-                        Ok(n) => {
-                            // self.logger.debug(format!("Transmitted {n} bytes"));
-                            // self.logger.debug(format!("Sent data {:02X?}", buf));
-                            thread::sleep(Duration::from_millis(2));
-                        }
-                        Err(err) => {
-                            self.logger
-                                .error(format!("Failed to transmit, error: {err}"));
-                            return Err(())
-                        }
-                    }
-                }
-                self.logger.debug(format!("Sent data {:02X?}", buf));
-                Ok(())
-                // match self.port.write(buf.as_slice()) {
-                //     Ok(n) => {
-                //         self.logger.debug(format!("Transmitted {n} bytes"));
-                //         self.logger.debug(format!("Sent data {:02X?}", buf));
-                //         Ok(())
-                //     }
-                //     Err(err) => {
-                //         self.logger
-                //             .error(format!("Failed to transmit, error: {err}"));
-                //         Err(())
-                //     }
-                // }
+        match self.port.write(&self.encoded_buffer) {
+            Ok(n) => {
+                self.logger.debug(format!("Transmitted {n} bytes"));
             }
             Err(err) => {
                 self.logger
-                    .error(format!("Failed to serialize data, error: {err}"));
-                Err(())
+                    .error(format!("Failed to transmit, error: {err}"));
+                return Err(());
             }
         }
+
+        Ok(())
     }
 
     fn run_transmitter(&mut self) {
