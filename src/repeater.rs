@@ -11,7 +11,7 @@ use crate::match_info::MatchInfo;
 use crate::modules;
 use crate::virtuoso_logger::Logger;
 
-const RECV_TIMEOUT: Duration = Duration::from_micros(100);
+const RECV_TIMEOUT: Duration = Duration::from_micros(1000);
 const RESERVED_CAPACITY: usize = 256;
 
 const HEADER_BYTE: u8 = 0xA5;
@@ -47,10 +47,6 @@ enum RecvError {
 
 impl modules::VirtuosoModule for Repeater {
     fn run(&mut self) {
-        self.logger.debug(format!(
-            "Running repeater in {:?} mode",
-            self.hw_config.repeater.role
-        ));
         match self.hw_config.repeater.role {
             RepeaterRole::Receiver => self.run_receiver(),
             RepeaterRole::Transmitter => self.run_transmitter(),
@@ -133,9 +129,9 @@ impl Repeater {
                         }
                     }
                 }
-                // END_BYTE => {
-                //     break;
-                // }
+                END_BYTE => {
+                    break;
+                }
                 SKIP_BYTE => {}
                 byte => {
                     self.raw_buffer.push(byte);
@@ -147,17 +143,19 @@ impl Repeater {
     }
 
     fn receive(&mut self) -> Result<Message, RecvError> {
-        let mut byte: [u8; 1] = [0];
+        let mut byte: [u8; 32] = [0; 32];
 
-        self.encoded_buffer.clear();
+        // self.encoded_buffer.clear();
 
         loop {
-            match self.port.read_exact(&mut byte) {
-                Ok(_) => {
-                    self.encoded_buffer.push(byte[0]);
+            match self.port.read(&mut byte) {
+                Ok(n) => {
+                    self.encoded_buffer.extend_from_slice(&byte[0..n]);
+                    // self.logger.debug(format!("Read {n} bytes {:02X?}", &byte));
                 }
                 Err(err) => {
                     if err.kind() == std::io::ErrorKind::TimedOut {
+                        // thread::sleep(Duration::from_millis(1));
                         return Err(RecvError::Timeout);
                     } else {
                         self.logger
@@ -173,9 +171,14 @@ impl Repeater {
         }
 
         self.logger
-            .debug(format!("Got raw data: {:02X?}", self.encoded_buffer));
+            .debug(format!("R Encoded buffer {:02X?}", self.encoded_buffer));
 
         self.decode_buffer();
+
+        self.logger
+            .debug(format!("R Raw buffer {:02X?}", self.raw_buffer));
+
+        self.encoded_buffer.clear();
 
         if self.raw_buffer.len() <= 6 {
             return Err(RecvError::BadStream);
@@ -188,12 +191,16 @@ impl Repeater {
         let checksum: [u8; 4] = self.raw_buffer[1..5].try_into().unwrap();
         let data: &[u8] = &self.raw_buffer[5..];
 
-        self.logger.debug(format!("Got checksum: {:?}", checksum));
-        self.logger.debug(format!(
-            "Got data, length: {}, data: {:02X?}",
-            data.len(),
-            data
-        ));
+        self.logger.debug(format!("R checksum {:02X?}", checksum));
+        self.logger
+            .debug(format!("R data {:02X?}", data));
+
+        // self.logger.debug(format!("Got checksum: {:?}", checksum));
+        // self.logger.debug(format!(
+        //     "Got data, length: {}, data: {:02X?}",
+        //     data.len(),
+        //     data
+        // ));
 
         if u32::from_le_bytes(Self::calc_checksum(&data)) != u32::from_le_bytes(checksum) {
             self.logger.error("Checksum mismatch".to_string());
@@ -286,17 +293,22 @@ impl Repeater {
 
         let checksum: [u8; 4] = Self::calc_checksum(&serialized_data);
 
+        self.logger.debug(format!("T checksum {:02X?}", checksum));
+        self.logger
+            .debug(format!("T data {:02X?}", serialized_data));
+
         self.raw_buffer.clear();
         self.raw_buffer.push(HEADER_BYTE);
         self.raw_buffer.extend_from_slice(&checksum);
         self.raw_buffer.extend(serialized_data);
 
+        self.logger
+            .debug(format!("T Raw buffer {:02X?}", self.raw_buffer));
+
         self.encode_buffer();
 
-        self.logger.debug(format!(
-            "Encoded buffer {:02X?} ready to transmit",
-            self.encoded_buffer
-        ));
+        self.logger
+            .debug(format!("T Encoded buffer {:02X?}", self.encoded_buffer));
 
         match self.port.write(&self.encoded_buffer) {
             Ok(n) => {

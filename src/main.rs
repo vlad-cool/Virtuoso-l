@@ -40,6 +40,15 @@ fn main() {
     #[cfg(feature = "video_recorder")]
     compile_error!("Video recorder feature is not implemented yet");
 
+    /*
+    TODO Properly swap sides
+    TODO Cyrano softer error
+    TODO Cyrano
+    TODO Repeater ACK / NAK 
+    TODO Repeater auto role
+    TODO Repeater reorder receiver
+     */
+
     let config: Arc<Mutex<VirtuosoConfig>> =
         Arc::new(Mutex::new(VirtuosoConfig::load_config()));
 

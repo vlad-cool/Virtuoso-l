@@ -119,10 +119,10 @@ pub const {}: Layout = Layout {{\n",
     }},
 ",
                             node.name,
-                            node.x as i32 - 100,
-                            node.y as i32 - 100,
-                            node.width as i32 + 200,
-                            node.height as i32 + 200,
+                            node.x as i32 - 200,
+                            node.y as i32 - 200,
+                            node.width as i32 + 400,
+                            node.height as i32 + 400,
                             position_data
                                 .clone()
                                 .expect("cargo::error=No position data in text node")
