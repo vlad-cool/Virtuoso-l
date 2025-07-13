@@ -156,7 +156,8 @@ impl Repeater {
                 Err(err) => {
                     if err.kind() == std::io::ErrorKind::TimedOut {
                         // thread::sleep(Duration::from_millis(1));
-                        return Err(RecvError::Timeout);
+                        continue;
+                        // return Err(RecvError::Timeout);
                     } else {
                         self.logger
                             .error(format!("Failed to receive data, error: {err:?}"));
