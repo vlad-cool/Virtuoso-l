@@ -1,0 +1,10 @@
+seat seat0 hide_cursor 0
+
+bar {
+    mode invisible
+    position top
+}
+
+default_border none
+
+exec /home/pi/Virtuoso/app/kiosk-wrapper.sh
