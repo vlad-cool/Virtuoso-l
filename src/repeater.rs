@@ -14,6 +14,8 @@ use crate::virtuoso_logger::Logger;
 const RECV_TIMEOUT: Duration = Duration::from_micros(1000);
 const RESERVED_CAPACITY: usize = 256;
 
+const RECIEVE_ATTEMPTS: u32 = 20;
+
 const HEADER_BYTE: u8 = 0xA5;
 const MAGIC_BYTE: u8 = 0xFA;
 const END_BYTE: u8 = 0xFB;
@@ -145,19 +147,23 @@ impl Repeater {
     fn receive(&mut self) -> Result<Message, RecvError> {
         let mut byte: [u8; 32] = [0; 32];
 
-        // self.encoded_buffer.clear();
+        self.encoded_buffer.clear();
+
+        let mut receive_attempts = 0;
 
         loop {
             match self.port.read(&mut byte) {
                 Ok(n) => {
                     self.encoded_buffer.extend_from_slice(&byte[0..n]);
-                    // self.logger.debug(format!("Read {n} bytes {:02X?}", &byte));
+                    receive_attempts = 0;
                 }
                 Err(err) => {
                     if err.kind() == std::io::ErrorKind::TimedOut {
-                        // thread::sleep(Duration::from_millis(1));
+                        if receive_attempts == RECIEVE_ATTEMPTS {
+                            return Err(RecvError::Timeout);
+                        }
+                        receive_attempts += 1;
                         continue;
-                        // return Err(RecvError::Timeout);
                     } else {
                         self.logger
                             .error(format!("Failed to receive data, error: {err:?}"));
@@ -195,13 +201,6 @@ impl Repeater {
         self.logger.debug(format!("R checksum {:02X?}", checksum));
         self.logger
             .debug(format!("R data {:02X?}", data));
-
-        // self.logger.debug(format!("Got checksum: {:?}", checksum));
-        // self.logger.debug(format!(
-        //     "Got data, length: {}, data: {:02X?}",
-        //     data.len(),
-        //     data
-        // ));
 
         if u32::from_le_bytes(Self::calc_checksum(&data)) != u32::from_le_bytes(checksum) {
             self.logger.error("Checksum mismatch".to_string());
@@ -250,8 +249,8 @@ impl Repeater {
                     self.logger.error("Receiver cannot get message".to_string());
                 }
                 Err(RecvError::Timeout) => {
-                    // self.logger
-                    //     .error("Receiver did not get message due to timeout".to_string());
+                    self.logger
+                        .error("Receiver did not get message due to timeout".to_string());
                 }
             }
         }

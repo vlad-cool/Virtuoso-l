@@ -2,6 +2,137 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::time::{Duration, Instant};
 
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
+pub enum WarningCard {
+    None,
+    Yellow(u8),
+    Red(u8),
+    Black(u8),
+}
+
+impl WarningCard {
+    const NUM_YELLOW: u8 = 1;
+    const NUM_RED: u8 = 15;
+    const NUM_BLACK: u8 = 1;
+
+    pub fn inc(&mut self) {
+        *self = match self {
+            Self::None => Self::Yellow(1),
+            Self::Yellow(Self::NUM_YELLOW) => Self::Red(1),
+            Self::Red(Self::NUM_RED) => Self::Black(1),
+            Self::Black(Self::NUM_BLACK) => Self::None,
+            Self::Yellow(n) => Self::Yellow(*n + 1),
+            Self::Red(n) => Self::Red(*n + 1),
+            Self::Black(n) => Self::Black(*n + 1),
+        };
+    }
+
+    pub fn to_i32(&self) -> i32 {
+        match self {
+            Self::None => 0,
+            Self::Yellow(n) => (1 + *n).into(),
+            Self::Red(n) => (1 + Self::NUM_YELLOW + *n).into(),
+            Self::Black(n) => (1 + Self::NUM_YELLOW + Self::NUM_RED + *n).into(),
+        }
+    }
+
+    pub fn to_u32(&self) -> u32 {
+        match self {
+            Self::None => 0,
+            Self::Yellow(n) => (1 + *n).into(),
+            Self::Red(n) => (1 + Self::NUM_YELLOW + *n).into(),
+            Self::Black(n) => (1 + Self::NUM_YELLOW + Self::NUM_RED + *n).into(),
+        }
+    }
+
+    pub fn has_yellow(&self) -> u32 {
+        match self {
+            Self::None => 0,
+            _ => 1,
+        }
+    }
+
+    pub fn num_red(&self) -> u32 {
+        match self {
+            Self::None => 0,
+            Self::Yellow(_) => 0,
+            _ => self.to_u32() - 1 - Self::NUM_YELLOW as u32,
+        }
+    }
+}
+
+impl std::fmt::Display for WarningCard {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::None => write!(f, "None"),
+            Self::Yellow(1) => write!(f, "Yellow"),
+            Self::Yellow(n) => write!(f, "Yellow x {n}"),
+            Self::Red(1) => write!(f, "Red"),
+            Self::Red(n) => write!(f, "Red x {n}"),
+            Self::Black(1) => write!(f, "Black"),
+            Self::Black(n) => write!(f, "Black x {n}"),
+        }
+    }
+}
+
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
+pub enum PassiveCard {
+    None,
+    Yellow(u8),
+    Red(u8),
+    Black(u8),
+}
+
+impl PassiveCard {
+    const NUM_YELLOW: u8 = 1;
+    const NUM_RED: u8 = 2;
+    const NUM_BLACK: u8 = 2;
+
+    pub fn inc(&mut self) {
+        *self = match self {
+            Self::None => Self::Yellow(1),
+            Self::Yellow(Self::NUM_YELLOW) => Self::Red(1),
+            Self::Red(Self::NUM_RED) => Self::Black(1),
+            Self::Black(Self::NUM_BLACK) => Self::None,
+            Self::Yellow(n) => Self::Yellow(*n + 1),
+            Self::Red(n) => Self::Red(*n + 1),
+            Self::Black(n) => Self::Black(*n + 1),
+        };
+    }
+
+    pub fn to_i32(&self) -> i32 {
+        match self {
+            Self::None => 0,
+            Self::Yellow(n) => (1 + *n).into(),
+            Self::Red(n) => (1 + Self::NUM_YELLOW + *n).into(),
+            Self::Black(n) => (1 + Self::NUM_YELLOW + Self::NUM_RED + *n).into(),
+        }
+    }
+
+    pub fn to_u32(&self) -> u32 {
+        match self {
+            Self::None => 0,
+            Self::Yellow(n) => (1 + *n).into(),
+            Self::Red(n) => (1 + Self::NUM_YELLOW + *n).into(),
+            Self::Black(n) => (1 + Self::NUM_YELLOW + Self::NUM_RED + *n).into(),
+        }
+    }
+}
+
+impl std::fmt::Display for PassiveCard {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::None => write!(f, "None"),
+            Self::Yellow(1) => write!(f, "Yellow"),
+            Self::Yellow(n) => write!(f, "Yellow x {n}"),
+            Self::Red(1) => write!(f, "Red"),
+            Self::Red(n) => write!(f, "Red x {n}"),
+            Self::Black(1) => write!(f, "Black"),
+            Self::Black(n) => write!(f, "Black x {n}"),
+        }
+    }
+}
+
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum Priority {
     Left,
     None,
@@ -373,13 +504,13 @@ pub struct FencerInfo {
     pub nation: String, // 3
     pub score: u32,
     pub status: FencerStatus,
-    pub yellow_card: u32,
-    pub red_card: u32,
     pub color_light: bool,
     pub white_light: bool,
     pub medical_interventions: u32,
     pub reserve_introduction: bool,
-    pub p_card: u32,
+
+    pub warning_card: WarningCard,
+    pub passive_card: PassiveCard,
 }
 
 impl FencerInfo {
@@ -390,13 +521,12 @@ impl FencerInfo {
             nation: "".to_string(),
             score: 0,
             status: FencerStatus::Undefined,
-            yellow_card: 0,
-            red_card: 0,
             color_light: false,
             white_light: false,
             medical_interventions: 0,
             reserve_introduction: false,
-            p_card: 0,
+            warning_card: WarningCard::None,
+            passive_card: PassiveCard::None,
         }
     }
 }
@@ -417,8 +547,6 @@ pub struct MatchInfo {
         deserialize_with = "deserialize_duration_to_instant"
     )]
     pub priority_updated: Instant,
-    // pub passive_indicator: u32,
-    // pub passive_counter: u32,
     pub auto_score_on: bool,
     pub auto_timer_on: bool,
 

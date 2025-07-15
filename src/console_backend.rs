@@ -26,13 +26,11 @@ enum Field {
     RightWhiteLed,
     RightColorLed,
 
-    LeftCaution,
-    LeftPenalty,
-    RightCaution,
-    RightPenalty,
+    LeftWarning,
+    RightWarning,
 
-    LeftPCard,
-    RightPCard,
+    LeftPassive,
+    RightPassive,
 
     AutoScore,
     AutoTimer,
@@ -62,13 +60,11 @@ impl std::fmt::Display for Field {
             Field::RightWhiteLed => write!(f, "Right White Led"),
             Field::RightColorLed => write!(f, "Right Color Led"),
 
-            Field::LeftCaution => write!(f, "Left Caution"),
-            Field::LeftPenalty => write!(f, "Left Penalty"),
-            Field::RightCaution => write!(f, "Right Caution"),
-            Field::RightPenalty => write!(f, "Right Penalty"),
-
-            Field::LeftPCard => write!(f, "Left PCard"),
-            Field::RightPCard => write!(f, "Right PCard"),
+            Field::LeftWarning => write!(f, "Left Caution"),
+            Field::RightWarning => write!(f, "Right Caution"),
+            
+            Field::LeftPassive => write!(f, "Left PCard"),
+            Field::RightPassive => write!(f, "Right PCard"),
 
             Field::AutoScore => write!(f, "Auto Score"),
             Field::AutoTimer => write!(f, "Auto Timer"),
@@ -107,13 +103,11 @@ fn parse_field(input: &str) -> Field {
         "rightwhiteled" => Field::RightWhiteLed,
         "rightcolorled" => Field::RightColorLed,
 
-        "leftcaution" => Field::LeftCaution,
-        "leftpenalty" => Field::LeftPenalty,
-        "rightcaution" => Field::RightCaution,
-        "rightpenalty" => Field::RightPenalty,
-
-        "leftpcard" => Field::LeftPCard,
-        "rightpcard" => Field::RightPCard,
+        "leftwarning" => Field::LeftWarning,
+        "rightwarning" => Field::RightWarning,
+        
+        "leftpcard" => Field::LeftPassive,
+        "rightpcard" => Field::RightPassive,
 
         "passivecounter" => Field::PassiveCounter,
         "passiveindicator" => Field::PassiveIndicator,
@@ -185,13 +179,16 @@ impl ConsoleBackend {
             Field::RightColorLed => match_info_data.right_fencer.color_light = value > 0,
             Field::RightWhiteLed => match_info_data.right_fencer.white_light = value > 0,
 
-            Field::LeftCaution => match_info_data.left_fencer.yellow_card = value,
-            Field::LeftPenalty => match_info_data.left_fencer.red_card = value,
-            Field::RightCaution => match_info_data.right_fencer.yellow_card = value,
-            Field::RightPenalty => match_info_data.right_fencer.red_card = value,
+            // Field::LeftCaution => match_info_data.left_fencer.yellow_card = value,
+            // Field::LeftPenalty => match_info_data.left_fencer.red_card = value,
+            // Field::RightCaution => match_info_data.right_fencer.yellow_card = value,
+            // Field::RightPenalty => match_info_data.right_fencer.red_card = value,
 
-            Field::LeftPCard => match_info_data.left_fencer.p_card = value,
-            Field::RightPCard => match_info_data.right_fencer.p_card = value,
+            Field::LeftWarning => println!("Not implemented yet"),
+            Field::RightWarning => println!("Not implemented yet"),
+
+            Field::LeftPassive => println!("Not implemented yet"),
+            Field::RightPassive => println!("Not implemented yet"),
 
             Field::AutoScore => match_info_data.auto_score_on = value > 0,
             Field::AutoTimer => match_info_data.auto_timer_on = value > 0,
@@ -230,13 +227,11 @@ impl ConsoleBackend {
             Field::RightColorLed => println!("{}", match_info_data.right_fencer.color_light),
             Field::RightWhiteLed => println!("{}", match_info_data.right_fencer.white_light),
 
-            Field::LeftCaution => println!("{}", match_info_data.left_fencer.yellow_card),
-            Field::LeftPenalty => println!("{}", match_info_data.left_fencer.red_card),
-            Field::RightCaution => println!("{}", match_info_data.right_fencer.yellow_card),
-            Field::RightPenalty => println!("{}", match_info_data.right_fencer.red_card),
+            Field::LeftWarning => println!("{}", match_info_data.left_fencer.warning_card),
+            Field::RightWarning => println!("{}", match_info_data.right_fencer.warning_card),
 
-            Field::LeftPCard => println!("{}", match_info_data.left_fencer.p_card),
-            Field::RightPCard => println!("{}", match_info_data.right_fencer.p_card),
+            Field::LeftPassive => println!("{}", match_info_data.left_fencer.passive_card),
+            Field::RightPassive => println!("{}", match_info_data.right_fencer.passive_card),
 
             Field::AutoScore => println!("{}", match_info_data.auto_score_on),
             Field::AutoTimer => println!("{}", match_info_data.auto_timer_on),

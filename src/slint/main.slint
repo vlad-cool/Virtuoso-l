@@ -72,6 +72,7 @@ export struct Layout  {
 }
 
 export global Palette {
+    out property <brush> transparent: #00000000;
     out property <brush> background: #000000;
     out property <brush> score_left: #e31e24;
     out property <brush> score_right: #009846;
@@ -108,6 +109,11 @@ export global Palette {
     out property <brush> auto_status_text_light: #dfdfdf;
     out property <brush> auto_status_text_dark: #4c4c4c;
     out property <brush> recording: #ff0000;
+    out property <brush> pcard_none: #4c4c4c;
+    out property <brush> pcard_yellow: #cccc00;
+    out property <brush> pcard_red: #e31e24;
+    out property <brush> pcard_black: #000000;
+    out property <brush> pcard_black_frame: #ffffff;
 }
 
 export component Virtuoso inherits Window {
@@ -140,10 +146,10 @@ export component Virtuoso inherits Window {
     in property <bool> right_color_led_on;
     in property <bool> right_white_led_on;
 
-    in property <bool> left_bot_pcard;
-    in property <bool> left_top_pcard;
-    in property <bool> right_bot_pcard;
-    in property <bool> right_top_pcard;
+    in property <int> left_pcard_type;
+    in property <int> left_pcard_number;
+    in property <int> right_pcard_type;
+    in property <int> right_pcard_number;
 
     in property <bool> is_online;
 
@@ -328,7 +334,7 @@ export component Virtuoso inherits Window {
         vertical-alignment: center;
         color: timer_running ? (last_ten_seconds ? Palette.timer_blue : Palette.timer_white) : Palette.timer_orange;
     }
-    
+
     Text {
         x: 1px * layout.timer-text.x;
         y: 1px * layout.timer-text.y;
@@ -476,7 +482,10 @@ export component Virtuoso inherits Window {
         height: 1px * layout.passive-l-bot-rect.height;
         border-radius: 1px * layout.passive-l-bot-rect.radius;
 
-        background: left_bot_pcard ? Palette.passive_yellow : Palette.passive_dark_yellow;
+        // border-color: left_pcard_type != 3 ? Palette.transparent : Palette.pcard_black_frame;
+        border-width: 2px;
+
+        background: left_pcard_type == 0 ? Palette.pcard_none : left_pcard_type == 1 ? Palette.pcard_yellow : left_pcard_type == 2 ? Palette.pcard_red : Palette.pcard_black;
     }
 
     Text {
@@ -485,10 +494,10 @@ export component Virtuoso inherits Window {
         width: 1px * layout.passive-l-bot-text.width;
         height: 1px * layout.passive-l-bot-text.height;
         font-size: 1px * layout.passive-l-bot-text.font_size;
-        text: "Pcard";
+        text: "P" + (left_pcard_number > 1 ? (" x " + left_pcard_number) : "");
         horizontal-alignment: center;
         vertical-alignment: center;
-        color: left_bot_pcard ? Palette.passive_text_light : Palette.passive_text_dark;
+        color: left_pcard_type != 3 ? Palette.background : Palette.pcard_black_frame;
     }
 
     Rectangle {
@@ -498,7 +507,7 @@ export component Virtuoso inherits Window {
         height: 1px * layout.passive-l-top-rect.height;
         border-radius: 1px * layout.passive-l-top-rect.radius;
 
-        background: left_top_pcard ? Palette.passive_red : Palette.passive_dark_red;
+        // background: left_top_pcard ? Palette.passive_red : Palette.passive_dark_red;
     }
 
     Text {
@@ -510,7 +519,7 @@ export component Virtuoso inherits Window {
         text: "Pcard";
         horizontal-alignment: center;
         vertical-alignment: center;
-        color: left_top_pcard ? Palette.passive_text_light : Palette.passive_text_dark;
+        // color: left_top_pcard ? Palette.passive_text_light : Palette.passive_text_dark;
     }
 
     Rectangle {
@@ -520,7 +529,7 @@ export component Virtuoso inherits Window {
         height: 1px * layout.passive-r-bot-rect.height;
         border-radius: 1px * layout.passive-r-bot-rect.radius;
 
-        background: right_bot_pcard ? Palette.passive_yellow : Palette.passive_dark_yellow;
+        // background: right_bot_pcard ? Palette.passive_yellow : Palette.passive_dark_yellow;
     }
 
     Text {
@@ -532,7 +541,7 @@ export component Virtuoso inherits Window {
         text: "Pcard";
         horizontal-alignment: center;
         vertical-alignment: center;
-        color: right_bot_pcard ? Palette.passive_text_light : Palette.passive_text_dark;
+        // color: right_bot_pcard ? Palette.passive_text_light : Palette.passive_text_dark;
     }
 
     Rectangle {
@@ -542,7 +551,7 @@ export component Virtuoso inherits Window {
         height: 1px * layout.passive-r-top-rect.height;
         border-radius: 1px * layout.passive-r-top-rect.radius;
 
-        background: right_top_pcard ? Palette.passive_red : Palette.passive_dark_red;
+        // background: right_top_pcard ? Palette.passive_red : Palette.passive_dark_red;
     }
 
     Text {
@@ -554,7 +563,7 @@ export component Virtuoso inherits Window {
         text: "Pcard";
         horizontal-alignment: center;
         vertical-alignment: center;
-        color: right_top_pcard ? Palette.passive_text_light : Palette.passive_text_dark;
+        // color: right_top_pcard ? Palette.passive_text_light : Palette.passive_text_dark;
     }
 
     Text {

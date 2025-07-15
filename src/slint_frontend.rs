@@ -11,6 +11,26 @@ use crate::layouts::*;
 
 const MESSAGE_DISPLAY_TIME: Duration = Duration::from_secs(2);
 
+impl match_info::PassiveCard {
+    fn get_slint_type(&self) -> i32 {
+        match self {
+            match_info::PassiveCard::None => 0,
+            match_info::PassiveCard::Yellow(_) => 1,
+            match_info::PassiveCard::Red(_) => 2,
+            match_info::PassiveCard::Black(_) => 3,
+        }
+    }
+   
+    fn get_card_numbers(&self) -> i32 {
+        match self {
+            match_info::PassiveCard::None => 1,
+            match_info::PassiveCard::Yellow(n) => *n as i32,
+            match_info::PassiveCard::Red(n) => *n as i32,
+            match_info::PassiveCard::Black(n) => *n as i32,
+        }
+    }
+}
+
 pub struct SlintFrontend {
     match_info: Arc<Mutex<match_info::MatchInfo>>,
     hw_config: HardwareConfig,
@@ -121,16 +141,21 @@ fn update_data(
         app.set_right_white_led_on(match_info_data.right_fencer.white_light);
 
         // TODO make actual caution and penalty cards
-        app.set_left_caution(match_info_data.left_fencer.yellow_card > 0);
-        app.set_left_penalty(match_info_data.left_fencer.red_card > 0);
-        app.set_right_caution(match_info_data.right_fencer.yellow_card > 0);
-        app.set_right_penalty(match_info_data.right_fencer.red_card > 0);
+        // app.set_left_caution(match_info_data.left_fencer.yellow_card > 0);
+        // app.set_left_penalty(match_info_data.left_fencer.red_card > 0);
+        // app.set_right_caution(match_info_data.right_fencer.yellow_card > 0);
+        // app.set_right_penalty(match_info_data.right_fencer.red_card > 0);
 
         // TODO make actual passive cards
-        app.set_left_bot_pcard(match_info_data.left_fencer.p_card > 0);
-        app.set_left_top_pcard(match_info_data.left_fencer.p_card > 1);
-        app.set_right_bot_pcard(match_info_data.right_fencer.p_card > 0);
-        app.set_right_top_pcard(match_info_data.right_fencer.p_card > 1);
+        // app.set_left_bot_pcard(match_info_data.left_fencer.p_card > 0);
+        // app.set_left_top_pcard(match_info_data.left_fencer.p_card > 1);
+        // app.set_right_bot_pcard(match_info_data.right_fencer.p_card > 0);
+        // app.set_right_top_pcard(match_info_data.right_fencer.p_card > 1);
+
+        app.set_left_pcard_type(match_info_data.left_fencer.passive_card.get_slint_type());
+        app.set_left_pcard_number(match_info_data.left_fencer.passive_card.get_card_numbers());
+        app.set_right_pcard_type(match_info_data.right_fencer.passive_card.get_slint_type());
+        app.set_right_pcard_number(match_info_data.right_fencer.passive_card.get_card_numbers());
 
         app.set_auto_score_on(match_info_data.auto_score_on);
         app.set_auto_timer_on(match_info_data.auto_timer_on);

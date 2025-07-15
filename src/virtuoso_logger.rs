@@ -53,6 +53,7 @@ pub struct Logger {
     tx: std::sync::mpsc::Sender<LogCommand>,
     log_levels: std::vec::Vec<LogLevel>,
     source: String,
+    debug: std::cell::Cell<bool>,
 }
 
 impl Logger {
@@ -72,8 +73,16 @@ impl Logger {
     }
 
     #[allow(dead_code)]
+    pub fn enable_debug(self) -> Self {
+        self.debug.set(true);
+        self
+    }
+
+    #[allow(dead_code)]
     pub fn debug(&self, message: String) {
-        self.send_log(LogLevel::Debug, message);
+        if self.debug.get() {
+            self.send_log(LogLevel::Debug, message);
+        }
     }
 
     #[allow(dead_code)]
@@ -257,6 +266,7 @@ impl VirtuosoLogger {
             tx: self.tx.clone(),
             log_levels: self.log_levels.clone(),
             source,
+            debug: std::cell::Cell::new(false),
         }
     }
 }

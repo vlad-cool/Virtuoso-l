@@ -8,10 +8,6 @@ use std::sync::{mpsc, Arc, Mutex, MutexGuard};
 use std::thread;
 use std::time::{Duration, Instant};
 
-/*
-TODO Properly swap sides
-*/
-
 use crate::gpio::PinLocation;
 use crate::match_info;
 use crate::modules;
@@ -151,12 +147,12 @@ impl LegacyBackend {
             },
         };
 
-        match_info_data.left_fencer.yellow_card =
-            (msg.yellow_card_left || msg.red_card_left) as u32;
-        match_info_data.left_fencer.red_card = msg.red_card_left as u32;
-        match_info_data.right_fencer.yellow_card =
-            (msg.yellow_card_right || msg.red_card_right) as u32;
-        match_info_data.right_fencer.red_card = msg.red_card_right as u32;
+        // match_info_data.left_fencer.yellow_card =
+        //     (msg.yellow_card_left || msg.red_card_left) as u32;
+        // match_info_data.left_fencer.red_card = msg.red_card_left as u32;
+        // match_info_data.right_fencer.yellow_card =
+        //     (msg.yellow_card_right || msg.red_card_right) as u32;
+        // match_info_data.right_fencer.red_card = msg.red_card_right as u32;
 
         match_info_data.left_fencer.color_light = msg.red;
         match_info_data.left_fencer.white_light = msg.white_red;
@@ -197,57 +193,6 @@ impl LegacyBackend {
             config.write_config();
         } else if msg.new && msg.address == self.rc5_address {
             match msg.command {
-                IrCommands::LeftPassiveCard => {
-                    let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-                        self.match_info.lock().unwrap();
-
-                    if !match_info_data.timer_running && match_info_data.passive_timer.on_edge() {
-                        match_info_data.passive_timer.reset();
-
-                        // (
-                        //     match_info_data.left_pcard_bot,
-                        //     match_info_data.left_pcard_top,
-                        // ) = match (
-                        //     match_info_data.left_pcard_bot,
-                        //     match_info_data.left_pcard_top,
-                        // ) {
-                        //     (false, false) => (true, false),
-                        //     (true, false) => (true, true),
-                        //     (false, true) => (true, true),
-                        //     (true, true) => (false, false),
-                        // };
-
-                        match_info_data.left_fencer.p_card += 1;
-                        match_info_data.left_fencer.p_card %= 4;
-
-                        match_info_data.modified_count += 1;
-                    }
-                }
-                IrCommands::RightPassiveCard => {
-                    let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-                        self.match_info.lock().unwrap();
-
-                    if !match_info_data.timer_running && match_info_data.passive_timer.on_edge() {
-                        match_info_data.passive_timer.reset();
-
-                        // (
-                        //     match_info_data.right_pcard_bot,
-                        //     match_info_data.right_pcard_top,
-                        // ) = match (
-                        //     match_info_data.right_pcard_bot,
-                        //     match_info_data.right_pcard_top,
-                        // ) {
-                        //     (false, false) => (true, false),
-                        //     (true, false) => (true, true),
-                        //     (false, true) => (true, true),
-                        //     (true, true) => (false, false),
-                        // };
-                        match_info_data.right_fencer.p_card += 1;
-                        match_info_data.right_fencer.p_card %= 4;
-
-                        match_info_data.modified_count += 1;
-                    }
-                }
                 IrCommands::AutoScoreOnOff => {
                     self.auto_status_controller
                         .set_field(AutoStatusFields::Score);
@@ -263,6 +208,32 @@ impl LegacyBackend {
                     if !match_info_data.timer_running {
                         match_info_data.passive_timer.reset();
                     }
+                }
+                // IrCommands::LeftPenaltyCard => {
+                //     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
+                //         self.match_info.lock().unwrap();
+                //     match_info_data.left_fencer.warning_card.inc();
+                //     match_info_data.modified_count += 1;
+                // }
+                // IrCommands::RightPenaltyCard => {
+                //     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
+                //         self.match_info.lock().unwrap();
+                //     match_info_data.right_fencer.warning_card.inc();
+                //     match_info_data.modified_count += 1;
+                // }
+                IrCommands::LeftPassiveCard => {
+                    let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
+                        self.match_info.lock().unwrap();
+                    match_info_data.left_fencer.passive_card.inc();
+                    match_info_data.modified_count += 1;
+                    self.logger.debug(format!("Left fencer pcard: {:?}", match_info_data.left_fencer.passive_card));
+                }
+                IrCommands::RightPassiveCard => {
+                    let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
+                    self.match_info.lock().unwrap();
+                    match_info_data.right_fencer.passive_card.inc();
+                    match_info_data.modified_count += 1;
+                    self.logger.debug(format!("Right fencer pcard: {:?}", match_info_data.right_fencer.passive_card));
                 }
                 // IrCommands::FlipSides => {
                 //     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
@@ -731,7 +702,7 @@ fn pins_handler(tx: mpsc::Sender<InputData>, logger: Logger) {
         match gpio_cdev::Chip::new(path) {
             Ok(chip) => {
                 chips.push(chip);
-            },
+            }
             Err(err) => {
                 logger.critical_error(format!("Failed to open chip {path}, error: {err}"));
             }

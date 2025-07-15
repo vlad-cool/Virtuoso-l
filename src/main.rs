@@ -47,6 +47,9 @@ fn main() {
     TODO Repeater ACK / NAK 
     TODO Repeater auto role
     TODO Repeater reorder receiver
+    TODO Swap sides
+    TODO New cards
+    TODO Menu
      */
 
     let config: Arc<Mutex<VirtuosoConfig>> =
@@ -68,7 +71,7 @@ fn main() {
     let mut legacy_backend = legacy_backend::LegacyBackend::new(
         Arc::clone(&match_info),
         Arc::clone(&config),
-        virtuoso_logger.get_logger("Legacy backend".to_string()),
+        virtuoso_logger.get_logger("Legacy backend".to_string()).enable_debug(),
     );
 
     #[cfg(feature = "gpio_frontend")]
