@@ -1,28 +1,19 @@
 [Plymouth Theme]
-Name=Armbian
-Description=Armbian logo
+Name=Virtuoso splash
+Description=Splash screen for Virtuoso devices
 ModuleName=two-step
 
 [two-step]
-Font=DejaVu Sans 15
-TitleFont=DejaVu Sans Mono Bold 30
 ImageDir=/usr/share/plymouth/themes/Virtuoso
-DialogHorizontalAlignment=.5
-DialogVerticalAlignment=.5
-TitleHorizontalAlignment=.5
-TitleVerticalAlignment=.5
-HorizontalAlignment=.5
-VerticalAlignment=.5
 WatermarkHorizontalAlignment=.5
 WatermarkVerticalAlignment=.5
 Transition=none
 TransitionDuration=0.0
 BackgroundStartColor=0x000000
 BackgroundEndColor=0x000000
-ProgressBarBackgroundColor=0x606060
-ProgressBarForegroundColor=0xffffff
+UseProgressBar=false
 DialogClearsFirmwareBackground=false
-MessageBelowAnimation=true
+MessageBelowAnimation=false
 
 [boot-up]
 UseEndAnimation=false
@@ -35,30 +26,3 @@ UseFirmwareBackground=true
 [reboot]
 UseEndAnimation=false
 UseFirmwareBackground=true
-
-[updates]
-SuppressMessages=true
-ProgressBarShowPercentComplete=true
-UseProgressBar=true
-Title=Installing Updates...
-_Title=Installing Updates...
-SubTitle=Do not turn off your computer
-_SubTitle=Do not turn off your computer
-
-[system-upgrade]
-SuppressMessages=true
-ProgressBarShowPercentComplete=true
-UseProgressBar=true
-Title=Upgrading System...
-_Title=Upgrading System...
-SubTitle=Do not turn off your computer
-_SubTitle=Do not turn off your computer
-
-[firmware-upgrade]
-SuppressMessages=true
-ProgressBarShowPercentComplete=true
-UseProgressBar=true
-Title=Upgrading Firmware...
-_Title=Upgrading Firmware...
-SubTitle=Do not turn off your computer
-_SubTitle=Do not turn off your computer
