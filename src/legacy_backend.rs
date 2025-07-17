@@ -29,7 +29,7 @@ pub struct LegacyBackend {
 }
 
 impl modules::VirtuosoModule for LegacyBackend {
-    fn run(&mut self) {
+    fn run(mut self) {
         let (tx, rx) = mpsc::channel::<InputData>();
 
         let tx_clone: mpsc::Sender<InputData> = tx.clone();

@@ -48,7 +48,7 @@ enum RecvError {
 }
 
 impl modules::VirtuosoModule for Repeater {
-    fn run(&mut self) {
+    fn run(mut self) {
         match self.hw_config.repeater.role {
             RepeaterRole::Receiver => self.run_receiver(),
             RepeaterRole::Transmitter => self.run_transmitter(),

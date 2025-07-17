@@ -21,7 +21,7 @@ pub struct GpioFrontend {
 }
 
 impl modules::VirtuosoModule for GpioFrontend {
-    fn run(&mut self) {
+    fn run(self) {
         self.logger.debug("Starting gpio frontend".to_string());
 
         let mut chips: Vec<gpio_cdev::Chip> = Vec::<gpio_cdev::Chip>::new();

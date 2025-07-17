@@ -1,3 +1,3 @@
 pub trait VirtuosoModule {
-    fn run(&mut self);
+    fn run(self);
 }

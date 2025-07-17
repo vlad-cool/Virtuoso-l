@@ -249,7 +249,7 @@ impl ConsoleBackend {
 }
 
 impl modules::VirtuosoModule for ConsoleBackend {
-    fn run(&mut self) {
+    fn run(mut self) {
         loop {
             let mut input = String::new();
             io::stdin()

@@ -111,18 +111,18 @@ pub const {}: Layout = Layout {{\n",
                     .write(
                         format!(
                             "    {}: TextProperties {{
-        x: {},
-        y: {},
-        width: {},
-        height: {},
-        font_size: {} + 1,
+        x: {:.1},
+        y: {:.1},
+        width: {:.1},
+        height: {:.1},
+        font_size: {}.0,
     }},
 ",
                             node.name,
-                            node.x as i32 - 200,
-                            node.y as i32 - 200,
-                            node.width as i32 + 400,
-                            node.height as i32 + 400,
+                            node.x,
+                            node.y,
+                            node.width,
+                            node.height,
                             position_data
                                 .clone()
                                 .expect("cargo::error=No position data in text node")
@@ -142,19 +142,14 @@ pub const {}: Layout = Layout {{\n",
                     .write(
                         format!(
                             "    {}: RectangleProperties {{
-        x: {},
-        y: {},
-        width: {},
-        height: {},
-        radius: {},
+        x: {:.1},
+        y: {:.1},
+        width: {:.1},
+        height: {:.1},
+        radius: {:.1},
     }},
 ",
-                            node.name,
-                            node.x as i32,
-                            node.y as i32,
-                            node.width as i32,
-                            node.height as i32,
-                            node.rx,
+                            node.name, node.x, node.y, node.width, node.height, node.rx,
                         )
                         .as_bytes(),
                     )
@@ -213,6 +208,9 @@ fn main() {
 
     let header: String = format!(
         "// Generated file
+#[cfg(feature = \"egui_frontend\")]
+use crate::layout_structure::*;
+#[cfg(feature = \"slint_frontend\")]
 slint::slint!{}export {} Virtuoso {} from {}src/slint/main.slint{};);
 ",
         '(', '{', '}', '"', '"'

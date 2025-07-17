@@ -25,6 +25,13 @@ mod legacy_backend;
 #[cfg(feature = "console_backend")]
 mod console_backend;
 
+#[cfg(feature = "egui_frontend")]
+mod layouts;
+#[cfg(feature = "egui_frontend")]
+mod layout_structure;
+#[cfg(feature = "egui_frontend")]
+mod egui_frontend;
+
 #[cfg(feature = "slint_frontend")]
 mod layouts;
 #[cfg(feature = "slint_frontend")]
@@ -44,7 +51,7 @@ fn main() {
     TODO Properly swap sides
     TODO Cyrano softer error
     TODO Cyrano
-    TODO Repeater ACK / NAK 
+    TODO Repeater ACK / NAK
     TODO Repeater auto role
     TODO Repeater reorder receiver
     TODO Swap sides
@@ -52,8 +59,7 @@ fn main() {
     TODO Menu
      */
 
-    let config: Arc<Mutex<VirtuosoConfig>> =
-        Arc::new(Mutex::new(VirtuosoConfig::load_config()));
+    let config: Arc<Mutex<VirtuosoConfig>> = Arc::new(Mutex::new(VirtuosoConfig::load_config()));
 
     let virtuoso_logger: virtuoso_logger::VirtuosoLogger =
         virtuoso_logger::VirtuosoLogger::new(Arc::clone(&config));
@@ -71,13 +77,22 @@ fn main() {
     let mut legacy_backend = legacy_backend::LegacyBackend::new(
         Arc::clone(&match_info),
         Arc::clone(&config),
-        virtuoso_logger.get_logger("Legacy backend".to_string()).enable_debug(),
+        virtuoso_logger
+            .get_logger("Legacy backend".to_string())
+            .enable_debug(),
     );
 
     #[cfg(feature = "gpio_frontend")]
     let mut gpio_frontend = gpio_frontend::GpioFrontend::new(
         Arc::clone(&match_info),
         virtuoso_logger.get_logger("Gpio frontend".to_string()),
+    );
+
+    #[cfg(feature = "egui_frontend")]
+    let mut egui_frontend = egui_frontend::EguiFrontend::new(
+        Arc::clone(&match_info),
+        hw_config.clone(),
+        virtuoso_logger.get_logger("Egui frontend".to_string()),
     );
 
     #[cfg(feature = "slint_frontend")]
@@ -155,24 +170,25 @@ fn main() {
     // };
     // #[cfg(feature = "repeater")]
 
-    #[cfg(feature = "slint_frontend")]
-    #[cfg(target_os = "macos")]
-    logger.info("Slint frontend started in main thread".to_string());
-    #[cfg(feature = "slint_frontend")]
-    #[cfg(target_os = "macos")]
-    slint_frontend.run();
-    #[cfg(feature = "slint_frontend")]
-    #[cfg(target_os = "macos")]
-    logger.info("Slint frontend stopped in main thread".to_string());
+    #[cfg(feature = "egui_frontend")]
+    {
+        use crate::match_info::ProgramState;
 
+        logger.info("Egui frontend started in main thread".to_string());
+        egui_frontend.run();
+        logger.info("Egui frontend stopped in main thread".to_string());
+        match_info.lock().unwrap().program_state = ProgramState::Exiting;
+    }
     #[cfg(feature = "slint_frontend")]
-    #[cfg(not(target_os = "macos"))]
-    let slint_frontend_thread = thread::spawn(move || {
+    {
+        logger.info("Slint frontend started in main thread".to_string());
+        #[cfg(feature = "slint_frontend")]
+        #[cfg(target_os = "macos")]
         slint_frontend.run();
-    });
-    #[cfg(feature = "slint_frontend")]
-    #[cfg(not(target_os = "macos"))]
-    logger.info("Slint frontend started".to_string());
+        #[cfg(feature = "slint_frontend")]
+        #[cfg(target_os = "macos")]
+        logger.info("Slint frontend stopped in main thread".to_string());
+    }
 
     #[cfg(feature = "legacy_backend")]
     if let Err(e) = legacy_backend_thread.join() {
@@ -190,16 +206,6 @@ fn main() {
         ));
     } else {
         logger.info("Legacy backend stopped".to_string());
-    }
-
-    #[cfg(feature = "slint_frontend")]
-    #[cfg(not(target_os = "macos"))]
-    if let Err(e) = slint_frontend_thread.join() {
-        logger.error(format!(
-            "Failed to join slint frontend thread, error: {e:?}"
-        ));
-    } else {
-        logger.info("Slint frontend stopped".to_string());
     }
 
     #[cfg(feature = "console_backend")]

@@ -1,11 +1,4 @@
 use slint::{Timer, TimerMode, ToSharedString};
-use std::sync::{Arc, Mutex, MutexGuard};
-use std::time::Duration;
-
-use crate::hw_config::{HardwareConfig, Resolution};
-use crate::match_info;
-use crate::modules;
-use crate::virtuoso_logger::Logger;
 
 use crate::layouts::*;
 

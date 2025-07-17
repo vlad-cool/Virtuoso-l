@@ -485,7 +485,7 @@ export component Virtuoso inherits Window {
         // border-color: left_pcard_type != 3 ? Palette.transparent : Palette.pcard_black_frame;
         border-width: 2px;
 
-        background: left_pcard_type == 0 ? Palette.pcard_none : left_pcard_type == 1 ? Palette.pcard_yellow : left_pcard_type == 2 ? Palette.pcard_red : Palette.pcard_black;
+        background: left_pcard_type == 0 ? Palette.pcard_none : Palette.pcard_yellow;
     }
 
     Text {
@@ -494,7 +494,7 @@ export component Virtuoso inherits Window {
         width: 1px * layout.passive-l-bot-text.width;
         height: 1px * layout.passive-l-bot-text.height;
         font-size: 1px * layout.passive-l-bot-text.font_size;
-        text: "P" + (left_pcard_number > 1 ? (" x " + left_pcard_number) : "");
+        text: left_pcard_number > 0 ? "P" : "";
         horizontal-alignment: center;
         vertical-alignment: center;
         color: left_pcard_type != 3 ? Palette.background : Palette.pcard_black_frame;
@@ -507,7 +507,9 @@ export component Virtuoso inherits Window {
         height: 1px * layout.passive-l-top-rect.height;
         border-radius: 1px * layout.passive-l-top-rect.radius;
 
-        // background: left_top_pcard ? Palette.passive_red : Palette.passive_dark_red;
+        border-color: left_pcard_type != 3 ? Palette.transparent : Palette.pcard_black_frame;
+        border-width: 2px;
+        background: left_pcard_type == 0 ? Palette.pcard_none : left_pcard_type == 1 ? Palette.pcard_yellow : left_pcard_type == 2 ? Palette.pcard_red : Palette.pcard_black;
     }
 
     Text {
@@ -516,7 +518,7 @@ export component Virtuoso inherits Window {
         width: 1px * layout.passive-l-top-text.width;
         height: 1px * layout.passive-l-top-text.height;
         font-size: 1px * layout.passive-l-top-text.font_size;
-        text: "Pcard";
+        text: "P" + (left_pcard_number > 1 ? (" x " + left_pcard_number) : "");
         horizontal-alignment: center;
         vertical-alignment: center;
         // color: left_top_pcard ? Palette.passive_text_light : Palette.passive_text_dark;
