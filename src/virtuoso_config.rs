@@ -81,23 +81,22 @@ impl VirtuosoConfig {
 
     pub fn load_config() -> VirtuosoConfig {
         let mut loaded: bool = true;
-        let config: VirtuosoConfig =
-            match std::fs::read_to_string(String::from(Self::DEFAULT_PATH))
-            {
-                Ok(content) => match toml::from_str(&content) {
-                    Ok(config) => config,
-                    Err(err) => {
-                        eprintln!("Error parsing config.toml: {}", err);
-                        loaded = false;
-                        VirtuosoConfig::default()
-                    }
-                },
+        let config: VirtuosoConfig = match std::fs::read_to_string(String::from(Self::DEFAULT_PATH))
+        {
+            Ok(content) => match toml::from_str(&content) {
+                Ok(config) => config,
                 Err(err) => {
-                    eprintln!("Error reading config.toml: {}", err);
+                    eprintln!("Error parsing config.toml: {}", err);
                     loaded = false;
                     VirtuosoConfig::default()
                 }
-            };
+            },
+            Err(err) => {
+                eprintln!("Error reading config.toml: {}", err);
+                loaded = false;
+                VirtuosoConfig::default()
+            }
+        };
 
         if !loaded {
             config.write_config();
@@ -108,7 +107,6 @@ impl VirtuosoConfig {
 
     pub fn write_config(&self) {
         let toml_str: String = toml::to_string(&self).expect("Failed to serialize config");
-        std::fs::write(Self::DEFAULT_PATH, toml_str)
-            .expect("Failed to write output.toml");
+        std::fs::write(Self::DEFAULT_PATH, toml_str).expect("Failed to write output.toml");
     }
 }

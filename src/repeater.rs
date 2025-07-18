@@ -199,8 +199,7 @@ impl Repeater {
         let data: &[u8] = &self.raw_buffer[5..];
 
         self.logger.debug(format!("R checksum {:02X?}", checksum));
-        self.logger
-            .debug(format!("R data {:02X?}", data));
+        self.logger.debug(format!("R data {:02X?}", data));
 
         if u32::from_le_bytes(Self::calc_checksum(&data)) != u32::from_le_bytes(checksum) {
             self.logger.error("Checksum mismatch".to_string());

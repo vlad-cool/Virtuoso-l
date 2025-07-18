@@ -4,11 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-egui = { version = "0.32.0", default-features = false, optional = true }
-eframe = { version = "0.32.0", default-features = false, features = [
-    "glow",
-    "wayland",
-], optional = true }
 gpio-cdev = { version = "0.4", optional = true }
 serial = { version = "0.4.0", optional = true }
 serde = { version = "1.0", features = ["derive"] }
@@ -21,7 +16,7 @@ slint = { version = "1.12.0", default-features = false, features = [
 ], optional = true }
 postcard = { version = "1.1.2", features = ["use-std"], optional = true }
 crc = { version = "3.3.0", optional = true }
-egui_alignments = "0.3.4"
+sdl2 = { version = "0.38.0", features = ["ttf"], optional = true }
 
 [build-dependencies]
 zip = "4.2.0"
@@ -36,11 +31,11 @@ slint = { version = "1.12.0", default-features = false, features = [
 ], optional = true }
 
 [features]
-default = ["console_backend", "egui_frontend", "cyrano_server"]
+default = ["console_backend", "sdl_frontend", "cyrano_server"]
 legacy_backend = ["serial", "gpio-cdev"]
 console_backend = []
 cyrano_server = []
-egui_frontend = ["eframe", "egui"]
+sdl_frontend = ["sdl2"]
 slint_frontend = ["slint"]
 video_recorder = []
 gpio_frontend = ["gpio-cdev"]

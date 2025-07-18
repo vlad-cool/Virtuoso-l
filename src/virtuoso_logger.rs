@@ -3,10 +3,10 @@ use std::fs::File;
 use std::io::Write;
 use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{Arc, Mutex, mpsc};
 
-use crate::virtuoso_config::LogLevelOption;
 use crate::VirtuosoConfig;
+use crate::virtuoso_config::LogLevelOption;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 enum LogLevel {

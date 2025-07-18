@@ -355,11 +355,7 @@ impl PassiveTimer {
             let res: u32 = ((60 - self.passive_counter) * 1000
                 + self.last_updated.elapsed().as_millis() as u32)
                 / 50;
-            if res > 1000 {
-                1000
-            } else {
-                res
-            }
+            if res > 1000 { 1000 } else { res }
         } else {
             (60 - self.passive_counter) * 1000 / 50
         }

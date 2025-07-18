@@ -25,12 +25,14 @@ mod legacy_backend;
 #[cfg(feature = "console_backend")]
 mod console_backend;
 
-#[cfg(feature = "egui_frontend")]
-mod layouts;
-#[cfg(feature = "egui_frontend")]
+#[cfg(feature = "sdl_frontend")]
+mod colors;
+#[cfg(feature = "sdl_frontend")]
 mod layout_structure;
-#[cfg(feature = "egui_frontend")]
-mod egui_frontend;
+#[cfg(feature = "sdl_frontend")]
+mod layouts;
+#[cfg(feature = "sdl_frontend")]
+mod sdl_frontend;
 
 #[cfg(feature = "slint_frontend")]
 mod layouts;
@@ -71,7 +73,7 @@ fn main() {
     let hw_config: HardwareConfig = HardwareConfig::get_config(&logger);
 
     #[cfg(feature = "console_backend")]
-    let mut console_backend = console_backend::ConsoleBackend::new(Arc::clone(&match_info));
+    let console_backend = console_backend::ConsoleBackend::new(Arc::clone(&match_info));
 
     #[cfg(feature = "legacy_backend")]
     let mut legacy_backend = legacy_backend::LegacyBackend::new(
@@ -88,11 +90,11 @@ fn main() {
         virtuoso_logger.get_logger("Gpio frontend".to_string()),
     );
 
-    #[cfg(feature = "egui_frontend")]
-    let mut egui_frontend = egui_frontend::EguiFrontend::new(
+    #[cfg(feature = "sdl_frontend")]
+    let sdl_frontend = sdl_frontend::SdlFrontend::new(
         Arc::clone(&match_info),
         hw_config.clone(),
-        virtuoso_logger.get_logger("Egui frontend".to_string()),
+        virtuoso_logger.get_logger("sdl frontend".to_string()),
     );
 
     #[cfg(feature = "slint_frontend")]
@@ -103,7 +105,7 @@ fn main() {
     );
 
     #[cfg(feature = "cyrano_server")]
-    let mut cyrano_server = cyrano_server::CyranoServer::new(
+    let cyrano_server = cyrano_server::CyranoServer::new(
         Arc::clone(&match_info),
         Arc::clone(&config),
         virtuoso_logger.get_logger("Cyrano server".to_string()),
@@ -170,13 +172,13 @@ fn main() {
     // };
     // #[cfg(feature = "repeater")]
 
-    #[cfg(feature = "egui_frontend")]
+    #[cfg(feature = "sdl_frontend")]
     {
         use crate::match_info::ProgramState;
 
-        logger.info("Egui frontend started in main thread".to_string());
-        egui_frontend.run();
-        logger.info("Egui frontend stopped in main thread".to_string());
+        logger.info("sdl frontend started in main thread".to_string());
+        sdl_frontend.run();
+        logger.info("sdl frontend stopped in main thread".to_string());
         match_info.lock().unwrap().program_state = ProgramState::Exiting;
     }
     #[cfg(feature = "slint_frontend")]

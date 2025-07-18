@@ -111,18 +111,18 @@ pub const {}: Layout = Layout {{\n",
                     .write(
                         format!(
                             "    {}: TextProperties {{
-        x: {:.1},
-        y: {:.1},
-        width: {:.1},
-        height: {:.1},
-        font_size: {}.0,
+        x: {},
+        y: {},
+        width: {},
+        height: {},
+        font_size: {},
     }},
 ",
                             node.name,
-                            node.x,
-                            node.y,
-                            node.width,
-                            node.height,
+                            node.x as i32,
+                            node.y as i32,
+                            node.width as u32,
+                            node.height as u32,
                             position_data
                                 .clone()
                                 .expect("cargo::error=No position data in text node")
@@ -142,14 +142,19 @@ pub const {}: Layout = Layout {{\n",
                     .write(
                         format!(
                             "    {}: RectangleProperties {{
-        x: {:.1},
-        y: {:.1},
-        width: {:.1},
-        height: {:.1},
-        radius: {:.1},
+        x: {},
+        y: {},
+        width: {},
+        height: {},
+        radius: {},
     }},
 ",
-                            node.name, node.x, node.y, node.width, node.height, node.rx,
+                            node.name,
+                            node.x as i32,
+                            node.y as i32,
+                            node.width as u32,
+                            node.height as u32,
+                            node.rx as u32,
                         )
                         .as_bytes(),
                     )
@@ -208,7 +213,7 @@ fn main() {
 
     let header: String = format!(
         "// Generated file
-#[cfg(feature = \"egui_frontend\")]
+#[cfg(feature = \"sdl_frontend\")]
 use crate::layout_structure::*;
 #[cfg(feature = \"slint_frontend\")]
 slint::slint!{}export {} Virtuoso {} from {}src/slint/main.slint{};);

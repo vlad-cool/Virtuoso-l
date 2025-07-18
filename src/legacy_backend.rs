@@ -4,7 +4,7 @@ use gpio_cdev;
 use serial::{self, SerialPort};
 use std::io::Read;
 use std::sync::mpsc::RecvError;
-use std::sync::{mpsc, Arc, Mutex, MutexGuard};
+use std::sync::{Arc, Mutex, MutexGuard, mpsc};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -226,14 +226,20 @@ impl LegacyBackend {
                         self.match_info.lock().unwrap();
                     match_info_data.left_fencer.passive_card.inc();
                     match_info_data.modified_count += 1;
-                    self.logger.debug(format!("Left fencer pcard: {:?}", match_info_data.left_fencer.passive_card));
+                    self.logger.debug(format!(
+                        "Left fencer pcard: {:?}",
+                        match_info_data.left_fencer.passive_card
+                    ));
                 }
                 IrCommands::RightPassiveCard => {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-                    self.match_info.lock().unwrap();
+                        self.match_info.lock().unwrap();
                     match_info_data.right_fencer.passive_card.inc();
                     match_info_data.modified_count += 1;
-                    self.logger.debug(format!("Right fencer pcard: {:?}", match_info_data.right_fencer.passive_card));
+                    self.logger.debug(format!(
+                        "Right fencer pcard: {:?}",
+                        match_info_data.right_fencer.passive_card
+                    ));
                 }
                 // IrCommands::FlipSides => {
                 //     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =

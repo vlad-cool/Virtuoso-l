@@ -3,7 +3,7 @@ use crate::gpio::PinLocation;
 use crate::virtuoso_logger::Logger;
 
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
-#[cfg(any(feature = "egui_frontend", feature = "slint_frontend"))]
+#[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
 pub enum Resolution {
     Res1920X1080,
     Res1920X550,
@@ -11,7 +11,7 @@ pub enum Resolution {
     Res1920X360,
 }
 
-#[cfg(any(feature = "egui_frontend", feature = "slint_frontend"))]
+#[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
 impl std::fmt::Display for Resolution {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -23,7 +23,7 @@ impl std::fmt::Display for Resolution {
     }
 }
 
-#[cfg(any(feature = "egui_frontend", feature = "slint_frontend"))]
+#[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
 impl Resolution {
     pub fn to_config_dir(&self) -> String {
         match self {
@@ -36,7 +36,7 @@ impl Resolution {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
-#[cfg(any(feature = "egui_frontend", feature = "slint_frontend"))]
+#[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
 pub struct DisplayConfig {
     pub resolution: Resolution,
     pub swap_sides: bool,
@@ -82,7 +82,7 @@ pub struct HardwareConfig {
     #[serde(skip_serializing)]
     reinit: bool,
 
-    #[cfg(any(feature = "egui_frontend", feature = "slint_frontend"))]
+    #[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
     pub display: DisplayConfig,
     #[cfg(feature = "gpio_frontend")]
     pub gpio: GpioFrontendConfig,
@@ -161,7 +161,7 @@ impl HardwareConfig {
 
     #[cfg(feature = "gpio-cdev")]
     fn load_jumpers(logger: &Logger) -> HardwareConfig {
-#[cfg(any(feature = "egui_frontend", feature = "slint_frontend"))]
+        #[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
         let (resolution, swap_sides) = {
             let swap_sides_pin: PinLocation = PinLocation::from_phys_number(7).unwrap();
             let res_1920x550_pin: PinLocation = PinLocation::from_phys_number(15).unwrap();
@@ -186,18 +186,18 @@ impl HardwareConfig {
             (resolution, swap_sides)
         };
 
-        #[cfg(all(feature = "egui_frontend", feature = "repeater"))]
+        #[cfg(all(feature = "sdl_frontend", feature = "repeater"))]
         let repeater_role: RepeaterRole = match resolution {
             Resolution::Res1920X1080 => RepeaterRole::Receiver,
             _ => RepeaterRole::Transmitter,
         };
-        #[cfg(not(feature = "egui_frontend"))]
+        #[cfg(not(feature = "sdl_frontend"))]
         let repeater_role: RepeaterRole = RepeaterRole::Transmitter;
 
         Self {
             force_file: None,
             reinit: false,
-#[cfg(any(feature = "egui_frontend", feature = "slint_frontend"))]
+            #[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
             display: DisplayConfig {
                 resolution,
                 swap_sides,
@@ -262,8 +262,8 @@ impl HardwareConfig {
             let file_config: HardwareConfig = HardwareConfig {
                 force_file: Some(false),
                 reinit: false,
-                
-                #[cfg(any(feature = "egui_frontend", feature = "slint_frontend"))]
+
+                #[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
                 display: DisplayConfig {
                     resolution: Resolution::Res1920X1080,
                     swap_sides: false,
@@ -295,7 +295,7 @@ impl HardwareConfig {
     }
 
     fn configure_os(&self, logger: &Logger) {
-#[cfg(any(feature = "egui_frontend", feature = "slint_frontend"))]
+        #[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
         {
             logger.info("Running setup script".to_string());
 

@@ -1,18 +1,19 @@
-
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct RectangleProperties {
-    pub x: f32,
-    pub y: f32,
-    pub width: f32,
-    pub height: f32,
-    pub radius: f32,
+    pub x: i32,
+    pub y: i32,
+    pub width: u32,
+    pub height: u32,
+    pub radius: u32,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct TextProperties {
-    pub x: f32,
-    pub y: f32,
-    pub width: f32,
-    pub height: f32,
-    pub font_size: f32,
+    pub x: i32,
+    pub y: i32,
+    pub width: u32,
+    pub height: u32,
+    pub font_size: u32,
 }
 
 pub struct Layout {

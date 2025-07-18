@@ -62,7 +62,7 @@ impl std::fmt::Display for Field {
 
             Field::LeftWarning => write!(f, "Left Caution"),
             Field::RightWarning => write!(f, "Right Caution"),
-            
+
             Field::LeftPassive => write!(f, "Left PCard"),
             Field::RightPassive => write!(f, "Right PCard"),
 
@@ -105,7 +105,7 @@ fn parse_field(input: &str) -> Field {
 
         "leftwarning" => Field::LeftWarning,
         "rightwarning" => Field::RightWarning,
-        
+
         "leftpcard" => Field::LeftPassive,
         "rightpcard" => Field::RightPassive,
 
@@ -183,7 +183,6 @@ impl ConsoleBackend {
             // Field::LeftPenalty => match_info_data.left_fencer.red_card = value,
             // Field::RightCaution => match_info_data.right_fencer.yellow_card = value,
             // Field::RightPenalty => match_info_data.right_fencer.red_card = value,
-
             Field::LeftWarning => println!("Not implemented yet"),
             Field::RightWarning => println!("Not implemented yet"),
 

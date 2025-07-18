@@ -13,7 +13,7 @@ impl match_info::PassiveCard {
             match_info::PassiveCard::Black(_) => 3,
         }
     }
-   
+
     fn get_card_numbers(&self) -> i32 {
         match self {
             match_info::PassiveCard::None => 1,
