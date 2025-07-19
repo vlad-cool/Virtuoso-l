@@ -468,6 +468,10 @@ impl TimerController {
     pub fn get_second_changed(&self) -> bool {
         self.second_changed
     }
+
+    pub fn get_time(&self) -> Duration {
+        Duration::from_millis(self.get_millis() as u64)
+    }
 }
 
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]

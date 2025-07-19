@@ -13,7 +13,7 @@ pub struct TextRenderer<'a> {
     y: i32,
     width: u32,
     height: u32,
-    
+
     logger: &'a crate::virtuoso_logger::Logger,
 }
 

@@ -6,7 +6,7 @@ use crate::colors;
 use crate::sdl_frontend::renderers::TextRenderer;
 use crate::sdl_frontend::score;
 
-pub struct ScoreDrawer<'a> {
+pub struct Drawer<'a> {
     score_l_l_renderer: TextRenderer<'a>,
     score_l_r_renderer: TextRenderer<'a>,
     score_r_l_renderer: TextRenderer<'a>,
@@ -18,7 +18,7 @@ pub struct ScoreDrawer<'a> {
     logger: &'a crate::virtuoso_logger::Logger,
 }
 
-impl<'a> ScoreDrawer<'a> {
+impl<'a> Drawer<'a> {
     pub fn new(
         canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
         texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
@@ -33,7 +33,7 @@ impl<'a> ScoreDrawer<'a> {
             .unwrap();
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
-        let res: ScoreDrawer<'a> = Self {
+        let mut res: Drawer<'a> = Self {
             score_l_l_renderer: TextRenderer::new(
                 canvas.clone(),
                 texture_creator,
@@ -66,6 +66,9 @@ impl<'a> ScoreDrawer<'a> {
             score_r: 1,
             logger,
         };
+
+        res.render(0, 0);
+        res.draw();
 
         res
     }

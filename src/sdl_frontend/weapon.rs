@@ -9,7 +9,7 @@ use crate::sdl_frontend::renderers::TextRenderer;
 use crate::sdl_frontend::weapon;
 use crate::virtuoso_logger::Logger;
 
-pub struct WeaponDrawer<'a> {
+pub struct Drawer<'a> {
     epee_renderer: TextRenderer<'a>,
     sabre_renderer: TextRenderer<'a>,
     fleuret_renderer: TextRenderer<'a>,
@@ -19,7 +19,7 @@ pub struct WeaponDrawer<'a> {
     logger: &'a Logger,
 }
 
-impl<'a> WeaponDrawer<'a> {
+impl<'a> Drawer<'a> {
     pub fn new(
         canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
         texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
@@ -34,7 +34,7 @@ impl<'a> WeaponDrawer<'a> {
             .unwrap();
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
-        let res: WeaponDrawer<'a> = Self {
+        let mut res: Drawer<'a> = Self {
             epee_renderer: TextRenderer::new(
                 canvas.clone(),
                 texture_creator,
@@ -57,10 +57,13 @@ impl<'a> WeaponDrawer<'a> {
                 logger,
             ),
 
-            weapon: Weapon::Epee,
+            weapon: Weapon::Sabre,
 
             logger,
         };
+
+        res.render(Weapon::Epee);
+        res.draw();
 
         res
     }

@@ -10,6 +10,7 @@ use std::time::Duration;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::match_info::Weapon;
 use crate::modules;
 use crate::virtuoso_logger::Logger;
 use crate::{colors, match_info};
@@ -19,9 +20,11 @@ use crate::{
 };
 use crate::{layout_structure, layouts};
 
+mod passive_counter;
 mod period;
 mod renderers;
 mod score;
+mod timer;
 mod weapon;
 
 const MESSAGE_DISPLAY_TIME: Duration = Duration::from_secs(2);
@@ -84,7 +87,9 @@ impl VirtuosoModule for SdlFrontend {
         let texture_creator: sdl2::render::TextureCreator<sdl2::video::WindowContext> =
             canvas.borrow().texture_creator();
 
-        let mut score_drawer: score::ScoreDrawer<'_> = score::ScoreDrawer::new(
+        canvas.borrow_mut().clear();
+
+        let mut score_drawer: score::Drawer<'_> = score::Drawer::new(
             canvas.clone(),
             &texture_creator,
             &ttf_context,
@@ -95,7 +100,7 @@ impl VirtuosoModule for SdlFrontend {
             &self.logger,
         );
 
-        let mut weapon_drawer: weapon::WeaponDrawer<'_> = weapon::WeaponDrawer::new(
+        let mut weapon_drawer: weapon::Drawer<'_> = weapon::Drawer::new(
             canvas.clone(),
             &texture_creator,
             &ttf_context,
@@ -106,7 +111,7 @@ impl VirtuosoModule for SdlFrontend {
             &self.logger,
         );
 
-        let mut period_drawer: period::PeriodDrawer<'_> = period::PeriodDrawer::new(
+        let mut period_drawer: period::Drawer<'_> = period::Drawer::new(
             canvas.clone(),
             &texture_creator,
             &ttf_context,
@@ -116,30 +121,72 @@ impl VirtuosoModule for SdlFrontend {
             &self.layout,
             &self.logger,
         );
+
+        let mut timer_drawer: timer::Drawer<'_> = timer::Drawer::new(
+            canvas.clone(),
+            &texture_creator,
+            &ttf_context,
+            RWops::from_bytes(font_bytes)
+                .map_err(|e| e.to_string())
+                .unwrap(),
+            &self.layout,
+            &self.logger,
+        );
+
+        let mut passive_counter: passive_counter::Drawer<'_> = passive_counter::Drawer::new(
+            canvas.clone(),
+            &texture_creator,
+            &ttf_context,
+            RWops::from_bytes(font_bytes)
+                .map_err(|e| e.to_string())
+                .unwrap(),
+            &self.layout,
+            &self.logger,
+        );
+
+        canvas.borrow_mut().present();
 
         let mut i: u32 = 0;
+        let time: std::time::Instant = std::time::Instant::now();
+
+        let mut modified_count: u32 = 0;
 
         let mut event_pump = sdl_context.event_pump().unwrap();
         'running: loop {
+            std::thread::sleep(Duration::from_millis(50));
+
             for event in event_pump.poll_iter() {
                 match event {
                     sdl2::event::Event::Quit { .. } => break 'running,
                     _ => {}
                 }
             }
+
+            let data: MutexGuard<'_, match_info::MatchInfo> = self.match_info.lock().unwrap();
+
+            if data.modified_count == modified_count {
+                continue 'running;
+            }
+
+            modified_count = data.modified_count;
+
             canvas.borrow_mut().clear();
-            score_drawer.render(i, i + 2);
-            i += 1;
-            i %= 55;
-            weapon_drawer.render(match_info::Weapon::Fleuret);
-            period_drawer.render(7);
+            score_drawer.render(data.left_fencer.score, data.right_fencer.score);
+            weapon_drawer.render(data.weapon);
+            period_drawer.render(data.period);
+            timer_drawer.render(data.timer_controller.get_time(), true);
+            passive_counter.render(
+                data.passive_timer.get_counter(),
+                data.weapon != Weapon::Fleuret,
+            );
 
             score_drawer.draw();
             weapon_drawer.draw();
             period_drawer.draw();
+            timer_drawer.draw();
+            passive_counter.draw();
 
             canvas.borrow_mut().present();
-            std::thread::sleep(Duration::from_millis(50));
         }
     }
 }

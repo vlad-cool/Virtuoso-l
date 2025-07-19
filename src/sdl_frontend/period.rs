@@ -6,7 +6,7 @@ use crate::colors;
 use crate::sdl_frontend::renderers::TextRenderer;
 use crate::sdl_frontend::{period, score};
 
-pub struct PeriodDrawer<'a> {
+pub struct Drawer<'a> {
     period_renderer: TextRenderer<'a>,
 
     period: u32,
@@ -14,7 +14,7 @@ pub struct PeriodDrawer<'a> {
     logger: &'a crate::virtuoso_logger::Logger,
 }
 
-impl<'a> PeriodDrawer<'a> {
+impl<'a> Drawer<'a> {
     pub fn new(
         canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
         texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
@@ -29,7 +29,7 @@ impl<'a> PeriodDrawer<'a> {
             .unwrap();
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
-        let mut res: PeriodDrawer<'a> = Self {
+        let mut res: Drawer<'a> = Self {
             period_renderer: TextRenderer::new(
                 canvas.clone(),
                 texture_creator,
@@ -42,6 +42,7 @@ impl<'a> PeriodDrawer<'a> {
         };
 
         res.render(1);
+        res.draw();
 
         res
     }
