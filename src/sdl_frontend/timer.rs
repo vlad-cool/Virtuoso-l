@@ -4,13 +4,13 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use crate::colors;
-use crate::sdl_frontend::renderers::TextRenderer;
+use crate::sdl_frontend::widgets::Label;
 
 pub struct Drawer<'a> {
-    timer_0_renderer: TextRenderer<'a>,
-    timer_1_renderer: TextRenderer<'a>,
-    timer_2_renderer: TextRenderer<'a>,
-    timer_3_renderer: TextRenderer<'a>,
+    timer_0_renderer: Label<'a>,
+    timer_1_renderer: Label<'a>,
+    timer_2_renderer: Label<'a>,
+    timer_3_renderer: Label<'a>,
 
     time: Duration,
     timer_running: bool,
@@ -34,28 +34,28 @@ impl<'a> Drawer<'a> {
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
         let mut res: Drawer<'a> = Self {
-            timer_0_renderer: TextRenderer::new(
+            timer_0_renderer: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.timer_m,
                 logger,
             ),
-            timer_1_renderer: TextRenderer::new(
+            timer_1_renderer: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.timer_colon,
                 logger,
             ),
-            timer_2_renderer: TextRenderer::new(
+            timer_2_renderer: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.timer_d,
                 logger,
             ),
-            timer_3_renderer: TextRenderer::new(
+            timer_3_renderer: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
@@ -78,7 +78,7 @@ impl<'a> Drawer<'a> {
             self.time = time;
             self.timer_running = timer_running;
 
-            let colon: String = if time.subsec_millis() > 500 {
+            let colon: String = if !timer_running || time.subsec_millis() > 500 {
                 ":".to_string()
             } else {
                 " ".to_string()

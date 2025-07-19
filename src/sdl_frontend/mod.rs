@@ -20,12 +20,13 @@ use crate::{
 };
 use crate::{layout_structure, layouts};
 
+mod passive_card;
 mod passive_counter;
 mod period;
-mod renderers;
 mod score;
 mod timer;
 mod weapon;
+mod widgets;
 
 const MESSAGE_DISPLAY_TIME: Duration = Duration::from_secs(2);
 
@@ -144,6 +145,17 @@ impl VirtuosoModule for SdlFrontend {
             &self.logger,
         );
 
+        let mut passive_card: passive_card::Drawer<'_> = passive_card::Drawer::new(
+            canvas.clone(),
+            &texture_creator,
+            &ttf_context,
+            RWops::from_bytes(font_bytes)
+                .map_err(|e| e.to_string())
+                .unwrap(),
+            &self.layout,
+            &self.logger,
+        );
+
         canvas.borrow_mut().present();
 
         let mut i: u32 = 0;
@@ -179,12 +191,17 @@ impl VirtuosoModule for SdlFrontend {
                 data.passive_timer.get_counter(),
                 data.weapon != Weapon::Fleuret,
             );
+            passive_card.render(
+                data.left_fencer.passive_card.to_u32(),
+                data.right_fencer.passive_card.to_u32(),
+            );
 
             score_drawer.draw();
             weapon_drawer.draw();
             period_drawer.draw();
             timer_drawer.draw();
             passive_counter.draw();
+            passive_card.draw();
 
             canvas.borrow_mut().present();
         }

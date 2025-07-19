@@ -3,11 +3,11 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::colors;
-use crate::sdl_frontend::renderers::TextRenderer;
+use crate::sdl_frontend::widgets::Label;
 use crate::sdl_frontend::{period, score};
 
 pub struct Drawer<'a> {
-    period_renderer: TextRenderer<'a>,
+    period_renderer: Label<'a>,
 
     period: u32,
 
@@ -30,7 +30,7 @@ impl<'a> Drawer<'a> {
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
         let mut res: Drawer<'a> = Self {
-            period_renderer: TextRenderer::new(
+            period_renderer: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),

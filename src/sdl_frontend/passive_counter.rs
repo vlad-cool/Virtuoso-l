@@ -3,12 +3,12 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::colors;
-use crate::sdl_frontend::renderers::TextRenderer;
+use crate::sdl_frontend::widgets::Label;
 use crate::sdl_frontend::{passive_counter, score};
 
 pub struct Drawer<'a> {
-    passive_counter_0_renderer: TextRenderer<'a>,
-    passive_counter_1_renderer: TextRenderer<'a>,
+    passive_counter_0_renderer: Label<'a>,
+    passive_counter_1_renderer: Label<'a>,
 
     passive_counter: u32,
     enabled: bool,
@@ -32,14 +32,14 @@ impl<'a> Drawer<'a> {
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
         let mut res: Drawer<'a> = Self {
-            passive_counter_0_renderer: TextRenderer::new(
+            passive_counter_0_renderer: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.passive_counter_dec,
                 logger,
             ),
-            passive_counter_1_renderer: TextRenderer::new(
+            passive_counter_1_renderer: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),

@@ -5,14 +5,14 @@ use std::rc::Rc;
 use crate::colors;
 use crate::layout_structure::Layout;
 use crate::match_info::Weapon;
-use crate::sdl_frontend::renderers::TextRenderer;
 use crate::sdl_frontend::weapon;
+use crate::sdl_frontend::widgets::Label;
 use crate::virtuoso_logger::Logger;
 
 pub struct Drawer<'a> {
-    epee_renderer: TextRenderer<'a>,
-    sabre_renderer: TextRenderer<'a>,
-    fleuret_renderer: TextRenderer<'a>,
+    epee_renderer: Label<'a>,
+    sabre_renderer: Label<'a>,
+    fleuret_renderer: Label<'a>,
 
     weapon: Weapon,
 
@@ -35,21 +35,21 @@ impl<'a> Drawer<'a> {
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
         let mut res: Drawer<'a> = Self {
-            epee_renderer: TextRenderer::new(
+            epee_renderer: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.epee,
                 logger,
             ),
-            sabre_renderer: TextRenderer::new(
+            sabre_renderer: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.sabre,
                 logger,
             ),
-            fleuret_renderer: TextRenderer::new(
+            fleuret_renderer: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),

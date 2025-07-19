@@ -3,14 +3,14 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::colors;
-use crate::sdl_frontend::renderers::TextRenderer;
 use crate::sdl_frontend::score;
+use crate::sdl_frontend::widgets::Label;
 
 pub struct Drawer<'a> {
-    score_l_l_renderer: TextRenderer<'a>,
-    score_l_r_renderer: TextRenderer<'a>,
-    score_r_l_renderer: TextRenderer<'a>,
-    score_r_r_renderer: TextRenderer<'a>,
+    score_l_l_renderer: Label<'a>,
+    score_l_r_renderer: Label<'a>,
+    score_r_l_renderer: Label<'a>,
+    score_r_r_renderer: Label<'a>,
 
     score_l: u32,
     score_r: u32,
@@ -34,28 +34,28 @@ impl<'a> Drawer<'a> {
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
         let mut res: Drawer<'a> = Self {
-            score_l_l_renderer: TextRenderer::new(
+            score_l_l_renderer: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.score_l_l,
                 logger,
             ),
-            score_l_r_renderer: TextRenderer::new(
+            score_l_r_renderer: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.score_l_r,
                 logger,
             ),
-            score_r_l_renderer: TextRenderer::new(
+            score_r_l_renderer: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.score_r_l,
                 logger,
             ),
-            score_r_r_renderer: TextRenderer::new(
+            score_r_r_renderer: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
