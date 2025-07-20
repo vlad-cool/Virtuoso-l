@@ -192,8 +192,8 @@ impl VirtuosoModule for SdlFrontend {
                 data.weapon != Weapon::Fleuret,
             );
             passive_card.render(
-                data.left_fencer.passive_card.to_u32(),
-                data.right_fencer.passive_card.to_u32(),
+                data.left_fencer.passive_card,
+                data.right_fencer.passive_card,
             );
 
             score_drawer.draw();

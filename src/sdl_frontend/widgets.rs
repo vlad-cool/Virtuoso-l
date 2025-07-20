@@ -24,9 +24,54 @@ fn draw_rounded_rectangle<'a>(
         color,
     );
     surface.fill_rect(
-        sdl2::rect::Rect::new(0, radius as i32, width, height - radius * 2),
+        sdl2::rect::Rect::new(0, radius as i32, radius, height - radius * 2),
         color,
     );
+    surface.fill_rect(
+        sdl2::rect::Rect::new(
+            width as i32 - radius as i32,
+            radius as i32,
+            radius,
+            height - radius * 2,
+        ),
+        color,
+    );
+
+    let format = surface.pixel_format();
+
+    surface.with_lock_mut(|pixels: &mut [u8]| {
+        for x in 0..(radius + 1) as usize {
+            for y in 0..(radius + 1) as usize {
+                let radius: usize = radius as usize;
+                let width: usize = width as usize;
+                let height: usize = height as usize;
+
+                if x * x + y * y <= (radius + 1) * (radius + 1) {
+                    let mut color = color.to_u32(&format).to_le_bytes();
+
+                    if x * x + y * y > radius * radius {
+                        let val: f32 = 1.0
+                            - (((x * x + y * y) as f32).sqrt() - ((radius * radius) as f32).sqrt());
+                        color[3] = (color[3] as f32 * val) as u8;
+                    }
+
+                    let x: usize = radius - x;
+                    let y: usize = radius - y;
+
+                    for index in [
+                        (x + y * width) * 4,
+                        (width - x + y * width) * 4,
+                        (x + (height - y - 1) * width) * 4,
+                        (width - x + (height - y - 1) * width) * 4,
+                    ] {
+                        for i in 0..4 {
+                            pixels[index + i] = color[i];
+                        }
+                    }
+                }
+            }
+        }
+    });
 
     surface
 }

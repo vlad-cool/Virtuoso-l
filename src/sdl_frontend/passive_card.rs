@@ -3,8 +3,9 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::colors;
-use crate::sdl_frontend::score;
+use crate::match_info::PassiveCard;
 use crate::sdl_frontend::widgets::Card;
+use crate::sdl_frontend::{passive_card, score};
 
 pub struct Drawer<'a> {
     card_l_caution: Card<'a>,
@@ -12,8 +13,8 @@ pub struct Drawer<'a> {
     card_r_caution: Card<'a>,
     card_r_penalty: Card<'a>,
 
-    cards_l: u32,
-    cards_r: u32,
+    cards_l: PassiveCard,
+    cards_r: PassiveCard,
 
     logger: &'a crate::virtuoso_logger::Logger,
 }
@@ -67,24 +68,24 @@ impl<'a> Drawer<'a> {
                 logger,
             ),
 
-            cards_l: 1,
-            cards_r: 1,
+            cards_l: PassiveCard::Yellow(1),
+            cards_r: PassiveCard::Yellow(1),
             logger,
         };
 
-        res.render(0, 0);
+        res.render(PassiveCard::None, PassiveCard::None);
         res.draw();
 
         res
     }
 
-    pub fn render(&mut self, cards_l: u32, cards_r: u32) {
+    pub fn render(&mut self, cards_l: PassiveCard, cards_r: PassiveCard) {
         if self.cards_l != cards_l {
             self.cards_l = cards_l;
 
-            if cards_l > 0 {
+            if cards_l != PassiveCard::None {
                 self.card_l_caution.render(
-                    "Pcard",
+                    "P",
                     0,
                     colors::PASSIVE_YELLOW,
                     colors::BACKGROUND,
@@ -92,7 +93,7 @@ impl<'a> Drawer<'a> {
                 );
             } else {
                 self.card_l_caution.render(
-                    "Pcard",
+                    "P",
                     0,
                     colors::PASSIVE_DARK_YELLOW,
                     colors::BACKGROUND,
@@ -100,29 +101,59 @@ impl<'a> Drawer<'a> {
                 );
             }
 
-            if cards_l > 1 {
-                self.card_l_penalty.render(
-                    "Pcard",
-                    0,
-                    colors::PASSIVE_RED,
-                    colors::BACKGROUND,
-                    colors::PASSIVE_TEXT_LIGHT,
-                );
-            } else {
-                self.card_l_penalty.render(
-                    "Pcard",
-                    0,
-                    colors::PASSIVE_DARK_RED,
-                    colors::BACKGROUND,
-                    colors::PASSIVE_TEXT_DARK,
-                );
+            match cards_l {
+                PassiveCard::None | PassiveCard::Yellow(_) => {
+                    self.card_l_penalty.render(
+                        "P",
+                        0,
+                        colors::PASSIVE_DARK_RED,
+                        colors::BACKGROUND,
+                        colors::PASSIVE_TEXT_DARK,
+                    );
+                }
+                PassiveCard::Red(1) => {
+                    self.card_l_penalty.render(
+                        "P",
+                        0,
+                        colors::PASSIVE_RED,
+                        colors::BACKGROUND,
+                        colors::PASSIVE_TEXT_LIGHT,
+                    );
+                }
+                PassiveCard::Red(n) => {
+                    self.card_l_penalty.render(
+                        format!("P x {}", n).as_str(),
+                        0,
+                        colors::PASSIVE_RED,
+                        colors::BACKGROUND,
+                        colors::PASSIVE_TEXT_LIGHT,
+                    );
+                }
+                PassiveCard::Black(1) => {
+                    self.card_l_penalty.render(
+                        "P",
+                        1,
+                        colors::PCARD_BLACK,
+                        colors::PCARD_BLACK_FRAME,
+                        colors::PASSIVE_TEXT_LIGHT,
+                    );
+                }
+                PassiveCard::Black(n) => {
+                    self.card_l_penalty.render(
+                        format!("P x {}", n).as_str(),
+                        1,
+                        colors::PCARD_BLACK,
+                        colors::PCARD_BLACK_FRAME,
+                        colors::PASSIVE_TEXT_LIGHT,
+                    );
+                }
             }
         }
-        
+
         if self.cards_r != cards_r {
             self.cards_r = cards_r;
 
-            if cards_r > 0 {
+            if cards_r != PassiveCard::None {
                 self.card_r_caution.render(
                     "Pcard",
                     0,
@@ -132,7 +163,7 @@ impl<'a> Drawer<'a> {
                 );
             } else {
                 self.card_r_caution.render(
-                    "Pcard",
+                    "P",
                     0,
                     colors::PASSIVE_DARK_YELLOW,
                     colors::BACKGROUND,
@@ -140,22 +171,52 @@ impl<'a> Drawer<'a> {
                 );
             }
 
-            if cards_r > 1 {
-                self.card_r_penalty.render(
-                    "Pcard",
-                    0,
-                    colors::PASSIVE_RED,
-                    colors::BACKGROUND,
-                    colors::PASSIVE_TEXT_LIGHT,
-                );
-            } else {
-                self.card_r_penalty.render(
-                    "Pcard",
-                    0,
-                    colors::PASSIVE_DARK_RED,
-                    colors::BACKGROUND,
-                    colors::PASSIVE_TEXT_DARK,
-                );
+            match cards_r {
+                PassiveCard::None | PassiveCard::Yellow(_) => {
+                    self.card_r_penalty.render(
+                        "P",
+                        0,
+                        colors::PASSIVE_DARK_RED,
+                        colors::BACKGROUND,
+                        colors::PASSIVE_TEXT_DARK,
+                    );
+                }
+                PassiveCard::Red(1) => {
+                    self.card_r_penalty.render(
+                        "P",
+                        0,
+                        colors::PASSIVE_RED,
+                        colors::BACKGROUND,
+                        colors::PASSIVE_TEXT_LIGHT,
+                    );
+                }
+                PassiveCard::Red(n) => {
+                    self.card_r_penalty.render(
+                        format!("P x {}", n).as_str(),
+                        0,
+                        colors::PASSIVE_RED,
+                        colors::BACKGROUND,
+                        colors::PASSIVE_TEXT_LIGHT,
+                    );
+                }
+                PassiveCard::Black(1) => {
+                    self.card_r_penalty.render(
+                        "P",
+                        2,
+                        colors::PCARD_BLACK,
+                        colors::PCARD_BLACK_FRAME,
+                        colors::PASSIVE_TEXT_LIGHT,
+                    );
+                }
+                PassiveCard::Black(n) => {
+                    self.card_r_penalty.render(
+                        format!("P x {}", n).as_str(),
+                        2,
+                        colors::PCARD_BLACK,
+                        colors::PCARD_BLACK_FRAME,
+                        colors::PASSIVE_TEXT_LIGHT,
+                    );
+                }
             }
         }
     }
