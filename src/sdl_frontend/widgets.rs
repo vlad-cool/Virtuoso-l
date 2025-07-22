@@ -122,8 +122,40 @@ impl<'a> Label<'a> {
     }
 
     pub fn render(&mut self, text: &str, color: sdl2::pixels::Color) {
-        let text_surface: sdl2::surface::Surface<'a> =
-            self.font.render(text).blended(color).unwrap();
+        let mut surfaces: std::vec::Vec<sdl2::surface::Surface<'_>> = std::vec::Vec::new();
+
+        let mut width: u32 = 0;
+        let mut height: u32 = 0;
+
+        for line in text.split("\n") {
+            let surface: sdl2::surface::Surface<'a> =
+                self.font.render(line).blended(color).unwrap();
+
+            width = std::cmp::max(width, surface.width());
+            height += surface.height();
+
+            surface.save_bmp(format!("aaa/{line}.bmp"));
+            surfaces.push(surface);
+        }
+
+        let mut text_surface: Surface<'static> = sdl2::surface::Surface::new(
+            width,
+            height as u32,
+            sdl2::pixels::PixelFormatEnum::RGBA8888,
+        )
+        .unwrap();
+
+        let mut y_pos: i32 = 0;
+        for surface in surfaces {
+            let dst_rect = sdl2::rect::Rect::new(
+                (width - surface.width()) as i32 / 2,
+                y_pos,
+                surface.width(),
+                surface.height(),
+            );
+            surface.blit(None, &mut text_surface, dst_rect);
+            y_pos += surface.height() as i32;
+        }
 
         self.texture = self
             .texture_creator

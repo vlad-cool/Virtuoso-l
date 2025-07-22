@@ -20,6 +20,8 @@ use crate::{
 };
 use crate::{layout_structure, layouts};
 
+mod auto_status;
+mod message;
 mod passive_card;
 mod passive_counter;
 mod period;
@@ -101,6 +103,17 @@ impl VirtuosoModule for SdlFrontend {
             &self.logger,
         );
 
+        let mut message: message::Drawer<'_> = message::Drawer::new(
+            canvas.clone(),
+            &texture_creator,
+            &ttf_context,
+            RWops::from_bytes(font_bytes)
+                .map_err(|e| e.to_string())
+                .unwrap(),
+            &self.layout,
+            &self.logger,
+        );
+
         let mut weapon_drawer: weapon::Drawer<'_> = weapon::Drawer::new(
             canvas.clone(),
             &texture_creator,
@@ -156,6 +169,17 @@ impl VirtuosoModule for SdlFrontend {
             &self.logger,
         );
 
+        let mut auto_status: auto_status::Drawer<'_> = auto_status::Drawer::new(
+            canvas.clone(),
+            &texture_creator,
+            &ttf_context,
+            RWops::from_bytes(font_bytes)
+                .map_err(|e| e.to_string())
+                .unwrap(),
+            &self.layout,
+            &self.logger,
+        );
+
         canvas.borrow_mut().present();
 
         let mut i: u32 = 0;
@@ -183,10 +207,17 @@ impl VirtuosoModule for SdlFrontend {
             modified_count = data.modified_count;
 
             canvas.borrow_mut().clear();
+
+            let display_message: bool = data.display_message != ""
+                && data.display_message_updated.elapsed() < MESSAGE_DISPLAY_TIME;
+            if display_message {
+                message.render(data.display_message.clone());
+            } else {
+                timer_drawer.render(data.timer_controller.get_time(), true, data.priority);
+            }
             score_drawer.render(data.left_fencer.score, data.right_fencer.score);
             weapon_drawer.render(data.weapon);
             period_drawer.render(data.period);
-            timer_drawer.render(data.timer_controller.get_time(), true);
             passive_counter.render(
                 data.passive_timer.get_counter(),
                 data.weapon != Weapon::Fleuret,
@@ -195,13 +226,19 @@ impl VirtuosoModule for SdlFrontend {
                 data.left_fencer.passive_card,
                 data.right_fencer.passive_card,
             );
+            auto_status.render(data.auto_timer_on, data.auto_score_on);
 
+            if display_message {
+                message.draw();
+            } else {
+                timer_drawer.draw();
+            }
             score_drawer.draw();
             weapon_drawer.draw();
             period_drawer.draw();
-            timer_drawer.draw();
             passive_counter.draw();
             passive_card.draw();
+            auto_status.draw();
 
             canvas.borrow_mut().present();
         }

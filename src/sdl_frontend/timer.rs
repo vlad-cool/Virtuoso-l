@@ -4,6 +4,7 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use crate::colors;
+use crate::match_info::Priority;
 use crate::sdl_frontend::widgets::Label;
 
 pub struct Drawer<'a> {
@@ -67,13 +68,13 @@ impl<'a> Drawer<'a> {
             logger,
         };
 
-        res.render(Duration::from_secs(60 * 3), false);
+        res.render(Duration::from_secs(60 * 3), false, Priority::None);
         res.draw();
 
         res
     }
 
-    pub fn render(&mut self, time: Duration, timer_running: bool) {
+    pub fn render(&mut self, time: Duration, timer_running: bool, priority: Priority) {
         if self.time != time || self.timer_running != timer_running {
             self.time = time;
             self.timer_running = timer_running;
@@ -112,8 +113,18 @@ impl<'a> Drawer<'a> {
                 colors::TIMER_ORANGE
             };
 
+            let colon_color: sdl2::pixels::Color = if timer_running {
+                match priority {
+                    Priority::Left => colors::PRIORITY_RED,
+                    Priority::None => color,
+                    Priority::Right => colors::PRIORITY_GREEN,
+                }
+            } else {
+                color
+            };
+
             self.timer_0_renderer.render(&time_str[0..1], color);
-            self.timer_1_renderer.render(&time_str[1..2], color);
+            self.timer_1_renderer.render(&time_str[1..2], colon_color);
             self.timer_2_renderer.render(&time_str[2..3], color);
             self.timer_3_renderer.render(&time_str[3..4], color);
         }
