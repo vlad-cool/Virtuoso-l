@@ -8,10 +8,10 @@ use crate::match_info::Priority;
 use crate::sdl_frontend::widgets::Label;
 
 pub struct Drawer<'a> {
-    timer_0_renderer: Label<'a>,
-    timer_1_renderer: Label<'a>,
-    timer_2_renderer: Label<'a>,
-    timer_3_renderer: Label<'a>,
+    timer_0_widget: Label<'a>,
+    timer_1_widget: Label<'a>,
+    timer_2_widget: Label<'a>,
+    timer_3_widget: Label<'a>,
 
     time: Duration,
     timer_running: bool,
@@ -35,28 +35,28 @@ impl<'a> Drawer<'a> {
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
         let mut res: Drawer<'a> = Self {
-            timer_0_renderer: Label::new(
+            timer_0_widget: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.timer_m,
                 logger,
             ),
-            timer_1_renderer: Label::new(
+            timer_1_widget: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.timer_colon,
                 logger,
             ),
-            timer_2_renderer: Label::new(
+            timer_2_widget: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.timer_d,
                 logger,
             ),
-            timer_3_renderer: Label::new(
+            timer_3_widget: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
@@ -123,17 +123,17 @@ impl<'a> Drawer<'a> {
                 color
             };
 
-            self.timer_0_renderer.render(&time_str[0..1], color);
-            self.timer_1_renderer.render(&time_str[1..2], colon_color);
-            self.timer_2_renderer.render(&time_str[2..3], color);
-            self.timer_3_renderer.render(&time_str[3..4], color);
+            self.timer_0_widget.render(&time_str[0..1], color);
+            self.timer_1_widget.render(&time_str[1..2], colon_color);
+            self.timer_2_widget.render(&time_str[2..3], color);
+            self.timer_3_widget.render(&time_str[3..4], color);
         }
     }
 
     pub fn draw(&mut self) {
-        self.timer_0_renderer.draw();
-        self.timer_1_renderer.draw();
-        self.timer_2_renderer.draw();
-        self.timer_3_renderer.draw();
+        self.timer_0_widget.draw();
+        self.timer_1_widget.draw();
+        self.timer_2_widget.draw();
+        self.timer_3_widget.draw();
     }
 }

@@ -24,7 +24,9 @@ mod auto_status;
 mod message;
 mod passive_card;
 mod passive_counter;
+mod penalty_card;
 mod period;
+mod priority;
 mod score;
 mod timer;
 mod weapon;
@@ -169,10 +171,35 @@ impl VirtuosoModule for SdlFrontend {
             &self.logger,
         );
 
+        let mut penalty_card: penalty_card::Drawer<'_> = penalty_card::Drawer::new(
+            canvas.clone(),
+            &texture_creator,
+            &ttf_context,
+            RWops::from_bytes(font_bytes)
+                .map_err(|e| e.to_string())
+                .unwrap(),
+            &self.layout,
+            &self.logger,
+        );
+
         let mut auto_status: auto_status::Drawer<'_> = auto_status::Drawer::new(
             canvas.clone(),
             &texture_creator,
             &ttf_context,
+            RWops::from_bytes(font_bytes)
+                .map_err(|e| e.to_string())
+                .unwrap(),
+            &self.layout,
+            &self.logger,
+        );
+
+        let mut priority: priority::Drawer<'_> = priority::Drawer::new(
+            canvas.clone(),
+            &texture_creator,
+            &ttf_context,
+            RWops::from_bytes(font_bytes)
+                .map_err(|e| e.to_string())
+                .unwrap(),
             RWops::from_bytes(font_bytes)
                 .map_err(|e| e.to_string())
                 .unwrap(),
@@ -226,7 +253,12 @@ impl VirtuosoModule for SdlFrontend {
                 data.left_fencer.passive_card,
                 data.right_fencer.passive_card,
             );
+            penalty_card.render(
+                data.left_fencer.warning_card,
+                data.right_fencer.warning_card,
+            );
             auto_status.render(data.auto_timer_on, data.auto_score_on);
+            priority.render(data.priority);
 
             if display_message {
                 message.draw();
@@ -238,7 +270,9 @@ impl VirtuosoModule for SdlFrontend {
             period_drawer.draw();
             passive_counter.draw();
             passive_card.draw();
+            penalty_card.draw();
             auto_status.draw();
+            priority.draw();
 
             canvas.borrow_mut().present();
         }

@@ -7,8 +7,8 @@ use crate::sdl_frontend::widgets::Label;
 use crate::sdl_frontend::{passive_counter, score};
 
 pub struct Drawer<'a> {
-    passive_counter_0_renderer: Label<'a>,
-    passive_counter_1_renderer: Label<'a>,
+    passive_counter_0_widget: Label<'a>,
+    passive_counter_1_widget: Label<'a>,
 
     passive_counter: u32,
     enabled: bool,
@@ -32,14 +32,14 @@ impl<'a> Drawer<'a> {
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
         let mut res: Drawer<'a> = Self {
-            passive_counter_0_renderer: Label::new(
+            passive_counter_0_widget: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.passive_counter_dec,
                 logger,
             ),
-            passive_counter_1_renderer: Label::new(
+            passive_counter_1_widget: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
@@ -74,15 +74,15 @@ impl<'a> Drawer<'a> {
                 colors::PASSIVE_TEXT_DARK
             };
 
-            self.passive_counter_0_renderer
+            self.passive_counter_0_widget
                 .render(&passive_counter_text[0..1], color);
-            self.passive_counter_1_renderer
+            self.passive_counter_1_widget
                 .render(&passive_counter_text[1..2], color);
         }
     }
 
     pub fn draw(&mut self) {
-        self.passive_counter_0_renderer.draw();
-        self.passive_counter_1_renderer.draw();
+        self.passive_counter_0_widget.draw();
+        self.passive_counter_1_widget.draw();
     }
 }

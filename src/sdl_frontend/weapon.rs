@@ -10,9 +10,9 @@ use crate::sdl_frontend::widgets::Label;
 use crate::virtuoso_logger::Logger;
 
 pub struct Drawer<'a> {
-    epee_renderer: Label<'a>,
-    sabre_renderer: Label<'a>,
-    fleuret_renderer: Label<'a>,
+    epee_widget: Label<'a>,
+    sabre_widget: Label<'a>,
+    fleuret_widget: Label<'a>,
 
     weapon: Weapon,
 
@@ -35,21 +35,21 @@ impl<'a> Drawer<'a> {
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
         let mut res: Drawer<'a> = Self {
-            epee_renderer: Label::new(
+            epee_widget: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.epee,
                 logger,
             ),
-            sabre_renderer: Label::new(
+            sabre_widget: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.sabre,
                 logger,
             ),
-            fleuret_renderer: Label::new(
+            fleuret_widget: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
@@ -72,7 +72,7 @@ impl<'a> Drawer<'a> {
         if self.weapon != weapon {
             self.weapon = weapon;
 
-            self.epee_renderer.render(
+            self.epee_widget.render(
                 "epee",
                 if weapon == Weapon::Epee {
                     colors::WEAPON_TEXT_LIGHT
@@ -81,7 +81,7 @@ impl<'a> Drawer<'a> {
                 },
             );
 
-            self.sabre_renderer.render(
+            self.sabre_widget.render(
                 "sabre",
                 if weapon == Weapon::Sabre {
                     colors::WEAPON_TEXT_LIGHT
@@ -90,7 +90,7 @@ impl<'a> Drawer<'a> {
                 },
             );
 
-            self.fleuret_renderer.render(
+            self.fleuret_widget.render(
                 "fleuret",
                 if weapon == Weapon::Fleuret {
                     colors::WEAPON_TEXT_LIGHT
@@ -102,8 +102,8 @@ impl<'a> Drawer<'a> {
     }
 
     pub fn draw(&mut self) {
-        self.epee_renderer.draw();
-        self.sabre_renderer.draw();
-        self.fleuret_renderer.draw();
+        self.epee_widget.draw();
+        self.sabre_widget.draw();
+        self.fleuret_widget.draw();
     }
 }

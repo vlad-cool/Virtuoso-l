@@ -71,7 +71,7 @@ impl<'a> Drawer<'a> {
 
             self.timer_widget.render(text, color);
         }
-        
+
         if self.auto_score_on != auto_score_on {
             self.auto_score_on = auto_score_on;
 

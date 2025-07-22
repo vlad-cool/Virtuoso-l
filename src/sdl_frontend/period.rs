@@ -7,7 +7,7 @@ use crate::sdl_frontend::widgets::Label;
 use crate::sdl_frontend::{period, score};
 
 pub struct Drawer<'a> {
-    period_renderer: Label<'a>,
+    period_widget: Label<'a>,
 
     period: u32,
 
@@ -30,7 +30,7 @@ impl<'a> Drawer<'a> {
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
         let mut res: Drawer<'a> = Self {
-            period_renderer: Label::new(
+            period_widget: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
@@ -57,12 +57,12 @@ impl<'a> Drawer<'a> {
             self.period = period;
 
             let period_text: String = format!("{}", period);
-            self.period_renderer
+            self.period_widget
                 .render(&period_text.as_str(), colors::PERIOD);
         }
     }
 
     pub fn draw(&mut self) {
-        self.period_renderer.draw();
+        self.period_widget.draw();
     }
 }

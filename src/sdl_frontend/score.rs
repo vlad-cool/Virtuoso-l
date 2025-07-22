@@ -7,10 +7,10 @@ use crate::sdl_frontend::score;
 use crate::sdl_frontend::widgets::Label;
 
 pub struct Drawer<'a> {
-    score_l_l_renderer: Label<'a>,
-    score_l_r_renderer: Label<'a>,
-    score_r_l_renderer: Label<'a>,
-    score_r_r_renderer: Label<'a>,
+    score_l_l_widget: Label<'a>,
+    score_l_r_widget: Label<'a>,
+    score_r_l_widget: Label<'a>,
+    score_r_r_widget: Label<'a>,
 
     score_l: u32,
     score_r: u32,
@@ -34,28 +34,28 @@ impl<'a> Drawer<'a> {
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
         let mut res: Drawer<'a> = Self {
-            score_l_l_renderer: Label::new(
+            score_l_l_widget: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.score_l_l,
                 logger,
             ),
-            score_l_r_renderer: Label::new(
+            score_l_r_widget: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.score_l_r,
                 logger,
             ),
-            score_r_l_renderer: Label::new(
+            score_r_l_widget: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
                 layout.score_r_l,
                 logger,
             ),
-            score_r_r_renderer: Label::new(
+            score_r_r_widget: Label::new(
                 canvas.clone(),
                 texture_creator,
                 font.clone(),
@@ -82,7 +82,7 @@ impl<'a> Drawer<'a> {
             } else {
                 format!("{}", score_l / 10)
             };
-            self.score_l_l_renderer
+            self.score_l_l_widget
                 .render(score_l_l_text.as_str(), colors::SCORE_LEFT);
 
             let score_l_r_text: String = if score_l < 10 {
@@ -90,7 +90,7 @@ impl<'a> Drawer<'a> {
             } else {
                 format!("{}", score_l % 10)
             };
-            self.score_l_r_renderer
+            self.score_l_r_widget
                 .render(score_l_r_text.as_str(), colors::SCORE_LEFT);
         }
 
@@ -101,7 +101,7 @@ impl<'a> Drawer<'a> {
             } else {
                 format!("{}", score_r / 10)
             };
-            self.score_r_l_renderer
+            self.score_r_l_widget
                 .render(score_r_l_text.as_str(), colors::SCORE_RIGHT);
 
             let score_r_r_text: String = if score_r < 10 {
@@ -109,15 +109,15 @@ impl<'a> Drawer<'a> {
             } else {
                 format!("{}", score_r % 10)
             };
-            self.score_r_r_renderer
+            self.score_r_r_widget
                 .render(score_r_r_text.as_str(), colors::SCORE_RIGHT);
         }
     }
 
     pub fn draw(&mut self) {
-        self.score_l_l_renderer.draw();
-        self.score_l_r_renderer.draw();
-        self.score_r_l_renderer.draw();
-        self.score_r_r_renderer.draw();
+        self.score_l_l_widget.draw();
+        self.score_l_r_widget.draw();
+        self.score_r_l_widget.draw();
+        self.score_r_r_widget.draw();
     }
 }
