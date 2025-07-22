@@ -336,123 +336,90 @@ impl<'a> Card<'a> {
     }
 }
 
-// pub struct Indicator<'a> {
-//     canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
-//     texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-//     texture: sdl2::render::Texture<'a>,
+pub struct Indicator<'a> {
+    canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
+    texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
+    texture: sdl2::render::Texture<'a>,
 
-//     x: i32,
-//     y: i32,
-//     width: u32,
-//     height: u32,
-//     radius: u32,
+    x: i32,
+    y: i32,
+    width: u32,
+    height: u32,
+    radius: u32,
 
-//     logger: &'a Logger,
-// }
+    logger: &'a Logger,
+}
 
-// impl<'a> Indicator<'a> {
-//     pub fn new(
-//         canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
-//         texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-//         font: Rc<sdl2::ttf::Font<'a, 'a>>,
+impl<'a> Indicator<'a> {
+    pub fn new(
+        canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
+        texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
+        
+        position: layout_structure::RectangleProperties,
 
-//         position: layout_structure::RectangleProperties,
+        logger: &'a Logger,
+    ) -> Self {
+        Self {
+            canvas,
+            texture_creator,
+            texture: texture_creator
+                .create_texture(
+                    sdl2::pixels::PixelFormatEnum::RGB888,
+                    sdl2::render::TextureAccess::Static,
+                    1,
+                    1,
+                )
+                .unwrap_with_logger(&logger),
 
-//         logger: &'a Logger,
-//     ) -> Self {
-//         Self {
-//             canvas,
-//             texture_creator,
-//             texture: texture_creator
-//                 .create_texture(
-//                     sdl2::pixels::PixelFormatEnum::RGB888,
-//                     sdl2::render::TextureAccess::Static,
-//                     1,
-//                     1,
-//                 )
-//                 .unwrap_with_logger(self.logger),
+            x: position.x,
+            y: position.x,
+            width: position.width,
+            height: position.height,
+            radius: position.radius,
 
-//             x: position.x,
-//             y: position.x,
-//             width: position.width,
-//             height: position.height,
-//             radius: position.radius,
+            logger,
+        }
+    }
 
-//             logger,
-//         }
-//     }
+    pub fn render(&mut self, color: sdl2::pixels::Color) {
+        let radius: u32 = min(self.radius, min(self.height / 2, self.width / 2));
 
-//     pub fn render(
-//         &mut self,
-//         text: &str,
-//         border_width: u32,
-//         card_color: sdl2::pixels::Color,
-//         border_color: sdl2::pixels::Color,
-//         text_color: sdl2::pixels::Color,
-//     ) {
-//         // let radius: u32 = min(
-//         //     self.rect_radius,
-//         //     min(self.rect_height / 2, self.rect_width / 2),
-//         // );
+        let surface: Surface<'_> =
+            draw_rounded_rectangle(color, self.width, self.height, radius, self.logger);
 
-//         // let mut outer_card: Surface<'_> =
-//         //     draw_rounded_rectangle(border_color, self.rect_width, self.rect_height, radius, self.logger,);
-//         // let inner_card: Surface<'_> = draw_rounded_rectangle(
-//         //     card_color,
-//         //     self.rect_width - border_width * 2,
-//         //     self.rect_height - border_width * 2,
-//         //     radius,
-//     // self.logger,
-//         // );
+        self.texture = self
+            .texture_creator
+            .create_texture_from_surface(&surface)
+            .unwrap_with_logger(&self.logger);
+    }
 
-//         // inner_card.blit(
-//         //     None,
-//         //     &mut outer_card,
-//         //     Some(sdl2::rect::Rect::new(
-//         //         border_width as i32,
-//         //         border_width as i32,
-//         //         self.rect_width - border_width * 2,
-//         //         self.rect_width - border_width * 2,
-//         //     )),
-//         // );
+    #[allow(dead_code)]
+    pub fn set_x(&mut self, x: i32) {
+        self.x = x;
+    }
 
-//         // let text_surface: sdl2::surface::Surface<'a> =
-//         //     self.font.render(text).blended(text_color).unwrap_with_logger(self.logger);
+    #[allow(dead_code)]
+    pub fn set_y(&mut self, y: i32) {
+        self.y = y;
+    }
 
-//         // let width: u32 = outer_card.width();
-//         // let height: u32 = outer_card.height();
+    #[allow(dead_code)]
+    pub fn set_width(&mut self, width: u32) {
+        self.width = width;
+    }
 
-//         // text_surface.blit(
-//         //     None,
-//         //     &mut outer_card,
-//         //     Rect::new(
-//         //         (width as i32 - text_surface.width() as i32) / 2,
-//         //         (height as i32 - text_surface.height() as i32) / 2,
-//         //         text_surface.width(),
-//         //         text_surface.height(),
-//         //     ),
-//         // );
+    #[allow(dead_code)]
+    pub fn set_height(&mut self, height: u32) {
+        self.height = height;
+    }
 
-//         // self.texture = self
-//         //     .texture_creator
-//         //     .create_texture_from_surface(&outer_card)
-//         //     .unwrap_with_logger(self.logger);
+    pub fn draw(&mut self) {
+        let target_rect: sdl2::rect::Rect =
+            sdl2::rect::Rect::new(self.x, self.y, self.width, self.height);
 
-//         // self.width = width;
-//         // self.height = height;
-//     }
-
-//     pub fn draw(&mut self) {
-//         // let target_rect: sdl2::rect::Rect = sdl2::rect::Rect::new(
-//         //     self.text + self.width as i32 / 2,
-//         //     self.text_y - self.height as i32 / 2,
-//         //     self.width,
-//         //     self.height,
-//         // );
-
-//         // self.canvas
-//         //     .borrow_mut()
-//         //     .copy(&self.texture, None, Some(target_rect))
-//         //     .unwrap_with_logger(self.logger);
-//     }
-// }
+        self.canvas
+            .borrow_mut()
+            .copy(&self.texture, None, Some(target_rect))
+            .unwrap_with_logger(&self.logger);
+    }
+}

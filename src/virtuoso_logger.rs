@@ -4,6 +4,7 @@ use std::io::Write;
 use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, mpsc};
+use std::time::Duration;
 
 use crate::VirtuosoConfig;
 use crate::virtuoso_config::LogLevelOption;
@@ -280,7 +281,12 @@ impl<T, E: std::fmt::Debug> LoggerUnwrap<T> for Result<T, E> {
         match self {
             Ok(val) => val,
             Err(e) => {
-                logger.critical_error(format!("Unwrap error: {:?}", e));
+                let bt: std::backtrace::Backtrace = std::backtrace::Backtrace::capture();
+                logger.critical_error(format!(
+                    "Unwrap on Err value, error: {:?}, backtrace: {}",
+                    e, bt
+                ));
+                std::thread::sleep(Duration::from_secs(2)); // So log will be written even if main panicked
                 panic!("called `unwrap_with_logger()` on an `Err` value: {:?}", e);
             }
         }

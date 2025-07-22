@@ -19,6 +19,7 @@ mod auto_status;
 mod message;
 mod passive_card;
 mod passive_counter;
+mod passive_indicator;
 mod penalty_card;
 mod period;
 mod priority;
@@ -41,7 +42,7 @@ impl SdlFrontend {
         hw_config: HardwareConfig,
         logger: Logger,
     ) -> Self {
-        let layout = match hw_config.display.resolution {
+        let layout: layout_structure::Layout = match hw_config.display.resolution {
             Resolution::Res1920X1080 => layouts::LAYOUT_1920X1080,
             Resolution::Res1920X550 => layouts::LAYOUT_1920X550,
             Resolution::Res1920X480 => layouts::LAYOUT_1920X480,
