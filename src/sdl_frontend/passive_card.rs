@@ -5,7 +5,7 @@ use std::rc::Rc;
 use crate::colors;
 use crate::match_info::PassiveCard;
 use crate::sdl_frontend::widgets::Card;
-use crate::sdl_frontend::{passive_card, score};
+use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 
 pub struct Drawer<'a> {
     card_l_caution_widget: Card<'a>,
@@ -15,8 +15,6 @@ pub struct Drawer<'a> {
 
     cards_l: PassiveCard,
     cards_r: PassiveCard,
-
-    logger: &'a crate::virtuoso_logger::Logger,
 }
 
 impl<'a> Drawer<'a> {
@@ -27,11 +25,11 @@ impl<'a> Drawer<'a> {
         rwops: sdl2::rwops::RWops<'a>,
         layout: &crate::layout_structure::Layout,
 
-        logger: &'a crate::virtuoso_logger::Logger,
+        logger: &'a Logger,
     ) -> Self {
         let font: sdl2::ttf::Font<'a, 'a> = ttf_context
             .load_font_from_rwops(rwops, layout.passive_l_top_text.font_size as u16)
-            .unwrap();
+            .unwrap_with_logger(logger);
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
         let mut res: Drawer<'a> = Self {
@@ -70,7 +68,6 @@ impl<'a> Drawer<'a> {
 
             cards_l: PassiveCard::Yellow(1),
             cards_r: PassiveCard::Yellow(1),
-            logger,
         };
 
         res.render(PassiveCard::None, PassiveCard::None);

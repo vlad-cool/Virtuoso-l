@@ -270,3 +270,19 @@ impl VirtuosoLogger {
         }
     }
 }
+
+pub trait LoggerUnwrap<T> {
+    fn unwrap_with_logger(self, logger: &Logger) -> T;
+}
+
+impl<T, E: std::fmt::Debug> LoggerUnwrap<T> for Result<T, E> {
+    fn unwrap_with_logger(self, logger: &Logger) -> T {
+        match self {
+            Ok(val) => val,
+            Err(e) => {
+                logger.critical_error(format!("Unwrap error: {:?}", e));
+                panic!("called `unwrap_with_logger()` on an `Err` value: {:?}", e);
+            }
+        }
+    }
+}

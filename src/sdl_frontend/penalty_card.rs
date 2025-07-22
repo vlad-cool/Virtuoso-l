@@ -6,19 +6,7 @@ use std::rc::Rc;
 use crate::colors;
 use crate::match_info::WarningCard;
 use crate::sdl_frontend::widgets::Card;
-use crate::sdl_frontend::{penalty_card, score};
-
-pub struct Drawer<'a> {
-    card_l_caution_widget: Card<'a>,
-    card_l_penalty_widget: Card<'a>,
-    card_r_caution_widget: Card<'a>,
-    card_r_penalty_widget: Card<'a>,
-
-    cards_l: WarningCard,
-    cards_r: WarningCard,
-
-    logger: &'a crate::virtuoso_logger::Logger,
-}
+use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 
 fn parse_caution_card<'a>(card: WarningCard) -> (&'a str, u32, Color, Color, Color) {
     if card != WarningCard::None {
@@ -80,6 +68,16 @@ fn parse_penalty_card<'a>(card: WarningCard) -> (String, u32, Color, Color, Colo
     }
 }
 
+pub struct Drawer<'a> {
+    card_l_caution_widget: Card<'a>,
+    card_l_penalty_widget: Card<'a>,
+    card_r_caution_widget: Card<'a>,
+    card_r_penalty_widget: Card<'a>,
+
+    cards_l: WarningCard,
+    cards_r: WarningCard,
+}
+
 impl<'a> Drawer<'a> {
     pub fn new(
         canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
@@ -88,11 +86,11 @@ impl<'a> Drawer<'a> {
         rwops: sdl2::rwops::RWops<'a>,
         layout: &crate::layout_structure::Layout,
 
-        logger: &'a crate::virtuoso_logger::Logger,
+        logger: &'a Logger,
     ) -> Self {
         let font: sdl2::ttf::Font<'a, 'a> = ttf_context
             .load_font_from_rwops(rwops, layout.caution_l_text.font_size as u16)
-            .unwrap();
+            .unwrap_with_logger(logger);
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
         let mut res: Drawer<'a> = Self {
@@ -131,7 +129,6 @@ impl<'a> Drawer<'a> {
 
             cards_l: WarningCard::Yellow(1),
             cards_r: WarningCard::Yellow(1),
-            logger,
         };
 
         res.render(WarningCard::None, WarningCard::None);

@@ -1,41 +1,47 @@
+use sdl2;
 use sdl2::rect::Rect;
 use sdl2::surface::Surface;
-use sdl2::{self, surface};
 use std::cell::RefCell;
 use std::cmp::min;
-use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
-use crate::sdl_frontend::widgets;
-use crate::{colors, layout_structure};
+use crate::layout_structure;
+use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 
 fn draw_rounded_rectangle<'a>(
     color: sdl2::pixels::Color,
     width: u32,
     height: u32,
     radius: u32,
+    logger: &Logger,
 ) -> sdl2::surface::Surface<'a> {
     let mut surface: Surface<'a> =
         sdl2::surface::Surface::new(width, height, sdl2::pixels::PixelFormatEnum::RGBA8888)
-            .unwrap();
+            .unwrap_with_logger(logger);
 
-    surface.fill_rect(
-        sdl2::rect::Rect::new(radius as i32, 0, width - radius * 2, height),
-        color,
-    );
-    surface.fill_rect(
-        sdl2::rect::Rect::new(0, radius as i32, radius, height - radius * 2),
-        color,
-    );
-    surface.fill_rect(
-        sdl2::rect::Rect::new(
-            width as i32 - radius as i32,
-            radius as i32,
-            radius,
-            height - radius * 2,
-        ),
-        color,
-    );
+    surface
+        .fill_rect(
+            sdl2::rect::Rect::new(radius as i32, 0, width - radius * 2, height),
+            color,
+        )
+        .unwrap_with_logger(logger);
+    surface
+        .fill_rect(
+            sdl2::rect::Rect::new(0, radius as i32, radius, height - radius * 2),
+            color,
+        )
+        .unwrap_with_logger(logger);
+    surface
+        .fill_rect(
+            sdl2::rect::Rect::new(
+                width as i32 - radius as i32,
+                radius as i32,
+                radius,
+                height - radius * 2,
+            ),
+            color,
+        )
+        .unwrap_with_logger(logger);
 
     let format = surface.pixel_format();
 
@@ -87,7 +93,7 @@ pub struct Label<'a> {
     width: u32,
     height: u32,
 
-    logger: &'a crate::virtuoso_logger::Logger,
+    logger: &'a Logger,
 }
 
 impl<'a> Label<'a> {
@@ -98,7 +104,7 @@ impl<'a> Label<'a> {
 
         position: layout_structure::TextProperties,
 
-        logger: &'a crate::virtuoso_logger::Logger,
+        logger: &'a Logger,
     ) -> Self {
         Self {
             canvas,
@@ -111,7 +117,7 @@ impl<'a> Label<'a> {
                     1,
                     1,
                 )
-                .unwrap(),
+                .unwrap_with_logger(logger),
             x: position.x + position.width as i32 / 2,
             y: position.y + position.height as i32 / 2,
             width: 0,
@@ -128,13 +134,14 @@ impl<'a> Label<'a> {
         let mut height: u32 = 0;
 
         for line in text.split("\n") {
-            let surface: sdl2::surface::Surface<'a> =
-                self.font.render(line).blended(color).unwrap();
+            let surface: sdl2::surface::Surface<'a> = self
+                .font
+                .render(line)
+                .blended(color)
+                .unwrap_with_logger(self.logger);
 
             width = std::cmp::max(width, surface.width());
             height += surface.height();
-
-            surface.save_bmp(format!("aaa/{line}.bmp"));
             surfaces.push(surface);
         }
 
@@ -143,7 +150,7 @@ impl<'a> Label<'a> {
             height as u32,
             sdl2::pixels::PixelFormatEnum::RGBA8888,
         )
-        .unwrap();
+        .unwrap_with_logger(self.logger);
 
         let mut y_pos: i32 = 0;
         for surface in surfaces {
@@ -153,14 +160,16 @@ impl<'a> Label<'a> {
                 surface.width(),
                 surface.height(),
             );
-            surface.blit(None, &mut text_surface, dst_rect);
+            surface
+                .blit(None, &mut text_surface, dst_rect)
+                .unwrap_with_logger(self.logger);
             y_pos += surface.height() as i32;
         }
 
         self.texture = self
             .texture_creator
             .create_texture_from_surface(&text_surface)
-            .unwrap();
+            .unwrap_with_logger(self.logger);
 
         self.width = text_surface.width();
         self.height = text_surface.height();
@@ -177,7 +186,7 @@ impl<'a> Label<'a> {
         self.canvas
             .borrow_mut()
             .copy(&self.texture, None, Some(target_rect))
-            .unwrap();
+            .unwrap_with_logger(self.logger);
     }
 }
 
@@ -198,7 +207,7 @@ pub struct Card<'a> {
     rect_height: u32,
     rect_radius: u32,
 
-    logger: &'a crate::virtuoso_logger::Logger,
+    logger: &'a Logger,
 }
 
 impl<'a> Card<'a> {
@@ -210,7 +219,7 @@ impl<'a> Card<'a> {
         text_position: layout_structure::TextProperties,
         rect_position: layout_structure::RectangleProperties,
 
-        logger: &'a crate::virtuoso_logger::Logger,
+        logger: &'a Logger,
     ) -> Self {
         Self {
             canvas,
@@ -223,7 +232,7 @@ impl<'a> Card<'a> {
                     1,
                     1,
                 )
-                .unwrap(),
+                .unwrap_with_logger(logger),
 
             text_x: text_position.x + text_position.width as i32 / 2,
             text_y: text_position.y + text_position.height as i32 / 2,
@@ -253,47 +262,60 @@ impl<'a> Card<'a> {
             min(self.rect_height / 2, self.rect_width / 2),
         );
 
-        let mut outer_card: Surface<'_> =
-            draw_rounded_rectangle(border_color, self.rect_width, self.rect_height, radius);
+        let mut outer_card: Surface<'_> = draw_rounded_rectangle(
+            border_color,
+            self.rect_width,
+            self.rect_height,
+            radius,
+            self.logger,
+        );
         let inner_card: Surface<'_> = draw_rounded_rectangle(
             card_color,
             self.rect_width - border_width * 2,
             self.rect_height - border_width * 2,
             radius,
+            self.logger,
         );
 
-        inner_card.blit(
-            None,
-            &mut outer_card,
-            Some(sdl2::rect::Rect::new(
-                border_width as i32,
-                border_width as i32,
-                self.rect_width - border_width * 2,
-                self.rect_width - border_width * 2,
-            )),
-        );
+        inner_card
+            .blit(
+                None,
+                &mut outer_card,
+                Some(sdl2::rect::Rect::new(
+                    border_width as i32,
+                    border_width as i32,
+                    self.rect_width - border_width * 2,
+                    self.rect_width - border_width * 2,
+                )),
+            )
+            .unwrap_with_logger(self.logger);
 
-        let text_surface: sdl2::surface::Surface<'a> =
-            self.font.render(text).blended(text_color).unwrap();
+        let text_surface: sdl2::surface::Surface<'a> = self
+            .font
+            .render(text)
+            .blended(text_color)
+            .unwrap_with_logger(self.logger);
 
         let width: u32 = outer_card.width();
         let height: u32 = outer_card.height();
 
-        text_surface.blit(
-            None,
-            &mut outer_card,
-            Rect::new(
-                (width as i32 - text_surface.width() as i32) / 2,
-                (height as i32 - text_surface.height() as i32) / 2,
-                text_surface.width(),
-                text_surface.height(),
-            ),
-        );
+        text_surface
+            .blit(
+                None,
+                &mut outer_card,
+                Rect::new(
+                    self.text_x - self.rect_x + (width as i32 - text_surface.width() as i32) / 2,
+                    self.text_y - self.rect_y + (height as i32 - text_surface.height() as i32) / 2,
+                    text_surface.width(),
+                    text_surface.height(),
+                ),
+            )
+            .unwrap_with_logger(self.logger);
 
         self.texture = self
             .texture_creator
             .create_texture_from_surface(&outer_card)
-            .unwrap();
+            .unwrap_with_logger(self.logger);
 
         self.width = width;
         self.height = height;
@@ -301,8 +323,8 @@ impl<'a> Card<'a> {
 
     pub fn draw(&mut self) {
         let target_rect: sdl2::rect::Rect = sdl2::rect::Rect::new(
-            self.text_x - self.width as i32 / 2,
-            self.text_y - self.height as i32 / 2,
+            self.rect_x - self.width as i32 / 2,
+            self.rect_y - self.height as i32 / 2,
             self.width,
             self.height,
         );
@@ -310,6 +332,127 @@ impl<'a> Card<'a> {
         self.canvas
             .borrow_mut()
             .copy(&self.texture, None, Some(target_rect))
-            .unwrap();
+            .unwrap_with_logger(self.logger);
     }
 }
+
+// pub struct Indicator<'a> {
+//     canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
+//     texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
+//     texture: sdl2::render::Texture<'a>,
+
+//     x: i32,
+//     y: i32,
+//     width: u32,
+//     height: u32,
+//     radius: u32,
+
+//     logger: &'a Logger,
+// }
+
+// impl<'a> Indicator<'a> {
+//     pub fn new(
+//         canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
+//         texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
+//         font: Rc<sdl2::ttf::Font<'a, 'a>>,
+
+//         position: layout_structure::RectangleProperties,
+
+//         logger: &'a Logger,
+//     ) -> Self {
+//         Self {
+//             canvas,
+//             texture_creator,
+//             texture: texture_creator
+//                 .create_texture(
+//                     sdl2::pixels::PixelFormatEnum::RGB888,
+//                     sdl2::render::TextureAccess::Static,
+//                     1,
+//                     1,
+//                 )
+//                 .unwrap_with_logger(self.logger),
+
+//             x: position.x,
+//             y: position.x,
+//             width: position.width,
+//             height: position.height,
+//             radius: position.radius,
+
+//             logger,
+//         }
+//     }
+
+//     pub fn render(
+//         &mut self,
+//         text: &str,
+//         border_width: u32,
+//         card_color: sdl2::pixels::Color,
+//         border_color: sdl2::pixels::Color,
+//         text_color: sdl2::pixels::Color,
+//     ) {
+//         // let radius: u32 = min(
+//         //     self.rect_radius,
+//         //     min(self.rect_height / 2, self.rect_width / 2),
+//         // );
+
+//         // let mut outer_card: Surface<'_> =
+//         //     draw_rounded_rectangle(border_color, self.rect_width, self.rect_height, radius, self.logger,);
+//         // let inner_card: Surface<'_> = draw_rounded_rectangle(
+//         //     card_color,
+//         //     self.rect_width - border_width * 2,
+//         //     self.rect_height - border_width * 2,
+//         //     radius,
+//     // self.logger,
+//         // );
+
+//         // inner_card.blit(
+//         //     None,
+//         //     &mut outer_card,
+//         //     Some(sdl2::rect::Rect::new(
+//         //         border_width as i32,
+//         //         border_width as i32,
+//         //         self.rect_width - border_width * 2,
+//         //         self.rect_width - border_width * 2,
+//         //     )),
+//         // );
+
+//         // let text_surface: sdl2::surface::Surface<'a> =
+//         //     self.font.render(text).blended(text_color).unwrap_with_logger(self.logger);
+
+//         // let width: u32 = outer_card.width();
+//         // let height: u32 = outer_card.height();
+
+//         // text_surface.blit(
+//         //     None,
+//         //     &mut outer_card,
+//         //     Rect::new(
+//         //         (width as i32 - text_surface.width() as i32) / 2,
+//         //         (height as i32 - text_surface.height() as i32) / 2,
+//         //         text_surface.width(),
+//         //         text_surface.height(),
+//         //     ),
+//         // );
+
+//         // self.texture = self
+//         //     .texture_creator
+//         //     .create_texture_from_surface(&outer_card)
+//         //     .unwrap_with_logger(self.logger);
+
+//         // self.width = width;
+//         // self.height = height;
+//     }
+
+//     pub fn draw(&mut self) {
+//         // let target_rect: sdl2::rect::Rect = sdl2::rect::Rect::new(
+//         //     self.text + self.width as i32 / 2,
+//         //     self.text_y - self.height as i32 / 2,
+//         //     self.width,
+//         //     self.height,
+//         // );
+
+//         // self.canvas
+//         //     .borrow_mut()
+//         //     .copy(&self.texture, None, Some(target_rect))
+//         //     .unwrap_with_logger(self.logger);
+//     }
+// }

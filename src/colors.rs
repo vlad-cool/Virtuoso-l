@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use sdl2::pixels::Color;
 
 pub const BACKGROUND: Color = Color::RGB(0x00, 0x00, 0x00);

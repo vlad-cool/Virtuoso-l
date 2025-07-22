@@ -1,13 +1,12 @@
-use sdl2::{self, rwops};
+use sdl2;
 use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::colors;
 use crate::layout_structure::Layout;
 use crate::match_info::Weapon;
-use crate::sdl_frontend::weapon;
 use crate::sdl_frontend::widgets::Label;
-use crate::virtuoso_logger::Logger;
+use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 
 pub struct Drawer<'a> {
     epee_widget: Label<'a>,
@@ -15,8 +14,6 @@ pub struct Drawer<'a> {
     fleuret_widget: Label<'a>,
 
     weapon: Weapon,
-
-    logger: &'a Logger,
 }
 
 impl<'a> Drawer<'a> {
@@ -31,7 +28,7 @@ impl<'a> Drawer<'a> {
     ) -> Self {
         let font: sdl2::ttf::Font<'a, 'a> = ttf_context
             .load_font_from_rwops(rwops, layout.epee.font_size as u16)
-            .unwrap();
+            .unwrap_with_logger(logger);
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
         let mut res: Drawer<'a> = Self {
@@ -58,8 +55,6 @@ impl<'a> Drawer<'a> {
             ),
 
             weapon: Weapon::Sabre,
-
-            logger,
         };
 
         res.render(Weapon::Epee);

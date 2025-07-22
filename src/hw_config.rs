@@ -24,6 +24,7 @@ impl std::fmt::Display for Resolution {
 }
 
 #[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
+#[allow(dead_code)]
 impl Resolution {
     pub fn to_config_dir(&self) -> String {
         match self {
@@ -294,6 +295,7 @@ impl HardwareConfig {
         }
     }
 
+    #[allow(dead_code)]
     fn configure_os(&self, logger: &Logger) {
         #[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
         {

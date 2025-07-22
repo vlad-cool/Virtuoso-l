@@ -9,6 +9,7 @@ pub enum WarningCard {
     Black(u8),
 }
 
+#[allow(dead_code)]
 impl WarningCard {
     const NUM_YELLOW: u8 = 1;
     const NUM_RED: u8 = 15;
@@ -82,6 +83,7 @@ pub enum PassiveCard {
     Black(u8),
 }
 
+#[allow(dead_code)]
 impl PassiveCard {
     const NUM_YELLOW: u8 = 1;
     const NUM_RED: u8 = 2;
@@ -314,6 +316,7 @@ pub struct PassiveTimer {
     last_updated: Instant,
 }
 
+#[allow(dead_code)]
 impl PassiveTimer {
     pub fn new() -> PassiveTimer {
         Self {
@@ -367,6 +370,7 @@ impl PassiveTimer {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct TimerController {
     last_second: bool,
@@ -388,6 +392,7 @@ impl PartialEq for TimerController {
     }
 }
 
+#[allow(dead_code)]
 impl TimerController {
     pub fn new() -> Self {
         Self {

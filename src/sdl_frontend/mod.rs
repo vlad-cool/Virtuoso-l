@@ -1,7 +1,3 @@
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
-use sdl2::pixels::Color;
-use sdl2::rect::Rect;
 use sdl2::rwops::RWops;
 
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -11,8 +7,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::match_info::Weapon;
-use crate::modules;
-use crate::virtuoso_logger::Logger;
+use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 use crate::{colors, match_info};
 use crate::{
     hw_config::{HardwareConfig, Resolution},
@@ -36,7 +31,6 @@ const MESSAGE_DISPLAY_TIME: Duration = Duration::from_secs(2);
 
 pub struct SdlFrontend {
     match_info: Arc<Mutex<match_info::MatchInfo>>,
-    hw_config: HardwareConfig,
     logger: Logger,
     layout: layout_structure::Layout,
 }
@@ -56,7 +50,6 @@ impl SdlFrontend {
 
         Self {
             match_info,
-            hw_config,
             logger,
             layout,
         }
@@ -64,11 +57,13 @@ impl SdlFrontend {
 }
 
 impl VirtuosoModule for SdlFrontend {
-    fn run(mut self) {
-        let sdl_context: sdl2::Sdl = sdl2::init().unwrap();
-        let video_subsystem: sdl2::VideoSubsystem = sdl_context.video().unwrap();
-        let ttf_context: sdl2::ttf::Sdl2TtfContext =
-            sdl2::ttf::init().map_err(|e| e.to_string()).unwrap();
+    fn run(self) {
+        let sdl_context: sdl2::Sdl = sdl2::init().unwrap_with_logger(&self.logger);
+        let video_subsystem: sdl2::VideoSubsystem =
+            sdl_context.video().unwrap_with_logger(&self.logger);
+        let ttf_context: sdl2::ttf::Sdl2TtfContext = sdl2::ttf::init()
+            .map_err(|e| e.to_string())
+            .unwrap_with_logger(&self.logger);
 
         let window: sdl2::video::Window = video_subsystem
             .window(
@@ -77,10 +72,12 @@ impl VirtuosoModule for SdlFrontend {
                 self.layout.background.height as u32,
             )
             .build()
-            .unwrap();
+            .unwrap_with_logger(&self.logger);
 
-        let mut canvas: sdl2::render::Canvas<sdl2::video::Window> =
-            window.into_canvas().build().unwrap();
+        let canvas: sdl2::render::Canvas<sdl2::video::Window> = window
+            .into_canvas()
+            .build()
+            .unwrap_with_logger(&self.logger);
 
         let canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>> =
             Rc::new(RefCell::new(canvas));
@@ -100,7 +97,7 @@ impl VirtuosoModule for SdlFrontend {
             &ttf_context,
             RWops::from_bytes(font_bytes)
                 .map_err(|e| e.to_string())
-                .unwrap(),
+                .unwrap_with_logger(&self.logger),
             &self.layout,
             &self.logger,
         );
@@ -111,7 +108,7 @@ impl VirtuosoModule for SdlFrontend {
             &ttf_context,
             RWops::from_bytes(font_bytes)
                 .map_err(|e| e.to_string())
-                .unwrap(),
+                .unwrap_with_logger(&self.logger),
             &self.layout,
             &self.logger,
         );
@@ -122,7 +119,7 @@ impl VirtuosoModule for SdlFrontend {
             &ttf_context,
             RWops::from_bytes(font_bytes)
                 .map_err(|e| e.to_string())
-                .unwrap(),
+                .unwrap_with_logger(&self.logger),
             &self.layout,
             &self.logger,
         );
@@ -133,7 +130,7 @@ impl VirtuosoModule for SdlFrontend {
             &ttf_context,
             RWops::from_bytes(font_bytes)
                 .map_err(|e| e.to_string())
-                .unwrap(),
+                .unwrap_with_logger(&self.logger),
             &self.layout,
             &self.logger,
         );
@@ -144,7 +141,7 @@ impl VirtuosoModule for SdlFrontend {
             &ttf_context,
             RWops::from_bytes(font_bytes)
                 .map_err(|e| e.to_string())
-                .unwrap(),
+                .unwrap_with_logger(&self.logger),
             &self.layout,
             &self.logger,
         );
@@ -155,7 +152,7 @@ impl VirtuosoModule for SdlFrontend {
             &ttf_context,
             RWops::from_bytes(font_bytes)
                 .map_err(|e| e.to_string())
-                .unwrap(),
+                .unwrap_with_logger(&self.logger),
             &self.layout,
             &self.logger,
         );
@@ -166,7 +163,7 @@ impl VirtuosoModule for SdlFrontend {
             &ttf_context,
             RWops::from_bytes(font_bytes)
                 .map_err(|e| e.to_string())
-                .unwrap(),
+                .unwrap_with_logger(&self.logger),
             &self.layout,
             &self.logger,
         );
@@ -177,7 +174,7 @@ impl VirtuosoModule for SdlFrontend {
             &ttf_context,
             RWops::from_bytes(font_bytes)
                 .map_err(|e| e.to_string())
-                .unwrap(),
+                .unwrap_with_logger(&self.logger),
             &self.layout,
             &self.logger,
         );
@@ -188,7 +185,7 @@ impl VirtuosoModule for SdlFrontend {
             &ttf_context,
             RWops::from_bytes(font_bytes)
                 .map_err(|e| e.to_string())
-                .unwrap(),
+                .unwrap_with_logger(&self.logger),
             &self.layout,
             &self.logger,
         );
@@ -199,22 +196,19 @@ impl VirtuosoModule for SdlFrontend {
             &ttf_context,
             RWops::from_bytes(font_bytes)
                 .map_err(|e| e.to_string())
-                .unwrap(),
+                .unwrap_with_logger(&self.logger),
             RWops::from_bytes(font_bytes)
                 .map_err(|e| e.to_string())
-                .unwrap(),
+                .unwrap_with_logger(&self.logger),
             &self.layout,
             &self.logger,
         );
 
         canvas.borrow_mut().present();
 
-        let mut i: u32 = 0;
-        let time: std::time::Instant = std::time::Instant::now();
-
         let mut modified_count: u32 = 0;
 
-        let mut event_pump = sdl_context.event_pump().unwrap();
+        let mut event_pump = sdl_context.event_pump().unwrap_with_logger(&self.logger);
         'running: loop {
             std::thread::sleep(Duration::from_millis(50));
 
@@ -225,7 +219,8 @@ impl VirtuosoModule for SdlFrontend {
                 }
             }
 
-            let data: MutexGuard<'_, match_info::MatchInfo> = self.match_info.lock().unwrap();
+            let data: MutexGuard<'_, match_info::MatchInfo> =
+                self.match_info.lock().unwrap_with_logger(&self.logger);
 
             if data.modified_count == modified_count {
                 continue 'running;

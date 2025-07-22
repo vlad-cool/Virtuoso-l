@@ -6,6 +6,7 @@ use std::time::Duration;
 use crate::colors;
 use crate::match_info::Priority;
 use crate::sdl_frontend::widgets::Label;
+use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 
 pub struct Drawer<'a> {
     timer_0_widget: Label<'a>,
@@ -15,8 +16,6 @@ pub struct Drawer<'a> {
 
     time: Duration,
     timer_running: bool,
-
-    logger: &'a crate::virtuoso_logger::Logger,
 }
 
 impl<'a> Drawer<'a> {
@@ -27,11 +26,11 @@ impl<'a> Drawer<'a> {
         rwops: sdl2::rwops::RWops<'a>,
         layout: &crate::layout_structure::Layout,
 
-        logger: &'a crate::virtuoso_logger::Logger,
+        logger: &'a Logger,
     ) -> Self {
         let font: sdl2::ttf::Font<'a, 'a> = ttf_context
             .load_font_from_rwops(rwops, layout.timer_m.font_size as u16)
-            .unwrap();
+            .unwrap_with_logger(logger);
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
         let mut res: Drawer<'a> = Self {
@@ -65,7 +64,6 @@ impl<'a> Drawer<'a> {
             ),
             time: Duration::from_secs(0),
             timer_running: true,
-            logger,
         };
 
         res.render(Duration::from_secs(60 * 3), false, Priority::None);

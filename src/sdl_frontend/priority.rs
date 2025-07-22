@@ -5,7 +5,7 @@ use std::rc::Rc;
 use crate::colors::{self, PRIORITY_TEXT_DARK, PRIORITY_TEXT_LIGHT};
 use crate::match_info::Priority;
 use crate::sdl_frontend::widgets::Label;
-use crate::sdl_frontend::{priority, score};
+use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 
 pub struct Drawer<'a> {
     l_cap_widget: Label<'a>,
@@ -14,8 +14,6 @@ pub struct Drawer<'a> {
     r_word_widget: Label<'a>,
 
     priority: Priority,
-
-    logger: &'a crate::virtuoso_logger::Logger,
 }
 
 impl<'a> Drawer<'a> {
@@ -27,7 +25,7 @@ impl<'a> Drawer<'a> {
         rwops_1: sdl2::rwops::RWops<'a>,
         layout: &crate::layout_structure::Layout,
 
-        logger: &'a crate::virtuoso_logger::Logger,
+        logger: &'a Logger,
     ) -> Self {
         let font_cap: sdl2::ttf::Font<'a, 'a> = ttf_context
             .load_font_from_rwops(rwops_0, layout.priority_l_cap.font_size as u16)
@@ -36,7 +34,7 @@ impl<'a> Drawer<'a> {
 
         let font_word: sdl2::ttf::Font<'a, 'a> = ttf_context
             .load_font_from_rwops(rwops_1, layout.priority_l_text.font_size as u16)
-            .unwrap();
+            .unwrap_with_logger(logger);
         let font_word: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font_word);
 
         let mut res: Drawer<'a> = Self {
@@ -70,8 +68,6 @@ impl<'a> Drawer<'a> {
             ),
 
             priority: Priority::Left,
-
-            logger,
         };
 
         res.render(Priority::None);
@@ -95,8 +91,8 @@ impl<'a> Drawer<'a> {
                 Priority::Right => (colors::PRIORITY_GREEN, PRIORITY_TEXT_LIGHT),
                 _ => (colors::PRIORITY_DARK_GREEN, PRIORITY_TEXT_DARK),
             };
-            self.r_cap_widget.render("P", left_cap_color);
-            self.r_word_widget.render("riority", left_word_color);
+            self.r_cap_widget.render("P", right_cap_color);
+            self.r_word_widget.render("riority", right_word_color);
         }
     }
 

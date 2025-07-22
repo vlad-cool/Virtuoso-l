@@ -3,15 +3,13 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::colors;
-use crate::sdl_frontend::score;
 use crate::sdl_frontend::widgets::Label;
+use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 
 pub struct Drawer<'a> {
     message_widget: Label<'a>,
 
     message: String,
-
-    logger: &'a crate::virtuoso_logger::Logger,
 }
 
 impl<'a> Drawer<'a> {
@@ -22,11 +20,11 @@ impl<'a> Drawer<'a> {
         rwops: sdl2::rwops::RWops<'a>,
         layout: &crate::layout_structure::Layout,
 
-        logger: &'a crate::virtuoso_logger::Logger,
+        logger: &'a Logger,
     ) -> Self {
         let font: sdl2::ttf::Font<'a, 'a> = ttf_context
             .load_font_from_rwops(rwops, layout.timer_text.font_size as u16)
-            .unwrap();
+            .unwrap_with_logger(logger);
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
         let mut res: Drawer<'a> = Self {
@@ -38,7 +36,6 @@ impl<'a> Drawer<'a> {
                 logger,
             ),
             message: "".to_string(),
-            logger,
         };
 
         res.render(" ".to_string());
