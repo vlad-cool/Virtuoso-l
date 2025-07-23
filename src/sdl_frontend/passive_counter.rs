@@ -1,9 +1,14 @@
 use sdl2;
+use sdl2::rwops::RWops;
+use sdl2::ttf::Font;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::Duration;
 
 use crate::colors;
+use crate::match_info::{MatchInfo, Weapon};
 use crate::sdl_frontend::widgets::Label;
+use crate::sdl_frontend::{VirtuosoWidget, WidgetContext, passive_counter};
 use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 
 pub struct Drawer<'a> {
@@ -12,60 +17,57 @@ pub struct Drawer<'a> {
 
     passive_counter: u32,
     enabled: bool,
+    updated: bool,
 }
 
 impl<'a> Drawer<'a> {
-    pub fn new(
-        canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
-        texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-        ttf_context: &'a sdl2::ttf::Sdl2TtfContext,
-        rwops: sdl2::rwops::RWops<'a>,
-        layout: &crate::layout_structure::Layout,
+    pub fn new(context: WidgetContext<'a>) -> Self {
+        let font: Rc<Font<'_, '_>> =
+            context.get_font(context.layout.passive_counter_dec.font_size as u16);
 
-        logger: &'a Logger,
-    ) -> Self {
-        let font: sdl2::ttf::Font<'a, 'a> = ttf_context
-            .load_font_from_rwops(rwops, layout.passive_counter_dec.font_size as u16)
-            .unwrap_with_logger(logger);
-        let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
-
-        let mut res: Drawer<'a> = Self {
+        Self {
             passive_counter_0_widget: Label::new(
-                canvas.clone(),
-                texture_creator,
+                context.canvas.clone(),
+                context.texture_creator,
                 font.clone(),
-                layout.passive_counter_dec,
-                logger,
+                context.layout.passive_counter_dec,
+                context.logger,
             ),
             passive_counter_1_widget: Label::new(
-                canvas.clone(),
-                texture_creator,
+                context.canvas.clone(),
+                context.texture_creator,
                 font.clone(),
-                layout.passive_counter_sec,
-                logger,
+                context.layout.passive_counter_sec,
+                context.logger,
             ),
-            passive_counter: 1,
+            passive_counter: 60,
             enabled: false,
-        };
-
-        res.render(60, true);
-        res.draw();
-
-        res
+            updated: true,
+        }
     }
+}
 
-    pub fn render(&mut self, passive_counter: u32, enabled: bool) {
+impl<'a> VirtuosoWidget for Drawer<'a> {
+    fn update(&mut self, data: &MatchInfo) {
+        let enabled: bool = data.weapon != Weapon::Sabre;
+        let passive_counter: u32 = data.passive_timer.get_counter();
+
         if self.passive_counter != passive_counter || self.enabled != enabled {
             self.passive_counter = passive_counter;
             self.enabled = enabled;
+            self.updated = true;
+        }
+    }
 
-            let passive_counter_text: String = if enabled {
-                format!("{}{}", passive_counter / 10, passive_counter % 10)
+    fn render(&mut self) {
+        if self.updated {
+            let passive_counter_text: String = if self.enabled {
+                format!("{}{}", self.passive_counter / 10, self.passive_counter % 10)
             } else {
-                format!("  ")
+                format!("60")
             };
 
-            let color: sdl2::pixels::Color = if enabled {
+            let color: sdl2::pixels::Color = if self.enabled {
                 colors::PASSIVE_TEXT_LIGHT
             } else {
                 colors::PASSIVE_TEXT_DARK
@@ -76,9 +78,7 @@ impl<'a> Drawer<'a> {
             self.passive_counter_1_widget
                 .render(&passive_counter_text[1..2], color);
         }
-    }
 
-    pub fn draw(&mut self) {
         self.passive_counter_0_widget.draw();
         self.passive_counter_1_widget.draw();
     }

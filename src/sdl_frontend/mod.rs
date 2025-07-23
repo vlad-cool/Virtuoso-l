@@ -45,6 +45,17 @@ struct WidgetContext<'a> {
     pub logger: &'a Logger,
 }
 
+impl<'a> WidgetContext<'a> {
+    pub fn get_font(&self, font_size: u16) -> Rc<sdl2::ttf::Font<'a, 'a>> {
+        let rwops: RWops<'_> = RWops::from_bytes(self.font_bytes).unwrap_with_logger(self.logger);
+        let font: sdl2::ttf::Font<'a, 'a> = self
+            .ttf_context
+            .load_font_from_rwops(rwops, font_size)
+            .unwrap_with_logger(self.logger);
+        Rc::new(font)
+    }
+}
+
 trait VirtuosoWidget {
     fn update(&mut self, data: &MatchInfo);
     fn render(&mut self);
@@ -122,7 +133,12 @@ impl VirtuosoModule for SdlFrontend {
 
         let mut widgets: Vec<Box<dyn VirtuosoWidget>> = Vec::<Box<dyn VirtuosoWidget>>::new();
 
-        widgets.push(Box::new(auto_status::Drawer::new(widget_context)));
+        // widgets.push(Box::new(auto_status::Drawer::new(widget_context)));
+        widgets.push(Box::new(auto_status::Drawer::new(widget_context.clone())));
+        widgets.push(Box::new(led_repeater::Drawer::new(widget_context.clone())));
+        widgets.push(Box::new(message::Drawer::new(widget_context.clone())));
+        widgets.push(Box::new(passive_card::Drawer::new(widget_context.clone())));
+        widgets.push(Box::new(passive_counter::Drawer::new(widget_context.clone())));
 
         let mut score_drawer: score::Drawer<'_> = score::Drawer::new(
             canvas.clone(),
@@ -135,16 +151,16 @@ impl VirtuosoModule for SdlFrontend {
             &self.logger,
         );
 
-        let mut message: message::Drawer<'_> = message::Drawer::new(
-            canvas.clone(),
-            &texture_creator,
-            &ttf_context,
-            RWops::from_bytes(font_bytes)
-                .map_err(|e| e.to_string())
-                .unwrap_with_logger(&self.logger),
-            &self.layout,
-            &self.logger,
-        );
+        // let mut message: message::Drawer<'_> = message::Drawer::new(
+        //     canvas.clone(),
+        //     &texture_creator,
+        //     &ttf_context,
+        //     RWops::from_bytes(font_bytes)
+        //         .map_err(|e| e.to_string())
+        //         .unwrap_with_logger(&self.logger),
+        //     &self.layout,
+        //     &self.logger,
+        // );
 
         let mut weapon_drawer: weapon::Drawer<'_> = weapon::Drawer::new(
             canvas.clone(),
@@ -179,16 +195,16 @@ impl VirtuosoModule for SdlFrontend {
             &self.logger,
         );
 
-        let mut passive_counter: passive_counter::Drawer<'_> = passive_counter::Drawer::new(
-            canvas.clone(),
-            &texture_creator,
-            &ttf_context,
-            RWops::from_bytes(font_bytes)
-                .map_err(|e| e.to_string())
-                .unwrap_with_logger(&self.logger),
-            &self.layout,
-            &self.logger,
-        );
+        // let mut passive_counter: passive_counter::Drawer<'_> = passive_counter::Drawer::new(
+        //     canvas.clone(),
+        //     &texture_creator,
+        //     &ttf_context,
+        //     RWops::from_bytes(font_bytes)
+        //         .map_err(|e| e.to_string())
+        //         .unwrap_with_logger(&self.logger),
+        //     &self.layout,
+        //     &self.logger,
+        // );
 
         let mut passive_indicator: passive_indicator::Drawer<'_> = passive_indicator::Drawer::new(
             canvas.clone(),
@@ -197,16 +213,16 @@ impl VirtuosoModule for SdlFrontend {
             &self.logger,
         );
 
-        let mut passive_card: passive_card::Drawer<'_> = passive_card::Drawer::new(
-            canvas.clone(),
-            &texture_creator,
-            &ttf_context,
-            RWops::from_bytes(font_bytes)
-                .map_err(|e| e.to_string())
-                .unwrap_with_logger(&self.logger),
-            &self.layout,
-            &self.logger,
-        );
+        // let mut passive_card: passive_card::Drawer<'_> = passive_card::Drawer::new(
+        //     canvas.clone(),
+        //     &texture_creator,
+        //     &ttf_context,
+        //     RWops::from_bytes(font_bytes)
+        //         .map_err(|e| e.to_string())
+        //         .unwrap_with_logger(&self.logger),
+        //     &self.layout,
+        //     &self.logger,
+        // );
 
         let mut penalty_card: penalty_card::Drawer<'_> = penalty_card::Drawer::new(
             canvas.clone(),
@@ -244,14 +260,15 @@ impl VirtuosoModule for SdlFrontend {
             &self.logger,
         );
 
-        let mut led_repeater: led_repeater::Drawer<'_> =
-            led_repeater::Drawer::new(canvas.clone(), &texture_creator, &self.layout, &self.logger);
+        // let mut led_repeater: led_repeater::Drawer<'_> =
+        //     led_repeater::Drawer::new(canvas.clone(), &texture_creator, &self.layout, &self.logger);
 
         canvas.borrow_mut().present();
 
-        let mut modified_count: u32 = 999;
+        let mut modified_count: u32 = 01312;
 
-        let mut event_pump: sdl2::EventPump = sdl_context.event_pump().unwrap_with_logger(&self.logger);
+        let mut event_pump: sdl2::EventPump =
+            sdl_context.event_pump().unwrap_with_logger(&self.logger);
         'running: loop {
             std::thread::sleep(Duration::from_millis(50));
 
@@ -276,48 +293,48 @@ impl VirtuosoModule for SdlFrontend {
             let display_message: bool = data.display_message != ""
                 && data.display_message_updated.elapsed() < MESSAGE_DISPLAY_TIME;
             if display_message {
-                message.render(data.display_message.clone());
+                // message.render(data.display_message.clone());
             } else {
                 timer_drawer.render(data.timer_controller.get_time(), true, data.priority);
             }
             score_drawer.render(data.left_fencer.score, data.right_fencer.score);
             weapon_drawer.render(data.weapon);
             period_drawer.render(data.period);
-            passive_counter.render(
-                data.passive_timer.get_counter(),
-                data.weapon != Weapon::Fleuret,
-            );
-            passive_card.render(
-                data.left_fencer.passive_card,
-                data.right_fencer.passive_card,
-            );
+            // passive_counter.render(
+            //     data.passive_timer.get_counter(),
+            //     data.weapon != Weapon::Fleuret,
+            // );
+            // passive_card.render(
+            //     data.left_fencer.passive_card,
+            //     data.right_fencer.passive_card,
+            // );
             penalty_card.render(
                 data.left_fencer.warning_card,
                 data.right_fencer.warning_card,
             );
             // auto_status.render(data.auto_timer_on, data.auto_score_on);
             priority.render(data.priority);
-            led_repeater.render(
-                data.left_fencer.color_light,
-                data.left_fencer.white_light,
-                data.right_fencer.color_light,
-                data.right_fencer.white_light,
-            );
+            // led_repeater.render(
+            //     data.left_fencer.color_light,
+            //     data.left_fencer.white_light,
+            //     data.right_fencer.color_light,
+            //     data.right_fencer.white_light,
+            // );
 
             if display_message {
-                message.draw();
+                // message.draw();
             } else {
                 timer_drawer.draw();
             }
             score_drawer.draw();
             weapon_drawer.draw();
             period_drawer.draw();
-            passive_counter.draw();
-            passive_card.draw();
+            // passive_counter.draw();
+            // passive_card.draw();
             penalty_card.draw();
             // auto_status.draw();
             priority.draw();
-            led_repeater.draw();
+            // led_repeater.draw();
 
             for widget in &mut widgets {
                 widget.update(&data);
@@ -326,7 +343,6 @@ impl VirtuosoModule for SdlFrontend {
             for widget in &mut widgets {
                 widget.render();
             }
-            
 
             canvas.borrow_mut().present();
         }

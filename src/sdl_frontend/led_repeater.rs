@@ -4,8 +4,9 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use crate::colors;
-use crate::layout_structure::RectangleProperties;
+use crate::match_info::MatchInfo;
 use crate::sdl_frontend::widgets::Indicator;
+use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 
 pub struct Drawer<'a> {
@@ -15,111 +16,113 @@ pub struct Drawer<'a> {
     r_white_widget: Indicator<'a>,
 
     l_color_led_on: bool,
+    l_color_led_updated: bool,
     l_white_led_on: bool,
+    l_white_led_updated: bool,
     r_color_led_on: bool,
+    r_color_led_updated: bool,
     r_white_led_on: bool,
+    r_white_led_updated: bool,
 }
 
 impl<'a> Drawer<'a> {
-    pub fn new(
-        canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
-        texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-        layout: &crate::layout_structure::Layout,
-
-        logger: &'a Logger,
-    ) -> Self {
-        let mut res: Drawer<'a> = Self {
+    pub fn new(context: WidgetContext<'a>) -> Self {
+        Self {
             l_color_widget: Indicator::new(
-                canvas.clone(),
-                texture_creator,
-                layout.left_color_indicator,
-                logger,
+                context.canvas.clone(),
+                context.texture_creator,
+                context.layout.left_color_indicator,
+                context.logger,
             ),
             l_white_widget: Indicator::new(
-                canvas.clone(),
-                texture_creator,
-                layout.left_white_indicator,
-                logger,
+                context.canvas.clone(),
+                context.texture_creator,
+                context.layout.left_white_indicator,
+                context.logger,
             ),
             r_color_widget: Indicator::new(
-                canvas.clone(),
-                texture_creator,
-                layout.right_color_indicator,
-                logger,
+                context.canvas.clone(),
+                context.texture_creator,
+                context.layout.right_color_indicator,
+                context.logger,
             ),
             r_white_widget: Indicator::new(
-                canvas.clone(),
-                texture_creator,
-                layout.right_white_indicator,
-                logger,
+                context.canvas.clone(),
+                context.texture_creator,
+                context.layout.right_white_indicator,
+                context.logger,
             ),
 
-            l_color_led_on: true,
-            l_white_led_on: true,
-            r_color_led_on: true,
-            r_white_led_on: true,
-        };
+            l_color_led_on: false,
+            l_color_led_updated: true,
+            l_white_led_on: false,
+            l_white_led_updated: true,
+            r_color_led_on: false,
+            r_color_led_updated: true,
+            r_white_led_on: false,
+            r_white_led_updated: true,
+        }
+    }
+}
 
-        res.render(false, false, false, false);
-        res.draw();
-
-        res
+impl<'a> VirtuosoWidget for Drawer<'a> {
+    fn update(&mut self, data: &MatchInfo) {
+        if self.l_color_led_on != data.left_fencer.color_light {
+            self.l_color_led_on = data.left_fencer.color_light;
+            self.l_color_led_updated = true;
+        }
+        if self.l_white_led_on != data.left_fencer.white_light {
+            self.l_white_led_on = data.left_fencer.white_light;
+            self.l_white_led_updated = true;
+        }
+        if self.r_color_led_on != data.right_fencer.color_light {
+            self.r_color_led_on = data.right_fencer.color_light;
+            self.r_color_led_updated = true;
+        }
+        if self.r_white_led_on != data.right_fencer.white_light {
+            self.r_white_led_on = data.right_fencer.white_light;
+            self.r_white_led_updated = true;
+        }
     }
 
-    pub fn render(
-        &mut self,
-        l_color_led_on: bool,
-        l_white_led_on: bool,
-        r_color_led_on: bool,
-        r_white_led_on: bool,
-    ) {
-        if self.l_color_led_on != l_color_led_on {
-            self.l_color_led_on = l_color_led_on;
-
-            let color: sdl2::pixels::Color = if l_color_led_on {
+    fn render(&mut self) {
+        if self.l_color_led_updated {
+            let color: sdl2::pixels::Color = if self.l_color_led_on {
                 colors::COLOR_LABELS_RED
             } else {
                 colors::COLOR_LABELS_DARK_RED
             };
-
             self.l_color_widget.render(color);
+            self.l_color_led_updated = false;
         }
-        if self.l_white_led_on != l_white_led_on {
-            self.l_white_led_on = l_white_led_on;
-
-            let color: sdl2::pixels::Color = if l_white_led_on {
+        if self.l_white_led_updated {
+            let color: sdl2::pixels::Color = if self.l_white_led_on {
                 colors::WHITE_LABELS_LIGHT
             } else {
                 colors::WHITE_LABELS_DARK
             };
-
             self.l_white_widget.render(color);
+            self.l_white_led_updated = false;
         }
-        if self.r_color_led_on != r_color_led_on {
-            self.r_color_led_on = r_color_led_on;
-
-            let color: sdl2::pixels::Color = if r_color_led_on {
+        if self.r_color_led_updated {
+            let color: sdl2::pixels::Color = if self.r_color_led_on {
                 colors::COLOR_LABELS_GREEN
             } else {
                 colors::COLOR_LABELS_DARK_GREEN
             };
-
             self.r_color_widget.render(color);
+            self.r_color_led_updated = false;
         }
-        if self.r_white_led_on != r_white_led_on {
-            self.r_white_led_on = r_white_led_on;
-
-            let color: sdl2::pixels::Color = if r_white_led_on {
+        if self.r_white_led_updated {
+            let color: sdl2::pixels::Color = if self.r_white_led_on {
                 colors::WHITE_LABELS_LIGHT
             } else {
                 colors::WHITE_LABELS_DARK
             };
-
             self.r_white_widget.render(color);
+            self.r_white_led_updated = false;
         }
-    }
 
-    pub fn draw(&mut self) {
         self.l_color_widget.draw();
         self.l_white_widget.draw();
         self.r_color_widget.draw();

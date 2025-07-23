@@ -243,7 +243,7 @@ impl<'a> Card<'a> {
             height: 0,
 
             rect_x: rect_position.x,
-            rect_y: rect_position.x,
+            rect_y: rect_position.y,
             rect_width: rect_position.width,
             rect_height: rect_position.height,
             rect_radius: rect_position.radius,
@@ -260,15 +260,6 @@ impl<'a> Card<'a> {
         border_color: sdl2::pixels::Color,
         text_color: sdl2::pixels::Color,
     ) {
-        if text == "" {
-            self.texture = None;
-            return;
-        }
-        if self.width == 0 || self.height == 0 {
-            self.texture = None;
-            return;
-        }
-
         let radius: u32 = min(
             self.rect_radius,
             min(self.rect_height / 2, self.rect_width / 2),
@@ -316,8 +307,8 @@ impl<'a> Card<'a> {
                 None,
                 &mut outer_card,
                 Rect::new(
-                    self.text_x - self.rect_x + (width as i32 - text_surface.width() as i32) / 2,
-                    self.text_y - self.rect_y + (height as i32 - text_surface.height() as i32) / 2,
+                    (width as i32 - text_surface.width() as i32) / 2,
+                    (height as i32 - text_surface.height() as i32) / 2,
                     text_surface.width(),
                     text_surface.height(),
                 ),
@@ -336,12 +327,8 @@ impl<'a> Card<'a> {
 
     pub fn draw(&mut self) {
         if let Some(texture) = &self.texture {
-            let target_rect: sdl2::rect::Rect = sdl2::rect::Rect::new(
-                self.rect_x - self.width as i32 / 2,
-                self.rect_y - self.height as i32 / 2,
-                self.width,
-                self.height,
-            );
+            let target_rect: sdl2::rect::Rect =
+                sdl2::rect::Rect::new(self.rect_x, self.rect_y, self.rect_width, self.rect_height);
 
             self.canvas
                 .borrow_mut()
@@ -380,7 +367,7 @@ impl<'a> Indicator<'a> {
             texture: None,
 
             x: position.x,
-            y: position.x,
+            y: position.y,
             width: position.width,
             height: position.height,
             radius: position.radius,

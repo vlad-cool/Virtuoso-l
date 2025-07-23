@@ -1,59 +1,63 @@
 use sdl2;
+use sdl2::rwops::RWops;
+use sdl2::ttf::Font;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::Duration;
 
 use crate::colors;
+use crate::match_info::MatchInfo;
 use crate::sdl_frontend::widgets::Label;
+use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 
 pub struct Drawer<'a> {
     message_widget: Label<'a>,
 
     message: String,
+    display: bool,
+    message_updated: bool,
 }
 
 impl<'a> Drawer<'a> {
-    pub fn new(
-        canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
-        texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-        ttf_context: &'a sdl2::ttf::Sdl2TtfContext,
-        rwops: sdl2::rwops::RWops<'a>,
-        layout: &crate::layout_structure::Layout,
+    const MESSAGE_DISPLAY_TIME: Duration = Duration::from_secs(2);
 
-        logger: &'a Logger,
-    ) -> Self {
-        let font: sdl2::ttf::Font<'a, 'a> = ttf_context
-            .load_font_from_rwops(rwops, layout.timer_text.font_size as u16)
-            .unwrap_with_logger(logger);
-        let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
+    pub fn new(context: WidgetContext<'a>) -> Self {
+        let font: Rc<Font<'_, '_>> = context.get_font(context.layout.timer_text.font_size as u16);
 
-        let mut res: Drawer<'a> = Self {
+        Self {
             message_widget: Label::new(
-                canvas.clone(),
-                texture_creator,
+                context.canvas.clone(),
+                context.texture_creator,
                 font.clone(),
-                layout.timer_text,
-                logger,
+                context.layout.timer_text,
+                context.logger,
             ),
             message: "".to_string(),
-        };
-
-        res.render(" ".to_string());
-        res.draw();
-
-        res
+            display: false,
+            message_updated: true,
+        }
     }
+}
 
-    pub fn render(&mut self, message: String) {
-        if self.message != message {
-            self.message = message.clone();
+impl<'a> VirtuosoWidget for Drawer<'a> {
+    fn update(&mut self, data: &MatchInfo) {
+        self.display = data.display_message_updated.elapsed() < Self::MESSAGE_DISPLAY_TIME;
 
-            self.message_widget
-                .render(message.as_str(), colors::TIMER_ORANGE);
+        if self.message != data.display_message {
+            self.message = data.display_message.clone();
+            self.message_updated = true;
         }
     }
 
-    pub fn draw(&mut self) {
-        self.message_widget.draw();
+    fn render(&mut self) {
+        if self.message_updated {
+            self.message_widget
+                .render(self.message.as_str(), colors::TIMER_ORANGE);
+            self.message_updated = false;
+        }
+        if self.display {
+            self.message_widget.draw();
+        }
     }
 }

@@ -1,5 +1,6 @@
 use sdl2;
 use sdl2::rwops::RWops;
+use sdl2::ttf::Font;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -21,13 +22,10 @@ pub struct Drawer<'a> {
 
 impl<'a> Drawer<'a> {
     pub fn new(context: WidgetContext<'a>) -> Self {
-        let rwops: RWops<'_> = RWops::from_bytes(context.font_bytes).unwrap_with_logger(context.logger);
-        let font: sdl2::ttf::Font<'a, 'a> = context.ttf_context
-            .load_font_from_rwops(rwops, context.layout.auto_timer_status.font_size as u16)
-            .unwrap_with_logger(context.logger);
-        let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
+        let font: Rc<Font<'_, '_>> =
+            context.get_font(context.layout.auto_timer_status.font_size as u16);
 
-        let mut res: Drawer<'a> = Self {
+        Self {
             score_widget: Label::new(
                 context.canvas.clone(),
                 context.texture_creator,
@@ -47,9 +45,7 @@ impl<'a> Drawer<'a> {
             auto_score_updated: true,
             auto_timer_on: false,
             auto_timer_updated: true,
-        };
-
-        res
+        }
     }
 }
 
@@ -66,7 +62,6 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     }
 
     fn render(&mut self) {
-        print!("mkfjdsjkh");
         if self.auto_timer_updated {
             let (text, color) = if self.auto_timer_on {
                 ("auto timer\non", colors::AUTO_STATUS_TEXT_LIGHT)
