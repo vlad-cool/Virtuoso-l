@@ -16,6 +16,7 @@ use crate::{
 use crate::{layout_structure, layouts};
 
 mod auto_status;
+mod led_repeater;
 mod message;
 mod passive_card;
 mod passive_counter;
@@ -158,6 +159,13 @@ impl VirtuosoModule for SdlFrontend {
             &self.logger,
         );
 
+        let mut passive_indicator: passive_indicator::Drawer<'_> = passive_indicator::Drawer::new(
+            canvas.clone(),
+            &texture_creator,
+            &self.layout,
+            &self.logger,
+        );
+
         let mut passive_card: passive_card::Drawer<'_> = passive_card::Drawer::new(
             canvas.clone(),
             &texture_creator,
@@ -204,6 +212,9 @@ impl VirtuosoModule for SdlFrontend {
             &self.layout,
             &self.logger,
         );
+
+        let mut led_repeater: led_repeater::Drawer<'_> =
+            led_repeater::Drawer::new(canvas.clone(), &texture_creator, &self.layout, &self.logger);
 
         canvas.borrow_mut().present();
 
@@ -255,6 +266,12 @@ impl VirtuosoModule for SdlFrontend {
             );
             auto_status.render(data.auto_timer_on, data.auto_score_on);
             priority.render(data.priority);
+            led_repeater.render(
+                data.left_fencer.color_light,
+                data.left_fencer.white_light,
+                data.right_fencer.color_light,
+                data.right_fencer.white_light,
+            );
 
             if display_message {
                 message.draw();
@@ -269,6 +286,7 @@ impl VirtuosoModule for SdlFrontend {
             penalty_card.draw();
             auto_status.draw();
             priority.draw();
+            led_repeater.draw();
 
             canvas.borrow_mut().present();
         }

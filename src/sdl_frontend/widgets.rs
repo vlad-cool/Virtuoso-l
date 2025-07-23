@@ -2,7 +2,7 @@ use sdl2;
 use sdl2::rect::Rect;
 use sdl2::surface::Surface;
 use std::cell::RefCell;
-use std::cmp::min;
+use std::cmp::{max, min};
 use std::rc::Rc;
 
 use crate::layout_structure;
@@ -15,9 +15,12 @@ fn draw_rounded_rectangle<'a>(
     radius: u32,
     logger: &Logger,
 ) -> sdl2::surface::Surface<'a> {
-    let mut surface: Surface<'a> =
-        sdl2::surface::Surface::new(width, height, sdl2::pixels::PixelFormatEnum::RGBA8888)
-            .unwrap_with_logger(logger);
+    let mut surface: Surface<'a> = sdl2::surface::Surface::new(
+        max(width, 1),
+        max(height, 1),
+        sdl2::pixels::PixelFormatEnum::RGBA8888,
+    )
+    .unwrap_with_logger(logger);
 
     surface
         .fill_rect(
@@ -43,7 +46,11 @@ fn draw_rounded_rectangle<'a>(
         )
         .unwrap_with_logger(logger);
 
-    let format = surface.pixel_format();
+    if width == 0 || height == 0 {
+        return surface;
+    }
+
+    let format: sdl2::pixels::PixelFormat = surface.pixel_format();
 
     surface.with_lock_mut(|pixels: &mut [u8]| {
         for x in 0..(radius + 1) as usize {
@@ -257,6 +264,9 @@ impl<'a> Card<'a> {
         border_color: sdl2::pixels::Color,
         text_color: sdl2::pixels::Color,
     ) {
+        if self.width == 0 || self.height == 0 {
+            return;
+        }
         let radius: u32 = min(
             self.rect_radius,
             min(self.rect_height / 2, self.rect_width / 2),
@@ -354,7 +364,7 @@ impl<'a> Indicator<'a> {
     pub fn new(
         canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
         texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-        
+
         position: layout_structure::RectangleProperties,
 
         logger: &'a Logger,

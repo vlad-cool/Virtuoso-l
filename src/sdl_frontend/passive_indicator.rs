@@ -21,17 +21,10 @@ impl<'a> Drawer<'a> {
     pub fn new(
         canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
         texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-        ttf_context: &'a sdl2::ttf::Sdl2TtfContext,
-        rwops: sdl2::rwops::RWops<'a>,
         layout: &crate::layout_structure::Layout,
 
         logger: &'a Logger,
     ) -> Self {
-        let font: sdl2::ttf::Font<'a, 'a> = ttf_context
-            .load_font_from_rwops(rwops, layout.passive_counter_dec.font_size as u16)
-            .unwrap_with_logger(logger);
-        let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
-
         let mut res: Drawer<'a> = Self {
             passive_indicator_widget: Indicator::new(
                 canvas.clone(),
