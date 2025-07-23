@@ -1,9 +1,12 @@
 use sdl2;
+use sdl2::rwops::RWops;
 use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::colors;
+use crate::match_info::MatchInfo;
 use crate::sdl_frontend::widgets::Label;
+use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 
 pub struct Drawer<'a> {
@@ -11,77 +14,81 @@ pub struct Drawer<'a> {
     score_widget: Label<'a>,
 
     auto_timer_on: bool,
+    auto_timer_updated: bool,
     auto_score_on: bool,
+    auto_score_updated: bool,
 }
 
 impl<'a> Drawer<'a> {
-    pub fn new(
-        canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
-        texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-        ttf_context: &'a sdl2::ttf::Sdl2TtfContext,
-        rwops: sdl2::rwops::RWops<'a>,
-        layout: &crate::layout_structure::Layout,
-
-        logger: &'a Logger,
-    ) -> Self {
-        let font: sdl2::ttf::Font<'a, 'a> = ttf_context
-            .load_font_from_rwops(rwops, layout.auto_timer_status.font_size as u16)
-            .unwrap_with_logger(logger);
+    pub fn new(context: WidgetContext<'a>) -> Self {
+        let rwops: RWops<'_> = RWops::from_bytes(context.font_bytes).unwrap_with_logger(context.logger);
+        let font: sdl2::ttf::Font<'a, 'a> = context.ttf_context
+            .load_font_from_rwops(rwops, context.layout.auto_timer_status.font_size as u16)
+            .unwrap_with_logger(context.logger);
         let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
 
         let mut res: Drawer<'a> = Self {
             score_widget: Label::new(
-                canvas.clone(),
-                texture_creator,
+                context.canvas.clone(),
+                context.texture_creator,
                 font.clone(),
-                layout.auto_score_status,
-                logger,
+                context.layout.auto_score_status,
+                context.logger,
             ),
             timer_widget: Label::new(
-                canvas.clone(),
-                texture_creator,
+                context.canvas.clone(),
+                context.texture_creator,
                 font.clone(),
-                layout.auto_timer_status,
-                logger,
+                context.layout.auto_timer_status,
+                context.logger,
             ),
 
-            auto_score_on: true,
-            auto_timer_on: true,
+            auto_score_on: false,
+            auto_score_updated: true,
+            auto_timer_on: false,
+            auto_timer_updated: true,
         };
-
-        res.render(false, false);
-        res.draw();
 
         res
     }
+}
 
-    pub fn render(&mut self, auto_timer_on: bool, auto_score_on: bool) {
-        if self.auto_timer_on != auto_timer_on {
-            self.auto_timer_on = auto_timer_on;
+impl<'a> VirtuosoWidget for Drawer<'a> {
+    fn update(&mut self, data: &MatchInfo) {
+        if self.auto_timer_on != data.auto_timer_on {
+            self.auto_timer_on = data.auto_timer_on;
+            self.auto_timer_updated = true;
+        }
+        if self.auto_score_on != data.auto_score_on {
+            self.auto_score_on = data.auto_score_on;
+            self.auto_score_updated = true;
+        }
+    }
 
-            let (text, color) = if auto_timer_on {
+    fn render(&mut self) {
+        print!("mkfjdsjkh");
+        if self.auto_timer_updated {
+            let (text, color) = if self.auto_timer_on {
                 ("auto timer\non", colors::AUTO_STATUS_TEXT_LIGHT)
             } else {
                 ("auto timer\noff", colors::AUTO_STATUS_TEXT_DARK)
             };
 
             self.timer_widget.render(text, color);
+            self.auto_timer_updated = false;
         }
 
-        if self.auto_score_on != auto_score_on {
-            self.auto_score_on = auto_score_on;
-
-            let (text, color) = if auto_score_on {
+        if self.auto_score_updated {
+            let (text, color) = if self.auto_score_on {
                 ("auto score\non", colors::AUTO_STATUS_TEXT_LIGHT)
             } else {
                 ("auto score\noff", colors::AUTO_STATUS_TEXT_DARK)
             };
 
             self.score_widget.render(text, color);
+            self.auto_score_updated = false;
         }
-    }
 
-    pub fn draw(&mut self) {
         self.timer_widget.draw();
         self.score_widget.draw();
     }

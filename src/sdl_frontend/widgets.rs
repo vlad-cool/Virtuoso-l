@@ -93,7 +93,7 @@ pub struct Label<'a> {
     canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
     texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
     font: Rc<sdl2::ttf::Font<'a, 'a>>,
-    texture: sdl2::render::Texture<'a>,
+    texture: Option<sdl2::render::Texture<'a>>,
 
     x: i32,
     y: i32,
@@ -117,14 +117,7 @@ impl<'a> Label<'a> {
             canvas,
             texture_creator,
             font,
-            texture: texture_creator
-                .create_texture(
-                    sdl2::pixels::PixelFormatEnum::RGB888,
-                    sdl2::render::TextureAccess::Static,
-                    1,
-                    1,
-                )
-                .unwrap_with_logger(logger),
+            texture: None,
             x: position.x + position.width as i32 / 2,
             y: position.y + position.height as i32 / 2,
             width: 0,
@@ -135,6 +128,13 @@ impl<'a> Label<'a> {
     }
 
     pub fn render(&mut self, text: &str, color: sdl2::pixels::Color) {
+        if text == "" {
+            self.texture = None;
+            self.width = 0;
+            self.height = 0;
+            return;
+        }
+
         let mut surfaces: std::vec::Vec<sdl2::surface::Surface<'_>> = std::vec::Vec::new();
 
         let mut width: u32 = 0;
@@ -173,27 +173,30 @@ impl<'a> Label<'a> {
             y_pos += surface.height() as i32;
         }
 
-        self.texture = self
-            .texture_creator
-            .create_texture_from_surface(&text_surface)
-            .unwrap_with_logger(self.logger);
+        self.texture = Some(
+            self.texture_creator
+                .create_texture_from_surface(&text_surface)
+                .unwrap_with_logger(self.logger),
+        );
 
         self.width = text_surface.width();
         self.height = text_surface.height();
     }
 
     pub fn draw(&mut self) {
-        let target_rect: sdl2::rect::Rect = sdl2::rect::Rect::new(
-            self.x - self.width as i32 / 2,
-            self.y as i32 - self.height as i32 / 2,
-            self.width,
-            self.height,
-        );
+        if let Some(texture) = &self.texture {
+            let target_rect: sdl2::rect::Rect = sdl2::rect::Rect::new(
+                self.x - self.width as i32 / 2,
+                self.y as i32 - self.height as i32 / 2,
+                self.width,
+                self.height,
+            );
 
-        self.canvas
-            .borrow_mut()
-            .copy(&self.texture, None, Some(target_rect))
-            .unwrap_with_logger(self.logger);
+            self.canvas
+                .borrow_mut()
+                .copy(&texture, None, Some(target_rect))
+                .unwrap_with_logger(self.logger);
+        }
     }
 }
 
@@ -201,7 +204,7 @@ pub struct Card<'a> {
     canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
     texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
     font: Rc<sdl2::ttf::Font<'a, 'a>>,
-    texture: sdl2::render::Texture<'a>,
+    texture: Option<sdl2::render::Texture<'a>>,
     width: u32,
     height: u32,
 
@@ -232,14 +235,7 @@ impl<'a> Card<'a> {
             canvas,
             texture_creator,
             font,
-            texture: texture_creator
-                .create_texture(
-                    sdl2::pixels::PixelFormatEnum::RGB888,
-                    sdl2::render::TextureAccess::Static,
-                    1,
-                    1,
-                )
-                .unwrap_with_logger(logger),
+            texture: None,
 
             text_x: text_position.x + text_position.width as i32 / 2,
             text_y: text_position.y + text_position.height as i32 / 2,
@@ -264,9 +260,15 @@ impl<'a> Card<'a> {
         border_color: sdl2::pixels::Color,
         text_color: sdl2::pixels::Color,
     ) {
-        if self.width == 0 || self.height == 0 {
+        if text == "" {
+            self.texture = None;
             return;
         }
+        if self.width == 0 || self.height == 0 {
+            self.texture = None;
+            return;
+        }
+
         let radius: u32 = min(
             self.rect_radius,
             min(self.rect_height / 2, self.rect_width / 2),
@@ -322,34 +324,37 @@ impl<'a> Card<'a> {
             )
             .unwrap_with_logger(self.logger);
 
-        self.texture = self
-            .texture_creator
-            .create_texture_from_surface(&outer_card)
-            .unwrap_with_logger(self.logger);
+        self.texture = Some(
+            self.texture_creator
+                .create_texture_from_surface(&outer_card)
+                .unwrap_with_logger(self.logger),
+        );
 
         self.width = width;
         self.height = height;
     }
 
     pub fn draw(&mut self) {
-        let target_rect: sdl2::rect::Rect = sdl2::rect::Rect::new(
-            self.rect_x - self.width as i32 / 2,
-            self.rect_y - self.height as i32 / 2,
-            self.width,
-            self.height,
-        );
+        if let Some(texture) = &self.texture {
+            let target_rect: sdl2::rect::Rect = sdl2::rect::Rect::new(
+                self.rect_x - self.width as i32 / 2,
+                self.rect_y - self.height as i32 / 2,
+                self.width,
+                self.height,
+            );
 
-        self.canvas
-            .borrow_mut()
-            .copy(&self.texture, None, Some(target_rect))
-            .unwrap_with_logger(self.logger);
+            self.canvas
+                .borrow_mut()
+                .copy(texture, None, Some(target_rect))
+                .unwrap_with_logger(self.logger);
+        }
     }
 }
 
 pub struct Indicator<'a> {
     canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
     texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-    texture: sdl2::render::Texture<'a>,
+    texture: Option<sdl2::render::Texture<'a>>,
 
     x: i32,
     y: i32,
@@ -372,14 +377,7 @@ impl<'a> Indicator<'a> {
         Self {
             canvas,
             texture_creator,
-            texture: texture_creator
-                .create_texture(
-                    sdl2::pixels::PixelFormatEnum::RGB888,
-                    sdl2::render::TextureAccess::Static,
-                    1,
-                    1,
-                )
-                .unwrap_with_logger(&logger),
+            texture: None,
 
             x: position.x,
             y: position.x,
@@ -392,15 +390,20 @@ impl<'a> Indicator<'a> {
     }
 
     pub fn render(&mut self, color: sdl2::pixels::Color) {
-        let radius: u32 = min(self.radius, min(self.height / 2, self.width / 2));
+        if self.width == 0 || self.height == 0 {
+            self.texture = None;
+        } else {
+            let radius: u32 = min(self.radius, min(self.height / 2, self.width / 2));
 
-        let surface: Surface<'_> =
-            draw_rounded_rectangle(color, self.width, self.height, radius, self.logger);
+            let surface: Surface<'_> =
+                draw_rounded_rectangle(color, self.width, self.height, radius, self.logger);
 
-        self.texture = self
-            .texture_creator
-            .create_texture_from_surface(&surface)
-            .unwrap_with_logger(&self.logger);
+            self.texture = Some(
+                self.texture_creator
+                    .create_texture_from_surface(&surface)
+                    .unwrap_with_logger(&self.logger),
+            );
+        }
     }
 
     #[allow(dead_code)]
@@ -424,12 +427,14 @@ impl<'a> Indicator<'a> {
     }
 
     pub fn draw(&mut self) {
-        let target_rect: sdl2::rect::Rect =
-            sdl2::rect::Rect::new(self.x, self.y, self.width, self.height);
+        if let Some(texture) = &self.texture {
+            let target_rect: sdl2::rect::Rect =
+                sdl2::rect::Rect::new(self.x, self.y, self.width, self.height);
 
-        self.canvas
-            .borrow_mut()
-            .copy(&self.texture, None, Some(target_rect))
-            .unwrap_with_logger(&self.logger);
+            self.canvas
+                .borrow_mut()
+                .copy(texture, None, Some(target_rect))
+                .unwrap_with_logger(&self.logger);
+        }
     }
 }
