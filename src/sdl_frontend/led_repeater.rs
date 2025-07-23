@@ -1,13 +1,9 @@
 use sdl2;
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::time::Duration;
 
 use crate::colors;
 use crate::match_info::MatchInfo;
 use crate::sdl_frontend::widgets::Indicator;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
-use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 
 pub struct Drawer<'a> {
     l_color_widget: Indicator<'a>,

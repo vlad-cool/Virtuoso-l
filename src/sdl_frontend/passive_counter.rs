@@ -1,15 +1,11 @@
 use sdl2;
-use sdl2::rwops::RWops;
 use sdl2::ttf::Font;
-use std::cell::RefCell;
 use std::rc::Rc;
-use std::time::Duration;
 
 use crate::colors;
 use crate::match_info::{MatchInfo, Weapon};
 use crate::sdl_frontend::widgets::Label;
-use crate::sdl_frontend::{VirtuosoWidget, WidgetContext, passive_counter};
-use crate::virtuoso_logger::{Logger, LoggerUnwrap};
+use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
 pub struct Drawer<'a> {
     passive_counter_0_widget: Label<'a>,
@@ -77,6 +73,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
                 .render(&passive_counter_text[0..1], color);
             self.passive_counter_1_widget
                 .render(&passive_counter_text[1..2], color);
+            self.updated = false;
         }
 
         self.passive_counter_0_widget.draw();

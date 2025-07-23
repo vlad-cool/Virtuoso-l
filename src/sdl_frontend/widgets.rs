@@ -237,8 +237,8 @@ impl<'a> Card<'a> {
             font,
             texture: None,
 
-            text_x: text_position.x + text_position.width as i32 / 2,
-            text_y: text_position.y + text_position.height as i32 / 2,
+            text_x: text_position.x,
+            text_y: text_position.y,
             width: 0,
             height: 0,
 
@@ -285,8 +285,8 @@ impl<'a> Card<'a> {
                 None,
                 &mut outer_card,
                 Some(sdl2::rect::Rect::new(
-                    border_width as i32,
-                    border_width as i32,
+                    self.text_x - self.rect_x + border_width as i32,
+                    self.text_y - self.rect_y + border_width as i32,
                     self.rect_width - border_width * 2,
                     self.rect_width - border_width * 2,
                 )),

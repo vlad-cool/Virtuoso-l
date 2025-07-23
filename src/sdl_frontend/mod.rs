@@ -8,11 +8,10 @@ use std::time::Duration;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::colors;
 use crate::layout_structure::Layout;
 use crate::match_info::MatchInfo;
-use crate::match_info::Weapon;
 use crate::virtuoso_logger::{Logger, LoggerUnwrap};
-use crate::{colors, match_info};
 use crate::{
     hw_config::{HardwareConfig, Resolution},
     modules::VirtuosoModule,
@@ -138,7 +137,14 @@ impl VirtuosoModule for SdlFrontend {
         widgets.push(Box::new(led_repeater::Drawer::new(widget_context.clone())));
         widgets.push(Box::new(message::Drawer::new(widget_context.clone())));
         widgets.push(Box::new(passive_card::Drawer::new(widget_context.clone())));
-        widgets.push(Box::new(passive_counter::Drawer::new(widget_context.clone())));
+        widgets.push(Box::new(passive_counter::Drawer::new(
+            widget_context.clone(),
+        )));
+        widgets.push(Box::new(passive_indicator::Drawer::new(
+            widget_context.clone(),
+        )));
+        widgets.push(Box::new(penalty_card::Drawer::new(widget_context.clone())));
+        widgets.push(Box::new(period::Drawer::new(widget_context.clone())));
 
         let mut score_drawer: score::Drawer<'_> = score::Drawer::new(
             canvas.clone(),
@@ -173,16 +179,16 @@ impl VirtuosoModule for SdlFrontend {
             &self.logger,
         );
 
-        let mut period_drawer: period::Drawer<'_> = period::Drawer::new(
-            canvas.clone(),
-            &texture_creator,
-            &ttf_context,
-            RWops::from_bytes(font_bytes)
-                .map_err(|e| e.to_string())
-                .unwrap_with_logger(&self.logger),
-            &self.layout,
-            &self.logger,
-        );
+        // let mut period_drawer: period::Drawer<'_> = period::Drawer::new(
+        //     canvas.clone(),
+        //     &texture_creator,
+        //     &ttf_context,
+        //     RWops::from_bytes(font_bytes)
+        //         .map_err(|e| e.to_string())
+        //         .unwrap_with_logger(&self.logger),
+        //     &self.layout,
+        //     &self.logger,
+        // );
 
         let mut timer_drawer: timer::Drawer<'_> = timer::Drawer::new(
             canvas.clone(),
@@ -206,12 +212,12 @@ impl VirtuosoModule for SdlFrontend {
         //     &self.logger,
         // );
 
-        let mut passive_indicator: passive_indicator::Drawer<'_> = passive_indicator::Drawer::new(
-            canvas.clone(),
-            &texture_creator,
-            &self.layout,
-            &self.logger,
-        );
+        // let mut passive_indicator: passive_indicator::Drawer<'_> = passive_indicator::Drawer::new(
+        //     canvas.clone(),
+        //     &texture_creator,
+        //     &self.layout,
+        //     &self.logger,
+        // );
 
         // let mut passive_card: passive_card::Drawer<'_> = passive_card::Drawer::new(
         //     canvas.clone(),
@@ -224,16 +230,16 @@ impl VirtuosoModule for SdlFrontend {
         //     &self.logger,
         // );
 
-        let mut penalty_card: penalty_card::Drawer<'_> = penalty_card::Drawer::new(
-            canvas.clone(),
-            &texture_creator,
-            &ttf_context,
-            RWops::from_bytes(font_bytes)
-                .map_err(|e| e.to_string())
-                .unwrap_with_logger(&self.logger),
-            &self.layout,
-            &self.logger,
-        );
+        // let mut penalty_card: penalty_card::Drawer<'_> = penalty_card::Drawer::new(
+        //     canvas.clone(),
+        //     &texture_creator,
+        //     &ttf_context,
+        //     RWops::from_bytes(font_bytes)
+        //         .map_err(|e| e.to_string())
+        //         .unwrap_with_logger(&self.logger),
+        //     &self.layout,
+        //     &self.logger,
+        // );
 
         // let mut auto_status: auto_status::Drawer<'_> = auto_status::Drawer::new(
         //     canvas.clone(),
@@ -299,7 +305,7 @@ impl VirtuosoModule for SdlFrontend {
             }
             score_drawer.render(data.left_fencer.score, data.right_fencer.score);
             weapon_drawer.render(data.weapon);
-            period_drawer.render(data.period);
+            // period_drawer.render(data.period);
             // passive_counter.render(
             //     data.passive_timer.get_counter(),
             //     data.weapon != Weapon::Fleuret,
@@ -308,10 +314,10 @@ impl VirtuosoModule for SdlFrontend {
             //     data.left_fencer.passive_card,
             //     data.right_fencer.passive_card,
             // );
-            penalty_card.render(
-                data.left_fencer.warning_card,
-                data.right_fencer.warning_card,
-            );
+            // penalty_card.render(
+            //     data.left_fencer.warning_card,
+            //     data.right_fencer.warning_card,
+            // );
             // auto_status.render(data.auto_timer_on, data.auto_score_on);
             priority.render(data.priority);
             // led_repeater.render(
@@ -328,10 +334,10 @@ impl VirtuosoModule for SdlFrontend {
             }
             score_drawer.draw();
             weapon_drawer.draw();
-            period_drawer.draw();
+            // period_drawer.draw();
             // passive_counter.draw();
             // passive_card.draw();
-            penalty_card.draw();
+            // penalty_card.draw();
             // auto_status.draw();
             priority.draw();
             // led_repeater.draw();

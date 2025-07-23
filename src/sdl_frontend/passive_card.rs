@@ -1,15 +1,12 @@
 use sdl2;
 use sdl2::pixels::Color;
-use sdl2::rwops::RWops;
 use sdl2::ttf::Font;
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::colors;
 use crate::match_info::{MatchInfo, PassiveCard};
 use crate::sdl_frontend::widgets::Card;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
-use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 
 fn parse_caution_card<'a>(card: PassiveCard) -> (&'a str, u32, Color, Color, Color) {
     if card != PassiveCard::None {
