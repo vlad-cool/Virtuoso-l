@@ -1,8 +1,10 @@
+use fontdue::Font;
 use sdl2;
 use sdl2::rect::Rect;
 use sdl2::surface::Surface;
 use std::cell::RefCell;
 use std::cmp::{max, min};
+use std::mem;
 use std::rc::Rc;
 
 use crate::sdl_frontend::layout_structure;
@@ -89,16 +91,84 @@ fn draw_rounded_rectangle<'a>(
     surface
 }
 
+fn render_font<'a>(
+    font: &Font,
+    text: &str,
+    size: u16,
+    color: sdl2::pixels::Color,
+) -> sdl2::surface::Surface<'a> {
+    let mut bitmaps: Vec<(fontdue::Metrics, Vec<u8>)> = Vec::<(fontdue::Metrics, Vec<u8>)>::new();
+    let mut width: u32 = 0;
+    let mut height: u32 = 0;
+
+    for char in text.chars() {
+        let (metrics, bitmap) = font.rasterize(char, size.into());
+        width += (metrics.width as i32 + metrics.xmin) as u32;
+        height = max(height, metrics.height as u32);
+        // println!("{}, {}", metrics.xmin, metrics.ymin);
+        bitmaps.push((metrics, bitmap));
+    }
+
+    let mut surface: Surface<'a> = sdl2::surface::Surface::new(
+        max(width, 1),
+        max(height, 1),
+        sdl2::pixels::PixelFormatEnum::RGBA8888,
+    )
+    .unwrap();
+
+    // println!("{}, {}, {}, {}", color.r, color.g, color.b, color.a);
+
+    surface.with_lock_mut(|pixels: &mut [u8]| {
+        let mut edge: u32 = 0;
+
+        for bitmap in bitmaps {
+            let metrics: fontdue::Metrics = bitmap.0;
+            let bitmap_width: u32 = metrics.width as u32;
+            let bitmap_height: u32 = metrics.height as u32;
+            let x_min: i32 = metrics.xmin;
+            let y_min: i32 = metrics.ymin;
+            let bitmap: Vec<u8> = bitmap.1;
+
+            for y in 0..bitmap_height {
+                for x in 0..bitmap_width {
+                    // let surface_x: u32 = x + max(0, x_min) as u32;
+                    // let surface_y: u32 = y + max(0, y_min) as u32;
+                    let i_bitmap: usize = (y * bitmap_width + x) as usize;
+                    let i_surface: usize = (y * width + x + edge) as usize;
+
+                    // pixels[i_surface * 4 + 0] = ((color.r as u16 * bitmap[i_bitmap] as u16) / 256) as u8;
+                    // pixels[i_surface * 4 + 1] = ((color.g as u16 * bitmap[i_bitmap] as u16) / 256) as u8;
+                    // pixels[i_surface * 4 + 2] = ((color.b as u16 * bitmap[i_bitmap] as u16) / 256) as u8;
+                    // pixels[i_surface * 4 + 3] = 255;
+
+                    pixels[i_surface * 4 + 0] = color.r;
+                    pixels[i_surface * 4 + 1] = color.g;
+                    pixels[i_surface * 4 + 2] = color.b;
+                    pixels[i_surface * 4 + 3] = bitmap[i_bitmap];
+                    // println!("{}", bitmap[i_bitmap]);
+                }
+            }
+
+            edge += (bitmap_width as i32 + metrics.xmin) as u32;
+        }
+    });
+
+    // surface.save_bmp(format!("{text}.bmp"));
+    surface
+}
+
 pub struct Label<'a> {
     canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
     texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-    font: Rc<sdl2::ttf::Font<'a, 'a>>,
+    // font: &'a Font,
+    font: Font,
     texture: Option<sdl2::render::Texture<'a>>,
 
     x: i32,
     y: i32,
     width: u32,
     height: u32,
+    font_size: u16,
 
     logger: &'a Logger,
 }
@@ -108,20 +178,25 @@ impl<'a> Label<'a> {
         canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
         texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
         font: Rc<sdl2::ttf::Font<'a, 'a>>,
-
+        // font: &'a Font,
         position: layout_structure::TextProperties,
 
         logger: &'a Logger,
     ) -> Self {
+        let font: &[u8] = include_bytes!("../../assets/AGENCYB.ttf") as &[u8];
+        let font: Font = fontdue::Font::from_bytes(font, fontdue::FontSettings::default()).unwrap();
+
         Self {
             canvas,
             texture_creator,
             font,
             texture: None,
+
             x: position.x + position.width as i32 / 2,
             y: position.y + position.height as i32 / 2,
             width: 0,
             height: 0,
+            font_size: position.font_size,
 
             logger,
         }
@@ -141,11 +216,12 @@ impl<'a> Label<'a> {
         let mut height: u32 = 0;
 
         for line in text.split("\n") {
-            let surface: sdl2::surface::Surface<'a> = self
-                .font
-                .render(line)
-                .blended(color)
-                .unwrap_with_logger(self.logger);
+            // let surface: sdl2::surface::Surface<'a> = self
+            //     .font
+            //     .render(line)
+            //     .blended(color)
+            //     .unwrap_with_logger(self.logger);
+            let surface: Surface<'_> = render_font(&self.font, text, self.font_size, color);
 
             width = std::cmp::max(width, surface.width());
             height += surface.height();

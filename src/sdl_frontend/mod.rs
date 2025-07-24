@@ -144,7 +144,6 @@ impl VirtuosoModule for SdlFrontend {
 
         let mut widgets: Vec<Box<dyn VirtuosoWidget>> = Vec::<Box<dyn VirtuosoWidget>>::new();
 
-        // widgets.push(Box::new(auto_status::Drawer::new(widget_context)));
         widgets.push(Box::new(auto_status::Drawer::new(widget_context.clone())));
         widgets.push(Box::new(led_repeater::Drawer::new(widget_context.clone())));
         widgets.push(Box::new(message::Drawer::new(widget_context.clone())));

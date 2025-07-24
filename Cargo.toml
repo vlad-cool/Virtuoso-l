@@ -11,6 +11,7 @@ toml = "0.7"
 postcard = { version = "1.1.2", features = ["use-std"], optional = true }
 crc = { version = "3.3.0", optional = true }
 sdl2 = { version = "0.38.0", features = ["ttf"], optional = true }
+fontdue = { version = "0.9.3", optional = true }
 
 [build-dependencies]
 zip = "4.2.0"
@@ -23,7 +24,7 @@ default = ["console_backend", "sdl_frontend", "cyrano_server"]
 legacy_backend = ["serial", "gpio-cdev"]
 console_backend = []
 cyrano_server = []
-sdl_frontend = ["sdl2"]
+sdl_frontend = ["sdl2", "fontdue"]
 video_recorder = []
 gpio_frontend = ["gpio-cdev"]
 repeater = ["serial", "crc", "postcard"]
