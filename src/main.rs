@@ -40,13 +40,13 @@ fn main() {
 
     /*
     TODO Properly swap sides
-    TODO Swap sides
     TODO Cyrano softer error
     TODO Cyrano
     TODO Repeater ACK / NAK
     TODO Repeater auto role
     TODO Repeater reorder receiver
     TODO Menu
+    TODO Replace mutex with rwlock
      */
 
     let config: Arc<Mutex<VirtuosoConfig>> = Arc::new(Mutex::new(VirtuosoConfig::load_config()));
@@ -64,7 +64,7 @@ fn main() {
     let console_backend = console_backend::ConsoleBackend::new(Arc::clone(&match_info));
 
     #[cfg(feature = "legacy_backend")]
-    let mut legacy_backend = legacy_backend::LegacyBackend::new(
+    let legacy_backend: legacy_backend::LegacyBackend = legacy_backend::LegacyBackend::new(
         Arc::clone(&match_info),
         Arc::clone(&config),
         virtuoso_logger
@@ -73,13 +73,13 @@ fn main() {
     );
 
     #[cfg(feature = "gpio_frontend")]
-    let mut gpio_frontend = gpio_frontend::GpioFrontend::new(
+    let gpio_frontend: gpio_frontend::GpioFrontend = gpio_frontend::GpioFrontend::new(
         Arc::clone(&match_info),
         virtuoso_logger.get_logger("Gpio frontend".to_string()),
     );
 
     #[cfg(feature = "sdl_frontend")]
-    let sdl_frontend = sdl_frontend::SdlFrontend::new(
+    let sdl_frontend: sdl_frontend::SdlFrontend = sdl_frontend::SdlFrontend::new(
         Arc::clone(&match_info),
         hw_config.clone(),
         virtuoso_logger.get_logger("sdl frontend".to_string()),
@@ -106,19 +106,19 @@ fn main() {
         }
     }
 
-    let logger_thread = thread::spawn(move || {
+    let logger_thread: thread::JoinHandle<()> = thread::spawn(move || {
         virtuoso_logger.run();
     });
 
     #[cfg(feature = "console_backend")]
-    let console_backend_thread = thread::spawn(move || {
+    let console_backend_thread: thread::JoinHandle<()> = thread::spawn(move || {
         console_backend.run();
     });
     #[cfg(feature = "console_backend")]
     logger.info("Console backend started".to_string());
 
     #[cfg(feature = "legacy_backend")]
-    let legacy_backend_thread = thread::spawn(move || {
+    let legacy_backend_thread: thread::JoinHandle<()> = thread::spawn(move || {
         legacy_backend.run();
     });
     #[cfg(feature = "legacy_backend")]
@@ -139,7 +139,7 @@ fn main() {
     logger.info("Cyrano server started".to_string());
 
     #[cfg(feature = "repeater")]
-    let repeater_thread = if let Ok(mut repeater) = repeater {
+    let repeater_thread = if let Ok(repeater) = repeater {
         let thread = thread::spawn(move || {
             repeater.run();
         });

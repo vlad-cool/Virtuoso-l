@@ -3,10 +3,26 @@ use sdl2::ttf::Font;
 use std::rc::Rc;
 use std::time::Duration;
 
-use crate::sdl_frontend::colors;
 use crate::match_info::{MatchInfo, Priority};
+use crate::sdl_frontend::colors;
 use crate::sdl_frontend::widgets::Label;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
+
+fn digit_to_str(digit: u64) -> &'static str {
+    match digit {
+        0 => "0",
+        1 => "1",
+        2 => "2",
+        3 => "3",
+        4 => "4",
+        5 => "5",
+        6 => "6",
+        7 => "7",
+        8 => "8",
+        9 => "9",
+        10.. => "-",
+    }
+}
 
 pub struct Drawer<'a> {
     timer_0_widget: Label<'a>,
@@ -83,22 +99,16 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
                 " ".to_string()
             };
 
-            let time_str: String = if self.time.as_secs() >= 10 {
+            let (timer_m, timer_s) = if self.time.as_secs() >= 10 {
                 let minutes: u64 = self.time.as_secs() / 60;
                 let seconds: u64 = self.time.as_secs() % 60;
 
-                format!("{}{}{}{}", minutes, colon, seconds / 10, seconds % 10)
+                (minutes, seconds)
             } else {
                 let seconds: u64 = self.time.as_secs();
                 let centiseconds: u32 = self.time.subsec_millis() / 10;
 
-                format!(
-                    "{}{}{}{}",
-                    seconds,
-                    colon,
-                    centiseconds / 10,
-                    centiseconds % 10
-                )
+                (seconds, centiseconds as u64)
             };
 
             let color: sdl2::pixels::Color = if self.timer_running {
@@ -121,10 +131,13 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
                 color
             };
 
-            self.timer_0_widget.render(&time_str[0..1], color);
-            self.timer_1_widget.render(&time_str[1..2], colon_color);
-            self.timer_2_widget.render(&time_str[2..3], color);
-            self.timer_3_widget.render(&time_str[3..4], color);
+            self.timer_0_widget
+                .render(digit_to_str(timer_m % 10), color);
+            self.timer_1_widget.render(&colon, colon_color);
+            self.timer_2_widget
+                .render(digit_to_str(timer_s / 10), color);
+            self.timer_3_widget
+                .render(digit_to_str(timer_s % 10), color);
             self.updated = false;
         }
         self.timer_0_widget.draw();

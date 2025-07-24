@@ -3,8 +3,8 @@ use sdl2::pixels::Color;
 use sdl2::ttf::Font;
 use std::rc::Rc;
 
-use crate::sdl_frontend::colors;
 use crate::match_info::{MatchInfo, WarningCard};
+use crate::sdl_frontend::colors;
 use crate::sdl_frontend::widgets::Card;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 

@@ -2,8 +2,8 @@ use sdl2;
 use sdl2::ttf::Font;
 use std::rc::Rc;
 
-use crate::sdl_frontend::colors;
 use crate::match_info::MatchInfo;
+use crate::sdl_frontend::colors;
 use crate::sdl_frontend::widgets::Label;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 

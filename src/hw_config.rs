@@ -162,7 +162,7 @@ impl HardwareConfig {
 
     #[cfg(feature = "gpio-cdev")]
     fn load_jumpers(logger: &Logger) -> HardwareConfig {
-        #[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
+        #[cfg(feature = "sdl_frontend")]
         let (resolution, swap_sides) = {
             let swap_sides_pin: PinLocation = PinLocation::from_phys_number(7).unwrap();
             let res_1920x550_pin: PinLocation = PinLocation::from_phys_number(15).unwrap();
@@ -198,7 +198,7 @@ impl HardwareConfig {
         Self {
             force_file: None,
             reinit: false,
-            #[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
+            #[cfg(feature = "sdl_frontend")]
             display: DisplayConfig {
                 resolution,
                 swap_sides,
