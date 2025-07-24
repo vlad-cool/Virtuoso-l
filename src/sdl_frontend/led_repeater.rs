@@ -1,6 +1,6 @@
 use sdl2;
 
-use crate::colors;
+use crate::sdl_frontend::colors;
 use crate::match_info::MatchInfo;
 use crate::sdl_frontend::widgets::Indicator;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};

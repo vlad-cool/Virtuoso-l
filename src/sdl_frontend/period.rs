@@ -2,7 +2,7 @@ use sdl2;
 use sdl2::ttf::Font;
 use std::rc::Rc;
 
-use crate::colors;
+use crate::sdl_frontend::colors;
 use crate::match_info::MatchInfo;
 use crate::sdl_frontend::widgets::Label;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
@@ -16,8 +16,7 @@ pub struct Drawer<'a> {
 
 impl<'a> Drawer<'a> {
     pub fn new(context: WidgetContext<'a>) -> Self {
-        let font: Rc<Font<'_, '_>> =
-            context.get_font(context.layout.passive_counter_dec.font_size as u16);
+        let font: Rc<Font<'_, '_>> = context.get_font(context.layout.passive_counter_dec.font_size);
 
         Self {
             period_widget: Label::new(

@@ -15,7 +15,7 @@ pub struct TextProperties {
     pub y: i32,
     pub width: u32,
     pub height: u32,
-    pub font_size: u32,
+    pub font_size: u16,
 }
 
 pub struct Layout {

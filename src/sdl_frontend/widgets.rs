@@ -5,7 +5,7 @@ use std::cell::RefCell;
 use std::cmp::{max, min};
 use std::rc::Rc;
 
-use crate::layout_structure;
+use crate::sdl_frontend::layout_structure;
 use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 
 fn draw_rounded_rectangle<'a>(

@@ -1,12 +1,12 @@
 use sdl2;
-use std::cell::RefCell;
+use sdl2::ttf::Font;
 use std::rc::Rc;
 use std::time::Duration;
 
-use crate::colors;
-use crate::match_info::Priority;
+use crate::sdl_frontend::colors;
+use crate::match_info::{MatchInfo, Priority};
 use crate::sdl_frontend::widgets::Label;
-use crate::virtuoso_logger::{Logger, LoggerUnwrap};
+use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
 pub struct Drawer<'a> {
     timer_0_widget: Label<'a>,
@@ -16,81 +16,81 @@ pub struct Drawer<'a> {
 
     time: Duration,
     timer_running: bool,
+    priority: Priority,
+    updated: bool,
 }
 
 impl<'a> Drawer<'a> {
-    pub fn new(
-        canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
-        texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-        ttf_context: &'a sdl2::ttf::Sdl2TtfContext,
-        rwops: sdl2::rwops::RWops<'a>,
-        layout: &crate::layout_structure::Layout,
+    pub fn new(context: WidgetContext<'a>) -> Self {
+        let font: Rc<Font<'_, '_>> = context.get_font(context.layout.timer_m.font_size);
 
-        logger: &'a Logger,
-    ) -> Self {
-        let font: sdl2::ttf::Font<'a, 'a> = ttf_context
-            .load_font_from_rwops(rwops, layout.timer_m.font_size as u16)
-            .unwrap_with_logger(logger);
-        let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
-
-        let mut res: Drawer<'a> = Self {
+        Self {
             timer_0_widget: Label::new(
-                canvas.clone(),
-                texture_creator,
+                context.canvas.clone(),
+                context.texture_creator,
                 font.clone(),
-                layout.timer_m,
-                logger,
+                context.layout.timer_m,
+                context.logger,
             ),
             timer_1_widget: Label::new(
-                canvas.clone(),
-                texture_creator,
+                context.canvas.clone(),
+                context.texture_creator,
                 font.clone(),
-                layout.timer_colon,
-                logger,
+                context.layout.timer_colon,
+                context.logger,
             ),
             timer_2_widget: Label::new(
-                canvas.clone(),
-                texture_creator,
+                context.canvas.clone(),
+                context.texture_creator,
                 font.clone(),
-                layout.timer_d,
-                logger,
+                context.layout.timer_d,
+                context.logger,
             ),
             timer_3_widget: Label::new(
-                canvas.clone(),
-                texture_creator,
+                context.canvas.clone(),
+                context.texture_creator,
                 font.clone(),
-                layout.timer_s,
-                logger,
+                context.layout.timer_s,
+                context.logger,
             ),
-            time: Duration::from_secs(0),
-            timer_running: true,
-        };
+            time: Duration::from_secs(3 * 60),
+            timer_running: false,
+            priority: Priority::None,
+            updated: true,
+        }
+    }
+}
 
-        res.render(Duration::from_secs(60 * 3), false, Priority::None);
-        res.draw();
-
-        res
+impl<'a> VirtuosoWidget for Drawer<'a> {
+    fn update(&mut self, data: &MatchInfo) {
+        let time: std::time::Duration = data.timer_controller.get_time();
+        if self.time != time
+            || self.timer_running != data.timer_running
+            || self.priority != data.priority
+        {
+            self.time = time;
+            self.timer_running = data.timer_running;
+            self.priority = data.priority;
+            self.updated = true;
+        }
     }
 
-    pub fn render(&mut self, time: Duration, timer_running: bool, priority: Priority) {
-        if self.time != time || self.timer_running != timer_running {
-            self.time = time;
-            self.timer_running = timer_running;
-
-            let colon: String = if !timer_running || time.subsec_millis() > 500 {
+    fn render(&mut self) {
+        if self.updated {
+            let colon: String = if !self.timer_running || self.time.subsec_millis() > 500 {
                 ":".to_string()
             } else {
                 " ".to_string()
             };
 
-            let time_str: String = if time.as_secs() >= 10 {
-                let minutes: u64 = time.as_secs() / 60;
-                let seconds: u64 = time.as_secs() % 60;
+            let time_str: String = if self.time.as_secs() >= 10 {
+                let minutes: u64 = self.time.as_secs() / 60;
+                let seconds: u64 = self.time.as_secs() % 60;
 
                 format!("{}{}{}{}", minutes, colon, seconds / 10, seconds % 10)
             } else {
-                let seconds: u64 = time.as_secs();
-                let centiseconds: u32 = time.subsec_millis() / 10;
+                let seconds: u64 = self.time.as_secs();
+                let centiseconds: u32 = self.time.subsec_millis() / 10;
 
                 format!(
                     "{}{}{}{}",
@@ -101,8 +101,8 @@ impl<'a> Drawer<'a> {
                 )
             };
 
-            let color: sdl2::pixels::Color = if timer_running {
-                if time.as_secs() > 10 {
+            let color: sdl2::pixels::Color = if self.timer_running {
+                if self.time.as_secs() > 10 {
                     colors::TIMER_WHITE
                 } else {
                     colors::TIMER_BLUE
@@ -111,8 +111,8 @@ impl<'a> Drawer<'a> {
                 colors::TIMER_ORANGE
             };
 
-            let colon_color: sdl2::pixels::Color = if timer_running {
-                match priority {
+            let colon_color: sdl2::pixels::Color = if self.timer_running {
+                match self.priority {
                     Priority::Left => colors::PRIORITY_RED,
                     Priority::None => color,
                     Priority::Right => colors::PRIORITY_GREEN,
@@ -125,10 +125,8 @@ impl<'a> Drawer<'a> {
             self.timer_1_widget.render(&time_str[1..2], colon_color);
             self.timer_2_widget.render(&time_str[2..3], color);
             self.timer_3_widget.render(&time_str[3..4], color);
+            self.updated = false;
         }
-    }
-
-    pub fn draw(&mut self) {
         self.timer_0_widget.draw();
         self.timer_1_widget.draw();
         self.timer_2_widget.draw();

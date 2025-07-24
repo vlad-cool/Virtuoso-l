@@ -1,8 +1,5 @@
 // Generated file
-#[cfg(feature = "sdl_frontend")]
-use crate::layout_structure::*;
-#[cfg(feature = "slint_frontend")]
-slint::slint!(export { Virtuoso } from "src/slint/main.slint";);
+use crate::sdl_frontend::layout_structure::*;
 
 pub const LAYOUT_1920X550: Layout = Layout {
     background: RectangleProperties {

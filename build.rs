@@ -207,18 +207,15 @@ fn main() {
         panic!()
     };
 
-    let file: File = File::create("src/layouts.rs").expect("Failed to open file for writing");
+    let file: File =
+        File::create("src/sdl_frontend/layouts.rs").expect("Failed to open file for writing");
 
     let mut writer: BufWriter<File> = BufWriter::new(file);
 
     let header: String = format!(
         "// Generated file
-#[cfg(feature = \"sdl_frontend\")]
-use crate::layout_structure::*;
-#[cfg(feature = \"slint_frontend\")]
-slint::slint!{}export {} Virtuoso {} from {}src/slint/main.slint{};);
-",
-        '(', '{', '}', '"', '"'
+use crate::sdl_frontend::layout_structure::*;
+"
     );
 
     writer

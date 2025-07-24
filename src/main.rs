@@ -26,18 +26,7 @@ mod legacy_backend;
 mod console_backend;
 
 #[cfg(feature = "sdl_frontend")]
-mod colors;
-#[cfg(feature = "sdl_frontend")]
-mod layout_structure;
-#[cfg(feature = "sdl_frontend")]
-mod layouts;
-#[cfg(feature = "sdl_frontend")]
 mod sdl_frontend;
-
-#[cfg(feature = "slint_frontend")]
-mod layouts;
-#[cfg(feature = "slint_frontend")]
-mod slint_frontend;
 
 #[cfg(feature = "gpio_frontend")]
 mod gpio_frontend;

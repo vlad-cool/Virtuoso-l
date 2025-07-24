@@ -3,7 +3,7 @@ use sdl2::pixels::Color;
 use sdl2::ttf::Font;
 use std::rc::Rc;
 
-use crate::colors;
+use crate::sdl_frontend::colors;
 use crate::match_info::{MatchInfo, WarningCard};
 use crate::sdl_frontend::widgets::Card;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
@@ -82,8 +82,7 @@ pub struct Drawer<'a> {
 
 impl<'a> Drawer<'a> {
     pub fn new(context: WidgetContext<'a>) -> Self {
-        let font: Rc<Font<'_, '_>> =
-            context.get_font(context.layout.caution_l_text.font_size as u16);
+        let font: Rc<Font<'_, '_>> = context.get_font(context.layout.caution_l_text.font_size);
 
         Self {
             card_l_caution_widget: Card::new(

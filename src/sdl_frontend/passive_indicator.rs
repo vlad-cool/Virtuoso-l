@@ -2,8 +2,8 @@ use sdl2;
 use sdl2::pixels::Color;
 use std::time::Duration;
 
-use crate::colors;
-use crate::layout_structure::RectangleProperties;
+use crate::sdl_frontend::colors;
+use crate::sdl_frontend::layout_structure::RectangleProperties;
 use crate::match_info::MatchInfo;
 use crate::sdl_frontend::widgets::Indicator;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};

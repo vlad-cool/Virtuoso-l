@@ -1,12 +1,11 @@
 use sdl2;
-use std::cell::RefCell;
+use sdl2::ttf::Font;
 use std::rc::Rc;
 
-use crate::colors;
-use crate::layout_structure::Layout;
-use crate::match_info::Weapon;
+use crate::sdl_frontend::colors;
+use crate::match_info::{MatchInfo, Weapon};
 use crate::sdl_frontend::widgets::Label;
-use crate::virtuoso_logger::{Logger, LoggerUnwrap};
+use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
 pub struct Drawer<'a> {
     epee_widget: Label<'a>,
@@ -14,62 +13,55 @@ pub struct Drawer<'a> {
     fleuret_widget: Label<'a>,
 
     weapon: Weapon,
+    updated: bool,
 }
 
 impl<'a> Drawer<'a> {
-    pub fn new(
-        canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
-        texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-        ttf_context: &'a sdl2::ttf::Sdl2TtfContext,
-        rwops: sdl2::rwops::RWops<'a>,
-        layout: &Layout,
+    pub fn new(context: WidgetContext<'a>) -> Self {
+        let font: Rc<Font<'_, '_>> = context.get_font(context.layout.epee.font_size);
 
-        logger: &'a Logger,
-    ) -> Self {
-        let font: sdl2::ttf::Font<'a, 'a> = ttf_context
-            .load_font_from_rwops(rwops, layout.epee.font_size as u16)
-            .unwrap_with_logger(logger);
-        let font: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font);
-
-        let mut res: Drawer<'a> = Self {
+        Self {
             epee_widget: Label::new(
-                canvas.clone(),
-                texture_creator,
+                context.canvas.clone(),
+                context.texture_creator,
                 font.clone(),
-                layout.epee,
-                logger,
+                context.layout.epee,
+                context.logger,
             ),
             sabre_widget: Label::new(
-                canvas.clone(),
-                texture_creator,
+                context.canvas.clone(),
+                context.texture_creator,
                 font.clone(),
-                layout.sabre,
-                logger,
+                context.layout.sabre,
+                context.logger,
             ),
             fleuret_widget: Label::new(
-                canvas.clone(),
-                texture_creator,
+                context.canvas.clone(),
+                context.texture_creator,
                 font.clone(),
-                layout.fleuret,
-                logger,
+                context.layout.fleuret,
+                context.logger,
             ),
 
-            weapon: Weapon::Sabre,
-        };
+            updated: true,
+            weapon: Weapon::Epee,
+        }
+    }
+}
 
-        res.render(Weapon::Epee);
-        res.draw();
-
-        res
+impl<'a> VirtuosoWidget for Drawer<'a> {
+    fn update(&mut self, data: &MatchInfo) {
+        if self.weapon != data.weapon {
+            self.weapon = data.weapon;
+            self.updated = true;
+        }
     }
 
-    pub fn render(&mut self, weapon: Weapon) {
-        if self.weapon != weapon {
-            self.weapon = weapon;
-
+    fn render(&mut self) {
+        if self.updated {
             self.epee_widget.render(
                 "epee",
-                if weapon == Weapon::Epee {
+                if self.weapon == Weapon::Epee {
                     colors::WEAPON_TEXT_LIGHT
                 } else {
                     colors::WEAPON_TEXT_DARK
@@ -78,7 +70,7 @@ impl<'a> Drawer<'a> {
 
             self.sabre_widget.render(
                 "sabre",
-                if weapon == Weapon::Sabre {
+                if self.weapon == Weapon::Sabre {
                     colors::WEAPON_TEXT_LIGHT
                 } else {
                     colors::WEAPON_TEXT_DARK
@@ -87,16 +79,14 @@ impl<'a> Drawer<'a> {
 
             self.fleuret_widget.render(
                 "fleuret",
-                if weapon == Weapon::Fleuret {
+                if self.weapon == Weapon::Fleuret {
                     colors::WEAPON_TEXT_LIGHT
                 } else {
                     colors::WEAPON_TEXT_DARK
                 },
             );
+            self.updated = false;
         }
-    }
-
-    pub fn draw(&mut self) {
         self.epee_widget.draw();
         self.sabre_widget.draw();
         self.fleuret_widget.draw();

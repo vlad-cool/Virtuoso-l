@@ -1,11 +1,11 @@
 use sdl2;
-use std::cell::RefCell;
+use sdl2::ttf::Font;
 use std::rc::Rc;
 
-use crate::colors::{self, PRIORITY_TEXT_DARK, PRIORITY_TEXT_LIGHT};
-use crate::match_info::Priority;
+use crate::sdl_frontend::colors;
+use crate::match_info::{MatchInfo, Priority};
 use crate::sdl_frontend::widgets::Label;
-use crate::virtuoso_logger::{Logger, LoggerUnwrap};
+use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
 pub struct Drawer<'a> {
     l_cap_widget: Label<'a>,
@@ -14,89 +14,76 @@ pub struct Drawer<'a> {
     r_word_widget: Label<'a>,
 
     priority: Priority,
+    updated: bool,
 }
 
 impl<'a> Drawer<'a> {
-    pub fn new(
-        canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
-        texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-        ttf_context: &'a sdl2::ttf::Sdl2TtfContext,
-        rwops_0: sdl2::rwops::RWops<'a>,
-        rwops_1: sdl2::rwops::RWops<'a>,
-        layout: &crate::layout_structure::Layout,
+    pub fn new(context: WidgetContext<'a>) -> Self {
+        let font_cap: Rc<Font<'_, '_>> = context.get_font(context.layout.priority_l_cap.font_size);
+        let font_word: Rc<Font<'_, '_>> =
+            context.get_font(context.layout.priority_l_text.font_size);
 
-        logger: &'a Logger,
-    ) -> Self {
-        let font_cap: sdl2::ttf::Font<'a, 'a> = ttf_context
-            .load_font_from_rwops(rwops_0, layout.priority_l_cap.font_size as u16)
-            .unwrap();
-        let font_cap: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font_cap);
-
-        let font_word: sdl2::ttf::Font<'a, 'a> = ttf_context
-            .load_font_from_rwops(rwops_1, layout.priority_l_text.font_size as u16)
-            .unwrap_with_logger(logger);
-        let font_word: Rc<sdl2::ttf::Font<'a, 'a>> = Rc::new(font_word);
-
-        let mut res: Drawer<'a> = Self {
+        Self {
             l_cap_widget: Label::new(
-                canvas.clone(),
-                texture_creator,
+                context.canvas.clone(),
+                context.texture_creator,
                 font_cap.clone(),
-                layout.priority_l_cap,
-                logger,
+                context.layout.priority_l_cap,
+                context.logger,
             ),
             l_word_widget: Label::new(
-                canvas.clone(),
-                texture_creator,
+                context.canvas.clone(),
+                context.texture_creator,
                 font_word.clone(),
-                layout.priority_l_text,
-                logger,
+                context.layout.priority_l_text,
+                context.logger,
             ),
             r_cap_widget: Label::new(
-                canvas.clone(),
-                texture_creator,
+                context.canvas.clone(),
+                context.texture_creator,
                 font_cap.clone(),
-                layout.priority_r_cap,
-                logger,
+                context.layout.priority_r_cap,
+                context.logger,
             ),
             r_word_widget: Label::new(
-                canvas.clone(),
-                texture_creator,
+                context.canvas.clone(),
+                context.texture_creator,
                 font_word.clone(),
-                layout.priority_r_text,
-                logger,
+                context.layout.priority_r_text,
+                context.logger,
             ),
 
-            priority: Priority::Left,
-        };
+            priority: Priority::None,
+            updated: true,
+        }
+    }
+}
 
-        res.render(Priority::None);
-        res.draw();
-
-        res
+impl<'a> VirtuosoWidget for Drawer<'a> {
+    fn update(&mut self, data: &MatchInfo) {
+        if self.priority != data.priority {
+            self.priority = data.priority;
+            self.updated = true;
+        }
     }
 
-    pub fn render(&mut self, priority: Priority) {
-        if self.priority != priority {
-            self.priority = priority;
-
-            let (left_cap_color, left_word_color) = match priority {
-                Priority::Left => (colors::PRIORITY_RED, PRIORITY_TEXT_LIGHT),
-                _ => (colors::PRIORITY_DARK_RED, PRIORITY_TEXT_DARK),
+    fn render(&mut self) {
+        if self.updated {
+            let (left_cap_color, left_word_color) = match self.priority {
+                Priority::Left => (colors::PRIORITY_RED, colors::PRIORITY_TEXT_LIGHT),
+                _ => (colors::PRIORITY_DARK_RED, colors::PRIORITY_TEXT_DARK),
             };
             self.l_cap_widget.render("P", left_cap_color);
             self.l_word_widget.render("riority", left_word_color);
 
-            let (right_cap_color, right_word_color) = match priority {
-                Priority::Right => (colors::PRIORITY_GREEN, PRIORITY_TEXT_LIGHT),
-                _ => (colors::PRIORITY_DARK_GREEN, PRIORITY_TEXT_DARK),
+            let (right_cap_color, right_word_color) = match self.priority {
+                Priority::Right => (colors::PRIORITY_GREEN, colors::PRIORITY_TEXT_LIGHT),
+                _ => (colors::PRIORITY_DARK_GREEN, colors::PRIORITY_TEXT_DARK),
             };
             self.r_cap_widget.render("P", right_cap_color);
             self.r_word_widget.render("riority", right_word_color);
+            self.updated = false;
         }
-    }
-
-    pub fn draw(&mut self) {
         self.l_cap_widget.draw();
         self.l_word_widget.draw();
         self.r_cap_widget.draw();

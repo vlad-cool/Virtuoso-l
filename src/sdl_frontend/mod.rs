@@ -8,15 +8,13 @@ use std::time::Duration;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::colors;
-use crate::layout_structure::Layout;
 use crate::match_info::MatchInfo;
 use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 use crate::{
     hw_config::{HardwareConfig, Resolution},
     modules::VirtuosoModule,
 };
-use crate::{layout_structure, layouts};
+use crate::sdl_frontend::layout_structure::Layout;
 
 mod auto_status;
 mod led_repeater;
@@ -31,6 +29,9 @@ mod score;
 mod timer;
 mod weapon;
 mod widgets;
+mod colors;
+mod layout_structure;
+mod layouts;
 
 const MESSAGE_DISPLAY_TIME: Duration = Duration::from_secs(2);
 
@@ -145,17 +146,21 @@ impl VirtuosoModule for SdlFrontend {
         )));
         widgets.push(Box::new(penalty_card::Drawer::new(widget_context.clone())));
         widgets.push(Box::new(period::Drawer::new(widget_context.clone())));
+        widgets.push(Box::new(priority::Drawer::new(widget_context.clone())));
+        widgets.push(Box::new(score::Drawer::new(widget_context.clone())));
+        widgets.push(Box::new(timer::Drawer::new(widget_context.clone())));
+        widgets.push(Box::new(weapon::Drawer::new(widget_context.clone())));
 
-        let mut score_drawer: score::Drawer<'_> = score::Drawer::new(
-            canvas.clone(),
-            &texture_creator,
-            &ttf_context,
-            RWops::from_bytes(font_bytes)
-                .map_err(|e| e.to_string())
-                .unwrap_with_logger(&self.logger),
-            &self.layout,
-            &self.logger,
-        );
+        // let mut score_drawer: score::Drawer<'_> = score::Drawer::new(
+        //     canvas.clone(),
+        //     &texture_creator,
+        //     &ttf_context,
+        //     RWops::from_bytes(font_bytes)
+        //         .map_err(|e| e.to_string())
+        //         .unwrap_with_logger(&self.logger),
+        //     &self.layout,
+        //     &self.logger,
+        // );
 
         // let mut message: message::Drawer<'_> = message::Drawer::new(
         //     canvas.clone(),
@@ -168,16 +173,16 @@ impl VirtuosoModule for SdlFrontend {
         //     &self.logger,
         // );
 
-        let mut weapon_drawer: weapon::Drawer<'_> = weapon::Drawer::new(
-            canvas.clone(),
-            &texture_creator,
-            &ttf_context,
-            RWops::from_bytes(font_bytes)
-                .map_err(|e| e.to_string())
-                .unwrap_with_logger(&self.logger),
-            &self.layout,
-            &self.logger,
-        );
+        // let mut weapon_drawer: weapon::Drawer<'_> = weapon::Drawer::new(
+        //     canvas.clone(),
+        //     &texture_creator,
+        //     &ttf_context,
+        //     RWops::from_bytes(font_bytes)
+        //         .map_err(|e| e.to_string())
+        //         .unwrap_with_logger(&self.logger),
+        //     &self.layout,
+        //     &self.logger,
+        // );
 
         // let mut period_drawer: period::Drawer<'_> = period::Drawer::new(
         //     canvas.clone(),
@@ -190,16 +195,16 @@ impl VirtuosoModule for SdlFrontend {
         //     &self.logger,
         // );
 
-        let mut timer_drawer: timer::Drawer<'_> = timer::Drawer::new(
-            canvas.clone(),
-            &texture_creator,
-            &ttf_context,
-            RWops::from_bytes(font_bytes)
-                .map_err(|e| e.to_string())
-                .unwrap_with_logger(&self.logger),
-            &self.layout,
-            &self.logger,
-        );
+        // let mut timer_drawer: timer::Drawer<'_> = timer::Drawer::new(
+        //     canvas.clone(),
+        //     &texture_creator,
+        //     &ttf_context,
+        //     RWops::from_bytes(font_bytes)
+        //         .map_err(|e| e.to_string())
+        //         .unwrap_with_logger(&self.logger),
+        //     &self.layout,
+        //     &self.logger,
+        // );
 
         // let mut passive_counter: passive_counter::Drawer<'_> = passive_counter::Drawer::new(
         //     canvas.clone(),
@@ -252,19 +257,19 @@ impl VirtuosoModule for SdlFrontend {
         //     &self.logger,
         // );
 
-        let mut priority: priority::Drawer<'_> = priority::Drawer::new(
-            canvas.clone(),
-            &texture_creator,
-            &ttf_context,
-            RWops::from_bytes(font_bytes)
-                .map_err(|e| e.to_string())
-                .unwrap_with_logger(&self.logger),
-            RWops::from_bytes(font_bytes)
-                .map_err(|e| e.to_string())
-                .unwrap_with_logger(&self.logger),
-            &self.layout,
-            &self.logger,
-        );
+        // let mut priority: priority::Drawer<'_> = priority::Drawer::new(
+        //     canvas.clone(),
+        //     &texture_creator,
+        //     &ttf_context,
+        //     RWops::from_bytes(font_bytes)
+        //         .map_err(|e| e.to_string())
+        //         .unwrap_with_logger(&self.logger),
+        //     RWops::from_bytes(font_bytes)
+        //         .map_err(|e| e.to_string())
+        //         .unwrap_with_logger(&self.logger),
+        //     &self.layout,
+        //     &self.logger,
+        // );
 
         // let mut led_repeater: led_repeater::Drawer<'_> =
         //     led_repeater::Drawer::new(canvas.clone(), &texture_creator, &self.layout, &self.logger);
@@ -301,10 +306,10 @@ impl VirtuosoModule for SdlFrontend {
             if display_message {
                 // message.render(data.display_message.clone());
             } else {
-                timer_drawer.render(data.timer_controller.get_time(), true, data.priority);
+                // timer_drawer.render(data.timer_controller.get_time(), true, data.priority);
             }
-            score_drawer.render(data.left_fencer.score, data.right_fencer.score);
-            weapon_drawer.render(data.weapon);
+            // score_drawer.render(data.left_fencer.score, data.right_fencer.score);
+            // weapon_drawer.render(data.weapon);
             // period_drawer.render(data.period);
             // passive_counter.render(
             //     data.passive_timer.get_counter(),
@@ -319,7 +324,7 @@ impl VirtuosoModule for SdlFrontend {
             //     data.right_fencer.warning_card,
             // );
             // auto_status.render(data.auto_timer_on, data.auto_score_on);
-            priority.render(data.priority);
+            // priority.render(data.priority);
             // led_repeater.render(
             //     data.left_fencer.color_light,
             //     data.left_fencer.white_light,
@@ -330,16 +335,16 @@ impl VirtuosoModule for SdlFrontend {
             if display_message {
                 // message.draw();
             } else {
-                timer_drawer.draw();
+                // timer_drawer.draw();
             }
-            score_drawer.draw();
-            weapon_drawer.draw();
+            // score_drawer.draw();
+            // weapon_drawer.draw();
             // period_drawer.draw();
             // passive_counter.draw();
             // passive_card.draw();
             // penalty_card.draw();
             // auto_status.draw();
-            priority.draw();
+            // priority.draw();
             // led_repeater.draw();
 
             for widget in &mut widgets {
