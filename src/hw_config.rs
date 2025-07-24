@@ -3,7 +3,7 @@ use crate::gpio::PinLocation;
 use crate::virtuoso_logger::Logger;
 
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
-#[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
+#[cfg(feature = "sdl_frontend")]
 pub enum Resolution {
     Res1920X1080,
     Res1920X550,
@@ -11,7 +11,7 @@ pub enum Resolution {
     Res1920X360,
 }
 
-#[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
+#[cfg(feature = "sdl_frontend")]
 impl std::fmt::Display for Resolution {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -23,7 +23,7 @@ impl std::fmt::Display for Resolution {
     }
 }
 
-#[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
+#[cfg(feature = "sdl_frontend")]
 #[allow(dead_code)]
 impl Resolution {
     pub fn to_config_dir(&self) -> String {
@@ -37,7 +37,7 @@ impl Resolution {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
-#[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
+#[cfg(feature = "sdl_frontend")]
 pub struct DisplayConfig {
     pub resolution: Resolution,
     pub swap_sides: bool,
@@ -83,7 +83,7 @@ pub struct HardwareConfig {
     #[serde(skip_serializing)]
     reinit: bool,
 
-    #[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
+    #[cfg(feature = "sdl_frontend")]
     pub display: DisplayConfig,
     #[cfg(feature = "gpio_frontend")]
     pub gpio: GpioFrontendConfig,
@@ -264,7 +264,7 @@ impl HardwareConfig {
                 force_file: Some(false),
                 reinit: false,
 
-                #[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
+                #[cfg(feature = "sdl_frontend")]
                 display: DisplayConfig {
                     resolution: Resolution::Res1920X1080,
                     swap_sides: false,
@@ -297,7 +297,7 @@ impl HardwareConfig {
 
     #[allow(dead_code)]
     fn configure_os(&self, logger: &Logger) {
-        #[cfg(any(feature = "sdl_frontend", feature = "slint_frontend"))]
+        #[cfg(feature = "sdl_frontend")]
         {
             logger.info("Running setup script".to_string());
 

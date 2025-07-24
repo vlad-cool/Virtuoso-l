@@ -40,13 +40,12 @@ fn main() {
 
     /*
     TODO Properly swap sides
+    TODO Swap sides
     TODO Cyrano softer error
     TODO Cyrano
     TODO Repeater ACK / NAK
     TODO Repeater auto role
     TODO Repeater reorder receiver
-    TODO Swap sides
-    TODO New cards
     TODO Menu
      */
 
@@ -84,13 +83,6 @@ fn main() {
         Arc::clone(&match_info),
         hw_config.clone(),
         virtuoso_logger.get_logger("sdl frontend".to_string()),
-    );
-
-    #[cfg(feature = "slint_frontend")]
-    let mut slint_frontend = slint_frontend::SlintFrontend::new(
-        Arc::clone(&match_info),
-        hw_config.clone(),
-        virtuoso_logger.get_logger("Slint frontend".to_string()),
     );
 
     #[cfg(feature = "cyrano_server")]
@@ -169,16 +161,6 @@ fn main() {
         sdl_frontend.run();
         logger.info("sdl frontend stopped in main thread".to_string());
         match_info.lock().unwrap().program_state = ProgramState::Exiting;
-    }
-    #[cfg(feature = "slint_frontend")]
-    {
-        logger.info("Slint frontend started in main thread".to_string());
-        #[cfg(feature = "slint_frontend")]
-        #[cfg(target_os = "macos")]
-        slint_frontend.run();
-        #[cfg(feature = "slint_frontend")]
-        #[cfg(target_os = "macos")]
-        logger.info("Slint frontend stopped in main thread".to_string());
     }
 
     #[cfg(feature = "legacy_backend")]
