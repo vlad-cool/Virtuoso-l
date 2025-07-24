@@ -91,6 +91,13 @@ fn main() {
         Arc::clone(&config),
         virtuoso_logger.get_logger("Cyrano server".to_string()),
     );
+    #[cfg(feature = "cyrano_server")]
+    match &cyrano_server {
+        Ok(_) => {}
+        Err(err) => {
+            logger.critical_error(format!("Failed to create cyrano server, error: {err}"));
+        }
+    }
 
     #[cfg(feature = "repeater")]
     let repeater = repeater::Repeater::new(
@@ -132,11 +139,16 @@ fn main() {
     logger.info("Gpio frontend started".to_string());
 
     #[cfg(feature = "cyrano_server")]
-    let cyrano_server_thread = thread::spawn(move || {
-        cyrano_server.run();
-    });
-    #[cfg(feature = "cyrano_server")]
-    logger.info("Cyrano server started".to_string());
+    let cyrano_server_thread = if let Ok(cyrano_server) = cyrano_server {
+        let thread = thread::spawn(move || {
+            cyrano_server.run();
+        });
+        logger.info("Cyrano server started".to_string());
+        thread
+    } else {
+        logger.critical_error("Cyrano server did not start because it did not exist".to_string());
+        thread::spawn(move || {})
+    };
 
     #[cfg(feature = "repeater")]
     let repeater_thread = if let Ok(repeater) = repeater {

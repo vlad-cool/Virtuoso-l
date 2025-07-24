@@ -209,18 +209,18 @@ impl LegacyBackend {
                         match_info_data.passive_timer.reset();
                     }
                 }
-                // IrCommands::LeftPenaltyCard => {
-                //     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-                //         self.match_info.lock().unwrap();
-                //     match_info_data.left_fencer.warning_card.inc();
-                //     match_info_data.modified_count += 1;
-                // }
-                // IrCommands::RightPenaltyCard => {
-                //     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-                //         self.match_info.lock().unwrap();
-                //     match_info_data.right_fencer.warning_card.inc();
-                //     match_info_data.modified_count += 1;
-                // }
+                IrCommands::LeftPenaltyCard => {
+                    let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
+                        self.match_info.lock().unwrap();
+                    match_info_data.left_fencer.warning_card.inc();
+                    match_info_data.modified_count += 1;
+                }
+                IrCommands::RightPenaltyCard => {
+                    let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
+                        self.match_info.lock().unwrap();
+                    match_info_data.right_fencer.warning_card.inc();
+                    match_info_data.modified_count += 1;
+                }
                 IrCommands::LeftPassiveCard => {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
                         self.match_info.lock().unwrap();
@@ -540,7 +540,7 @@ enum IrCommands {
     RightPassiveCard,
 
     LeftPenaltyCard,
-    RightPenalty,
+    RightPenaltyCard,
 
     SecondsIncrement,
     SecondsDecrement,
@@ -576,7 +576,7 @@ impl IrCommands {
             18 => IrCommands::RightPassiveCard,
 
             4 => IrCommands::LeftPenaltyCard,
-            11 => IrCommands::RightPenalty,
+            11 => IrCommands::RightPenaltyCard,
 
             14 => IrCommands::SecondsIncrement,
             6 => IrCommands::SecondsDecrement,

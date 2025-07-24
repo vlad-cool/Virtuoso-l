@@ -45,7 +45,7 @@ fn parse_penalty_card<'a>(card: WarningCard) -> (String, u32, Color, Color, Colo
             colors::PASSIVE_TEXT_LIGHT,
         ),
         WarningCard::Red(n) => (
-            format!("penalty x {}", n),
+            format!("pen x {}", n),
             0,
             colors::PASSIVE_RED,
             colors::BACKGROUND,
@@ -59,7 +59,7 @@ fn parse_penalty_card<'a>(card: WarningCard) -> (String, u32, Color, Color, Colo
             colors::PASSIVE_TEXT_LIGHT,
         ),
         WarningCard::Black(n) => (
-            format!("penalty x {}", n),
+            format!("pen x {}", n),
             1,
             colors::PCARD_BLACK,
             colors::PCARD_BLACK_FRAME,
