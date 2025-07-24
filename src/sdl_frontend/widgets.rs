@@ -100,10 +100,16 @@ fn render_font<'a>(
     let mut bitmaps: Vec<(fontdue::Metrics, Vec<u8>)> = Vec::<(fontdue::Metrics, Vec<u8>)>::new();
     let mut width: u32 = 0;
     let mut height: u32 = 0;
+    let mut x_min: i32 = 0;
+    let mut y_min: i32 = 0;
+    let mut x_max: i32 = 0;
+    let mut y_max: i32 = 0;
 
     for char in text.chars() {
         let (metrics, bitmap) = font.rasterize(char, size.into());
         width += (metrics.width as i32 + metrics.xmin) as u32;
+
+        // if
         height = max(height, metrics.height as u32);
         // println!("{}, {}", metrics.xmin, metrics.ymin);
         bitmaps.push((metrics, bitmap));
@@ -136,16 +142,10 @@ fn render_font<'a>(
                     let i_bitmap: usize = (y * bitmap_width + x) as usize;
                     let i_surface: usize = (y * width + x + edge) as usize;
 
-                    // pixels[i_surface * 4 + 0] = ((color.r as u16 * bitmap[i_bitmap] as u16) / 256) as u8;
-                    // pixels[i_surface * 4 + 1] = ((color.g as u16 * bitmap[i_bitmap] as u16) / 256) as u8;
-                    // pixels[i_surface * 4 + 2] = ((color.b as u16 * bitmap[i_bitmap] as u16) / 256) as u8;
-                    // pixels[i_surface * 4 + 3] = 255;
-
-                    pixels[i_surface * 4 + 0] = color.r;
-                    pixels[i_surface * 4 + 1] = color.g;
-                    pixels[i_surface * 4 + 2] = color.b;
-                    pixels[i_surface * 4 + 3] = bitmap[i_bitmap];
-                    // println!("{}", bitmap[i_bitmap]);
+                    pixels[i_surface * 4 + 0] = bitmap[i_bitmap];
+                    pixels[i_surface * 4 + 3] = color.r;
+                    pixels[i_surface * 4 + 2] = color.g;
+                    pixels[i_surface * 4 + 1] = color.b;
                 }
             }
 
