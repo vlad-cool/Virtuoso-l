@@ -16,22 +16,35 @@ use crate::{
 };
 use crate::sdl_frontend::layout_structure::Layout;
 
-mod auto_status;
-mod led_repeater;
-mod message;
-mod passive_card;
-mod passive_counter;
-mod passive_indicator;
-mod penalty_card;
-mod period;
-mod priority;
-mod score;
-mod timer;
-mod weapon;
 mod widgets;
 mod colors;
 mod layout_structure;
 mod layouts;
+
+#[path = "main_screen/auto_status.rs"]
+mod auto_status;
+#[path = "main_screen/led_repeater.rs"]
+mod led_repeater;
+#[path = "main_screen/message.rs"]
+mod message;
+#[path = "main_screen/passive_card.rs"]
+mod passive_card;
+#[path = "main_screen/passive_counter.rs"]
+mod passive_counter;
+#[path = "main_screen/passive_indicator.rs"]
+mod passive_indicator;
+#[path = "main_screen/penalty_card.rs"]
+mod penalty_card;
+#[path = "main_screen/period.rs"]
+mod period;
+#[path = "main_screen/priority.rs"]
+mod priority;
+#[path = "main_screen/score.rs"]
+mod score;
+#[path = "main_screen/timer.rs"]
+mod timer;
+#[path = "main_screen/weapon.rs"]
+mod weapon;
 
 const MESSAGE_DISPLAY_TIME: Duration = Duration::from_secs(2);
 
