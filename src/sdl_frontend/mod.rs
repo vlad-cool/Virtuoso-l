@@ -126,7 +126,7 @@ impl VirtuosoModule for SdlFrontend {
 
         canvas.borrow_mut().set_draw_color(colors::BACKGROUND);
 
-        let font_bytes = include_bytes!("../../assets/AGENCYB.ttf");
+        let font_bytes: &[u8] = include_bytes!("../../assets/AGENCYB.ttf") as &[u8];
 
         let texture_creator: sdl2::render::TextureCreator<WindowContext> =
             canvas.borrow().texture_creator();
@@ -163,12 +163,12 @@ impl VirtuosoModule for SdlFrontend {
 
         canvas.borrow_mut().present();
 
-        let mut modified_count: u32 = 100;
+        let mut modified_count: u32 = 100_000_000;
 
         let mut event_pump: sdl2::EventPump =
             sdl_context.event_pump().unwrap_with_logger(&self.logger);
         'running: loop {
-            let time: std::time::Instant = std::time::Instant::now();
+            std::thread::sleep(Duration::from_millis(20));
 
             for event in event_pump.poll_iter() {
                 match event {
@@ -180,35 +180,21 @@ impl VirtuosoModule for SdlFrontend {
             let data: MutexGuard<'_, MatchInfo> =
                 self.match_info.lock().unwrap_with_logger(&self.logger);
 
-            if data.modified_count == modified_count {
-                continue 'running;
+            if data.modified_count != modified_count {
+                modified_count = data.modified_count;
+
+                canvas.borrow_mut().clear();
+
+                for widget in &mut widgets {
+                    widget.update(&data);
+                }
+                std::mem::drop(data);
+                for widget in &mut widgets {
+                    widget.render();
+                }
+
+                canvas.borrow_mut().present();
             }
-
-            modified_count = data.modified_count;
-
-            canvas.borrow_mut().clear();
-
-            let timer = std::time::Instant::now();
-            for widget in &mut widgets {
-                widget.update(&data);
-            }
-            self.logger
-                .info(format!("111 {}", timer.elapsed().as_micros()));
-            std::mem::drop(data);
-            self.logger
-                .info(format!("222 {}", timer.elapsed().as_micros()));
-            for widget in &mut widgets {
-                let timer = std::time::Instant::now();
-                widget.render();
-                self.logger
-                    .info(format!("--- {}", timer.elapsed().as_micros()));
-            }
-            self.logger
-                .info(format!("333 {}", timer.elapsed().as_micros()));
-
-            canvas.borrow_mut().present();
-
-            std::thread::sleep(Duration::from_millis(20).saturating_sub(time.elapsed()));
         }
     }
 }
