@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use crate::match_info::MatchInfo;
 use crate::sdl_frontend::colors;
-use crate::sdl_frontend::widgets::Label;
+use crate::sdl_frontend::widgets::{Label, LabelTextureCache, LabelHashKey};
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
 pub struct Drawer<'a> {
@@ -12,6 +12,7 @@ pub struct Drawer<'a> {
     score_l_r_widget: Label<'a>,
     score_r_l_widget: Label<'a>,
     score_r_r_widget: Label<'a>,
+    texture_cache: LabelTextureCache<'a>,
 
     score_l: u32,
     score_l_updated: bool,
@@ -22,6 +23,17 @@ pub struct Drawer<'a> {
 impl<'a> Drawer<'a> {
     pub fn new(context: WidgetContext<'a>) -> Self {
         let font: Rc<Font<'_, '_>> = context.get_font(context.layout.score_l_l.font_size);
+        let mut texture_cache: LabelTextureCache<'a> = LabelTextureCache::new();
+
+        for char in "0123456789 ".chars() {
+            for color in [colors::SCORE_LEFT, colors::SCORE_RIGHT] {
+                let key: LabelHashKey = LabelHashKey {
+                    color,
+                    text: char.to_string(),
+                };
+                texture_cache.get(key, context.texture_creator, font.clone(), context.logger);
+            }
+        }
 
         Self {
             score_l_l_widget: Label::new(
@@ -52,6 +64,8 @@ impl<'a> Drawer<'a> {
                 context.layout.score_r_r,
                 context.logger,
             ),
+            texture_cache,
+
             score_l: 0,
             score_l_updated: true,
             score_r: 0,
@@ -79,16 +93,22 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             } else {
                 format!("{}", self.score_l / 10)
             };
-            self.score_l_l_widget
-                .render(score_l_l_text.as_str(), colors::SCORE_LEFT);
+            self.score_l_l_widget.render(
+                score_l_l_text,
+                colors::SCORE_LEFT,
+                &mut self.texture_cache,
+            );
 
             let score_l_r_text: String = if self.score_l < 10 {
                 " ".to_string()
             } else {
                 format!("{}", self.score_l % 10)
             };
-            self.score_l_r_widget
-                .render(score_l_r_text.as_str(), colors::SCORE_LEFT);
+            self.score_l_r_widget.render(
+                score_l_r_text,
+                colors::SCORE_LEFT,
+                &mut self.texture_cache,
+            );
             self.score_l_updated = false;
         }
 
@@ -98,16 +118,22 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             } else {
                 format!("{}", self.score_r / 10)
             };
-            self.score_r_l_widget
-                .render(score_r_l_text.as_str(), colors::SCORE_RIGHT);
+            self.score_r_l_widget.render(
+                score_r_l_text,
+                colors::SCORE_RIGHT,
+                &mut self.texture_cache,
+            );
 
             let score_r_r_text: String = if self.score_r < 10 {
                 format!("{}", self.score_r)
             } else {
                 format!("{}", self.score_r % 10)
             };
-            self.score_r_r_widget
-                .render(score_r_r_text.as_str(), colors::SCORE_RIGHT);
+            self.score_r_r_widget.render(
+                score_r_r_text,
+                colors::SCORE_RIGHT,
+                &mut self.texture_cache,
+            );
             self.score_r_updated = false;
         }
         self.score_l_l_widget.draw();

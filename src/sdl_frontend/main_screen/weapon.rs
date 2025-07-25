@@ -4,13 +4,14 @@ use std::rc::Rc;
 
 use crate::match_info::{MatchInfo, Weapon};
 use crate::sdl_frontend::colors;
-use crate::sdl_frontend::widgets::Label;
+use crate::sdl_frontend::widgets::{Label, LabelTextureCache};
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
 pub struct Drawer<'a> {
     epee_widget: Label<'a>,
     sabre_widget: Label<'a>,
     fleuret_widget: Label<'a>,
+    texture_cache: LabelTextureCache<'a>,
 
     weapon: Weapon,
     updated: bool,
@@ -42,6 +43,7 @@ impl<'a> Drawer<'a> {
                 context.layout.fleuret,
                 context.logger,
             ),
+            texture_cache: LabelTextureCache::new(),
 
             updated: true,
             weapon: Weapon::Epee,
@@ -60,30 +62,33 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     fn render(&mut self) {
         if self.updated {
             self.epee_widget.render(
-                "epee",
+                "epee".to_string(),
                 if self.weapon == Weapon::Epee {
                     colors::WEAPON_TEXT_LIGHT
                 } else {
                     colors::WEAPON_TEXT_DARK
                 },
+                &mut self.texture_cache,
             );
 
             self.sabre_widget.render(
-                "sabre",
+                "sabre".to_string(),
                 if self.weapon == Weapon::Sabre {
                     colors::WEAPON_TEXT_LIGHT
                 } else {
                     colors::WEAPON_TEXT_DARK
                 },
+                &mut self.texture_cache,
             );
 
             self.fleuret_widget.render(
-                "fleuret",
+                "fleuret".to_string(),
                 if self.weapon == Weapon::Fleuret {
                     colors::WEAPON_TEXT_LIGHT
                 } else {
                     colors::WEAPON_TEXT_DARK
                 },
+                &mut self.texture_cache,
             );
             self.updated = false;
         }

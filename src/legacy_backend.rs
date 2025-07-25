@@ -420,7 +420,7 @@ struct UartData {
     score_left: u32,
     score_right: u32,
     period: u32,
-    
+
     #[allow(dead_code)]
     yellow_card_left: bool,
     #[allow(dead_code)]

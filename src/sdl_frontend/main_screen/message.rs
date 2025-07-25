@@ -5,11 +5,12 @@ use std::time::Duration;
 
 use crate::match_info::MatchInfo;
 use crate::sdl_frontend::colors;
-use crate::sdl_frontend::widgets::Label;
+use crate::sdl_frontend::widgets::{Label, LabelTextureCache};
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
 pub struct Drawer<'a> {
     message_widget: Label<'a>,
+    texture_cache: LabelTextureCache<'a>,
 
     message: String,
     display: bool,
@@ -30,6 +31,7 @@ impl<'a> Drawer<'a> {
                 context.layout.timer_text,
                 context.logger,
             ),
+            texture_cache: LabelTextureCache::new(),
             message: "".to_string(),
             display: false,
             message_updated: true,
@@ -49,8 +51,11 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
 
     fn render(&mut self) {
         if self.message_updated {
-            self.message_widget
-                .render(self.message.as_str(), colors::TIMER_ORANGE);
+            self.message_widget.render(
+                self.message.clone(),
+                colors::TIMER_ORANGE,
+                &mut self.texture_cache,
+            );
             self.message_updated = false;
         }
         if self.display {

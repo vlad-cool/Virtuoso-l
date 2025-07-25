@@ -168,7 +168,7 @@ impl VirtuosoModule for SdlFrontend {
         let mut event_pump: sdl2::EventPump =
             sdl_context.event_pump().unwrap_with_logger(&self.logger);
         'running: loop {
-            std::thread::sleep(Duration::from_millis(20));
+            let time: std::time::Instant = std::time::Instant::now();
 
             for event in event_pump.poll_iter() {
                 match event {
@@ -207,6 +207,8 @@ impl VirtuosoModule for SdlFrontend {
                 .info(format!("333 {}", timer.elapsed().as_micros()));
 
             canvas.borrow_mut().present();
+
+            std::thread::sleep(Duration::from_millis(20).saturating_sub(time.elapsed()));
         }
     }
 }

@@ -4,12 +4,13 @@ use std::rc::Rc;
 
 use crate::match_info::MatchInfo;
 use crate::sdl_frontend::colors;
-use crate::sdl_frontend::widgets::Label;
+use crate::sdl_frontend::widgets::{Label, LabelTextureCache};
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
 pub struct Drawer<'a> {
     timer_widget: Label<'a>,
     score_widget: Label<'a>,
+    texture_cache: LabelTextureCache<'a>,
 
     auto_timer_on: bool,
     auto_timer_updated: bool,
@@ -36,6 +37,7 @@ impl<'a> Drawer<'a> {
                 context.layout.auto_timer_status,
                 context.logger,
             ),
+            texture_cache: LabelTextureCache::new(),
 
             auto_score_on: false,
             auto_score_updated: true,
@@ -60,23 +62,25 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     fn render(&mut self) {
         if self.auto_timer_updated {
             let (text, color) = if self.auto_timer_on {
-                ("auto timer\non", colors::AUTO_STATUS_TEXT_LIGHT)
+                ("auto timer\non".to_string(), colors::AUTO_STATUS_TEXT_LIGHT)
             } else {
-                ("auto timer\noff", colors::AUTO_STATUS_TEXT_DARK)
+                ("auto timer\noff".to_string(), colors::AUTO_STATUS_TEXT_DARK)
             };
 
-            self.timer_widget.render(text, color);
+            self.timer_widget
+                .render(text, color, &mut self.texture_cache);
             self.auto_timer_updated = false;
         }
 
         if self.auto_score_updated {
             let (text, color) = if self.auto_score_on {
-                ("auto score\non", colors::AUTO_STATUS_TEXT_LIGHT)
+                ("auto score\non".to_string(), colors::AUTO_STATUS_TEXT_LIGHT)
             } else {
-                ("auto score\noff", colors::AUTO_STATUS_TEXT_DARK)
+                ("auto score\noff".to_string(), colors::AUTO_STATUS_TEXT_DARK)
             };
 
-            self.score_widget.render(text, color);
+            self.score_widget
+                .render(text, color, &mut self.texture_cache);
             self.auto_score_updated = false;
         }
 

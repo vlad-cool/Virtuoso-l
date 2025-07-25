@@ -4,12 +4,13 @@ use std::rc::Rc;
 
 use crate::match_info::{MatchInfo, Weapon};
 use crate::sdl_frontend::colors;
-use crate::sdl_frontend::widgets::Label;
+use crate::sdl_frontend::widgets::{Label, LabelTextureCache};
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
 pub struct Drawer<'a> {
     passive_counter_0_widget: Label<'a>,
     passive_counter_1_widget: Label<'a>,
+    texture_cache: LabelTextureCache<'a>,
 
     passive_counter: u32,
     enabled: bool,
@@ -35,6 +36,7 @@ impl<'a> Drawer<'a> {
                 context.layout.passive_counter_sec,
                 context.logger,
             ),
+            texture_cache: LabelTextureCache::new(),
             passive_counter: 60,
             enabled: false,
             updated: true,
@@ -68,10 +70,16 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
                 colors::PASSIVE_TEXT_DARK
             };
 
-            self.passive_counter_0_widget
-                .render(&passive_counter_text[0..1], color);
-            self.passive_counter_1_widget
-                .render(&passive_counter_text[1..2], color);
+            self.passive_counter_0_widget.render(
+                passive_counter_text[0..1].to_string(),
+                color,
+                &mut self.texture_cache,
+            );
+            self.passive_counter_1_widget.render(
+                passive_counter_text[1..2].to_string(),
+                color,
+                &mut self.texture_cache,
+            );
             self.updated = false;
         }
 
