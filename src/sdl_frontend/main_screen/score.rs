@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use crate::match_info::MatchInfo;
 use crate::sdl_frontend::colors;
-use crate::sdl_frontend::widgets::{Label, LabelTextureCache, LabelHashKey};
+use crate::sdl_frontend::widgets::{Label, LabelHashKey, LabelTextureCache};
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
 pub struct Drawer<'a> {

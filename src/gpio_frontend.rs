@@ -5,10 +5,11 @@ use std::time::Duration;
 
 use crate::gpio::PinLocation;
 use crate::match_info;
+use crate::match_info::Priority;
 use crate::modules;
 use crate::virtuoso_logger::Logger;
 
-// const PRIORITY_LED_DELAY: Duration = Duration::from_millis(2000);
+const PRIORITY_LED_DELAY: Duration = Duration::from_millis(2000);
 
 const LEFT_COLOR_LED: u8 = 29;
 const LEFT_WHITE_LED: u8 = 31;
@@ -144,26 +145,18 @@ impl modules::VirtuosoModule for GpioFrontend {
             let match_info_data: MutexGuard<'_, match_info::MatchInfo> =
                 self.match_info.lock().unwrap();
 
-            let left_color_led_state: bool = match_info_data.left_fencer.color_light;
-            let right_color_led_state: bool = match_info_data.right_fencer.color_light;
-            // let left_color_led_state: bool = (match_info_data.priority == Priority::Left
-            //     && match_info_data.priority_updated.elapsed() < PRIORITY_LED_DELAY)
-            //     || match_info_data.left_fencer.color_light;
-            // let right_color_led_state: bool = (match_info_data.priority == Priority::Right
-            //     && match_info_data.priority_updated.elapsed() < PRIORITY_LED_DELAY)
-            //     || match_info_data.right_fencer.color_light;
+            // let left_color_led_state: bool = match_info_data.left_fencer.color_light;
+            // let right_color_led_state: bool = match_info_data.right_fencer.color_light;
+            let left_color_led_state: bool = match_info_data.left_fencer.color_light
+                && (match_info_data.priority != Priority::Left
+                    || match_info_data.priority_updated.elapsed() < PRIORITY_LED_DELAY);
+            let right_color_led_state: bool = match_info_data.right_fencer.color_light
+                && (match_info_data.priority != Priority::Right
+                    || match_info_data.priority_updated.elapsed() < PRIORITY_LED_DELAY);
             let left_white_led_state: bool = match_info_data.left_fencer.white_light;
             let right_white_led_state: bool = match_info_data.right_fencer.white_light;
 
             std::mem::drop(match_info_data);
-
-            // self.logger.debug(format!(
-            //     "{}, {}, {}, {}",
-            //     left_color_led_state,
-            //     left_white_led_state,
-            //     right_color_led_state,
-            //     right_white_led_state
-            // ));
 
             gpio_left_color_led
                 .set_value(left_color_led_state as u8)
@@ -194,7 +187,7 @@ impl modules::VirtuosoModule for GpioFrontend {
                     ));
                 });
 
-            thread::sleep(Duration::from_millis(10));
+            thread::sleep(Duration::from_millis(20));
         }
     }
 }

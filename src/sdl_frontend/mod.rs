@@ -167,6 +167,7 @@ impl VirtuosoModule for SdlFrontend {
 
         let mut event_pump: sdl2::EventPump =
             sdl_context.event_pump().unwrap_with_logger(&self.logger);
+
         'running: loop {
             std::thread::sleep(Duration::from_millis(20));
 
@@ -179,22 +180,20 @@ impl VirtuosoModule for SdlFrontend {
 
             let data: MutexGuard<'_, MatchInfo> =
                 self.match_info.lock().unwrap_with_logger(&self.logger);
-
             if data.modified_count != modified_count {
                 modified_count = data.modified_count;
-
-                canvas.borrow_mut().clear();
 
                 for widget in &mut widgets {
                     widget.update(&data);
                 }
-                std::mem::drop(data);
-                for widget in &mut widgets {
-                    widget.render();
-                }
-
-                canvas.borrow_mut().present();
             }
+            std::mem::drop(data);
+
+            canvas.borrow_mut().clear();
+            for widget in &mut widgets {
+                widget.render();
+            }
+            canvas.borrow_mut().present();
         }
     }
 }

@@ -125,14 +125,14 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     }
 
     fn render(&mut self) {
-        if self.updated {
+        if self.updated || self.timer_running {
             let colon: String = if !self.timer_running || self.time.subsec_millis() > 500 {
                 ":".to_string()
             } else {
                 " ".to_string()
             };
 
-            let (timer_m, timer_s) = if self.time.as_secs() >= 10 {
+            let (timer_m, timer_s) = if (self.time + Duration::from_millis(999)).as_secs() >= 10 {
                 let minutes: u64 = self.time.as_secs() / 60;
                 let seconds: u64 = self.time.as_secs() % 60;
 

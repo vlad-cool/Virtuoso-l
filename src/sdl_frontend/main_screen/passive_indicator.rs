@@ -50,7 +50,8 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     }
 
     fn render(&mut self) {
-        if self.updated {
+        // if self.updated {
+        {
             let color: Color = match self.passive_counter {
                 0 => colors::PASSIVE_RED,
                 1..11 => {
