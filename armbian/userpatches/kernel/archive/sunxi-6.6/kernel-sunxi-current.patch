@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: John Doe <john.doe@somewhere.on.planet>
+Date: Thu, 6 Mar 2025 16:10:57 +0000
+Subject: added ethernet to bananapi m2 zero
+
+Signed-off-by: John Doe <john.doe@somewhere.on.planet>
+---
+ arch/arm/boot/dts/allwinner/sun8i-h2-plus-bananapi-m2-zero.dts | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/arch/arm/boot/dts/allwinner/sun8i-h2-plus-bananapi-m2-zero.dts b/arch/arm/boot/dts/allwinner/sun8i-h2-plus-bananapi-m2-zero.dts
+index ed5737284c09..d5fa48f04b83 100644
+--- a/arch/arm/boot/dts/allwinner/sun8i-h2-plus-bananapi-m2-zero.dts
++++ b/arch/arm/boot/dts/allwinner/sun8i-h2-plus-bananapi-m2-zero.dts
+@@ -18,10 +18,11 @@ / {
+ 	compatible = "sinovoip,bpi-m2-zero", "allwinner,sun8i-h2-plus";
+ 
+ 	aliases {
+ 		serial0 = &uart0;
+ 		serial1 = &uart1;
++		ethernet0 = "/soc/ethernet@1c30000";
+ 	};
+ 
+ 	chosen {
+ 		stdout-path = "serial0:115200n8";
+ 	};
+@@ -277,5 +278,12 @@ &usbphy {
+ 	 * the external USB device will be powered just by the power input
+ 	 * from the power-only USB port.
+ 	 */
+ 	status = "okay";
+ };
++
++&emac {
++	status = "okay";
++	phy-handle = <&int_mii_phy>;
++	phy-mode = "mii";
++	allwinner,leds-active-low;
++};
+-- 
+Created with Armbian build tools https://github.com/armbian/build
+

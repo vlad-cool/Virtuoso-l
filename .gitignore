@@ -1,6 +1,6 @@
-/target
-/image_build
-/mockup/extracted
-log.txt
 /.vscode
-src/cyrano_server.rs
+/target
+/mockup/extracted
+/armbian_build
+/scripts/mnt
+log.txt

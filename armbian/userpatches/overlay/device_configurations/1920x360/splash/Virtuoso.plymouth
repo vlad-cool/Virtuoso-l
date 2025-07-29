@@ -1,0 +1,28 @@
+[Plymouth Theme]
+Name=Virtuoso splash
+Description=Splash screen for Virtuoso devices
+ModuleName=two-step
+
+[two-step]
+ImageDir=/usr/share/plymouth/themes/Virtuoso
+WatermarkHorizontalAlignment=.5
+WatermarkVerticalAlignment=.5
+Transition=none
+TransitionDuration=0.0
+BackgroundStartColor=0x000000
+BackgroundEndColor=0x000000
+UseProgressBar=false
+DialogClearsFirmwareBackground=false
+MessageBelowAnimation=false
+
+[boot-up]
+UseEndAnimation=false
+UseFirmwareBackground=true
+
+[shutdown]
+UseEndAnimation=false
+UseFirmwareBackground=true
+
+[reboot]
+UseEndAnimation=false
+UseFirmwareBackground=true

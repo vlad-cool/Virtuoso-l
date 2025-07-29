@@ -12,4 +12,6 @@ cp splash/* /usr/share/plymouth/themes/Virtuoso/
 
 update-initramfs -u -v
 
+cat > /etc/overlayroot.conf <<< 'overlayroot="tmpfs"'
+
 reboot
