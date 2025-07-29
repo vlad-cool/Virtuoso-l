@@ -180,12 +180,8 @@ impl VirtuosoModule for SdlFrontend {
 
             let data: MutexGuard<'_, MatchInfo> =
                 self.match_info.lock().unwrap_with_logger(&self.logger);
-            if data.modified_count != modified_count {
-                modified_count = data.modified_count;
-
-                for widget in &mut widgets {
-                    widget.update(&data);
-                }
+            for widget in &mut widgets {
+                widget.update(&data);
             }
             std::mem::drop(data);
 
