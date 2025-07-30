@@ -163,8 +163,6 @@ impl VirtuosoModule for SdlFrontend {
 
         canvas.borrow_mut().present();
 
-        let mut modified_count: u32 = 100_000_000;
-
         let mut event_pump: sdl2::EventPump =
             sdl_context.event_pump().unwrap_with_logger(&self.logger);
 

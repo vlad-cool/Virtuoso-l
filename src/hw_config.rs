@@ -24,7 +24,6 @@ impl std::fmt::Display for Resolution {
 }
 
 #[cfg(feature = "sdl_frontend")]
-#[allow(dead_code)]
 impl Resolution {
     pub fn to_config_dir(&self) -> String {
         match self {

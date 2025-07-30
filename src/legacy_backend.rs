@@ -56,18 +56,12 @@ impl modules::VirtuosoModule for LegacyBackend {
                 Ok(msg) => {
                     match msg {
                         InputData::UartData(msg) => {
-                            // self.logger
-                            //     .debug(format!("Got following IR sequence: {:?}", msg));
                             self.apply_uart_data(msg);
                         }
                         InputData::PinsData(msg) => {
-                            // self.logger
-                            //     .debug(format!("Got following pins data: {:?}", msg));
                             self.apply_pins_data(msg);
                         }
                         InputData::IrCommand(msg) => {
-                            // self.logger
-                            //     .debug(format!("Got following IR sequence: {:?}", msg));
                             self.apply_ir_data(msg);
                         }
                     };
@@ -718,14 +712,6 @@ fn pins_handler(tx: mpsc::Sender<InputData>, logger: Logger) {
             }
         }
     }
-
-    // let gpio_pin_wireless: crate::gpio::PinLocation = crate::gpio::from_phys_number(7).unwrap();
-    // let gpio_line_wireless: gpio_cdev::Line = chips[gpio_pin_wireless.chip as usize]
-    //     .get_line(gpio_pin_wireless.line)
-    //     .unwrap();
-    // let gpio_handle_wireless: gpio_cdev::LineHandle = gpio_line_wireless
-    //     .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read-input")
-    //     .unwrap();
 
     let gpio_pin_weapon_0: crate::gpio::PinLocation = PinLocation::from_phys_number(32).unwrap();
     let gpio_line_weapon_0: gpio_cdev::Line = chips[gpio_pin_weapon_0.chip as usize]
