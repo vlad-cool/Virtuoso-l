@@ -13,7 +13,7 @@ use crate::virtuoso_logger::Logger;
 const RECV_TIMEOUT: Duration = Duration::from_micros(1000);
 const RESERVED_CAPACITY: usize = 256;
 
-const RECIEVE_ATTEMPTS: u32 = 20;
+const RECEIEVE_ATTEMPTS: u32 = 4;
 
 const HEADER_BYTE: u8 = 0xA5;
 const MAGIC_BYTE: u8 = 0xFA;
@@ -27,12 +27,13 @@ pub struct Repeater {
     port: serial::unix::TTYPort,
     raw_buffer: Vec<u8>,
     encoded_buffer: Vec<u8>,
+    modified_count: u32,
 }
 
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 enum Message {
-    Ack,
-    Err,
+    Ack(u32),
+    Err(u32),
     MatchInfo(MatchInfo),
 }
 
@@ -47,49 +48,63 @@ enum RecvError {
 
 impl modules::VirtuosoModule for Repeater {
     fn run(mut self) {
-        let mut modified_count: u32 = 0;
-        let mut ack_received: bool = false;
-
         loop {
-            match self.receive() {
-                Ok(Message::MatchInfo(match_info)) => {
-                    self.match_info.lock().unwrap().clone_from(&match_info);
-                }
-                Ok(Message::Ack) => {
-                    ack_received = true;
-                    // self.logger.error("Receiver got ack message".to_string());
-                }
-                Ok(Message::Err) => {
-                    self.logger.error("Receiver got err message".to_string());
-                }
-                Err(RecvError::BadHeader) => self
-                    .logger
-                    .error("Receiver got wrong magic number in header".to_string()),
-                Err(RecvError::BadChecksum) => {
-                    self.logger
-                        .error("Receiver got message with bad checksum".to_string());
-                }
-                Err(RecvError::BadStream) => {
-                    self.logger
-                        .error("Receiver did not get enough data to decode".to_string());
-                }
-                Err(RecvError::DeserializationError) => {
-                    self.logger.error("Receiver got bad message".to_string());
-                }
-                Err(RecvError::SerialError) => {
-                    self.logger.error("Receiver cannot get message".to_string());
-                }
-                Err(RecvError::Timeout) => {
-                    self.logger
-                        .error("Receiver did not get message due to timeout".to_string());
+            for _ in 0..3 {
+                match self.receive() {
+                    Ok(Message::MatchInfo(match_info)) => {
+                        self.modified_count = match_info.modified_count;
+                        self.match_info.lock().unwrap().clone_from(&match_info);
+                        let _ = self.transmit(&Message::Ack(self.modified_count));
+                    }
+                    Ok(Message::Ack(n)) => {
+                        self.modified_count = n;
+                    }
+                    Ok(Message::Err(n)) => {
+                        self.modified_count = n.wrapping_sub(1);
+                        self.logger.error("Got err message".to_string());
+                    }
+                    Err(RecvError::BadHeader) => {
+                        let _ = self.transmit(&Message::Err(self.modified_count));
+                        self.logger
+                            .error("Receiver got wrong magic number in header".to_string())
+                    }
+                    Err(RecvError::BadChecksum) => {
+                        let _ = self.transmit(&Message::Err(self.modified_count));
+                        self.logger
+                            .error("Receiver got message with bad checksum".to_string());
+                    }
+                    Err(RecvError::BadStream) => {
+                        let _ = self.transmit(&Message::Err(self.modified_count));
+                        self.logger
+                            .error("Receiver did not get enough data to decode".to_string());
+                    }
+                    Err(RecvError::DeserializationError) => {
+                        let _ = self.transmit(&Message::Err(self.modified_count));
+                        self.logger.error("Receiver got bad message".to_string());
+                    }
+                    Err(RecvError::SerialError) => {
+                        let _ = self.transmit(&Message::Err(self.modified_count));
+                        self.logger.error("Receiver cannot get message".to_string());
+                    }
+                    Err(RecvError::Timeout) => {
+                        break;
+                    }
                 }
             }
 
-            let new_modified_count: u32 = self.match_info.lock().unwrap().modified_count;
-            if modified_count != new_modified_count {
-                modified_count = match self.transmit() {
-                    Ok(_) => new_modified_count,
-                    Err(_) => modified_count,
+            {
+                let match_info: MatchInfo = self.match_info.lock().unwrap().clone();
+                let new_modified_count: u32 = match_info.modified_count;
+                if self.modified_count != new_modified_count {
+                    let message: Message = Message::MatchInfo(match_info);
+                    self.logger.info(format!(
+                        "Sending match info with modified count == {new_modified_count}"
+                    ));
+
+                    self.modified_count = match self.transmit(&message) {
+                        Ok(_) => new_modified_count,
+                        Err(_) => self.modified_count,
+                    }
                 }
             }
 
@@ -112,14 +127,15 @@ impl Repeater {
             flow_control: serial::FlowControl::FlowNone,
         };
 
-        let mut port: serial::unix::TTYPort =
-            match serial::open(&hw_config.repeater.uart_port) {
-                Ok(port) => port,
-                Err(err) => {
-                    logger.critical_error(format!("Failed to open port, error: {err}"));
-                    return Err("Failed to open port".to_string());
-                }
-            };
+        let modified_count: u32 = match_info.lock().unwrap().modified_count;
+
+        let mut port: serial::unix::TTYPort = match serial::open(&hw_config.repeater.uart_port) {
+            Ok(port) => port,
+            Err(err) => {
+                logger.critical_error(format!("Failed to open port, error: {err}"));
+                return Err("Failed to open port".to_string());
+            }
+        };
         match port.configure(&settings) {
             Ok(()) => {}
             Err(err) => {
@@ -141,6 +157,7 @@ impl Repeater {
             port,
             raw_buffer: Vec::with_capacity(RESERVED_CAPACITY),
             encoded_buffer: Vec::with_capacity(RESERVED_CAPACITY),
+            modified_count,
         })
     }
 
@@ -161,6 +178,9 @@ impl Repeater {
 
             match byte {
                 MAGIC_BYTE => {
+                    if i == self.encoded_buffer.len() {
+                        break;
+                    }
                     i += 1;
                     let byte: u8 = self.encoded_buffer[i];
                     match byte {
@@ -200,7 +220,7 @@ impl Repeater {
                 }
                 Err(err) => {
                     if err.kind() == std::io::ErrorKind::TimedOut {
-                        if receive_attempts == RECIEVE_ATTEMPTS {
+                        if receive_attempts == RECEIEVE_ATTEMPTS {
                             return Err(RecvError::Timeout);
                         }
                         receive_attempts += 1;
@@ -242,7 +262,7 @@ impl Repeater {
         self.logger.debug(format!("R checksum {:02X?}", checksum));
         self.logger.debug(format!("R data {:02X?}", data));
 
-        if u32::from_le_bytes(Self::calc_checksum(&data)) != u32::from_le_bytes(checksum) {
+        if Self::calc_checksum(&data) != checksum {
             self.logger.error("Checksum mismatch".to_string());
             return Err(RecvError::BadChecksum);
         }
@@ -283,9 +303,8 @@ impl Repeater {
         self.encoded_buffer.push(END_BYTE);
     }
 
-    fn transmit(&mut self) -> Result<(), ()> {
-        let match_info: MatchInfo = self.match_info.lock().unwrap().clone();
-        let serialized_data: Vec<u8> = match postcard::to_stdvec(&Message::MatchInfo(match_info)) {
+    fn transmit(&mut self, message: &Message) -> Result<(), ()> {
+        let serialized_data: Vec<u8> = match postcard::to_stdvec(message) {
             Ok(data) => data,
             Err(err) => {
                 self.logger
