@@ -67,6 +67,7 @@ fn main() {
     let legacy_backend: legacy_backend::LegacyBackend = legacy_backend::LegacyBackend::new(
         Arc::clone(&match_info),
         Arc::clone(&config),
+        &hw_config,
         virtuoso_logger
             .get_logger("Legacy backend".to_string())
             .enable_debug(),
@@ -76,6 +77,7 @@ fn main() {
     let gpio_frontend: gpio_frontend::GpioFrontend = gpio_frontend::GpioFrontend::new(
         Arc::clone(&match_info),
         virtuoso_logger.get_logger("Gpio frontend".to_string()),
+        &hw_config,
     );
 
     #[cfg(feature = "sdl_frontend")]

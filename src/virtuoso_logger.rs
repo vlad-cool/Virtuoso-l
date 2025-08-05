@@ -68,9 +68,9 @@ impl Logger {
             source: self.source.clone(),
             message,
         };
-        self.tx
-            .send(LogCommand::LogMessage(msg))
-            .expect("logger failed to send message");
+        if let Err(err) = self.tx.send(LogCommand::LogMessage(msg)) {
+            eprintln!("Failed to senf message to logger, error: {err}");
+        }
     }
 
     #[allow(dead_code)]

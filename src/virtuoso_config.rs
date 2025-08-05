@@ -1,19 +1,23 @@
+#[cfg(feature = "legacy_backend")]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct LegacyBackendConfig {
     pub rc5_address: u32,
 }
 
+#[cfg(feature = "legacy_backend")]
 impl Default for LegacyBackendConfig {
     fn default() -> Self {
         Self { rc5_address: 0 }
     }
 }
 
+#[cfg(feature = "cyrano_server")]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CyranoServerConfig {
     pub cyrano_port: u16,
 }
 
+#[cfg(feature = "cyrano_server")]
 impl Default for CyranoServerConfig {
     fn default() -> Self {
         Self { cyrano_port: 50100 }
@@ -68,8 +72,10 @@ impl Default for LoggerConfig {
 
 #[derive(Default, Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct VirtuosoConfig {
+    #[cfg(feature = "legacy_backend")]
     #[serde(default)]
     pub legacy_backend: LegacyBackendConfig,
+    #[cfg(feature = "cyrano_server")]
     #[serde(default)]
     pub cyrano_server: CyranoServerConfig,
     #[serde(default)]

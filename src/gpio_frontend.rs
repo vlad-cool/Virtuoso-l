@@ -3,144 +3,49 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread;
 use std::time::Duration;
 
-use crate::gpio::PinLocation;
-use crate::match_info;
+use crate::hw_config::{HardwareConfig, GpioFrontendConfig};
 use crate::match_info::Priority;
 use crate::modules;
-use crate::virtuoso_logger::Logger;
+use crate::virtuoso_logger::{Logger, LoggerUnwrap};
+use crate::match_info;
 
 const PRIORITY_LED_DELAY: Duration = Duration::from_millis(2000);
-
-const LEFT_COLOR_LED: u8 = 29;
-const LEFT_WHITE_LED: u8 = 31;
-const RIGHT_COLOR_LED: u8 = 35;
-const RIGHT_WHITE_LED: u8 = 38;
 
 pub struct GpioFrontend {
     match_info: Arc<Mutex<match_info::MatchInfo>>,
     logger: Logger,
+    hw_config: GpioFrontendConfig,
 }
 
 impl modules::VirtuosoModule for GpioFrontend {
     fn run(self) {
         self.logger.debug("Starting gpio frontend".to_string());
 
-        let mut chips: Vec<gpio_cdev::Chip> = Vec::<gpio_cdev::Chip>::new();
+        let gpio_left_color_led = self
+            .hw_config
+            .left_color_led_pin
+            .to_line()
+            .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "led indicators")
+            .unwrap_with_logger(&self.logger);
+        let gpio_left_white_led = self
+            .hw_config
+            .left_white_led_pin
+            .to_line()
+            .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "led indicators")
+            .unwrap_with_logger(&self.logger);
+        let gpio_right_color_led = self
+            .hw_config
+            .right_color_led_pin
+            .to_line()
+            .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "led indicators")
+            .unwrap_with_logger(&self.logger);
+        let gpio_right_white_led = self
+            .hw_config
+            .right_white_led_pin
+            .to_line()
+            .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "led indicators")
+            .unwrap_with_logger(&self.logger);
 
-        for path in &["/dev/gpiochip0", "/dev/gpiochip1"] {
-            if let Ok(chip) = gpio_cdev::Chip::new(path) {
-                chips.push(chip);
-            } else {
-                println!("Failed to open chip {}", path);
-            }
-        }
-
-        let gpio_left_color_led: PinLocation =
-            PinLocation::from_phys_number(LEFT_COLOR_LED).unwrap();
-        let gpio_left_color_led: gpio_cdev::Line =
-            match chips[gpio_left_color_led.chip as usize].get_line(gpio_left_color_led.line) {
-                Ok(line) => line,
-                Err(err) => {
-                    self.logger.error(format!(
-                        "Failed to get line for left color led, error: {err}"
-                    ));
-                    return;
-                }
-            };
-        let gpio_left_color_led: gpio_cdev::LineHandle = match gpio_left_color_led.request(
-            gpio_cdev::LineRequestFlags::OUTPUT,
-            0,
-            "led indicators",
-        ) {
-            Ok(line_handler) => line_handler,
-            Err(err) => {
-                self.logger.error(format!(
-                    "Failed to request line handler for left color led, error: {err}"
-                ));
-                return;
-            }
-        };
-
-        let gpio_left_white_led: PinLocation =
-            PinLocation::from_phys_number(LEFT_WHITE_LED).unwrap();
-        let gpio_left_white_led: gpio_cdev::Line =
-            match chips[gpio_left_white_led.chip as usize].get_line(gpio_left_white_led.line) {
-                Ok(line) => line,
-                Err(err) => {
-                    self.logger.error(format!(
-                        "Failed to get line for left white led, error: {err}"
-                    ));
-                    return;
-                }
-            };
-        let gpio_left_white_led: gpio_cdev::LineHandle = match gpio_left_white_led.request(
-            gpio_cdev::LineRequestFlags::OUTPUT,
-            0,
-            "led indicators",
-        ) {
-            Ok(line_handler) => line_handler,
-            Err(err) => {
-                self.logger.error(format!(
-                    "Failed to request line handler for left white led, error: {err}"
-                ));
-                return;
-            }
-        };
-
-        let gpio_right_color_led: PinLocation =
-            PinLocation::from_phys_number(RIGHT_COLOR_LED).unwrap();
-        let gpio_right_color_led: gpio_cdev::Line =
-            match chips[gpio_right_color_led.chip as usize].get_line(gpio_right_color_led.line) {
-                Ok(line) => line,
-                Err(err) => {
-                    self.logger.error(format!(
-                        "Failed to get line for right color led, error: {err}"
-                    ));
-                    return;
-                }
-            };
-        let gpio_right_color_led: gpio_cdev::LineHandle = match gpio_right_color_led.request(
-            gpio_cdev::LineRequestFlags::OUTPUT,
-            0,
-            "led indicators",
-        ) {
-            Ok(line_handler) => line_handler,
-            Err(err) => {
-                self.logger.error(format!(
-                    "Failed to request line handler for right color led, error: {err}"
-                ));
-                return;
-            }
-        };
-
-        let gpio_right_white_led: crate::gpio::PinLocation =
-            PinLocation::from_phys_number(RIGHT_WHITE_LED).unwrap();
-        let gpio_right_white_led: gpio_cdev::Line =
-            match chips[gpio_right_white_led.chip as usize].get_line(gpio_right_white_led.line) {
-                Ok(line) => line,
-                Err(err) => {
-                    self.logger.error(format!(
-                        "Failed to get line for right white led, error: {err}"
-                    ));
-                    return;
-                }
-            };
-        let gpio_right_white_led: gpio_cdev::LineHandle = match gpio_right_white_led.request(
-            gpio_cdev::LineRequestFlags::OUTPUT,
-            0,
-            "led indicators",
-        ) {
-            Ok(line_handler) => line_handler,
-            Err(err) => {
-                self.logger.error(format!(
-                    "Failed to request line handler for right white led, error: {err}"
-                ));
-                return;
-            }
-        };
-
-        self.logger
-            .debug("Starting main gpio frontend loop".to_string());
         loop {
             let match_info_data: MutexGuard<'_, match_info::MatchInfo> =
                 self.match_info.lock().unwrap();
@@ -193,10 +98,15 @@ impl modules::VirtuosoModule for GpioFrontend {
 }
 
 impl GpioFrontend {
-    pub fn new(match_info: Arc<Mutex<match_info::MatchInfo>>, logger: Logger) -> Self {
+    pub fn new(
+        match_info: Arc<Mutex<match_info::MatchInfo>>,
+        logger: Logger,
+        hw_config: &HardwareConfig,
+    ) -> Self {
         Self {
             match_info: Arc::clone(&match_info),
             logger,
+            hw_config: hw_config.gpio.clone(),
         }
     }
 }

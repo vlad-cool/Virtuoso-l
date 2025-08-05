@@ -6,7 +6,6 @@ use std::thread;
 use std::time::Duration;
 
 use crate::hw_config::HardwareConfig;
-use crate::hw_config::RepeaterRole;
 use crate::match_info::MatchInfo;
 use crate::modules;
 use crate::virtuoso_logger::Logger;
@@ -26,7 +25,6 @@ pub struct Repeater {
     match_info: Arc<Mutex<MatchInfo>>,
     logger: Logger,
     port: serial::unix::TTYPort,
-    hw_config: HardwareConfig,
     raw_buffer: Vec<u8>,
     encoded_buffer: Vec<u8>,
 }
@@ -49,9 +47,53 @@ enum RecvError {
 
 impl modules::VirtuosoModule for Repeater {
     fn run(mut self) {
-        match self.hw_config.repeater.role {
-            RepeaterRole::Receiver => self.run_receiver(),
-            RepeaterRole::Transmitter => self.run_transmitter(),
+        let mut modified_count: u32 = 0;
+        let mut ack_received: bool = false;
+
+        loop {
+            match self.receive() {
+                Ok(Message::MatchInfo(match_info)) => {
+                    self.match_info.lock().unwrap().clone_from(&match_info);
+                }
+                Ok(Message::Ack) => {
+                    ack_received = true;
+                    // self.logger.error("Receiver got ack message".to_string());
+                }
+                Ok(Message::Err) => {
+                    self.logger.error("Receiver got err message".to_string());
+                }
+                Err(RecvError::BadHeader) => self
+                    .logger
+                    .error("Receiver got wrong magic number in header".to_string()),
+                Err(RecvError::BadChecksum) => {
+                    self.logger
+                        .error("Receiver got message with bad checksum".to_string());
+                }
+                Err(RecvError::BadStream) => {
+                    self.logger
+                        .error("Receiver did not get enough data to decode".to_string());
+                }
+                Err(RecvError::DeserializationError) => {
+                    self.logger.error("Receiver got bad message".to_string());
+                }
+                Err(RecvError::SerialError) => {
+                    self.logger.error("Receiver cannot get message".to_string());
+                }
+                Err(RecvError::Timeout) => {
+                    self.logger
+                        .error("Receiver did not get message due to timeout".to_string());
+                }
+            }
+
+            let new_modified_count: u32 = self.match_info.lock().unwrap().modified_count;
+            if modified_count != new_modified_count {
+                modified_count = match self.transmit() {
+                    Ok(_) => new_modified_count,
+                    Err(_) => modified_count,
+                }
+            }
+
+            thread::sleep(Duration::from_millis(10));
         }
     }
 }
@@ -71,7 +113,7 @@ impl Repeater {
         };
 
         let mut port: serial::unix::TTYPort =
-            match serial::open(hw_config.repeater.uart_path.as_str()) {
+            match serial::open(&hw_config.repeater.uart_port) {
                 Ok(port) => port,
                 Err(err) => {
                     logger.critical_error(format!("Failed to open port, error: {err}"));
@@ -97,7 +139,6 @@ impl Repeater {
             match_info: Arc::clone(&match_info),
             logger,
             port,
-            hw_config,
             raw_buffer: Vec::with_capacity(RESERVED_CAPACITY),
             encoded_buffer: Vec::with_capacity(RESERVED_CAPACITY),
         })
@@ -149,7 +190,7 @@ impl Repeater {
 
         self.encoded_buffer.clear();
 
-        let mut receive_attempts = 0;
+        let mut receive_attempts: u32 = 0;
 
         loop {
             match self.port.read(&mut byte) {
@@ -214,43 +255,6 @@ impl Repeater {
                 self.logger
                     .error(format!("Failed to deserialize message, error: {err}"));
                 Err(RecvError::DeserializationError)
-            }
-        }
-    }
-
-    fn run_receiver(&mut self) {
-        loop {
-            match self.receive() {
-                Ok(Message::MatchInfo(match_info)) => {
-                    self.match_info.lock().unwrap().clone_from(&match_info);
-                }
-                Ok(Message::Ack) => {
-                    self.logger.error("Receiver got ack message".to_string());
-                }
-                Ok(Message::Err) => {
-                    self.logger.error("Receiver got err message".to_string());
-                }
-                Err(RecvError::BadHeader) => self
-                    .logger
-                    .error("Receiver got wrong magic number in header".to_string()),
-                Err(RecvError::BadChecksum) => {
-                    self.logger
-                        .error("Receiver got message with bad checksum".to_string());
-                }
-                Err(RecvError::BadStream) => {
-                    self.logger
-                        .error("Receiver did not get enough data to decode".to_string());
-                }
-                Err(RecvError::DeserializationError) => {
-                    self.logger.error("Receiver got bad message".to_string());
-                }
-                Err(RecvError::SerialError) => {
-                    self.logger.error("Receiver cannot get message".to_string());
-                }
-                Err(RecvError::Timeout) => {
-                    self.logger
-                        .error("Receiver did not get message due to timeout".to_string());
-                }
             }
         }
     }
@@ -321,21 +325,5 @@ impl Repeater {
         }
 
         Ok(())
-    }
-
-    fn run_transmitter(&mut self) {
-        let mut modified_count: u32 = self.match_info.lock().unwrap().modified_count - 1;
-
-        loop {
-            let new_modified_count: u32 = self.match_info.lock().unwrap().modified_count;
-            if modified_count != new_modified_count {
-                modified_count = match self.transmit() {
-                    Ok(_) => new_modified_count,
-                    Err(_) => modified_count,
-                }
-            }
-
-            thread::sleep(Duration::from_millis(10));
-        }
     }
 }

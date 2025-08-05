@@ -1,3 +1,6 @@
+#[cfg(feature = "legacy_backend")]
+use std::path::PathBuf;
+
 #[cfg(feature = "gpio-cdev")]
 use crate::gpio::PinLocation;
 use crate::virtuoso_logger::Logger;
@@ -35,29 +38,31 @@ impl Resolution {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "sdl_frontend")]
 pub struct DisplayConfig {
     pub resolution: Resolution,
     pub swap_sides: bool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "gpio_frontend")]
 pub struct GpioFrontendConfig {
-    pub left_color_led_pin: PinLocation,
     pub left_white_led_pin: PinLocation,
+    pub left_color_led_pin: PinLocation,
     pub right_color_led_pin: PinLocation,
     pub right_white_led_pin: PinLocation,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "legacy_backend")]
-pub struct LegacyBackendConfig {
+pub struct LegacyBackendConfig
+{
     pub weapon_0_pin: PinLocation,
     pub weapon_1_pin: PinLocation,
     pub weapon_btn_pin: PinLocation,
     pub ir_pin: PinLocation,
+    pub uart_port: PathBuf,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -71,12 +76,13 @@ pub enum RepeaterRole {
 #[cfg(feature = "repeater")]
 pub struct RepeaterConfig {
     pub role: RepeaterRole,
-    pub uart_path: String,
+    pub uart_port: PathBuf,
     pub uart_speed: usize,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
-pub struct HardwareConfig {
+pub struct HardwareConfig
+{
     force_file: Option<bool>,
     #[serde(default)]
     #[serde(skip_serializing)]
@@ -93,7 +99,7 @@ pub struct HardwareConfig {
 }
 
 impl HardwareConfig {
-    const DEFAULT_PATH: &str = "hardware_config.toml";
+    const DEFAULT_PATH: &'static str = "hardware_config.toml";
 
     fn load_file(logger: &Logger) -> Option<Self> {
         match std::fs::read_to_string(Self::DEFAULT_PATH) {
@@ -117,23 +123,8 @@ impl HardwareConfig {
 
     #[cfg(feature = "gpio-cdev")]
     fn read_pin_value(pin: PinLocation, logger: &Logger) -> bool {
-        let mut chips: Vec<gpio_cdev::Chip> = Vec::<gpio_cdev::Chip>::new();
+        let line: gpio_cdev::Line = pin.to_line();
 
-        for path in &["/dev/gpiochip0", "/dev/gpiochip1"] {
-            if let Ok(chip) = gpio_cdev::Chip::new(path) {
-                chips.push(chip);
-            } else {
-                println!("Failed to open chip {}", path);
-            }
-        }
-
-        let line: gpio_cdev::Line = match chips[pin.chip as usize].get_line(pin.line) {
-            Ok(line) => line,
-            Err(err) => {
-                logger.error(format!("Failed to get line for pin {pin:?}, error: {err}"));
-                return false;
-            }
-        };
         let handler: gpio_cdev::LineHandle = match line.request(
             gpio_cdev::LineRequestFlags::INPUT,
             0,
@@ -215,11 +206,12 @@ impl HardwareConfig {
                 weapon_1_pin: PinLocation::from_phys_number(36).unwrap(),
                 weapon_btn_pin: PinLocation::from_phys_number(37).unwrap(),
                 ir_pin: PinLocation::from_phys_number(3).unwrap(),
+                uart_port: "/dev/ttyS2".into(),
             },
             #[cfg(feature = "repeater")]
             repeater: RepeaterConfig {
                 role: repeater_role,
-                uart_path: "/dev/ttyS3".to_string(),
+                uart_port: "/dev/ttyS3".into(),
                 uart_speed: 115200,
             },
         }

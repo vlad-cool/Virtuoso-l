@@ -1,18 +1,20 @@
 #[allow(dead_code)]
 #[allow(unused_variables)]
 use gpio_cdev;
+use gpio_cdev::Line;
 use serial::{self, SerialPort};
 use std::io::Read;
+use std::path::PathBuf;
 use std::sync::mpsc::RecvError;
 use std::sync::{Arc, Mutex, MutexGuard, mpsc};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use crate::gpio::PinLocation;
+use crate::hw_config::{HardwareConfig, LegacyBackendConfig};
 use crate::match_info;
 use crate::modules;
 use crate::virtuoso_config::VirtuosoConfig;
-use crate::virtuoso_logger::Logger;
+use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 
 const AUTO_STATUS_WAIT_THRESHOLD: std::time::Duration = std::time::Duration::from_millis(200);
 const AUTO_STATUS_ON: u32 = 196;
@@ -24,7 +26,7 @@ pub struct LegacyBackend {
     weapon_select_btn_pressed: bool,
     rc5_address: u32,
     auto_status_controller: AutoStatusController,
-
+    hw_config: LegacyBackendConfig,
     logger: Logger,
 }
 
@@ -34,20 +36,33 @@ impl modules::VirtuosoModule for LegacyBackend {
 
         let tx_clone: mpsc::Sender<InputData> = tx.clone();
         let logger_clone: Logger = self.logger.clone();
+        let port_path: PathBuf = self.hw_config.uart_port.clone();
         thread::spawn(move || {
-            uart_handler(tx_clone, logger_clone);
+            uart_handler(tx_clone, logger_clone, port_path);
         });
 
         let tx_clone: mpsc::Sender<InputData> = tx.clone();
         let logger_clone: Logger = self.logger.clone();
+
+        let gpio_line_weapon_0: Line = self.hw_config.weapon_0_pin.to_line();
+        let gpio_line_weapon_1: Line = self.hw_config.weapon_1_pin.to_line();
+        let gpio_line_weapon_btn: Line = self.hw_config.weapon_btn_pin.to_line();
+
         thread::spawn(move || {
-            pins_handler(tx_clone, logger_clone);
+            pins_handler(
+                tx_clone,
+                logger_clone,
+                gpio_line_weapon_0,
+                gpio_line_weapon_1,
+                gpio_line_weapon_btn,
+            );
         });
 
         let tx_clone: mpsc::Sender<InputData> = tx.clone();
         let logger_clone: Logger = self.logger.clone();
+        let ir_line: Line = self.hw_config.ir_pin.to_line();
         thread::spawn(move || {
-            rc5_receiever(tx_clone, logger_clone);
+            rc5_receiever(tx_clone, logger_clone, ir_line);
         });
 
         loop {
@@ -76,6 +91,7 @@ impl LegacyBackend {
     pub fn new(
         match_info: Arc<Mutex<match_info::MatchInfo>>,
         config: Arc<Mutex<VirtuosoConfig>>,
+        hw_config: &HardwareConfig,
         logger: Logger,
     ) -> Self {
         let rc5_address: u32 = config.lock().unwrap().legacy_backend.rc5_address;
@@ -85,6 +101,7 @@ impl LegacyBackend {
             weapon_select_btn_pressed: false,
             rc5_address,
             auto_status_controller: AutoStatusController::new(),
+            hw_config: hw_config.legacy_backend.clone(),
             logger,
         }
     }
@@ -456,8 +473,8 @@ impl UartData {
     }
 }
 
-fn uart_handler(tx: mpsc::Sender<InputData>, logger: Logger) {
-    let mut port: serial::unix::TTYPort = match serial::open("/dev/ttyS2") {
+fn uart_handler(tx: mpsc::Sender<InputData>, logger: Logger, port_path: PathBuf) {
+    let mut port: serial::unix::TTYPort = match serial::open(&port_path) {
         Ok(port) => port,
         Err(err) => {
             logger.critical_error(format!("Failed to open uart port, error: {err}"));
@@ -598,11 +615,7 @@ struct IrFrame {
     command: IrCommands,
 }
 
-fn rc5_receiever(tx: mpsc::Sender<InputData>, logger: Logger) {
-    let line: crate::gpio::PinLocation = PinLocation::from_phys_number(3).unwrap();
-    let mut chip: gpio_cdev::Chip =
-        gpio_cdev::Chip::new(format!("/dev/gpiochip{}", line.chip)).unwrap();
-
+fn rc5_receiever(tx: mpsc::Sender<InputData>, logger: Logger, line: gpio_cdev::Line) {
     let mut last_interrupt_time: u64 = 0u64;
 
     let mut receieve_buf: [i32; 28] = [0; 28];
@@ -610,9 +623,7 @@ fn rc5_receiever(tx: mpsc::Sender<InputData>, logger: Logger) {
 
     let mut last_toggle_value: i32 = -1;
 
-    for event in chip
-        .get_line(line.line)
-        .unwrap()
+    for event in line
         .events(
             gpio_cdev::LineRequestFlags::INPUT,
             gpio_cdev::EventRequestFlags::BOTH_EDGES,
@@ -699,54 +710,39 @@ struct PinsData {
     weapon_select_btn: bool,
 }
 
-fn pins_handler(tx: mpsc::Sender<InputData>, logger: Logger) {
-    let mut chips: Vec<gpio_cdev::Chip> = Vec::<gpio_cdev::Chip>::new();
-
-    for path in &["/dev/gpiochip0", "/dev/gpiochip1"] {
-        match gpio_cdev::Chip::new(path) {
-            Ok(chip) => {
-                chips.push(chip);
-            }
-            Err(err) => {
-                logger.critical_error(format!("Failed to open chip {path}, error: {err}"));
-            }
-        }
-    }
-
-    let gpio_pin_weapon_0: crate::gpio::PinLocation = PinLocation::from_phys_number(32).unwrap();
-    let gpio_line_weapon_0: gpio_cdev::Line = chips[gpio_pin_weapon_0.chip as usize]
-        .get_line(gpio_pin_weapon_0.line)
-        .unwrap();
+fn pins_handler(
+    tx: mpsc::Sender<InputData>,
+    logger: Logger,
+    gpio_line_weapon_0: Line,
+    gpio_line_weapon_1: Line,
+    gpio_line_weapon_btn: Line,
+) {
     let gpio_handle_weapon_0: gpio_cdev::LineHandle = gpio_line_weapon_0
         .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read weapon 1")
-        .unwrap();
-    let gpio_pin_weapon_1: crate::gpio::PinLocation = PinLocation::from_phys_number(36).unwrap();
-    let gpio_line_weapon_1: gpio_cdev::Line = chips[gpio_pin_weapon_1.chip as usize]
-        .get_line(gpio_pin_weapon_1.line)
-        .unwrap();
+        .unwrap_with_logger(&logger);
     let gpio_handle_weapon_1: gpio_cdev::LineHandle = gpio_line_weapon_1
         .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read weapon 2")
-        .unwrap();
+        .unwrap_with_logger(&logger);
 
-    let gpio_pin_weapon_btn: crate::gpio::PinLocation = PinLocation::from_phys_number(37).unwrap();
-    let gpio_line_weapon_btn: gpio_cdev::Line = chips[gpio_pin_weapon_btn.chip as usize]
-        .get_line(gpio_pin_weapon_btn.line)
-        .unwrap();
     let gpio_handle_weapon_btn: gpio_cdev::LineHandle = gpio_line_weapon_btn
         .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read weapon button")
-        .unwrap();
+        .unwrap_with_logger(&logger);
 
     let mut old_pins_data: Option<PinsData> = Option::None;
 
     loop {
         let new_pins_data: PinsData = PinsData {
-            weapon: gpio_handle_weapon_0.get_value().unwrap() * 2
-                + gpio_handle_weapon_1.get_value().unwrap(),
-            weapon_select_btn: gpio_handle_weapon_btn.get_value().unwrap() == 0u8,
+            weapon: gpio_handle_weapon_0.get_value().unwrap_with_logger(&logger) * 2
+                + gpio_handle_weapon_1.get_value().unwrap_with_logger(&logger),
+            weapon_select_btn: gpio_handle_weapon_btn
+                .get_value()
+                .unwrap_with_logger(&logger)
+                == 0u8,
         };
 
         if old_pins_data.as_ref() != Some(&new_pins_data) {
-            tx.send(InputData::PinsData(new_pins_data.clone())).unwrap();
+            tx.send(InputData::PinsData(new_pins_data.clone()))
+                .unwrap_with_logger(&logger);
         }
 
         old_pins_data = Some(new_pins_data);
