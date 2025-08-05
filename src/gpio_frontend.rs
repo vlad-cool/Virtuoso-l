@@ -3,11 +3,11 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread;
 use std::time::Duration;
 
-use crate::hw_config::{HardwareConfig, GpioFrontendConfig};
+use crate::hw_config::{GpioFrontendConfig, HardwareConfig};
+use crate::match_info;
 use crate::match_info::Priority;
 use crate::modules;
 use crate::virtuoso_logger::{Logger, LoggerUnwrap};
-use crate::match_info;
 
 const PRIORITY_LED_DELAY: Duration = Duration::from_millis(2000);
 
@@ -25,24 +25,28 @@ impl modules::VirtuosoModule for GpioFrontend {
             .hw_config
             .left_color_led_pin
             .to_line()
+            .unwrap_with_logger(&self.logger)
             .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "led indicators")
             .unwrap_with_logger(&self.logger);
         let gpio_left_white_led = self
             .hw_config
             .left_white_led_pin
             .to_line()
+            .unwrap_with_logger(&self.logger)
             .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "led indicators")
             .unwrap_with_logger(&self.logger);
         let gpio_right_color_led = self
             .hw_config
             .right_color_led_pin
             .to_line()
+            .unwrap_with_logger(&self.logger)
             .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "led indicators")
             .unwrap_with_logger(&self.logger);
         let gpio_right_white_led = self
             .hw_config
             .right_white_led_pin
             .to_line()
+            .unwrap_with_logger(&self.logger)
             .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "led indicators")
             .unwrap_with_logger(&self.logger);
 
@@ -63,36 +67,12 @@ impl modules::VirtuosoModule for GpioFrontend {
 
             std::mem::drop(match_info_data);
 
-            gpio_left_color_led
-                .set_value(left_color_led_state as u8)
-                .unwrap_or_else(|err| {
-                    self.logger.error(format!(
-                        "Failed to set pin for left color led, error: {err}"
-                    ));
-                });
-            gpio_left_white_led
-                .set_value(left_white_led_state as u8)
-                .unwrap_or_else(|err| {
-                    self.logger.error(format!(
-                        "Failed to set pin for left white led, error: {err}"
-                    ));
-                });
-            gpio_right_color_led
-                .set_value(right_color_led_state as u8)
-                .unwrap_or_else(|err| {
-                    self.logger.error(format!(
-                        "Failed to set pin for right color led, error: {err}"
-                    ));
-                });
-            gpio_right_white_led
-                .set_value(right_white_led_state as u8)
-                .unwrap_or_else(|err| {
-                    self.logger.error(format!(
-                        "Failed to set pin for right white led, error: {err}"
-                    ));
-                });
+            self.set_led_state("left color", gpio_left_color_led, left_color_led_state);
+            self.set_led_state("left white", gpio_left_white_led, left_white_led_state);
+            self.set_led_state("right color", gpio_right_color_led, right_color_led_state);
+            self.set_led_state("right white", gpio_right_white_led, right_white_led_state);
 
-            thread::sleep(Duration::from_millis(20));
+            thread::sleep(Duration::from_millis(50));
         }
     }
 }
@@ -107,6 +87,13 @@ impl GpioFrontend {
             match_info: Arc::clone(&match_info),
             logger,
             hw_config: hw_config.gpio.clone(),
+        }
+    }
+
+    fn set_led_state(&self, name: &str, line: &gpio_cdev::LineHandle, state: bool) {
+        if let Err(err) = line.set_value(state as u8) {
+            self.logger
+                .error(format!("Failed to set pin for {name} led, error: {err}"));
         }
     }
 }

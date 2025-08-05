@@ -1,5 +1,10 @@
-use gpio_cdev::{Chip, Line};
+use gpio_cdev::{Chip, Line, Error as GpioError};
+use std::collections::HashMap;
 use std::path::PathBuf;
+use once_cell::sync::Lazy;
+use std::sync::Mutex;
+
+static CHIP_CACHE: Lazy<Mutex<HashMap<PathBuf, Chip>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct PinLocation {
@@ -10,7 +15,7 @@ pub struct PinLocation {
 impl PinLocation {
     pub fn from_phys_number(pin_number: u8) -> Option<PinLocation> {
         match pin_number {
-            03 => Some(PinLocation {
+            3 => Some(PinLocation {
                 chip: "/dev/gpiochip0".into(),
                 line: 12,
             }),
@@ -126,8 +131,13 @@ impl PinLocation {
         }
     }
 
-    pub fn to_line(&self) -> Line {
-        let mut gpio_chip: Chip = Chip::new(&self.chip).unwrap();
-        gpio_chip.get_line(self.line).unwrap()
+    pub fn to_line(&self) -> Result<Line, GpioError> {
+        let mut cache = CHIP_CACHE.lock().unwrap();
+
+        let chip = cache
+            .entry(self.chip.clone())
+            .or_insert_with(|| Chip::new(&self.chip).unwrap());
+
+        chip.get_line(self.line)
     }
 }

@@ -1,9 +1,10 @@
+use crate::virtuoso_logger::Logger;
+
 #[cfg(feature = "legacy_backend")]
 use std::path::PathBuf;
 
 #[cfg(feature = "gpio-cdev")]
 use crate::gpio::PinLocation;
-use crate::virtuoso_logger::Logger;
 
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "sdl_frontend")]
@@ -56,8 +57,7 @@ pub struct GpioFrontendConfig {
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "legacy_backend")]
-pub struct LegacyBackendConfig
-{
+pub struct LegacyBackendConfig {
     pub weapon_0_pin: PinLocation,
     pub weapon_1_pin: PinLocation,
     pub weapon_btn_pin: PinLocation,
@@ -81,11 +81,9 @@ pub struct RepeaterConfig {
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
-pub struct HardwareConfig
-{
+pub struct HardwareConfig {
     force_file: Option<bool>,
-    #[serde(default)]
-    #[serde(skip_serializing)]
+    #[serde(default, skip_serializing)]
     reinit: bool,
 
     #[cfg(feature = "sdl_frontend")]
@@ -107,14 +105,14 @@ impl HardwareConfig {
                 Ok(config) => Some(config),
                 Err(err) => {
                     logger.warning(format!(
-                        "Failed to open hardware config file, error: {err}. First run?"
+                        "Failed to parse hardware config file, error: {err}"
                     ));
                     None
                 }
             },
             Err(err) => {
                 logger.warning(format!(
-                    "Failed to parse hardware config file, error: {err}"
+                    "Failed to open hardware config file, error: {err}. First run?"
                 ));
                 None
             }
@@ -123,7 +121,9 @@ impl HardwareConfig {
 
     #[cfg(feature = "gpio-cdev")]
     fn read_pin_value(pin: PinLocation, logger: &Logger) -> bool {
-        let line: gpio_cdev::Line = pin.to_line();
+        use crate::virtuoso_logger::LoggerUnwrap;
+
+        let line: gpio_cdev::Line = pin.to_line().unwrap_with_logger(logger);
 
         let handler: gpio_cdev::LineHandle = match line.request(
             gpio_cdev::LineRequestFlags::INPUT,
@@ -133,7 +133,7 @@ impl HardwareConfig {
             Ok(line_handler) => line_handler,
             Err(err) => {
                 logger.error(format!(
-                    "Failed to request line handler for right white led, error: {err}"
+                    "Failed to request line handler for pin {pin:?}, error: {err}"
                 ));
                 return false;
             }
