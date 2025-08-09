@@ -3,7 +3,28 @@ use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
 use std::io::{BufReader, BufWriter, Write};
 use std::path::Path;
+use std::process::Command;
 use std::vec::Vec;
+
+fn generate_licenses() {
+    match Command::new("cargo")
+        .args(["license", "--avoid-dev-deps", "--all-features", "--json"])
+        .output()
+    {
+        Ok(output) if output.status.success() => {
+            let json: String = String::from_utf8_lossy(&output.stdout).to_string();
+            fs::write("licenses.json", json).unwrap();
+        }
+        Ok(_) => {
+            println!("cargo:warning=`cargo-license` failed to run or returned error. Is it inst");
+        }
+        Err(_) => {
+            println!(
+                "cargo:warning=`cargo-license` not installed. Run: cargo install cargo-license"
+            );
+        }
+    }
+}
 
 fn extract_zip(src_path: &str, dest_dir: &str) {
     let archive: fs::File = fs::File::open(src_path).expect("Failed to open penpot archibe");
@@ -173,8 +194,7 @@ pub const {}: Layout = Layout {{\n",
         .expect("cargo::error=Failed to write to file");
 }
 
-fn main() {
-    println!("cargo:rerun-if-changed=build.rs");
+fn parse_penpot() {
     println!("cargo:rerun-if-changed=mockup/Virtuoso.penpot");
 
     let archive_path: &'static str = "mockup/Virtuoso.penpot";
@@ -239,4 +259,10 @@ use crate::sdl_frontend::layout_structure::*;
             }
         }
     }
+}
+
+fn main() {
+    println!("cargo:rerun-if-changed=build.rs");
+    generate_licenses();
+    parse_penpot();
 }
