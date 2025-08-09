@@ -1,4 +1,3 @@
-// use fontdue::Font;
 use sdl2;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
@@ -38,8 +37,8 @@ impl<'a> LabelTextureCache<'a> {
         font: Rc<sdl2::ttf::Font<'a, 'a>>,
         logger: &Logger,
     ) -> (u32, u32, Rc<Option<Texture<'a>>>) {
-        if self.cache.contains_key(&key) {
-            self.cache[&key].clone()
+        if let Some(value) = self.cache.get(&key) {
+            return value.clone();
         } else {
             let text: &str = key.text.as_str();
             let color: Color = key.color;
@@ -61,7 +60,6 @@ impl<'a> LabelTextureCache<'a> {
             for line in text.split("\n") {
                 let surface: sdl2::surface::Surface<'a> =
                     font.render(line).blended(color).unwrap_with_logger(logger);
-                // let surface: Surface<'_> = render_font(&self.font, line, self.font_size, color);
 
                 width = std::cmp::max(width, surface.width());
                 height += surface.height();
@@ -186,96 +184,9 @@ fn draw_rounded_rectangle<'a>(
     surface
 }
 
-// fn render_font<'a>(
-//     font: &Font,
-//     text: &str,
-//     size: u16,
-//     color: Color,
-// ) -> sdl2::surface::Surface<'a> {
-//     let mut bitmaps: Vec<(fontdue::Metrics, Vec<u8>)> = Vec::<(fontdue::Metrics, Vec<u8>)>::new();
-//     let mut width: u32 = 0;
-//     let mut height: u32 = 0;
-//     let mut x_min: i32 = 0;
-//     let mut y_min: i32 = 0;
-//     let mut x_max: i32 = 0;
-//     let mut y_max: i32 = 0;
-
-//     for char in text.chars() {
-//         let (metrics, bitmap) = font.rasterize(char, size.into());
-//         width += (metrics.width as i32 + metrics.xmin) as u32;
-
-//         let m_height = if metrics.ymin < 0 {
-//             metrics.height + (-metrics.ymin) as usize
-//         } else {
-//             metrics.height + metrics.ymin as usize
-//         };
-//         height = max(height, m_height as u32);
-//         // println!("{}, {}, {}", metrics.xmin, metrics.ymin, char);
-//         bitmaps.push((metrics, bitmap));
-//     }
-
-//     let mut surface: Surface<'a> = sdl2::surface::Surface::new(
-//         max(width, 1),
-//         max(height, 1),
-//         sdl2::pixels::PixelFormatEnum::RGBA8888,
-//     )
-//     .unwrap();
-
-//     // println!("{}, {}, {}, {}", color.r, color.g, color.b, color.a);
-
-//     surface.with_lock_mut(|pixels: &mut [u8]| {
-//         let mut edge: u32 = 0;
-
-//         for bitmap in bitmaps {
-//             let metrics: fontdue::Metrics = bitmap.0;
-//             let bitmap_width: u32 = metrics.width as u32;
-//             let bitmap_height: u32 = metrics.height as u32;
-//             let x_min: i32 = metrics.xmin;
-//             let y_min: i32 = metrics.ymin;
-//             let bitmap: Vec<u8> = bitmap.1;
-
-//             for y in 0..bitmap_height {
-//                 for x in 0..bitmap_width {
-//                     // let surface_x: u32 = x + max(0, x_min) as u32;
-//                     // let surface_y: u32 = y + max(0, y_min) as u32;
-//                     let i_bitmap: usize = (y * bitmap_width + x) as usize;
-//                     // println!("{}, {}, {}", y, y_min, height_1);
-
-//                     let i_surface: usize = if metrics.ymin >= 0 {
-//                         // ((y as i32 + y_min + height_1 as i32) as u32 * width + x + edge) as usize;
-//                         ((y as i32 - metrics.height as i32 + metrics.ymin + height as i32) as u32
-//                             * width
-//                             + x
-//                             + edge) as usize
-//                     } else {
-//                         // println!("{}, {}, {}, {}", y, metrics.ymin, height, metrics.height);
-//                         ((y as i32 + height as i32 + metrics.ymin as i32 - metrics.height as i32)
-//                             as u32
-//                             * width
-//                             + x
-//                             + edge) as usize
-//                     };
-
-//                     pixels[i_surface * 4 + 0] = bitmap[i_bitmap];
-//                     pixels[i_surface * 4 + 1] = color.b;
-//                     pixels[i_surface * 4 + 2] = color.g;
-//                     pixels[i_surface * 4 + 3] = color.r;
-//                 }
-//             }
-
-//             edge += (bitmap_width as i32 + metrics.xmin) as u32;
-//         }
-//     });
-
-//     // surface.save_bmp(format!("{text}.bmp"));
-//     surface
-// }
-
 pub struct Label<'a> {
     canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
     texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-    // font: &'a Font,
-    // font: Font,
     font: Rc<sdl2::ttf::Font<'a, 'a>>,
     texture: Rc<Option<sdl2::render::Texture<'a>>>,
 
@@ -283,7 +194,6 @@ pub struct Label<'a> {
     y: i32,
     width: u32,
     height: u32,
-    // font_size: u16,
     logger: &'a Logger,
 }
 
@@ -292,14 +202,10 @@ impl<'a> Label<'a> {
         canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
         texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
         font: Rc<sdl2::ttf::Font<'a, 'a>>,
-        // font: &'a Font,
         position: layout_structure::TextProperties,
 
         logger: &'a Logger,
     ) -> Self {
-        // let font: &[u8] = include_bytes!("../../assets/AGENCYB.ttf") as &[u8];
-        // let font: Font = fontdue::Font::from_bytes(font, fontdue::FontSettings::default()).unwrap();
-
         Self {
             canvas,
             texture_creator,
@@ -310,7 +216,6 @@ impl<'a> Label<'a> {
             y: position.y + position.height as i32 / 2,
             width: 0,
             height: 0,
-            // font_size: position.font_size,
             logger,
         }
     }
@@ -323,13 +228,11 @@ impl<'a> Label<'a> {
     ) {
         let key: LabelHashKey = LabelHashKey {
             text: text.clone(),
-            // text: "-",
             color,
         };
 
         let (width, height, texture) =
             texture_cache.get(key, self.texture_creator, self.font.clone(), self.logger);
-        // (self.width, self.height, self.texture) =
         self.width = width;
         self.height = height;
         self.texture = texture.clone();
@@ -440,7 +343,7 @@ impl<'a> Card<'a> {
                     self.text_x - self.rect_x + border_width as i32,
                     self.text_y - self.rect_y + border_width as i32,
                     self.rect_width - border_width * 2,
-                    self.rect_width - border_width * 2,
+                    self.rect_height - border_width * 2,
                 )),
             )
             .unwrap_with_logger(self.logger);
