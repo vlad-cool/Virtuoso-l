@@ -11,5 +11,6 @@ cross build --target armv7-unknown-linux-gnueabihf --release --no-default-featur
 for BANANA_IP in "${BANANA_IPS[@]}"
 do
     rsync --info=progress2 target/armv7-unknown-linux-gnueabihf/release/Virtuoso pi@$BANANA_IP:Virtuoso/app
-    ssh pi@$BANANA_IP ./kill.sh
+    # ssh pi@$BANANA_IP ./kill.sh
+    ssh pi@$BANANA_IP sudo reboot
 done

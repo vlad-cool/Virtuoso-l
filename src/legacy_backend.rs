@@ -1,18 +1,15 @@
-#[allow(dead_code)]
-#[allow(unused_variables)]
 use gpio_cdev;
 use gpio_cdev::Line;
 use serial::{self, SerialPort};
 use std::io::Read;
 use std::path::PathBuf;
 use std::sync::mpsc::RecvError;
-use std::sync::{Arc, Mutex, MutexGuard, mpsc};
+use std::sync::{MutexGuard, mpsc};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use crate::hw_config::{HardwareConfig, LegacyBackendConfig};
 use crate::match_info;
-use crate::modules;
+use crate::modules::{self, VirtuosoModuleContext};
 use crate::virtuoso_config::VirtuosoConfig;
 use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 
@@ -21,13 +18,11 @@ const AUTO_STATUS_ON: u32 = 196;
 const AUTO_STATUS_OFF: u32 = 17;
 
 pub struct LegacyBackend {
-    match_info: Arc<Mutex<match_info::MatchInfo>>,
-    config: Arc<Mutex<VirtuosoConfig>>,
+    context: VirtuosoModuleContext,
+
     weapon_select_btn_pressed: bool,
     rc5_address: u32,
     auto_status_controller: AutoStatusController,
-    hw_config: LegacyBackendConfig,
-    logger: Logger,
 }
 
 impl modules::VirtuosoModule for LegacyBackend {
@@ -35,30 +30,36 @@ impl modules::VirtuosoModule for LegacyBackend {
         let (tx, rx) = mpsc::channel::<InputData>();
 
         let tx_clone: mpsc::Sender<InputData> = tx.clone();
-        let logger_clone: Logger = self.logger.clone();
-        let port_path: PathBuf = self.hw_config.uart_port.clone();
+        let logger_clone: Logger = self.context.logger.clone();
+        let port_path: PathBuf = self.context.hw_config.legacy_backend.uart_port.clone();
         thread::spawn(move || {
             uart_handler(tx_clone, logger_clone, port_path);
         });
 
         let tx_clone: mpsc::Sender<InputData> = tx.clone();
-        let logger_clone: Logger = self.logger.clone();
+        let logger_clone: Logger = self.context.logger.clone();
 
         let gpio_line_weapon_0: Line = self
+            .context
             .hw_config
+            .legacy_backend
             .weapon_0_pin
             .to_line()
-            .unwrap_with_logger(&self.logger);
+            .unwrap_with_logger(&self.context.logger);
         let gpio_line_weapon_1: Line = self
+            .context
             .hw_config
+            .legacy_backend
             .weapon_1_pin
             .to_line()
-            .unwrap_with_logger(&self.logger);
+            .unwrap_with_logger(&self.context.logger);
         let gpio_line_weapon_btn: Line = self
+            .context
             .hw_config
+            .legacy_backend
             .weapon_btn_pin
             .to_line()
-            .unwrap_with_logger(&self.logger);
+            .unwrap_with_logger(&self.context.logger);
 
         thread::spawn(move || {
             pins_handler(
@@ -71,12 +72,14 @@ impl modules::VirtuosoModule for LegacyBackend {
         });
 
         let tx_clone: mpsc::Sender<InputData> = tx.clone();
-        let logger_clone: Logger = self.logger.clone();
+        let logger_clone: Logger = self.context.logger.clone();
         let ir_line: Line = self
+            .context
             .hw_config
+            .legacy_backend
             .ir_pin
             .to_line()
-            .unwrap_with_logger(&self.logger);
+            .unwrap_with_logger(&self.context.logger);
         thread::spawn(move || {
             rc5_receiever(tx_clone, logger_clone, ir_line);
         });
@@ -104,27 +107,20 @@ impl modules::VirtuosoModule for LegacyBackend {
 }
 
 impl LegacyBackend {
-    pub fn new(
-        match_info: Arc<Mutex<match_info::MatchInfo>>,
-        config: Arc<Mutex<VirtuosoConfig>>,
-        hw_config: &HardwareConfig,
-        logger: Logger,
-    ) -> Self {
-        let rc5_address: u32 = config.lock().unwrap().legacy_backend.rc5_address;
+    pub fn new(context: VirtuosoModuleContext) -> Self {
+        let rc5_address: u32 = context.config.lock().unwrap().legacy_backend.rc5_address;
         Self {
-            match_info: Arc::clone(&match_info),
-            config,
+            context,
+
             weapon_select_btn_pressed: false,
             rc5_address,
             auto_status_controller: AutoStatusController::new(),
-            hw_config: hw_config.legacy_backend.clone(),
-            logger,
         }
     }
 
     fn apply_uart_data(&mut self, msg: UartData) {
         let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-            self.match_info.lock().unwrap();
+            self.context.match_info.lock().unwrap();
 
         match_info_data.left_fencer.score = msg.score_left;
         match_info_data.right_fencer.score = msg.score_right;
@@ -190,12 +186,16 @@ impl LegacyBackend {
             match_info_data.passive_timer.reset();
         }
 
-        match_info_data.modified_count += 1;
+        // match_info_data.modified_count += 1;
+        std::mem::drop(match_info_data);
+        self.context
+            .match_info_modified_count
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 
     fn apply_pins_data(&mut self, msg: PinsData) {
         let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-            self.match_info.lock().unwrap();
+            self.context.match_info.lock().unwrap();
 
         match_info_data.weapon = match msg.weapon {
             3 => match_info::Weapon::Epee,
@@ -204,7 +204,10 @@ impl LegacyBackend {
             _ => match_info_data.weapon,
         };
 
-        match_info_data.modified_count += 1;
+        std::mem::drop(match_info_data);
+        self.context
+            .match_info_modified_count
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
 
         self.weapon_select_btn_pressed = msg.weapon_select_btn;
     }
@@ -215,7 +218,7 @@ impl LegacyBackend {
             && msg.command == IrCommands::SetTime
         {
             self.rc5_address = msg.address;
-            let mut config = self.config.lock().unwrap();
+            let mut config: MutexGuard<'_, VirtuosoConfig> = self.context.config.lock().unwrap();
             config.legacy_backend.rc5_address = msg.address;
             config.write_config();
         } else if msg.new && msg.address == self.rc5_address {
@@ -230,7 +233,7 @@ impl LegacyBackend {
                 }
                 IrCommands::SetTime => {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-                        self.match_info.lock().unwrap();
+                        self.context.match_info.lock().unwrap();
 
                     if !match_info_data.timer_running {
                         match_info_data.passive_timer.reset();
@@ -238,35 +241,43 @@ impl LegacyBackend {
                 }
                 IrCommands::LeftPenaltyCard => {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-                        self.match_info.lock().unwrap();
+                        self.context.match_info.lock().unwrap();
                     match_info_data.left_fencer.warning_card.inc();
-                    match_info_data.modified_count += 1;
+
+                    std::mem::drop(match_info_data);
+                    self.context
+                        .match_info_modified_count
+                        .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 }
                 IrCommands::RightPenaltyCard => {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-                        self.match_info.lock().unwrap();
+                        self.context.match_info.lock().unwrap();
                     match_info_data.right_fencer.warning_card.inc();
-                    match_info_data.modified_count += 1;
+
+                    std::mem::drop(match_info_data);
+                    self.context
+                        .match_info_modified_count
+                        .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 }
                 IrCommands::LeftPassiveCard => {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-                        self.match_info.lock().unwrap();
+                        self.context.match_info.lock().unwrap();
                     match_info_data.left_fencer.passive_card.inc();
-                    match_info_data.modified_count += 1;
-                    self.logger.debug(format!(
-                        "Left fencer pcard: {:?}",
-                        match_info_data.left_fencer.passive_card
-                    ));
+
+                    std::mem::drop(match_info_data);
+                    self.context
+                        .match_info_modified_count
+                        .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 }
                 IrCommands::RightPassiveCard => {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-                        self.match_info.lock().unwrap();
+                        self.context.match_info.lock().unwrap();
                     match_info_data.right_fencer.passive_card.inc();
-                    match_info_data.modified_count += 1;
-                    self.logger.debug(format!(
-                        "Right fencer pcard: {:?}",
-                        match_info_data.right_fencer.passive_card
-                    ));
+
+                    std::mem::drop(match_info_data);
+                    self.context
+                        .match_info_modified_count
+                        .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 }
                 // IrCommands::FlipSides => {
                 //     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
@@ -280,7 +291,7 @@ impl LegacyBackend {
     }
 
     fn set_auto_statuses(&mut self) {
-        self.logger.debug(format!(
+        self.context.logger.debug(format!(
             "Setting state of {:?} to {:?}",
             self.auto_status_controller.modified_field, self.auto_status_controller.new_state
         ));
@@ -303,13 +314,13 @@ impl LegacyBackend {
 
         self.auto_status_controller.reset();
 
-        self.logger.info(format!(
+        self.context.logger.info(format!(
             "Setting state of {:?} to {:?}",
             modified_field, new_state
         ));
 
         let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-            self.match_info.lock().unwrap();
+            self.context.match_info.lock().unwrap();
 
         match modified_field {
             AutoStatusFields::Score => match_info_data.auto_score_on = new_state.to_bool(),
@@ -320,7 +331,10 @@ impl LegacyBackend {
         match_info_data.display_message = format!("{} {}", modified_field, new_state);
         match_info_data.display_message_updated = Instant::now();
 
-        match_info_data.modified_count += 1;
+        std::mem::drop(match_info_data);
+        self.context
+            .match_info_modified_count
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 }
 

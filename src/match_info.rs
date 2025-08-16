@@ -538,7 +538,6 @@ impl FencerInfo {
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MatchInfo {
     pub program_state: ProgramState,
-    pub modified_count: u32,
 
     pub weapon: Weapon,
     // pub timer: u32,
@@ -584,7 +583,6 @@ impl MatchInfo {
     pub fn new() -> Self {
         Self {
             program_state: ProgramState::Running,
-            modified_count: 0,
 
             weapon: Weapon::Epee,
             // left_score: 0,

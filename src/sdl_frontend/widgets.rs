@@ -168,9 +168,9 @@ fn draw_rounded_rectangle<'a>(
 
                     for index in [
                         (x + y * width) * 4,
-                        (width - x + y * width) * 4,
+                        (width - x - 1 + y * width) * 4,
                         (x + (height - y - 1) * width) * 4,
-                        (width - x + (height - y - 1) * width) * 4,
+                        (width - x - 1  + (height - y - 1) * width) * 4,
                     ] {
                         for i in 0..4 {
                             pixels[index + i] = color[i];

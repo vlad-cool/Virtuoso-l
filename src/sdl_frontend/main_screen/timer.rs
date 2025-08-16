@@ -112,7 +112,7 @@ impl<'a> Drawer<'a> {
 
 impl<'a> VirtuosoWidget for Drawer<'a> {
     fn update(&mut self, data: &MatchInfo) {
-        let time: std::time::Duration = data.timer_controller.get_time();
+        let time: std::time::Duration = data.timer_controller.get_time() + Duration::from_millis(999);
         if self.time != time
             || self.timer_running != data.timer_running
             || self.priority != data.priority

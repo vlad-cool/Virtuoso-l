@@ -1,4 +1,3 @@
-use std::collections::VecDeque;
 use std::vec::Vec;
 
 /*
@@ -28,50 +27,48 @@ pub enum MenuItem {
 }
 
 #[derive(Debug, Clone)]
-pub struct SettingsMenu {
-    show: bool,
-    items: Vec<MenuItem>,
+enum MenuElement {
+    IpAddress,
+}
+
+impl MenuElement {
+    pub fn to_item(&self) -> MenuItem {
+        match self {
+            Self::IpAddress => MenuItem::Label("sgf".to_string()),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct MenuTab {
+    name: String,
+    elements: Vec<MenuElement>,
     index: usize,
-    action_queue: VecDeque<MenuAction>,
+}
+
+#[derive(Debug, Clone)]
+pub struct SettingsMenu {
+    tabs: Vec<MenuTab>,
+    index: usize,
 }
 
 impl SettingsMenu {
-    pub fn is_shown(&self) -> bool {
-        self.show
-    }
-
-    pub fn show(&mut self) {
-        self.show = true;
-    }
-
-    pub fn hide(&mut self) {
-        self.show = false;
-    }
-
-    pub fn set_show(&mut self, show: bool) {
-        self.show = show;
+    pub fn new() -> Self {
+        Self {
+            tabs: vec![],
+            index: 0,
+        }
     }
 
     pub fn next(&mut self) {
-        self.index = (self.index + 1) % self.items.len();
+        self.index = (self.index + 1) % self.tabs.len();
     }
 
     pub fn prev(&mut self) {
-        self.index = (self.index + self.items.len() - 1) % self.items.len();
+        self.index = (self.index + self.tabs.len() - 1) % self.tabs.len();
     }
 
-    pub fn get_item(&self) -> &MenuItem {
-        &self.items[self.index]
-    }
-
-    pub fn press(&mut self) {
-        let item: &MenuItem = self.get_item();
-
-        match item {
-            MenuItem::Label(_) => {}
-            MenuItem::Button(_, action) => {
-                action.act();
-            }
-        }
+    pub fn get_item(&self) -> &MenuTab {
+        &self.tabs[self.index]
     }
 }

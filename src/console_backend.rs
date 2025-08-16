@@ -1,11 +1,10 @@
 use std::io;
-use std::sync::{Arc, Mutex};
 
 use crate::match_info::{self, ProgramState};
-use crate::modules;
+use crate::modules::{self, VirtuosoModuleContext};
 
 pub struct ConsoleBackend {
-    match_info: Arc<Mutex<match_info::MatchInfo>>,
+    context: modules::VirtuosoModuleContext,
 }
 
 #[derive(Debug)]
@@ -140,12 +139,12 @@ fn parse_command(input: &str) -> Command {
 }
 
 impl ConsoleBackend {
-    pub fn new(match_info: Arc<Mutex<match_info::MatchInfo>>) -> Self {
-        Self { match_info }
+    pub fn new(context: VirtuosoModuleContext) -> Self {
+        Self { context }
     }
 
     fn set_field(&mut self, field: Field, value: u32) {
-        let mut match_info_data = self.match_info.lock().unwrap();
+        let mut match_info_data = self.context.match_info.lock().unwrap();
 
         match field {
             Field::LeftScore => match_info_data.left_fencer.score = value,
@@ -203,11 +202,11 @@ impl ConsoleBackend {
             }
         }
 
-        match_info_data.modified_count += 1;
+        self.context.match_info_modified_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 
     fn print_field(&self, field: Field) {
-        let match_info_data = self.match_info.lock().unwrap();
+        let match_info_data = self.context.match_info.lock().unwrap();
 
         match field {
             Field::LeftScore => println!("{}", match_info_data.left_fencer.score),
@@ -257,7 +256,7 @@ impl modules::VirtuosoModule for ConsoleBackend {
 
             input = input.trim().to_ascii_lowercase();
 
-            if self.match_info.lock().unwrap().program_state == ProgramState::Exiting {
+            if self.context.match_info.lock().unwrap().program_state == ProgramState::Exiting {
                 break;
             }
 
@@ -270,7 +269,7 @@ impl modules::VirtuosoModule for ConsoleBackend {
             match command {
                 Command::Set(field, value) => self.set_field(field, value),
                 Command::Get(field) => self.print_field(field),
-                Command::Show => println!("{:?}", self.match_info.lock().unwrap()),
+                Command::Show => println!("{:?}", self.context.match_info.lock().unwrap()),
                 Command::Unknown => println!("Unknown command or invalid format"),
             }
         }

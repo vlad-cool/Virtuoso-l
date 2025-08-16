@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::Write;
 use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
-use std::sync::{Arc, Mutex, mpsc};
+use std::sync::mpsc;
 use std::time::Duration;
 
 use crate::virtuoso_config::{LogLevelOption, VirtuosoConfig};
@@ -121,9 +121,8 @@ pub struct VirtuosoLogger {
 }
 
 impl VirtuosoLogger {
-    pub fn new(config: Arc<Mutex<VirtuosoConfig>>) -> Self {
-        let config: crate::virtuoso_config::LoggerConfig =
-            config.lock().unwrap().logger_config.clone();
+    pub fn new(config: &VirtuosoConfig) -> Self {
+        let config: crate::virtuoso_config::LoggerConfig = config.logger_config.clone();
 
         let stderr: bool = config.stderr;
 

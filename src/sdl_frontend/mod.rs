@@ -2,19 +2,18 @@ use sdl2::render::Canvas;
 use sdl2::rwops::RWops;
 use sdl2::video::{Window, WindowContext};
 
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::MutexGuard;
 use std::time::Duration;
 
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::hw_config::Resolution;
 use crate::match_info::MatchInfo;
+use crate::modules::VirtuosoModule;
+use crate::modules::VirtuosoModuleContext;
 use crate::sdl_frontend::layout_structure::Layout;
 use crate::virtuoso_logger::{Logger, LoggerUnwrap};
-use crate::{
-    hw_config::{HardwareConfig, Resolution},
-    modules::VirtuosoModule,
-};
 
 mod colors;
 mod layout_structure;
@@ -73,29 +72,20 @@ trait VirtuosoWidget {
 }
 
 pub struct SdlFrontend {
-    match_info: Arc<Mutex<MatchInfo>>,
-    logger: Logger,
+    context: VirtuosoModuleContext,
     layout: layout_structure::Layout,
 }
 
 impl SdlFrontend {
-    pub fn new(
-        match_info: Arc<Mutex<MatchInfo>>,
-        hw_config: HardwareConfig,
-        logger: Logger,
-    ) -> Self {
-        let layout: layout_structure::Layout = match hw_config.display.resolution {
+    pub fn new(context: VirtuosoModuleContext) -> Self {
+        let layout: layout_structure::Layout = match context.hw_config.display.resolution {
             Resolution::Res1920X1080 => layouts::LAYOUT_1920X1080,
             Resolution::Res1920X550 => layouts::LAYOUT_1920X550,
             Resolution::Res1920X480 => layouts::LAYOUT_1920X480,
             Resolution::Res1920X360 => layouts::LAYOUT_1920X360,
         };
 
-        Self {
-            match_info,
-            logger,
-            layout,
-        }
+        Self { context, layout }
     }
 }
 
@@ -104,7 +94,8 @@ impl VirtuosoModule for SdlFrontend {
         let sdl_context: sdl2::Sdl = match sdl2::init() {
             Ok(sdl_context) => sdl_context,
             Err(err) => {
-                self.logger
+                self.context
+                    .logger
                     .critical_error(format!("Failed to init sdl, error: {err}"));
                 return;
             }
@@ -113,7 +104,8 @@ impl VirtuosoModule for SdlFrontend {
         let video_subsystem: sdl2::VideoSubsystem = match sdl_context.video() {
             Ok(video_subsystem) => video_subsystem,
             Err(err) => {
-                self.logger
+                self.context
+                    .logger
                     .critical_error(format!("Failed to create video subsystem, error: {err}"));
                 return;
             }
@@ -122,7 +114,8 @@ impl VirtuosoModule for SdlFrontend {
         let ttf_context: sdl2::ttf::Sdl2TtfContext = match sdl2::ttf::init() {
             Ok(ttf_context) => ttf_context,
             Err(err) => {
-                self.logger
+                self.context
+                    .logger
                     .critical_error(format!("Failed to init ttf context, error: {err}"));
                 return;
             }
@@ -138,7 +131,8 @@ impl VirtuosoModule for SdlFrontend {
         {
             Ok(window) => window,
             Err(err) => {
-                self.logger
+                self.context
+                    .logger
                     .critical_error(format!("Failed to create window, error: {err}"));
                 return;
             }
@@ -147,7 +141,8 @@ impl VirtuosoModule for SdlFrontend {
         let canvas = match window.into_canvas().build() {
             Ok(canvas) => canvas,
             Err(err) => {
-                self.logger
+                self.context
+                    .logger
                     .critical_error(format!("Failed to create canvas, error: {err}"));
                 return;
             }
@@ -168,7 +163,7 @@ impl VirtuosoModule for SdlFrontend {
             ttf_context: &ttf_context,
             font_bytes,
             layout: &self.layout,
-            logger: &self.logger,
+            logger: &self.context.logger,
         };
 
         canvas.borrow_mut().clear();
@@ -194,8 +189,9 @@ impl VirtuosoModule for SdlFrontend {
 
         canvas.borrow_mut().present();
 
-        let mut event_pump: sdl2::EventPump =
-            sdl_context.event_pump().unwrap_with_logger(&self.logger);
+        let mut event_pump: sdl2::EventPump = sdl_context
+            .event_pump()
+            .unwrap_with_logger(&self.context.logger);
 
         'running: loop {
             std::thread::sleep(Duration::from_millis(20));
@@ -207,8 +203,11 @@ impl VirtuosoModule for SdlFrontend {
                 }
             }
 
-            let data: MutexGuard<'_, MatchInfo> =
-                self.match_info.lock().unwrap_with_logger(&self.logger);
+            let data: MutexGuard<'_, MatchInfo> = self
+                .context
+                .match_info
+                .lock()
+                .unwrap_with_logger(&self.context.logger);
             for widget in &mut widgets {
                 widget.update(&data);
             }

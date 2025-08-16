@@ -1,14 +1,11 @@
 use serde::{Deserialize, Serialize};
 use serial::{self, SerialPort};
 use std::io::{Read, Write};
-use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-use crate::hw_config::HardwareConfig;
 use crate::match_info::MatchInfo;
-use crate::modules;
-use crate::virtuoso_logger::Logger;
+use crate::modules::{self, VirtuosoModuleContext};
 
 const RECV_TIMEOUT: Duration = Duration::from_micros(5000);
 const RESERVED_CAPACITY: usize = 256;
@@ -19,12 +16,11 @@ const HEADER_BYTE: u8 = 0xA5;
 const MAGIC_BYTE: u8 = 0xFA;
 const END_BYTE: u8 = 0xFB;
 const END_BYTE_REPLACEMENT: u8 = 0xFC;
-const SKIP_BYTE: u8 = 0x01; // Byte that receiver automatically add at the end of frame
+const SKIP_BYTE: u8 = 0x01; // Byte that receiver automatically add at the end of the frame
 const SKIP_BYTE_REPLACEMENT: u8 = 0xFD;
 
 pub struct Repeater {
-    match_info: Arc<Mutex<MatchInfo>>,
-    logger: Logger,
+    context: VirtuosoModuleContext,
     port: serial::unix::TTYPort,
     raw_buffer: Vec<u8>,
     encoded_buffer: Vec<u8>,
@@ -34,14 +30,14 @@ pub struct Repeater {
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 enum Message {
     Request(u32),
-    MatchInfo(MatchInfo),
+    MatchInfo(u32, MatchInfo),
 }
 
 impl std::fmt::Display for Message {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Message::Request(n) => write!(f, "request [{n}]"),
-            Message::MatchInfo(_) => write!(f, "match info"),
+            Message::MatchInfo(_, _) => write!(f, "match info"),
         }
     }
 }
@@ -60,37 +56,54 @@ impl modules::VirtuosoModule for Repeater {
         loop {
             for _ in 0..3 {
                 match self.receive() {
-                    Ok(Message::MatchInfo(match_info)) => {
-                        self.logger
-                            .debug(format!("Got match info [{}]", match_info.modified_count));
-                        self.modified_count = match_info.modified_count;
-                        self.match_info.lock().unwrap().clone_from(&match_info);
+                    Ok(Message::MatchInfo(modified_count, match_info)) => {
+                        self.context
+                            .logger
+                            .debug(format!("Got match info [{}]", modified_count));
+                        self.modified_count = modified_count;
+                        self.context
+                            .match_info
+                            .lock()
+                            .unwrap()
+                            .clone_from(&match_info);
                     }
                     Ok(Message::Request(n)) => {
                         let match_info: std::sync::MutexGuard<'_, MatchInfo> =
-                            self.match_info.lock().unwrap();
-                        if n < match_info.modified_count {
+                            self.context.match_info.lock().unwrap();
+                        let modified_count: u32 = self
+                            .context
+                            .match_info_modified_count
+                            .load(std::sync::atomic::Ordering::Relaxed);
+                        if n < modified_count {
                             let match_info_cloned: MatchInfo = match_info.clone();
                             std::mem::drop(match_info);
-                            let _ = self.transmit(&Message::MatchInfo(match_info_cloned));
+                            let _ = self
+                                .transmit(&Message::MatchInfo(modified_count, match_info_cloned));
                         }
                     }
                     Err(RecvError::BadHeader) => self
+                        .context
                         .logger
                         .error("Receiver got packet with wrong header byte".to_string()),
                     Err(RecvError::BadChecksum) => {
-                        self.logger
+                        self.context
+                            .logger
                             .error("Receiver got message with bad checksum".to_string());
                     }
                     Err(RecvError::BadStream) => {
-                        self.logger
+                        self.context
+                            .logger
                             .error("Receiver did not get enough data to decode".to_string());
                     }
                     Err(RecvError::DeserializationError) => {
-                        self.logger.error("Receiver got bad message".to_string());
+                        self.context
+                            .logger
+                            .error("Receiver got bad message".to_string());
                     }
                     Err(RecvError::SerialError) => {
-                        self.logger.error("Receiver cannot get message".to_string());
+                        self.context
+                            .logger
+                            .error("Receiver cannot get message".to_string());
                     }
                     Err(RecvError::Timeout) => {
                         break;
@@ -99,56 +112,56 @@ impl modules::VirtuosoModule for Repeater {
             }
 
             {
-                let modified_count = self.match_info.lock().unwrap().modified_count;
+                let modified_count: u32 = self
+                    .context
+                    .match_info_modified_count
+                    .load(std::sync::atomic::Ordering::Relaxed);
                 let _ = self.transmit(&Message::Request(modified_count));
             }
 
-            thread::sleep(Duration::from_millis(10));
+            thread::sleep(Duration::from_millis(20));
         }
     }
 }
 
 impl Repeater {
     pub fn new(
-        match_info: Arc<Mutex<MatchInfo>>,
-        logger: Logger,
-        hw_config: HardwareConfig,
+        context: VirtuosoModuleContext,
     ) -> Result<Self, String> {
         let settings: serial::PortSettings = serial::PortSettings {
-            baud_rate: serial::BaudRate::from_speed(hw_config.repeater.uart_speed),
+            baud_rate: serial::BaudRate::from_speed(context.hw_config.repeater.uart_speed),
             char_size: serial::CharSize::Bits8,
             parity: serial::Parity::ParityNone,
             stop_bits: serial::StopBits::Stop1,
             flow_control: serial::FlowControl::FlowNone,
         };
 
-        let modified_count: u32 = match_info.lock().unwrap().modified_count;
+        let modified_count: u32 = context.match_info_modified_count.load(std::sync::atomic::Ordering::Relaxed);
 
-        let mut port: serial::unix::TTYPort = match serial::open(&hw_config.repeater.uart_port) {
+        let mut port: serial::unix::TTYPort = match serial::open(&context.hw_config.repeater.uart_port) {
             Ok(port) => port,
             Err(err) => {
-                logger.critical_error(format!("Failed to open port, error: {err}"));
+                context.logger.critical_error(format!("Failed to open port, error: {err}"));
                 return Err("Failed to open port".to_string());
             }
         };
         match port.configure(&settings) {
             Ok(()) => {}
             Err(err) => {
-                logger.critical_error(format!("Failed to configure port, error: {err}"));
+                context.logger.critical_error(format!("Failed to configure port, error: {err}"));
                 return Err("Failed to configure port".to_string());
             }
         }
         match port.set_timeout(RECV_TIMEOUT) {
             Ok(()) => {}
             Err(err) => {
-                logger.critical_error(format!("Failed to set port timeout, error: {err}"));
+                context.logger.critical_error(format!("Failed to set port timeout, error: {err}"));
                 return Err("Failed to set port timeout".to_string());
             }
         }
 
         Ok(Self {
-            match_info: Arc::clone(&match_info),
-            logger,
+            context,
             port,
             raw_buffer: Vec::with_capacity(RESERVED_CAPACITY),
             encoded_buffer: Vec::with_capacity(RESERVED_CAPACITY),
@@ -190,7 +203,7 @@ impl Repeater {
                     byte => {
                         // Error, but we continue decoding not to make code too complex
                         // (error will be caught on checksum matching)
-                        self.logger
+                        self.context.logger
                             .warning(format!("Unexpected escaped byte, potential error"));
                         self.raw_buffer.push(byte);
                     }
@@ -222,7 +235,7 @@ impl Repeater {
         loop {
             match self.port.read(&mut byte) {
                 Ok(0) => {
-                    self.logger.warning("Got empty buffer".to_string());
+                    self.context.logger.warning("Got empty buffer".to_string());
                     if receive_attempts == RECEIVE_ATTEMPTS {
                         return Err(RecvError::Timeout);
                     }
@@ -241,7 +254,7 @@ impl Repeater {
                         receive_attempts += 1;
                         continue;
                     } else {
-                        self.logger
+                        self.context.logger
                             .error(format!("Failed to receive data, error: {err:?}"));
                         return Err(RecvError::SerialError);
                     }
@@ -253,12 +266,12 @@ impl Repeater {
             }
         }
 
-        self.logger
+        self.context.logger
             .debug(format!("R Encoded buffer {:02X?}", self.encoded_buffer));
 
         self.decode_buffer();
 
-        self.logger
+        self.context.logger
             .debug(format!("R Raw buffer {:02X?}", self.raw_buffer));
 
         self.encoded_buffer.clear();
@@ -274,11 +287,11 @@ impl Repeater {
         let checksum: [u8; 4] = self.raw_buffer[1..5].try_into().unwrap();
         let data: &[u8] = &self.raw_buffer[5..];
 
-        self.logger.debug(format!("R checksum {:02X?}", checksum));
-        self.logger.debug(format!("R data {:02X?}", data));
+        self.context.logger.debug(format!("R checksum {:02X?}", checksum));
+        self.context.logger.debug(format!("R data {:02X?}", data));
 
         if Self::calc_checksum(&data) != checksum {
-            self.logger.error("Checksum mismatch".to_string());
+            self.context.logger.error("Checksum mismatch".to_string());
             return Err(RecvError::BadChecksum);
         }
 
@@ -287,7 +300,7 @@ impl Repeater {
         match res {
             Ok(res) => Ok(res),
             Err(err) => {
-                self.logger
+                self.context.logger
                     .error(format!("Failed to deserialize message, error: {err}"));
                 Err(RecvError::DeserializationError)
             }
@@ -319,12 +332,12 @@ impl Repeater {
     }
 
     fn transmit(&mut self, message: &Message) -> Result<(), ()> {
-        self.logger
+        self.context.logger
             .debug(format!("Transmitting message {}", message));
         let serialized_data: Vec<u8> = match postcard::to_stdvec(message) {
             Ok(data) => data,
             Err(err) => {
-                self.logger
+                self.context.logger
                     .error(format!("Failed to serialize message, error: {err}"));
                 return Err(());
             }
@@ -332,8 +345,8 @@ impl Repeater {
 
         let checksum: [u8; 4] = Self::calc_checksum(&serialized_data);
 
-        self.logger.debug(format!("T checksum {:02X?}", checksum));
-        self.logger
+        self.context.logger.debug(format!("T checksum {:02X?}", checksum));
+        self.context.logger
             .debug(format!("T data {:02X?}", serialized_data));
 
         self.raw_buffer.clear();
@@ -341,24 +354,24 @@ impl Repeater {
         self.raw_buffer.extend_from_slice(&checksum);
         self.raw_buffer.extend(serialized_data);
 
-        self.logger
+        self.context.logger
             .debug(format!("T Raw buffer {:02X?}", self.raw_buffer));
 
         self.encode_buffer();
 
-        self.logger
+        self.context.logger
             .debug(format!("T Encoded buffer {:02X?}", self.encoded_buffer));
 
         let mut offset: usize = 0;
         while offset < self.encoded_buffer.len() {
             match self.port.write(&self.encoded_buffer[offset..]) {
                 Ok(0) => {
-                    self.logger.error("Error: transmitted 0 bytes".to_string());
+                    self.context.logger.error("Error: transmitted 0 bytes".to_string());
                     return Err(());
                 }
                 Ok(n) => offset += n,
                 Err(err) => {
-                    self.logger
+                    self.context.logger
                         .error(format!("Failed to transmit, error: {err}"));
                     return Err(());
                 }
@@ -366,7 +379,7 @@ impl Repeater {
         }
         let _ = self.port.flush();
 
-        self.logger.debug(format!("Transmitted {offset} bytes"));
+        self.context.logger.debug(format!("Transmitted {offset} bytes"));
 
         Ok(())
     }
