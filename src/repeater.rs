@@ -125,9 +125,7 @@ impl modules::VirtuosoModule for Repeater {
 }
 
 impl Repeater {
-    pub fn new(
-        context: VirtuosoModuleContext,
-    ) -> Result<Self, String> {
+    pub fn new(context: VirtuosoModuleContext) -> Result<Self, String> {
         let settings: serial::PortSettings = serial::PortSettings {
             baud_rate: serial::BaudRate::from_speed(context.hw_config.repeater.uart_speed),
             char_size: serial::CharSize::Bits8,
@@ -136,26 +134,35 @@ impl Repeater {
             flow_control: serial::FlowControl::FlowNone,
         };
 
-        let modified_count: u32 = context.match_info_modified_count.load(std::sync::atomic::Ordering::Relaxed);
+        let modified_count: u32 = context
+            .match_info_modified_count
+            .load(std::sync::atomic::Ordering::Relaxed);
 
-        let mut port: serial::unix::TTYPort = match serial::open(&context.hw_config.repeater.uart_port) {
-            Ok(port) => port,
-            Err(err) => {
-                context.logger.critical_error(format!("Failed to open port, error: {err}"));
-                return Err("Failed to open port".to_string());
-            }
-        };
+        let mut port: serial::unix::TTYPort =
+            match serial::open(&context.hw_config.repeater.uart_port) {
+                Ok(port) => port,
+                Err(err) => {
+                    context
+                        .logger
+                        .critical_error(format!("Failed to open port, error: {err}"));
+                    return Err("Failed to open port".to_string());
+                }
+            };
         match port.configure(&settings) {
             Ok(()) => {}
             Err(err) => {
-                context.logger.critical_error(format!("Failed to configure port, error: {err}"));
+                context
+                    .logger
+                    .critical_error(format!("Failed to configure port, error: {err}"));
                 return Err("Failed to configure port".to_string());
             }
         }
         match port.set_timeout(RECV_TIMEOUT) {
             Ok(()) => {}
             Err(err) => {
-                context.logger.critical_error(format!("Failed to set port timeout, error: {err}"));
+                context
+                    .logger
+                    .critical_error(format!("Failed to set port timeout, error: {err}"));
                 return Err("Failed to set port timeout".to_string());
             }
         }
@@ -203,7 +210,8 @@ impl Repeater {
                     byte => {
                         // Error, but we continue decoding not to make code too complex
                         // (error will be caught on checksum matching)
-                        self.context.logger
+                        self.context
+                            .logger
                             .warning(format!("Unexpected escaped byte, potential error"));
                         self.raw_buffer.push(byte);
                     }
@@ -254,7 +262,8 @@ impl Repeater {
                         receive_attempts += 1;
                         continue;
                     } else {
-                        self.context.logger
+                        self.context
+                            .logger
                             .error(format!("Failed to receive data, error: {err:?}"));
                         return Err(RecvError::SerialError);
                     }
@@ -266,12 +275,14 @@ impl Repeater {
             }
         }
 
-        self.context.logger
+        self.context
+            .logger
             .debug(format!("R Encoded buffer {:02X?}", self.encoded_buffer));
 
         self.decode_buffer();
 
-        self.context.logger
+        self.context
+            .logger
             .debug(format!("R Raw buffer {:02X?}", self.raw_buffer));
 
         self.encoded_buffer.clear();
@@ -287,7 +298,9 @@ impl Repeater {
         let checksum: [u8; 4] = self.raw_buffer[1..5].try_into().unwrap();
         let data: &[u8] = &self.raw_buffer[5..];
 
-        self.context.logger.debug(format!("R checksum {:02X?}", checksum));
+        self.context
+            .logger
+            .debug(format!("R checksum {:02X?}", checksum));
         self.context.logger.debug(format!("R data {:02X?}", data));
 
         if Self::calc_checksum(&data) != checksum {
@@ -300,7 +313,8 @@ impl Repeater {
         match res {
             Ok(res) => Ok(res),
             Err(err) => {
-                self.context.logger
+                self.context
+                    .logger
                     .error(format!("Failed to deserialize message, error: {err}"));
                 Err(RecvError::DeserializationError)
             }
@@ -332,12 +346,14 @@ impl Repeater {
     }
 
     fn transmit(&mut self, message: &Message) -> Result<(), ()> {
-        self.context.logger
+        self.context
+            .logger
             .debug(format!("Transmitting message {}", message));
         let serialized_data: Vec<u8> = match postcard::to_stdvec(message) {
             Ok(data) => data,
             Err(err) => {
-                self.context.logger
+                self.context
+                    .logger
                     .error(format!("Failed to serialize message, error: {err}"));
                 return Err(());
             }
@@ -345,8 +361,11 @@ impl Repeater {
 
         let checksum: [u8; 4] = Self::calc_checksum(&serialized_data);
 
-        self.context.logger.debug(format!("T checksum {:02X?}", checksum));
-        self.context.logger
+        self.context
+            .logger
+            .debug(format!("T checksum {:02X?}", checksum));
+        self.context
+            .logger
             .debug(format!("T data {:02X?}", serialized_data));
 
         self.raw_buffer.clear();
@@ -354,24 +373,29 @@ impl Repeater {
         self.raw_buffer.extend_from_slice(&checksum);
         self.raw_buffer.extend(serialized_data);
 
-        self.context.logger
+        self.context
+            .logger
             .debug(format!("T Raw buffer {:02X?}", self.raw_buffer));
 
         self.encode_buffer();
 
-        self.context.logger
+        self.context
+            .logger
             .debug(format!("T Encoded buffer {:02X?}", self.encoded_buffer));
 
         let mut offset: usize = 0;
         while offset < self.encoded_buffer.len() {
             match self.port.write(&self.encoded_buffer[offset..]) {
                 Ok(0) => {
-                    self.context.logger.error("Error: transmitted 0 bytes".to_string());
+                    self.context
+                        .logger
+                        .error("Error: transmitted 0 bytes".to_string());
                     return Err(());
                 }
                 Ok(n) => offset += n,
                 Err(err) => {
-                    self.context.logger
+                    self.context
+                        .logger
                         .error(format!("Failed to transmit, error: {err}"));
                     return Err(());
                 }
@@ -379,7 +403,9 @@ impl Repeater {
         }
         let _ = self.port.flush();
 
-        self.context.logger.debug(format!("Transmitted {offset} bytes"));
+        self.context
+            .logger
+            .debug(format!("Transmitted {offset} bytes"));
 
         Ok(())
     }

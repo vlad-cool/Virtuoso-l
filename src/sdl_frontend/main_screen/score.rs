@@ -96,7 +96,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             self.score_l_l_widget.render(
                 score_l_l_text,
                 colors::SCORE_LEFT,
-                &mut self.texture_cache,
+                Some(&mut self.texture_cache),
             );
 
             let score_l_r_text: String = if self.score_l < 10 {
@@ -107,7 +107,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             self.score_l_r_widget.render(
                 score_l_r_text,
                 colors::SCORE_LEFT,
-                &mut self.texture_cache,
+                Some(&mut self.texture_cache),
             );
             self.score_l_updated = false;
         }
@@ -121,7 +121,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             self.score_r_l_widget.render(
                 score_r_l_text,
                 colors::SCORE_RIGHT,
-                &mut self.texture_cache,
+                Some(&mut self.texture_cache),
             );
 
             let score_r_r_text: String = if self.score_r < 10 {
@@ -132,7 +132,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             self.score_r_r_widget.render(
                 score_r_r_text,
                 colors::SCORE_RIGHT,
-                &mut self.texture_cache,
+                Some(&mut self.texture_cache),
             );
             self.score_r_updated = false;
         }

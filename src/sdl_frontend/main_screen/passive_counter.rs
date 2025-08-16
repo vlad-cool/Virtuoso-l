@@ -73,12 +73,12 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             self.passive_counter_0_widget.render(
                 passive_counter_text[0..1].to_string(),
                 color,
-                &mut self.texture_cache,
+                Some(&mut self.texture_cache),
             );
             self.passive_counter_1_widget.render(
                 passive_counter_text[1..2].to_string(),
                 color,
-                &mut self.texture_cache,
+                Some(&mut self.texture_cache),
             );
             self.updated = false;
         }

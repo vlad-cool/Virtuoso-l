@@ -1,4 +1,4 @@
 if [ -z "$SSH_TTY" ] && [ -z "$TMUX" ] && [[ "$(tty)"="/dev/tty1" ]]
 then
-    SDL_VIDEODRIVER=wayland sway
+    WLR_BACKENDS=drm,headless SDL_VIDEODRIVER=wayland sway
 fi

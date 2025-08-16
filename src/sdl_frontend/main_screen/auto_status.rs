@@ -68,7 +68,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             };
 
             self.timer_widget
-                .render(text, color, &mut self.texture_cache);
+                .render(text, color, Some(&mut self.texture_cache));
             self.auto_timer_updated = false;
         }
 
@@ -80,7 +80,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             };
 
             self.score_widget
-                .render(text, color, &mut self.texture_cache);
+                .render(text, color, Some(&mut self.texture_cache));
             self.auto_score_updated = false;
         }
 

@@ -7,23 +7,10 @@ IR info (current address)
 Licenses
 */
 
-#[derive(Debug, Clone, Copy)]
-pub enum MenuAction {
-    Nop,
-}
-
-impl MenuAction {
-    fn act(&self) {
-        match self {
-            Self::Nop => {}
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub enum MenuItem {
     Label(String),
-    Button(String, MenuAction),
+    Button(String),
 }
 
 #[derive(Debug, Clone)]
@@ -55,7 +42,11 @@ pub struct SettingsMenu {
 impl SettingsMenu {
     pub fn new() -> Self {
         Self {
-            tabs: vec![],
+            tabs: vec![MenuTab {
+                name: "Internet".to_string(),
+                elements: vec![MenuElement::IpAddress],
+                index: 0,
+            }],
             index: 0,
         }
     }

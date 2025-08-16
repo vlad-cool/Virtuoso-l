@@ -77,12 +77,15 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
                 Priority::Left => (colors::PRIORITY_RED, colors::PRIORITY_TEXT_LIGHT),
                 _ => (colors::PRIORITY_DARK_RED, colors::PRIORITY_TEXT_DARK),
             };
-            self.l_cap_widget
-                .render("P".to_string(), left_cap_color, &mut self.texture_cache_cap);
+            self.l_cap_widget.render(
+                "P".to_string(),
+                left_cap_color,
+                Some(&mut self.texture_cache_cap),
+            );
             self.l_word_widget.render(
                 "riority".to_string(),
                 left_word_color,
-                &mut self.texture_cache_word,
+                Some(&mut self.texture_cache_word),
             );
 
             let (right_cap_color, right_word_color) = match self.priority {
@@ -92,12 +95,12 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             self.r_cap_widget.render(
                 "P".to_string(),
                 right_cap_color,
-                &mut self.texture_cache_cap,
+                Some(&mut self.texture_cache_cap),
             );
             self.r_word_widget.render(
                 "riority".to_string(),
                 right_word_color,
-                &mut self.texture_cache_word,
+                Some(&mut self.texture_cache_word),
             );
             self.updated = false;
         }

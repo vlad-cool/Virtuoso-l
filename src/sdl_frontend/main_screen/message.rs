@@ -54,7 +54,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             self.message_widget.render(
                 self.message.clone(),
                 colors::TIMER_ORANGE,
-                &mut self.texture_cache,
+                Some(&mut self.texture_cache),
             );
             self.message_updated = false;
         }

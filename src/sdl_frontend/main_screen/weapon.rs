@@ -68,7 +68,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
                 } else {
                     colors::WEAPON_TEXT_DARK
                 },
-                &mut self.texture_cache,
+                Some(&mut self.texture_cache),
             );
 
             self.sabre_widget.render(
@@ -78,7 +78,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
                 } else {
                     colors::WEAPON_TEXT_DARK
                 },
-                &mut self.texture_cache,
+                Some(&mut self.texture_cache),
             );
 
             self.fleuret_widget.render(
@@ -88,7 +88,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
                 } else {
                     colors::WEAPON_TEXT_DARK
                 },
-                &mut self.texture_cache,
+                Some(&mut self.texture_cache),
             );
             self.updated = false;
         }

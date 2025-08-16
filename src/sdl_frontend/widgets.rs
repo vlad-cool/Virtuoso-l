@@ -23,6 +23,70 @@ pub struct LabelTextureCache<'a> {
     cache: HashMap<LabelHashKey, (u32, u32, Rc<Option<Texture<'a>>>)>,
 }
 
+fn draw_label_texture<'a>(
+    key: LabelHashKey,
+    texture_creator: &'a TextureCreator<sdl2::video::WindowContext>,
+    font: Rc<sdl2::ttf::Font<'a, 'a>>,
+    logger: &Logger,
+) -> (u32, u32, Rc<Option<Texture<'a>>>) {
+    let text: String = key.text;
+
+    if text == "" {
+        let texture: Option<Texture<'a>> = None;
+        let width: u32 = 0;
+        let height: u32 = 0;
+        return (width, height, Rc::new(texture));
+    }
+
+    let mut surfaces: std::vec::Vec<sdl2::surface::Surface<'_>> = std::vec::Vec::new();
+
+    let mut width: u32 = 0;
+    let mut height: u32 = 0;
+
+    for line in text.split("\n") {
+        let surface: sdl2::surface::Surface<'a> = font
+            .render(line)
+            .blended(key.color)
+            .unwrap_with_logger(logger);
+
+        width = std::cmp::max(width, surface.width());
+        height += surface.height();
+        surfaces.push(surface);
+    }
+
+    let mut text_surface: Surface<'static> = sdl2::surface::Surface::new(
+        width,
+        height as u32,
+        sdl2::pixels::PixelFormatEnum::RGBA8888,
+    )
+    .unwrap_with_logger(logger);
+
+    let mut y_pos: i32 = 0;
+    for surface in surfaces {
+        let dst_rect = sdl2::rect::Rect::new(
+            (width - surface.width()) as i32 / 2,
+            y_pos,
+            surface.width(),
+            surface.height(),
+        );
+        surface
+            .blit(None, &mut text_surface, dst_rect)
+            .unwrap_with_logger(logger);
+        y_pos += surface.height() as i32;
+    }
+
+    let texture = Some(
+        texture_creator
+            .create_texture_from_surface(&text_surface)
+            .unwrap_with_logger(logger),
+    );
+
+    let width: u32 = text_surface.width();
+    let height: u32 = text_surface.height();
+
+    (width, height, Rc::new(texture))
+}
+
 impl<'a> LabelTextureCache<'a> {
     pub fn new() -> Self {
         Self {
@@ -40,65 +104,12 @@ impl<'a> LabelTextureCache<'a> {
         if let Some(value) = self.cache.get(&key) {
             return value.clone();
         } else {
-            let text: &str = key.text.as_str();
-            let color: Color = key.color;
-
-            if text == "" {
-                let texture: Option<Texture<'a>> = None;
-                let width: u32 = 0;
-                let height: u32 = 0;
-                self.cache
-                    .insert(key.clone(), (width, height, Rc::new(texture)));
-                return self.cache[&key].clone();
-            }
-
-            let mut surfaces: std::vec::Vec<sdl2::surface::Surface<'_>> = std::vec::Vec::new();
-
-            let mut width: u32 = 0;
-            let mut height: u32 = 0;
-
-            for line in text.split("\n") {
-                let surface: sdl2::surface::Surface<'a> =
-                    font.render(line).blended(color).unwrap_with_logger(logger);
-
-                width = std::cmp::max(width, surface.width());
-                height += surface.height();
-                surfaces.push(surface);
-            }
-
-            let mut text_surface: Surface<'static> = sdl2::surface::Surface::new(
-                width,
-                height as u32,
-                sdl2::pixels::PixelFormatEnum::RGBA8888,
-            )
-            .unwrap_with_logger(logger);
-
-            let mut y_pos: i32 = 0;
-            for surface in surfaces {
-                let dst_rect = sdl2::rect::Rect::new(
-                    (width - surface.width()) as i32 / 2,
-                    y_pos,
-                    surface.width(),
-                    surface.height(),
-                );
-                surface
-                    .blit(None, &mut text_surface, dst_rect)
-                    .unwrap_with_logger(logger);
-                y_pos += surface.height() as i32;
-            }
-
-            let texture = Some(
-                texture_creator
-                    .create_texture_from_surface(&text_surface)
-                    .unwrap_with_logger(logger),
+            self.cache.insert(
+                key.clone(),
+                draw_label_texture(key.clone(), texture_creator, font, logger),
             );
 
-            let width: u32 = text_surface.width();
-            let height: u32 = text_surface.height();
-
-            self.cache
-                .insert(key.clone(), (width, height, Rc::new(texture)));
-            self.cache[&key].clone()
+            return self.cache[&key].clone();
         }
     }
 }
@@ -170,7 +181,7 @@ fn draw_rounded_rectangle<'a>(
                         (x + y * width) * 4,
                         (width - x - 1 + y * width) * 4,
                         (x + (height - y - 1) * width) * 4,
-                        (width - x - 1  + (height - y - 1) * width) * 4,
+                        (width - x - 1 + (height - y - 1) * width) * 4,
                     ] {
                         for i in 0..4 {
                             pixels[index + i] = color[i];
@@ -224,15 +235,19 @@ impl<'a> Label<'a> {
         &mut self,
         text: String,
         color: Color,
-        texture_cache: &mut LabelTextureCache<'a>,
+        texture_cache: Option<&mut LabelTextureCache<'a>>,
     ) {
         let key: LabelHashKey = LabelHashKey {
             text: text.clone(),
             color,
         };
 
-        let (width, height, texture) =
-            texture_cache.get(key, self.texture_creator, self.font.clone(), self.logger);
+        let (width, height, texture) = if let Some(texture_cache) = texture_cache {
+            texture_cache.get(key, self.texture_creator, self.font.clone(), self.logger)
+        } else {
+            draw_label_texture(key, self.texture_creator, self.font.clone(), self.logger)
+        };
+
         self.width = width;
         self.height = height;
         self.texture = texture.clone();

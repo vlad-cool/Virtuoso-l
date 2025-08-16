@@ -112,7 +112,8 @@ impl<'a> Drawer<'a> {
 
 impl<'a> VirtuosoWidget for Drawer<'a> {
     fn update(&mut self, data: &MatchInfo) {
-        let time: std::time::Duration = data.timer_controller.get_time() + Duration::from_millis(999);
+        let time: std::time::Duration =
+            data.timer_controller.get_time() + Duration::from_millis(999);
         if self.time != time
             || self.timer_running != data.timer_running
             || self.priority != data.priority
@@ -164,14 +165,23 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
                 color
             };
 
-            self.timer_0_widget
-                .render(digit_to_str(timer_m % 10), color, &mut self.texture_cache);
+            self.timer_0_widget.render(
+                digit_to_str(timer_m % 10),
+                color,
+                Some(&mut self.texture_cache),
+            );
             self.timer_1_widget
-                .render(colon, colon_color, &mut self.texture_cache);
-            self.timer_2_widget
-                .render(digit_to_str(timer_s / 10), color, &mut self.texture_cache);
-            self.timer_3_widget
-                .render(digit_to_str(timer_s % 10), color, &mut self.texture_cache);
+                .render(colon, colon_color, Some(&mut self.texture_cache));
+            self.timer_2_widget.render(
+                digit_to_str(timer_s / 10),
+                color,
+                Some(&mut self.texture_cache),
+            );
+            self.timer_3_widget.render(
+                digit_to_str(timer_s % 10),
+                color,
+                Some(&mut self.texture_cache),
+            );
             self.updated = false;
         }
         self.timer_0_widget.draw();

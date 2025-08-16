@@ -47,7 +47,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         if self.updated {
             let period_text: String = format!("{}", self.period % 10);
             self.period_widget
-                .render(period_text, colors::PERIOD, &mut self.texture_cache);
+                .render(period_text, colors::PERIOD, Some(&mut self.texture_cache));
             self.updated = false;
         }
         self.period_widget.draw();

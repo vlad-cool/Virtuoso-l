@@ -202,7 +202,9 @@ impl ConsoleBackend {
             }
         }
 
-        self.context.match_info_modified_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.context
+            .match_info_modified_count
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 
     fn print_field(&self, field: Field) {
