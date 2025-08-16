@@ -1,7 +1,7 @@
-use gpio_cdev::{Chip, Line, Error as GpioError};
+use gpio_cdev::{Chip, Error as GpioError, Line};
+use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use once_cell::sync::Lazy;
 use std::sync::Mutex;
 
 static CHIP_CACHE: Lazy<Mutex<HashMap<PathBuf, Chip>>> = Lazy::new(|| Mutex::new(HashMap::new()));

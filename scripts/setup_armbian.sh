@@ -1,4 +1,5 @@
 #!/bin/bash
+shopt -s dotglob
 
 echo DANGEROUS SCRIPT. MAKE SURE IMAGE WILL BE MOUNTED TO /dev/loop0
 sleep 10
@@ -16,6 +17,20 @@ sudo tee -a mnt/etc/fstab <<< "UUID=$UUID  /home/pi/Virtuoso  vfat  defaults,nof
 # mkdir -p mnt/home
 sudo mkdir -p mnt/home/pi
 sudo cp -r ../linux_assets/* mnt/home/pi
+chmod +x mnt/home/pi/setup.sh
+
+sudo tee mnt/etc/sudorers <<< 'Defaults        env_reset
+Defaults        mail_badpass
+Defaults        secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+Defaults        !requiretty
+Defaults        use_pty
+root    ALL=(ALL:ALL) ALL
+%admin  ALL=(ALL) ALL
+%sudo   ALL=(ALL:ALL) ALL
+@includedir /etc/sudoers.d
+pi ALL=(ALL) NOPASSWD: /usr/bin/plymouth
+pi ALL=(ALL) NOPASSWD: /home/pi/setup.sh'
+
 sudo umount mnt
 
 sudo mount /dev/loop0p2 mnt
@@ -29,3 +44,8 @@ sudo cp ../target/armv7-unknown-linux-gnueabihf/release/Virtuoso mnt/app
 sudo umount mnt
 
 sudo losetup -d /dev/loop0
+
+echo sudo image_exec -i $1 -p 1 -u bash <<< "chown -R pi:pi /home/pi"
+sudo image_exec -i $1 -p 1 -u bash <<< "chown -R pi:pi /home/pi
+chmod +x /home/pi/setup.sh"
+

@@ -44,9 +44,21 @@ impl modules::VirtuosoModule for LegacyBackend {
         let tx_clone: mpsc::Sender<InputData> = tx.clone();
         let logger_clone: Logger = self.logger.clone();
 
-        let gpio_line_weapon_0: Line = self.hw_config.weapon_0_pin.to_line().unwrap_with_logger(&self.logger);
-        let gpio_line_weapon_1: Line = self.hw_config.weapon_1_pin.to_line().unwrap_with_logger(&self.logger);
-        let gpio_line_weapon_btn: Line = self.hw_config.weapon_btn_pin.to_line().unwrap_with_logger(&self.logger);
+        let gpio_line_weapon_0: Line = self
+            .hw_config
+            .weapon_0_pin
+            .to_line()
+            .unwrap_with_logger(&self.logger);
+        let gpio_line_weapon_1: Line = self
+            .hw_config
+            .weapon_1_pin
+            .to_line()
+            .unwrap_with_logger(&self.logger);
+        let gpio_line_weapon_btn: Line = self
+            .hw_config
+            .weapon_btn_pin
+            .to_line()
+            .unwrap_with_logger(&self.logger);
 
         thread::spawn(move || {
             pins_handler(
@@ -60,7 +72,11 @@ impl modules::VirtuosoModule for LegacyBackend {
 
         let tx_clone: mpsc::Sender<InputData> = tx.clone();
         let logger_clone: Logger = self.logger.clone();
-        let ir_line: Line = self.hw_config.ir_pin.to_line().unwrap_with_logger(&self.logger);
+        let ir_line: Line = self
+            .hw_config
+            .ir_pin
+            .to_line()
+            .unwrap_with_logger(&self.logger);
         thread::spawn(move || {
             rc5_receiever(tx_clone, logger_clone, ir_line);
         });

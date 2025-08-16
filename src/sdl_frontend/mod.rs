@@ -101,26 +101,57 @@ impl SdlFrontend {
 
 impl VirtuosoModule for SdlFrontend {
     fn run(self) {
-        let sdl_context: sdl2::Sdl = sdl2::init().unwrap_with_logger(&self.logger);
-        let video_subsystem: sdl2::VideoSubsystem =
-            sdl_context.video().unwrap_with_logger(&self.logger);
-        let ttf_context: sdl2::ttf::Sdl2TtfContext = sdl2::ttf::init()
-            .map_err(|e| e.to_string())
-            .unwrap_with_logger(&self.logger);
+        let sdl_context: sdl2::Sdl = match sdl2::init() {
+            Ok(sdl_context) => sdl_context,
+            Err(err) => {
+                self.logger
+                    .critical_error(format!("Failed to init sdl, error: {err}"));
+                return;
+            }
+        };
 
-        let window: Window = video_subsystem
+        let video_subsystem: sdl2::VideoSubsystem = match sdl_context.video() {
+            Ok(video_subsystem) => video_subsystem,
+            Err(err) => {
+                self.logger
+                    .critical_error(format!("Failed to create video subsystem, error: {err}"));
+                return;
+            }
+        };
+
+        let ttf_context: sdl2::ttf::Sdl2TtfContext = match sdl2::ttf::init() {
+            Ok(ttf_context) => ttf_context,
+            Err(err) => {
+                self.logger
+                    .critical_error(format!("Failed to init ttf context, error: {err}"));
+                return;
+            }
+        };
+
+        let window: Window = match video_subsystem
             .window(
                 "Virtuoso",
                 self.layout.background.width as u32,
                 self.layout.background.height as u32,
             )
             .build()
-            .unwrap_with_logger(&self.logger);
+        {
+            Ok(window) => window,
+            Err(err) => {
+                self.logger
+                    .critical_error(format!("Failed to create window, error: {err}"));
+                return;
+            }
+        };
 
-        let canvas: Canvas<Window> = window
-            .into_canvas()
-            .build()
-            .unwrap_with_logger(&self.logger);
+        let canvas = match window.into_canvas().build() {
+            Ok(canvas) => canvas,
+            Err(err) => {
+                self.logger
+                    .critical_error(format!("Failed to create canvas, error: {err}"));
+                return;
+            }
+        };
 
         let canvas: Rc<RefCell<Canvas<Window>>> = Rc::new(RefCell::new(canvas));
 

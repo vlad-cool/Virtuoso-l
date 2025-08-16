@@ -65,17 +65,9 @@ pub struct LegacyBackendConfig {
     pub uart_port: PathBuf,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
-#[cfg(feature = "repeater")]
-pub enum RepeaterRole {
-    Transmitter,
-    Receiver,
-}
-
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "repeater")]
 pub struct RepeaterConfig {
-    pub role: RepeaterRole,
     pub uart_port: PathBuf,
     pub uart_speed: usize,
 }
@@ -170,20 +162,12 @@ impl HardwareConfig {
                 (false, true, false) => Resolution::Res1920X480,
                 (false, false, true) => Resolution::Res1920X360,
                 (_, _, _) => {
-                    logger.error(format!("More than one resolution selected: 1920x550: {res_1920x550},1920x480: {res_1920x480},1920x360: {res_1920x360},Falling back to 1920x360"));
+                    logger.error(format!("More than one resolution selected: 1920x550: {res_1920x550}, 1920x480: {res_1920x480}, 1920x360: {res_1920x360}, Falling back to 1920x360"));
                     Resolution::Res1920X360
                 }
             };
             (resolution, swap_sides)
         };
-
-        #[cfg(all(feature = "sdl_frontend", feature = "repeater"))]
-        let repeater_role: RepeaterRole = match resolution {
-            Resolution::Res1920X1080 => RepeaterRole::Receiver,
-            _ => RepeaterRole::Transmitter,
-        };
-        #[cfg(not(feature = "sdl_frontend"))]
-        let repeater_role: RepeaterRole = RepeaterRole::Transmitter;
 
         Self {
             force_file: None,
@@ -210,7 +194,6 @@ impl HardwareConfig {
             },
             #[cfg(feature = "repeater")]
             repeater: RepeaterConfig {
-                role: repeater_role,
                 uart_port: "/dev/ttyS3".into(),
                 uart_speed: 115200,
             },
@@ -228,8 +211,8 @@ impl HardwareConfig {
                 let force_file: bool = file_config.force_file.unwrap_or(false);
 
                 if force_file {
-                    file_config.write_config(logger);
                     if file_config.reinit {
+                        file_config.write_config(logger);
                         file_config.configure_os(logger);
                     }
                     file_config

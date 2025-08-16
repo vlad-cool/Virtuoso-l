@@ -10,16 +10,17 @@ use crate::match_info::MatchInfo;
 use crate::modules;
 use crate::virtuoso_logger::Logger;
 
-const RECV_TIMEOUT: Duration = Duration::from_micros(1000);
+const RECV_TIMEOUT: Duration = Duration::from_micros(5000);
 const RESERVED_CAPACITY: usize = 256;
 
-const RECEIEVE_ATTEMPTS: u32 = 4;
+const RECEIVE_ATTEMPTS: u32 = 4;
 
 const HEADER_BYTE: u8 = 0xA5;
 const MAGIC_BYTE: u8 = 0xFA;
 const END_BYTE: u8 = 0xFB;
 const END_BYTE_REPLACEMENT: u8 = 0xFC;
-const SKIP_BYTE: u8 = 0x01;
+const SKIP_BYTE: u8 = 0x01; // Byte that receiver automatically add at the end of frame
+const SKIP_BYTE_REPLACEMENT: u8 = 0xFD;
 
 pub struct Repeater {
     match_info: Arc<Mutex<MatchInfo>>,
@@ -32,9 +33,17 @@ pub struct Repeater {
 
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 enum Message {
-    Ack(u32),
-    Err(u32),
+    Request(u32),
     MatchInfo(MatchInfo),
+}
+
+impl std::fmt::Display for Message {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Message::Request(n) => write!(f, "request [{n}]"),
+            Message::MatchInfo(_) => write!(f, "match info"),
+        }
+    }
 }
 
 enum RecvError {
@@ -52,38 +61,35 @@ impl modules::VirtuosoModule for Repeater {
             for _ in 0..3 {
                 match self.receive() {
                     Ok(Message::MatchInfo(match_info)) => {
+                        self.logger
+                            .debug(format!("Got match info [{}]", match_info.modified_count));
                         self.modified_count = match_info.modified_count;
                         self.match_info.lock().unwrap().clone_from(&match_info);
-                        let _ = self.transmit(&Message::Ack(self.modified_count));
                     }
-                    Ok(Message::Ack(n)) => {
-                        self.modified_count = n;
+                    Ok(Message::Request(n)) => {
+                        let match_info: std::sync::MutexGuard<'_, MatchInfo> =
+                            self.match_info.lock().unwrap();
+                        if n < match_info.modified_count {
+                            let match_info_cloned: MatchInfo = match_info.clone();
+                            std::mem::drop(match_info);
+                            let _ = self.transmit(&Message::MatchInfo(match_info_cloned));
+                        }
                     }
-                    Ok(Message::Err(n)) => {
-                        self.modified_count = n.wrapping_sub(1);
-                        self.logger.error("Got err message".to_string());
-                    }
-                    Err(RecvError::BadHeader) => {
-                        let _ = self.transmit(&Message::Err(self.modified_count));
-                        self.logger
-                            .error("Receiver got wrong magic number in header".to_string())
-                    }
+                    Err(RecvError::BadHeader) => self
+                        .logger
+                        .error("Receiver got packet with wrong header byte".to_string()),
                     Err(RecvError::BadChecksum) => {
-                        let _ = self.transmit(&Message::Err(self.modified_count));
                         self.logger
                             .error("Receiver got message with bad checksum".to_string());
                     }
                     Err(RecvError::BadStream) => {
-                        let _ = self.transmit(&Message::Err(self.modified_count));
                         self.logger
                             .error("Receiver did not get enough data to decode".to_string());
                     }
                     Err(RecvError::DeserializationError) => {
-                        let _ = self.transmit(&Message::Err(self.modified_count));
                         self.logger.error("Receiver got bad message".to_string());
                     }
                     Err(RecvError::SerialError) => {
-                        let _ = self.transmit(&Message::Err(self.modified_count));
                         self.logger.error("Receiver cannot get message".to_string());
                     }
                     Err(RecvError::Timeout) => {
@@ -93,19 +99,8 @@ impl modules::VirtuosoModule for Repeater {
             }
 
             {
-                let match_info: MatchInfo = self.match_info.lock().unwrap().clone();
-                let new_modified_count: u32 = match_info.modified_count;
-                if self.modified_count != new_modified_count {
-                    let message: Message = Message::MatchInfo(match_info);
-                    self.logger.info(format!(
-                        "Sending match info with modified count == {new_modified_count}"
-                    ));
-
-                    self.modified_count = match self.transmit(&message) {
-                        Ok(_) => new_modified_count,
-                        Err(_) => self.modified_count,
-                    }
-                }
+                let modified_count = self.match_info.lock().unwrap().modified_count;
+                let _ = self.transmit(&Message::Request(modified_count));
             }
 
             thread::sleep(Duration::from_millis(10));
@@ -171,37 +166,49 @@ impl Repeater {
     fn decode_buffer(&mut self) {
         self.raw_buffer.clear();
 
-        let mut i: usize = 0;
+        let mut magic_byte: bool = false;
 
-        while i < self.encoded_buffer.len() {
-            let byte: u8 = self.encoded_buffer[i];
+        // while i < self.encoded_buffer.len() {
+        for byte in &self.encoded_buffer {
+            let byte: u8 = *byte;
 
-            match byte {
-                MAGIC_BYTE => {
-                    if i == self.encoded_buffer.len() {
-                        break;
-                    }
-                    i += 1;
-                    let byte: u8 = self.encoded_buffer[i];
-                    match byte {
-                        END_BYTE_REPLACEMENT => {
-                            self.raw_buffer.push(END_BYTE);
-                        }
-                        byte => {
-                            self.raw_buffer.push(byte);
-                        }
-                    }
-                }
-                END_BYTE => {
-                    break;
-                }
-                SKIP_BYTE => {}
-                byte => {
-                    self.raw_buffer.push(byte);
-                }
+            if byte == SKIP_BYTE {
+                continue;
             }
 
-            i += 1;
+            if magic_byte {
+                match byte {
+                    END_BYTE_REPLACEMENT => {
+                        self.raw_buffer.push(END_BYTE);
+                    }
+                    SKIP_BYTE_REPLACEMENT => {
+                        self.raw_buffer.push(SKIP_BYTE);
+                    }
+                    MAGIC_BYTE => {
+                        self.raw_buffer.push(MAGIC_BYTE);
+                    }
+                    byte => {
+                        // Error, but we continue decoding not to make code too complex
+                        // (error will be caught on checksum matching)
+                        self.logger
+                            .warning(format!("Unexpected escaped byte, potential error"));
+                        self.raw_buffer.push(byte);
+                    }
+                }
+                magic_byte = false;
+            } else {
+                match byte {
+                    MAGIC_BYTE => {
+                        magic_byte = true;
+                    }
+                    END_BYTE => {
+                        break;
+                    }
+                    byte => {
+                        self.raw_buffer.push(byte);
+                    }
+                }
+            }
         }
     }
 
@@ -214,13 +221,21 @@ impl Repeater {
 
         loop {
             match self.port.read(&mut byte) {
+                Ok(0) => {
+                    self.logger.warning("Got empty buffer".to_string());
+                    if receive_attempts == RECEIVE_ATTEMPTS {
+                        return Err(RecvError::Timeout);
+                    }
+                    receive_attempts += 1;
+                    continue;
+                }
                 Ok(n) => {
                     self.encoded_buffer.extend_from_slice(&byte[0..n]);
                     receive_attempts = 0;
                 }
                 Err(err) => {
                     if err.kind() == std::io::ErrorKind::TimedOut {
-                        if receive_attempts == RECEIEVE_ATTEMPTS {
+                        if receive_attempts == RECEIVE_ATTEMPTS {
                             return Err(RecvError::Timeout);
                         }
                         receive_attempts += 1;
@@ -233,7 +248,7 @@ impl Repeater {
                 }
             };
 
-            if *self.encoded_buffer.last().unwrap() == END_BYTE {
+            if let Some(_) = self.encoded_buffer.iter().position(|&b| b == END_BYTE) {
                 break;
             }
         }
@@ -248,7 +263,7 @@ impl Repeater {
 
         self.encoded_buffer.clear();
 
-        if self.raw_buffer.len() <= 6 {
+        if self.raw_buffer.len() < 6 {
             return Err(RecvError::BadStream);
         }
 
@@ -289,7 +304,7 @@ impl Repeater {
                 }
                 SKIP_BYTE => {
                     self.encoded_buffer.push(MAGIC_BYTE);
-                    self.encoded_buffer.push(SKIP_BYTE);
+                    self.encoded_buffer.push(SKIP_BYTE_REPLACEMENT);
                 }
                 END_BYTE => {
                     self.encoded_buffer.push(MAGIC_BYTE);
@@ -304,6 +319,8 @@ impl Repeater {
     }
 
     fn transmit(&mut self, message: &Message) -> Result<(), ()> {
+        self.logger
+            .debug(format!("Transmitting message {}", message));
         let serialized_data: Vec<u8> = match postcard::to_stdvec(message) {
             Ok(data) => data,
             Err(err) => {
@@ -332,16 +349,24 @@ impl Repeater {
         self.logger
             .debug(format!("T Encoded buffer {:02X?}", self.encoded_buffer));
 
-        match self.port.write(&self.encoded_buffer) {
-            Ok(n) => {
-                self.logger.debug(format!("Transmitted {n} bytes"));
-            }
-            Err(err) => {
-                self.logger
-                    .error(format!("Failed to transmit, error: {err}"));
-                return Err(());
+        let mut offset: usize = 0;
+        while offset < self.encoded_buffer.len() {
+            match self.port.write(&self.encoded_buffer[offset..]) {
+                Ok(0) => {
+                    self.logger.error("Error: transmitted 0 bytes".to_string());
+                    return Err(());
+                }
+                Ok(n) => offset += n,
+                Err(err) => {
+                    self.logger
+                        .error(format!("Failed to transmit, error: {err}"));
+                    return Err(());
+                }
             }
         }
+        let _ = self.port.flush();
+
+        self.logger.debug(format!("Transmitted {offset} bytes"));
 
         Ok(())
     }

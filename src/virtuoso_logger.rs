@@ -6,8 +6,7 @@ use std::str::FromStr;
 use std::sync::{Arc, Mutex, mpsc};
 use std::time::Duration;
 
-use crate::VirtuosoConfig;
-use crate::virtuoso_config::LogLevelOption;
+use crate::virtuoso_config::{LogLevelOption, VirtuosoConfig};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 enum LogLevel {
@@ -69,7 +68,7 @@ impl Logger {
             message,
         };
         if let Err(err) = self.tx.send(LogCommand::LogMessage(msg)) {
-            eprintln!("Failed to senf message to logger, error: {err}");
+            eprintln!("Failed to send message to logger, error: {err}");
         }
     }
 

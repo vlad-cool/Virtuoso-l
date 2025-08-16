@@ -4,6 +4,7 @@ use std::thread;
 mod hw_config;
 mod match_info;
 mod modules;
+mod settings_menu;
 mod virtuoso_config;
 mod virtuoso_logger;
 
@@ -68,9 +69,7 @@ fn main() {
         Arc::clone(&match_info),
         Arc::clone(&config),
         &hw_config,
-        virtuoso_logger
-            .get_logger("Legacy backend".to_string())
-            .enable_debug(),
+        virtuoso_logger.get_logger("Legacy backend".to_string()),
     );
 
     #[cfg(feature = "gpio_frontend")]
@@ -104,7 +103,9 @@ fn main() {
     #[cfg(feature = "repeater")]
     let repeater = repeater::Repeater::new(
         Arc::clone(&match_info),
-        virtuoso_logger.get_logger("Repeater".to_string()),
+        virtuoso_logger
+            .get_logger("Repeater".to_string())
+            .enable_debug(),
         hw_config.clone(),
     );
     #[cfg(feature = "repeater")]

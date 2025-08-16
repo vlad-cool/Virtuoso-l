@@ -7,4 +7,4 @@ bar {
 
 default_border none
 
-exec /home/pi/Virtuoso/app/run.sh
+exec /home/pi/Virtuoso/app/Virtuoso
