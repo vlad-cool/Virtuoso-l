@@ -106,7 +106,7 @@ fn main() {
         context.with_logger(
             virtuoso_logger
                 .get_logger("Repeater".to_string())
-                .enable_debug(),
+                // .enable_debug(),
         ),
     );
     #[cfg(feature = "repeater")]

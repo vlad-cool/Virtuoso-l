@@ -24,6 +24,8 @@ mod widgets;
 mod auto_status;
 #[path = "main_screen/led_repeater.rs"]
 mod led_repeater;
+#[path = "settings_menu/menu.rs"]
+mod menu;
 #[path = "main_screen/message.rs"]
 mod message;
 #[path = "main_screen/passive_card.rs"]
@@ -187,6 +189,8 @@ impl VirtuosoModule for SdlFrontend {
         widgets.push(Box::new(timer::Drawer::new(widget_context.clone())));
         widgets.push(Box::new(weapon::Drawer::new(widget_context.clone())));
 
+        let mut settings_menu: menu::Drawer<'_> = menu::Drawer::new(widget_context.clone());
+
         canvas.borrow_mut().present();
 
         let mut event_pump: sdl2::EventPump = sdl_context
@@ -203,21 +207,33 @@ impl VirtuosoModule for SdlFrontend {
                 }
             }
 
-            let data: MutexGuard<'_, MatchInfo> = self
+            if self
                 .context
-                .match_info
-                .lock()
-                .unwrap_with_logger(&self.context.logger);
-            for widget in &mut widgets {
-                widget.update(&data);
-            }
-            std::mem::drop(data);
+                .settings_menu_shown
+                .load(std::sync::atomic::Ordering::Relaxed)
+            {
+                canvas.borrow_mut().clear();
+                settings_menu.update(&self.context.settings_menu.lock().unwrap());
+                settings_menu.render();
+                canvas.borrow_mut().present();
+                std::thread::sleep(Duration::from_millis(40));
+            } else {
+                let data: MutexGuard<'_, MatchInfo> = self
+                    .context
+                    .match_info
+                    .lock()
+                    .unwrap_with_logger(&self.context.logger);
+                for widget in &mut widgets {
+                    widget.update(&data);
+                }
+                std::mem::drop(data);
 
-            canvas.borrow_mut().clear();
-            for widget in &mut widgets {
-                widget.render();
+                canvas.borrow_mut().clear();
+                for widget in &mut widgets {
+                    widget.render();
+                }
+                canvas.borrow_mut().present();
             }
-            canvas.borrow_mut().present();
         }
     }
 }

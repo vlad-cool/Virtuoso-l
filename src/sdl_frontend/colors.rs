@@ -54,3 +54,13 @@ pub const PCARD_YELLOW: Color = Color::RGB(0xcc, 0xcc, 0x00);
 pub const PCARD_RED: Color = Color::RGB(0xe3, 0x1e, 0x24);
 pub const PCARD_BLACK: Color = Color::RGB(0x00, 0x00, 0x00);
 pub const PCARD_BLACK_FRAME: Color = Color::RGB(0xff, 0xff, 0xff);
+
+pub const MENU_HEADER_TEXT: Color = Color::RGB(0xff, 0xff, 0xff);
+
+pub const MENU_LABEL_FRAME: Color = Color::RGB(0xff, 0xff, 0xff);
+pub const MENU_LABEL_BACKGROUND: Color = Color::RGB(0x00, 0x00, 0x00);
+pub const MENU_LABEL_TEXT: Color = Color::RGB(0xff, 0xff, 0xff);
+
+pub const MENU_BUTTON_FRAME: Color = Color::RGB(0xff, 0xff, 0xff);
+pub const MENU_BUTTON_BACKGROUND: Color = Color::RGB(0x33, 0x33, 0x33);
+pub const MENU_BUTTON_TEXT: Color = Color::RGB(0xff, 0xff, 0xff);

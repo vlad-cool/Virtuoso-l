@@ -23,38 +23,27 @@ pub struct LabelTextureCache<'a> {
     cache: HashMap<LabelHashKey, (u32, u32, Rc<Option<Texture<'a>>>)>,
 }
 
-fn draw_label_texture<'a>(
-    key: LabelHashKey,
-    texture_creator: &'a TextureCreator<sdl2::video::WindowContext>,
+fn render_text<'a>(
+    text: &str,
+    color: Color,
     font: Rc<sdl2::ttf::Font<'a, 'a>>,
     logger: &Logger,
-) -> (u32, u32, Rc<Option<Texture<'a>>>) {
-    let text: String = key.text;
-
-    if text == "" {
-        let texture: Option<Texture<'a>> = None;
-        let width: u32 = 0;
-        let height: u32 = 0;
-        return (width, height, Rc::new(texture));
-    }
-
+) -> Surface<'a> {
     let mut surfaces: std::vec::Vec<sdl2::surface::Surface<'_>> = std::vec::Vec::new();
 
     let mut width: u32 = 0;
     let mut height: u32 = 0;
 
     for line in text.split("\n") {
-        let surface: sdl2::surface::Surface<'a> = font
-            .render(line)
-            .blended(key.color)
-            .unwrap_with_logger(logger);
+        let surface: sdl2::surface::Surface<'a> =
+            font.render(line).blended(color).unwrap_with_logger(logger);
 
         width = std::cmp::max(width, surface.width());
         height += surface.height();
         surfaces.push(surface);
     }
 
-    let mut text_surface: Surface<'static> = sdl2::surface::Surface::new(
+    let mut text_surface: Surface<'a> = sdl2::surface::Surface::new(
         width,
         height as u32,
         sdl2::pixels::PixelFormatEnum::RGBA8888,
@@ -74,6 +63,26 @@ fn draw_label_texture<'a>(
             .unwrap_with_logger(logger);
         y_pos += surface.height() as i32;
     }
+    text_surface
+}
+
+fn draw_label_texture<'a>(
+    key: LabelHashKey,
+    texture_creator: &'a TextureCreator<sdl2::video::WindowContext>,
+    font: Rc<sdl2::ttf::Font<'a, 'a>>,
+    logger: &Logger,
+) -> (u32, u32, Rc<Option<Texture<'a>>>) {
+    let text: String = key.text;
+
+    if text == "" {
+        let texture: Option<Texture<'a>> = None;
+        let width: u32 = 0;
+        let height: u32 = 0;
+        return (width, height, Rc::new(texture));
+    }
+
+    let text_surface: Surface<'_> =
+        render_text(text.as_str(), key.color, font, logger);
 
     let texture = Some(
         texture_creator
@@ -363,11 +372,7 @@ impl<'a> Card<'a> {
             )
             .unwrap_with_logger(self.logger);
 
-        let text_surface: sdl2::surface::Surface<'a> = self
-            .font
-            .render(text)
-            .blended(text_color)
-            .unwrap_with_logger(self.logger);
+        let text_surface: Surface<'_> = render_text(text, text_color, self.font.clone(), self.logger);
 
         let width: u32 = outer_card.width();
         let height: u32 = outer_card.height();

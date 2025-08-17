@@ -285,6 +285,35 @@ impl LegacyBackend {
 
                 //     match_info_data.
                 // }
+                IrCommands::ChangeWeapon => {
+                    if self.weapon_select_btn_pressed {
+                        self.context
+                            .settings_menu_shown
+                            .fetch_xor(true, std::sync::atomic::Ordering::Relaxed);
+                    }
+                }
+
+                IrCommands::AuxLL => {
+                    if self.context.settings_menu_shown.load(std::sync::atomic::Ordering::Relaxed) {
+                        self.context.settings_menu.lock().unwrap().prev();
+                    }
+                }
+                IrCommands::AuxRR => {
+                    if self.context.settings_menu_shown.load(std::sync::atomic::Ordering::Relaxed) {
+                        self.context.settings_menu.lock().unwrap().next();
+                    }
+                }
+                IrCommands::AuxL => {
+                    if self.context.settings_menu_shown.load(std::sync::atomic::Ordering::Relaxed) {
+                        self.context.settings_menu.lock().unwrap().get_item_mut().prev();
+                    }
+                }
+                IrCommands::AuxR => {
+                    if self.context.settings_menu_shown.load(std::sync::atomic::Ordering::Relaxed) {
+                        self.context.settings_menu.lock().unwrap().get_item_mut().next();
+                    }
+                }
+
                 _ => {}
             }
         }
@@ -597,6 +626,12 @@ enum IrCommands {
 
     PeriodIncrement,
 
+    AuxLL,
+    AuxL,
+    AuxM,
+    AuxR,
+    AuxRR,
+
     Unknown,
 }
 
@@ -632,6 +667,12 @@ impl IrCommands {
             10 => IrCommands::Reset,
 
             8 => IrCommands::PeriodIncrement,
+
+            20 => IrCommands::AuxLL,
+            23 => IrCommands::AuxL,
+            24 => IrCommands::AuxM,
+            22 => IrCommands::AuxR,
+            21 => IrCommands::AuxRR,
 
             _ => IrCommands::Unknown,
         }
@@ -715,6 +756,8 @@ fn rc5_receiever(tx: mpsc::Sender<InputData>, logger: Logger, line: gpio_cdev::L
                     command *= 2;
                     command += rc5_frame[i];
                 }
+
+                logger.info(format!("Got rc5 command {command}"));
 
                 tx.send(InputData::IrCommand(IrFrame {
                     new: toggle_bit != last_toggle_value,
