@@ -271,10 +271,20 @@ impl VirtuosoLogger {
 }
 
 pub trait LoggerUnwrap<T> {
+    fn log_err(self, logger: &Logger);
     fn unwrap_with_logger(self, logger: &Logger) -> T;
 }
 
 impl<T, E: std::fmt::Debug> LoggerUnwrap<T> for Result<T, E> {
+    fn log_err(self, logger: &Logger) {
+        match self {
+            Ok(_) => (),
+            Err(e) => {
+                logger.error(format!("logged error, error: {:?}", e));
+            }
+        }
+    }
+
     fn unwrap_with_logger(self, logger: &Logger) -> T {
         match self {
             Ok(val) => val,

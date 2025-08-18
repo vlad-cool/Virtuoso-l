@@ -554,6 +554,7 @@ pub struct MatchInfo {
     pub auto_timer_on: bool,
 
     pub cyrano_online: bool,
+    pub cyrano_active: bool,
 
     pub piste: String,
     pub competition_id: String,
@@ -599,6 +600,7 @@ impl MatchInfo {
             auto_timer_on: false,
 
             cyrano_online: false,
+            cyrano_active: false,
 
             piste: "".to_string(),
             competition_id: "".to_string(),

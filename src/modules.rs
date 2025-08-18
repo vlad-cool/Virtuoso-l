@@ -1,11 +1,19 @@
 use std::sync::atomic::{AtomicBool, AtomicU32};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, mpsc};
 
 pub use crate::hw_config::HardwareConfig;
 pub use crate::match_info::MatchInfo;
 pub use crate::settings_menu::SettingsMenu;
 pub use crate::virtuoso_config::VirtuosoConfig;
 pub use crate::virtuoso_logger::Logger;
+
+#[derive(Clone, Copy, Debug)]
+pub enum CyranoCommand {
+    CyranoNext,
+    CyranoPrev,
+    CyranoBegin,
+    CyranoEnd,
+}
 
 #[derive(Clone)]
 pub struct VirtuosoModuleContext {
@@ -18,6 +26,9 @@ pub struct VirtuosoModuleContext {
 
     pub settings_menu_shown: Arc<AtomicBool>,
     pub settings_menu: Arc<Mutex<SettingsMenu>>,
+
+    pub cyrano_command_tx: mpsc::Sender<CyranoCommand>,
+    pub cyrano_command_rx: Arc::<Mutex<Option<mpsc::Receiver<CyranoCommand>>>>,
 }
 
 impl VirtuosoModuleContext {
@@ -28,6 +39,8 @@ impl VirtuosoModuleContext {
         match_info: MatchInfo,
         settings_menu: SettingsMenu,
     ) -> Self {
+        let (tx, rx) = mpsc::channel::<CyranoCommand>();
+
         Self {
             logger,
             config: Arc::new(Mutex::new(config)),
@@ -38,6 +51,9 @@ impl VirtuosoModuleContext {
 
             settings_menu_shown: Arc::new(AtomicBool::new(false)),
             settings_menu: Arc::new(Mutex::new(settings_menu)),
+
+            cyrano_command_tx: tx,
+            cyrano_command_rx: Arc::new(Mutex::new(Some(rx))),
         }
     }
 

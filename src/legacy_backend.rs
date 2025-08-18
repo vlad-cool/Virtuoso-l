@@ -294,23 +294,69 @@ impl LegacyBackend {
                 }
 
                 IrCommands::AuxLL => {
-                    if self.context.settings_menu_shown.load(std::sync::atomic::Ordering::Relaxed) {
+                    if self
+                        .context
+                        .settings_menu_shown
+                        .load(std::sync::atomic::Ordering::Relaxed)
+                    {
                         self.context.settings_menu.lock().unwrap().prev();
+                    } else {
+                        self.context
+                            .cyrano_command_tx
+                            .send(modules::CyranoCommand::CyranoPrev)
+                            .log_err(&self.context.logger);
                     }
                 }
                 IrCommands::AuxRR => {
-                    if self.context.settings_menu_shown.load(std::sync::atomic::Ordering::Relaxed) {
+                    if self
+                        .context
+                        .settings_menu_shown
+                        .load(std::sync::atomic::Ordering::Relaxed)
+                    {
                         self.context.settings_menu.lock().unwrap().next();
+                    } else {
+                        self.context
+                            .cyrano_command_tx
+                            .send(modules::CyranoCommand::CyranoNext)
+                            .log_err(&self.context.logger);
                     }
                 }
                 IrCommands::AuxL => {
-                    if self.context.settings_menu_shown.load(std::sync::atomic::Ordering::Relaxed) {
-                        self.context.settings_menu.lock().unwrap().get_item_mut().prev();
+                    if self
+                        .context
+                        .settings_menu_shown
+                        .load(std::sync::atomic::Ordering::Relaxed)
+                    {
+                        self.context
+                            .settings_menu
+                            .lock()
+                            .unwrap()
+                            .get_item_mut()
+                            .prev();
+                    } else {
+                        self.context
+                            .cyrano_command_tx
+                            .send(modules::CyranoCommand::CyranoBegin)
+                            .log_err(&self.context.logger);
                     }
                 }
                 IrCommands::AuxR => {
-                    if self.context.settings_menu_shown.load(std::sync::atomic::Ordering::Relaxed) {
-                        self.context.settings_menu.lock().unwrap().get_item_mut().next();
+                    if self
+                        .context
+                        .settings_menu_shown
+                        .load(std::sync::atomic::Ordering::Relaxed)
+                    {
+                        self.context
+                            .settings_menu
+                            .lock()
+                            .unwrap()
+                            .get_item_mut()
+                            .next();
+                    } else {
+                        self.context
+                            .cyrano_command_tx
+                            .send(modules::CyranoCommand::CyranoEnd)
+                            .log_err(&self.context.logger);
                     }
                 }
 
