@@ -186,11 +186,8 @@ impl LegacyBackend {
             match_info_data.passive_timer.reset();
         }
 
-        // match_info_data.modified_count += 1;
         std::mem::drop(match_info_data);
-        self.context
-            .match_info_modified_count
-            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.context.match_info_data_updated();
     }
 
     fn apply_pins_data(&mut self, msg: PinsData) {
@@ -205,9 +202,7 @@ impl LegacyBackend {
         };
 
         std::mem::drop(match_info_data);
-        self.context
-            .match_info_modified_count
-            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.context.match_info_data_updated();
 
         self.weapon_select_btn_pressed = msg.weapon_select_btn;
     }
@@ -223,6 +218,16 @@ impl LegacyBackend {
             config.write_config();
         } else if msg.new && msg.address == self.rc5_address {
             match msg.command {
+                IrCommands::FlipSides => {
+                    let mut match_info_data: MutexGuard<'_, modules::MatchInfo> =
+                        self.context.match_info.lock().unwrap();
+                    (match_info_data.left_fencer, match_info_data.right_fencer) = (
+                        match_info_data.right_fencer.clone(),
+                        match_info_data.left_fencer.clone(),
+                    );
+                    std::mem::drop(match_info_data);
+                    self.context.match_info_data_updated();
+                }
                 IrCommands::AutoScoreOnOff => {
                     self.auto_status_controller
                         .set_field(AutoStatusFields::Score);
@@ -245,9 +250,7 @@ impl LegacyBackend {
                     match_info_data.left_fencer.warning_card.inc();
 
                     std::mem::drop(match_info_data);
-                    self.context
-                        .match_info_modified_count
-                        .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    self.context.match_info_data_updated();
                 }
                 IrCommands::RightPenaltyCard => {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
@@ -255,9 +258,7 @@ impl LegacyBackend {
                     match_info_data.right_fencer.warning_card.inc();
 
                     std::mem::drop(match_info_data);
-                    self.context
-                        .match_info_modified_count
-                        .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    self.context.match_info_data_updated();
                 }
                 IrCommands::LeftPassiveCard => {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
@@ -265,9 +266,7 @@ impl LegacyBackend {
                     match_info_data.left_fencer.passive_card.inc();
 
                     std::mem::drop(match_info_data);
-                    self.context
-                        .match_info_modified_count
-                        .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    self.context.match_info_data_updated();
                 }
                 IrCommands::RightPassiveCard => {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
@@ -275,9 +274,7 @@ impl LegacyBackend {
                     match_info_data.right_fencer.passive_card.inc();
 
                     std::mem::drop(match_info_data);
-                    self.context
-                        .match_info_modified_count
-                        .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    self.context.match_info_data_updated();
                 }
                 // IrCommands::FlipSides => {
                 //     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
@@ -407,9 +404,7 @@ impl LegacyBackend {
         match_info_data.display_message_updated = Instant::now();
 
         std::mem::drop(match_info_data);
-        self.context
-            .match_info_modified_count
-            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.context.match_info_data_updated();
     }
 }
 

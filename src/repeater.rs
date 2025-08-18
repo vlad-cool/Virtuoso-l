@@ -70,10 +70,7 @@ impl modules::VirtuosoModule for Repeater {
                     Ok(Message::Request(n)) => {
                         let match_info: std::sync::MutexGuard<'_, MatchInfo> =
                             self.context.match_info.lock().unwrap();
-                        let modified_count: u32 = self
-                            .context
-                            .match_info_modified_count
-                            .load(std::sync::atomic::Ordering::Relaxed);
+                        let modified_count: u32 = self.context.get_modified_count();
                         if n < modified_count {
                             let match_info_cloned: MatchInfo = match_info.clone();
                             std::mem::drop(match_info);
@@ -112,10 +109,7 @@ impl modules::VirtuosoModule for Repeater {
             }
 
             {
-                let modified_count: u32 = self
-                    .context
-                    .match_info_modified_count
-                    .load(std::sync::atomic::Ordering::Relaxed);
+                let modified_count: u32 = self.context.get_modified_count();
                 let _ = self.transmit(&Message::Request(modified_count));
             }
 
@@ -134,9 +128,7 @@ impl Repeater {
             flow_control: serial::FlowControl::FlowNone,
         };
 
-        let modified_count: u32 = context
-            .match_info_modified_count
-            .load(std::sync::atomic::Ordering::Relaxed);
+        let modified_count: u32 = context.get_modified_count();
 
         let mut port: serial::unix::TTYPort =
             match serial::open(&context.hw_config.repeater.uart_port) {

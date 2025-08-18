@@ -21,14 +21,14 @@ pub struct VirtuosoModuleContext {
     pub config: Arc<Mutex<VirtuosoConfig>>,
     pub hw_config: HardwareConfig,
 
-    pub match_info_modified_count: Arc<AtomicU32>,
+    match_info_modified_count: Arc<AtomicU32>,
     pub match_info: Arc<Mutex<MatchInfo>>,
 
     pub settings_menu_shown: Arc<AtomicBool>,
     pub settings_menu: Arc<Mutex<SettingsMenu>>,
 
     pub cyrano_command_tx: mpsc::Sender<CyranoCommand>,
-    pub cyrano_command_rx: Arc::<Mutex<Option<mpsc::Receiver<CyranoCommand>>>>,
+    pub cyrano_command_rx: Arc<Mutex<Option<mpsc::Receiver<CyranoCommand>>>>,
 }
 
 impl VirtuosoModuleContext {
@@ -61,6 +61,16 @@ impl VirtuosoModuleContext {
         let mut res: VirtuosoModuleContext = self.clone();
         res.logger = logger;
         res
+    }
+
+    pub fn match_info_data_updated(&mut self) {
+        self.match_info_modified_count
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    pub fn get_modified_count(&self) -> u32 {
+        self.match_info_modified_count
+            .load(std::sync::atomic::Ordering::Relaxed)
     }
 }
 

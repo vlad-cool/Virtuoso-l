@@ -474,7 +474,7 @@ impl TimerController {
     }
 
     pub fn get_time(&self) -> Duration {
-        Duration::from_millis(self.get_millis() as u64)
+        Duration::from_millis(self.get_millis() as u64 + 999)
     }
 }
 

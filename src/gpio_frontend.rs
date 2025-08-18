@@ -4,7 +4,6 @@ use std::thread;
 use std::time::Duration;
 
 use crate::match_info;
-use crate::match_info::Priority;
 use crate::modules::{self, VirtuosoModuleContext};
 use crate::virtuoso_logger::LoggerUnwrap;
 
@@ -52,23 +51,20 @@ impl modules::VirtuosoModule for GpioFrontend {
             .unwrap_with_logger(logger);
 
         loop {
-            let new_modified_count: u32 = self
-                .context
-                .match_info_modified_count
-                .load(std::sync::atomic::Ordering::Relaxed);
+            let new_modified_count: u32 = self.context.get_modified_count();
 
             if new_modified_count != self.modified_count {
                 let match_info_data: MutexGuard<'_, match_info::MatchInfo> =
                     self.context.match_info.lock().unwrap();
 
-                // let left_color_led_state: bool = match_info_data.left_fencer.color_light;
-                // let right_color_led_state: bool = match_info_data.right_fencer.color_light;
-                let left_color_led_state: bool = match_info_data.left_fencer.color_light
-                    && (match_info_data.priority != Priority::Left
-                        || match_info_data.priority_updated.elapsed() < PRIORITY_LED_DELAY);
-                let right_color_led_state: bool = match_info_data.right_fencer.color_light
-                    && (match_info_data.priority != Priority::Right
-                        || match_info_data.priority_updated.elapsed() < PRIORITY_LED_DELAY);
+                let left_color_led_state: bool = match_info_data.left_fencer.color_light;
+                let right_color_led_state: bool = match_info_data.right_fencer.color_light;
+                // let left_color_led_state: bool = match_info_data.left_fencer.color_light
+                //     && (match_info_data.priority != Priority::Left
+                //         || match_info_data.priority_updated.elapsed() < PRIORITY_LED_DELAY);
+                // let right_color_led_state: bool = match_info_data.right_fencer.color_light
+                //     && (match_info_data.priority != Priority::Right
+                //         || match_info_data.priority_updated.elapsed() < PRIORITY_LED_DELAY);
                 let left_white_led_state: bool = match_info_data.left_fencer.white_light;
                 let right_white_led_state: bool = match_info_data.right_fencer.white_light;
 

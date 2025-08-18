@@ -169,13 +169,7 @@ impl<'a> Drawer<'a> {
                     }
                 }
             } else {
-                self.elements_widgets[i].render(
-                    " ",
-                    0,
-                    BACKGROUND,
-                    BACKGROUND,
-                    BACKGROUND,
-                );
+                self.elements_widgets[i].render(" ", 0, BACKGROUND, BACKGROUND, BACKGROUND);
             }
         }
         self.header_widget

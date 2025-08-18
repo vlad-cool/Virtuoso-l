@@ -22,6 +22,12 @@ mod widgets;
 
 #[path = "main_screen/auto_status.rs"]
 mod auto_status;
+#[path = "main_screen/cyrano/cyrano_status.rs"]
+mod cyrano_status;
+#[path = "main_screen/cyrano/fencer_name.rs"]
+mod fencer_name;
+#[path = "main_screen/cyrano/fencer_nation.rs"]
+mod fencer_nation;
 #[path = "main_screen/led_repeater.rs"]
 mod led_repeater;
 #[path = "settings_menu/menu.rs"]
@@ -188,6 +194,10 @@ impl VirtuosoModule for SdlFrontend {
         widgets.push(Box::new(score::Drawer::new(widget_context.clone())));
         widgets.push(Box::new(timer::Drawer::new(widget_context.clone())));
         widgets.push(Box::new(weapon::Drawer::new(widget_context.clone())));
+
+        widgets.push(Box::new(fencer_name::Drawer::new(widget_context.clone())));
+        widgets.push(Box::new(fencer_nation::Drawer::new(widget_context.clone())));
+        widgets.push(Box::new(cyrano_status::Drawer::new(widget_context.clone())));
 
         let mut settings_menu: menu::Drawer<'_> = menu::Drawer::new(widget_context.clone());
 

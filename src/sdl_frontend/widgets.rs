@@ -81,8 +81,7 @@ fn draw_label_texture<'a>(
         return (width, height, Rc::new(texture));
     }
 
-    let text_surface: Surface<'_> =
-        render_text(text.as_str(), key.color, font, logger);
+    let text_surface: Surface<'_> = render_text(text.as_str(), key.color, font, logger);
 
     let texture = Some(
         texture_creator
@@ -355,7 +354,7 @@ impl<'a> Card<'a> {
             card_color,
             self.rect_width - border_width * 2,
             self.rect_height - border_width * 2,
-            radius,
+            radius - border_width,
             self.logger,
         );
 
@@ -372,7 +371,8 @@ impl<'a> Card<'a> {
             )
             .unwrap_with_logger(self.logger);
 
-        let text_surface: Surface<'_> = render_text(text, text_color, self.font.clone(), self.logger);
+        let text_surface: Surface<'_> =
+            render_text(text, text_color, self.font.clone(), self.logger);
 
         let width: u32 = outer_card.width();
         let height: u32 = outer_card.height();

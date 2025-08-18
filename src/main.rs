@@ -102,13 +102,10 @@ fn main() {
     }
 
     #[cfg(feature = "repeater")]
-    let repeater: Result<repeater::Repeater, String> = repeater::Repeater::new(
-        context.with_logger(
-            virtuoso_logger
-                .get_logger("Repeater".to_string())
-                // .enable_debug(),
-        ),
-    );
+    let repeater: Result<repeater::Repeater, String> =
+        repeater::Repeater::new(context.with_logger(
+            virtuoso_logger.get_logger("Repeater".to_string()), // .enable_debug(),
+        ));
     #[cfg(feature = "repeater")]
     match &repeater {
         Ok(_) => {}
