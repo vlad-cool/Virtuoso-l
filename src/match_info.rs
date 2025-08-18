@@ -565,10 +565,10 @@ pub struct MatchInfo {
     pub time: String,
     pub display_message: String,
     #[serde(
-        serialize_with = "serialize_instant_as_elapsed",
-        deserialize_with = "deserialize_duration_to_instant"
+        serialize_with = "serialize_optional_instant_as_elapsed",
+        deserialize_with = "deserialize_optional_duration_to_instant"
     )]
-    pub display_message_updated: Instant,
+    pub display_message_updated: Option<Instant>,
     // pub stopwatch: String,
     pub competition_type: Option<CompetitionType>,
 
@@ -611,7 +611,7 @@ impl MatchInfo {
 
             time: "".to_string(),
             display_message: "".to_string(),
-            display_message_updated: Instant::now(),
+            display_message_updated: None,
             // stopwatch: "".to_string(),
             competition_type: None,
 
@@ -639,4 +639,33 @@ where
 {
     let duration: Duration = Duration::deserialize(deserializer)?;
     Ok(Instant::now() - duration)
+}
+
+fn serialize_optional_instant_as_elapsed<S>(
+    instant: &Option<Instant>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    if let Some(instant) = instant {
+        let duration: Duration = instant.elapsed();
+        duration.serialize(serializer)
+    } else {
+        None::<Duration>.serialize(serializer)
+    }
+}
+
+fn deserialize_optional_duration_to_instant<'de, D>(
+    deserializer: D,
+) -> Result<Option<Instant>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let duration: Option<Duration> = Option::<Duration>::deserialize(deserializer)?;
+    if let Some(duration) = duration {
+        Ok(Some(Instant::now() - duration))
+    } else {
+        Ok(None)
+    }
 }

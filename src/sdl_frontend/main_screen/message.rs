@@ -1,7 +1,7 @@
 use sdl2;
 use sdl2::ttf::Font;
 use std::rc::Rc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::match_info::MatchInfo;
 use crate::sdl_frontend::colors;
@@ -13,12 +13,12 @@ pub struct Drawer<'a> {
     texture_cache: LabelTextureCache<'a>,
 
     message: String,
-    display: bool,
+    update_time: Option<Instant>,
     message_updated: bool,
 }
 
 impl<'a> Drawer<'a> {
-    const MESSAGE_DISPLAY_TIME: Duration = Duration::from_secs(2);
+    pub const MESSAGE_DISPLAY_TIME: Duration = Duration::from_secs(2);
 
     pub fn new(context: WidgetContext<'a>) -> Self {
         let font: Rc<Font<'_, '_>> = context.get_font(context.layout.timer_text.font_size);
@@ -33,17 +33,16 @@ impl<'a> Drawer<'a> {
             ),
             texture_cache: LabelTextureCache::new(),
             message: "".to_string(),
-            display: false,
-            message_updated: true,
+            update_time: None,
+            message_updated: false,
         }
     }
 }
 
 impl<'a> VirtuosoWidget for Drawer<'a> {
     fn update(&mut self, data: &MatchInfo) {
-        self.display = data.display_message_updated.elapsed() < Self::MESSAGE_DISPLAY_TIME;
-
         if self.message != data.display_message {
+            self.update_time = data.display_message_updated;
             self.message = data.display_message.clone();
             self.message_updated = true;
         }
@@ -58,8 +57,11 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             );
             self.message_updated = false;
         }
-        if self.display {
+        if let Some(update_time) = self.update_time
+            && update_time.elapsed() < Self::MESSAGE_DISPLAY_TIME
+        {
             self.message_widget.draw();
+            eprintln!("N>NJHJGFD");
         }
     }
 }

@@ -401,7 +401,7 @@ impl LegacyBackend {
         }
 
         match_info_data.display_message = format!("{} {}", modified_field, new_state);
-        match_info_data.display_message_updated = Instant::now();
+        match_info_data.display_message_updated = Some(Instant::now());
 
         std::mem::drop(match_info_data);
         self.context.match_info_data_updated();

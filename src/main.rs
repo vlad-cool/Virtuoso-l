@@ -39,6 +39,7 @@ fn main() {
     compile_error!("Video recorder feature is not implemented yet");
 
     /*
+    TODO Auto status saving
     TODO Properly swap sides
     TODO Cyrano softer error
     TODO Cyrano

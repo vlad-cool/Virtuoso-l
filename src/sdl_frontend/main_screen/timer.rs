@@ -1,12 +1,12 @@
 use sdl2;
 use sdl2::ttf::Font;
 use std::rc::Rc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::match_info::{MatchInfo, Priority};
-use crate::sdl_frontend::colors;
 use crate::sdl_frontend::widgets::{Label, LabelHashKey, LabelTextureCache};
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
+use crate::sdl_frontend::{colors, message};
 
 fn digit_to_str(digit: u64) -> String {
     match digit {
@@ -35,6 +35,7 @@ pub struct Drawer<'a> {
     timer_running: bool,
     priority: Priority,
     updated: bool,
+    message_update_time: Option<Instant>,
 }
 
 impl<'a> Drawer<'a> {
@@ -106,12 +107,15 @@ impl<'a> Drawer<'a> {
             timer_running: false,
             priority: Priority::None,
             updated: true,
+            message_update_time: None,
         }
     }
 }
 
 impl<'a> VirtuosoWidget for Drawer<'a> {
     fn update(&mut self, data: &MatchInfo) {
+        self.message_update_time = data.display_message_updated;
+
         let time: std::time::Duration = data.timer_controller.get_time();
         if self.time != time
             || self.timer_running != data.timer_running
@@ -183,9 +187,15 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             );
             self.updated = false;
         }
-        self.timer_0_widget.draw();
-        self.timer_1_widget.draw();
-        self.timer_2_widget.draw();
-        self.timer_3_widget.draw();
+
+        if let Some(update_time) = self.message_update_time
+            && update_time.elapsed() < message::Drawer::MESSAGE_DISPLAY_TIME
+        {
+        } else {
+            self.timer_0_widget.draw();
+            self.timer_1_widget.draw();
+            self.timer_2_widget.draw();
+            self.timer_3_widget.draw();
+        }
     }
 }
