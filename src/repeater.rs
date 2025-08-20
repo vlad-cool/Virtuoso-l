@@ -30,6 +30,7 @@ pub struct Repeater {
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 enum Message {
     MatchInfo(u32, MatchInfo),
+    // Potentially more types for updates and other
 }
 
 impl std::fmt::Display for Message {
