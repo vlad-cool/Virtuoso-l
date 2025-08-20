@@ -1,11 +1,12 @@
 use serde::{Deserialize, Serialize};
 use serial::{self, SerialPort};
 use std::io::{Read, Write};
-use std::thread;
 use std::time::Duration;
 
+use crate::hw_config::RepeaterRole;
 use crate::match_info::MatchInfo;
 use crate::modules::{self, VirtuosoModuleContext};
+use crate::virtuoso_logger::LoggerUnwrap;
 
 const RECV_TIMEOUT: Duration = Duration::from_micros(5000);
 const RESERVED_CAPACITY: usize = 256;
@@ -24,24 +25,22 @@ pub struct Repeater {
     port: serial::unix::TTYPort,
     raw_buffer: Vec<u8>,
     encoded_buffer: Vec<u8>,
-    modified_count: u32,
 }
 
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 enum Message {
-    Request(u32),
     MatchInfo(u32, MatchInfo),
 }
 
 impl std::fmt::Display for Message {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Message::Request(n) => write!(f, "request [{n}]"),
             Message::MatchInfo(_, _) => write!(f, "match info"),
         }
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 enum RecvError {
     BadHeader,
     SerialError,
@@ -53,67 +52,37 @@ enum RecvError {
 
 impl modules::VirtuosoModule for Repeater {
     fn run(mut self) {
-        loop {
-            for _ in 0..3 {
+        match self.context.hw_config.repeater.role {
+            RepeaterRole::Receiver => loop {
                 match self.receive() {
                     Ok(Message::MatchInfo(modified_count, match_info)) => {
                         self.context
                             .logger
                             .debug(format!("Got match info [{}]", modified_count));
-                        self.modified_count = modified_count;
                         self.context
                             .match_info
                             .lock()
                             .unwrap()
                             .clone_from(&match_info);
                     }
-                    Ok(Message::Request(n)) => {
-                        let match_info: std::sync::MutexGuard<'_, MatchInfo> =
-                            self.context.match_info.lock().unwrap();
-                        let modified_count: u32 = self.context.get_modified_count();
-                        if n < modified_count {
-                            let match_info_cloned: MatchInfo = match_info.clone();
-                            std::mem::drop(match_info);
-                            let _ = self
-                                .transmit(&Message::MatchInfo(modified_count, match_info_cloned));
-                        }
-                    }
-                    Err(RecvError::BadHeader) => self
+                    Err(err) => self
                         .context
                         .logger
-                        .error("Receiver got packet with wrong header byte".to_string()),
-                    Err(RecvError::BadChecksum) => {
-                        self.context
-                            .logger
-                            .error("Receiver got message with bad checksum".to_string());
-                    }
-                    Err(RecvError::BadStream) => {
-                        self.context
-                            .logger
-                            .error("Receiver did not get enough data to decode".to_string());
-                    }
-                    Err(RecvError::DeserializationError) => {
-                        self.context
-                            .logger
-                            .error("Receiver got bad message".to_string());
-                    }
-                    Err(RecvError::SerialError) => {
-                        self.context
-                            .logger
-                            .error("Receiver cannot get message".to_string());
-                    }
-                    Err(RecvError::Timeout) => {
-                        break;
-                    }
+                        .error(format!("Failed to receive match info, error: {err:?}")),
                 }
-            }
-
-            {
+            },
+            RepeaterRole::Transmitter => loop {
+                let match_info: std::sync::MutexGuard<'_, MatchInfo> =
+                    self.context.match_info.lock().unwrap();
                 let modified_count: u32 = self.context.get_modified_count();
-                let _ = self.transmit(&Message::Request(modified_count));
-            }
 
-            thread::sleep(Duration::from_millis(20));
+                let match_info_cloned: MatchInfo = match_info.clone();
+                std::mem::drop(match_info);
+                self.transmit(&Message::MatchInfo(modified_count, match_info_cloned))
+                    .log_err(&self.context.logger);
+
+                self.context.wait_modified_count_atomic(modified_count);
+            },
         }
     }
 }
@@ -127,8 +96,6 @@ impl Repeater {
             stop_bits: serial::StopBits::Stop1,
             flow_control: serial::FlowControl::FlowNone,
         };
-
-        let modified_count: u32 = context.get_modified_count();
 
         let mut port: serial::unix::TTYPort =
             match serial::open(&context.hw_config.repeater.uart_port) {
@@ -164,7 +131,6 @@ impl Repeater {
             port,
             raw_buffer: Vec::with_capacity(RESERVED_CAPACITY),
             encoded_buffer: Vec::with_capacity(RESERVED_CAPACITY),
-            modified_count,
         })
     }
 

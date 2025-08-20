@@ -67,9 +67,17 @@ pub struct LegacyBackendConfig {
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "repeater")]
+pub enum RepeaterRole {
+    Transmitter,
+    Receiver,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[cfg(feature = "repeater")]
 pub struct RepeaterConfig {
     pub uart_port: PathBuf,
     pub uart_speed: usize,
+    pub role: RepeaterRole,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -169,6 +177,18 @@ impl HardwareConfig {
             (resolution, swap_sides)
         };
 
+        #[cfg(feature = "repeater")]
+        let repeater_role: RepeaterRole = {
+            let btn_1: PinLocation = PinLocation::from_phys_number(32).unwrap();
+            let btn_2: PinLocation = PinLocation::from_phys_number(36).unwrap();
+
+            if Self::read_pin_value(btn_1, logger) | Self::read_pin_value(btn_2, logger) {
+                RepeaterRole::Transmitter
+            } else {
+                RepeaterRole::Receiver
+            }
+        };
+
         Self {
             force_file: None,
             reinit: false,
@@ -196,6 +216,7 @@ impl HardwareConfig {
             repeater: RepeaterConfig {
                 uart_port: "/dev/ttyS3".into(),
                 uart_speed: 115200,
+                role: repeater_role,
             },
         }
     }

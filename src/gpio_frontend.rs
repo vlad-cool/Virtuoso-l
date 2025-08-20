@@ -7,7 +7,7 @@ use crate::match_info;
 use crate::modules::{self, VirtuosoModuleContext};
 use crate::virtuoso_logger::LoggerUnwrap;
 
-const PRIORITY_LED_DELAY: Duration = Duration::from_millis(2000);
+// const PRIORITY_LED_DELAY: Duration = Duration::from_millis(2000);
 
 pub struct GpioFrontend {
     context: VirtuosoModuleContext,
@@ -16,8 +16,8 @@ pub struct GpioFrontend {
 
 impl modules::VirtuosoModule for GpioFrontend {
     fn run(self) {
-        let logger = &self.context.logger;
-        let hw_config = &self.context.hw_config;
+        let logger: &modules::Logger = &self.context.logger;
+        let hw_config: &modules::HardwareConfig = &self.context.hw_config;
 
         logger.debug("Starting gpio frontend".to_string());
 

@@ -66,11 +66,18 @@ impl VirtuosoModuleContext {
     pub fn match_info_data_updated(&mut self) {
         self.match_info_modified_count
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+
+        let raw_ptr: *const AtomicU32 = Arc::as_ptr(&self.match_info_modified_count);
+        atomic_wait::wake_all(raw_ptr);
     }
 
     pub fn get_modified_count(&self) -> u32 {
         self.match_info_modified_count
             .load(std::sync::atomic::Ordering::Relaxed)
+    }
+
+    pub fn wait_modified_count_atomic(&self, old_value: u32) {
+        atomic_wait::wait(&self.match_info_modified_count, old_value);
     }
 }
 
