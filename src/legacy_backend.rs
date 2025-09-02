@@ -109,6 +109,17 @@ impl modules::VirtuosoModule for LegacyBackend {
 impl LegacyBackend {
     pub fn new(context: VirtuosoModuleContext) -> Self {
         let rc5_address: u32 = context.config.lock().unwrap().legacy_backend.rc5_address;
+
+        {
+            let mut match_info_data: MutexGuard<'_, modules::MatchInfo> =
+                context.match_info.lock().unwrap();
+            let config: &crate::virtuoso_config::LegacyBackendConfig =
+                &context.config.lock().unwrap().legacy_backend;
+
+            match_info_data.auto_score_on = config.auto_score_on;
+            match_info_data.auto_timer_on = config.auto_timer_on;
+        }
+
         Self {
             context,
 
@@ -395,8 +406,20 @@ impl LegacyBackend {
             self.context.match_info.lock().unwrap();
 
         match modified_field {
-            AutoStatusFields::Score => match_info_data.auto_score_on = new_state.to_bool(),
-            AutoStatusFields::Timer => match_info_data.auto_timer_on = new_state.to_bool(),
+            AutoStatusFields::Score => {
+                match_info_data.auto_score_on = new_state.to_bool();
+                let mut config: MutexGuard<'_, VirtuosoConfig> =
+                    self.context.config.lock().unwrap();
+                config.legacy_backend.auto_score_on = new_state.to_bool();
+                config.write_config();
+            }
+            AutoStatusFields::Timer => {
+                match_info_data.auto_timer_on = new_state.to_bool();
+                let mut config: MutexGuard<'_, VirtuosoConfig> =
+                    self.context.config.lock().unwrap();
+                config.legacy_backend.auto_timer_on = new_state.to_bool();
+                config.write_config();
+            }
             _ => {}
         }
 

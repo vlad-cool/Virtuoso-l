@@ -62,9 +62,9 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     fn render(&mut self) {
         if self.auto_timer_updated {
             let (text, color) = if self.auto_timer_on {
-                ("auto timer\non".to_string(), colors::AUTO_STATUS_TEXT_LIGHT)
+                ("auto\ntimer on".to_string(), colors::AUTO_STATUS_TEXT_LIGHT)
             } else {
-                ("auto timer\noff".to_string(), colors::AUTO_STATUS_TEXT_DARK)
+                ("auto\ntimer off".to_string(), colors::AUTO_STATUS_TEXT_DARK)
             };
 
             self.timer_widget
@@ -74,9 +74,9 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
 
         if self.auto_score_updated {
             let (text, color) = if self.auto_score_on {
-                ("auto score\non".to_string(), colors::AUTO_STATUS_TEXT_LIGHT)
+                ("auto\nscore on".to_string(), colors::AUTO_STATUS_TEXT_LIGHT)
             } else {
-                ("auto score\noff".to_string(), colors::AUTO_STATUS_TEXT_DARK)
+                ("auto\nscore off".to_string(), colors::AUTO_STATUS_TEXT_DARK)
             };
 
             self.score_widget

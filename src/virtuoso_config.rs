@@ -1,13 +1,19 @@
 #[cfg(feature = "legacy_backend")]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct LegacyBackendConfig {
+    pub auto_score_on: bool,
+    pub auto_timer_on: bool,
     pub rc5_address: u32,
 }
 
 #[cfg(feature = "legacy_backend")]
 impl Default for LegacyBackendConfig {
     fn default() -> Self {
-        Self { rc5_address: 0 }
+        Self {
+            auto_score_on: false,
+            auto_timer_on: false,
+            rc5_address: 0,
+        }
     }
 }
 
