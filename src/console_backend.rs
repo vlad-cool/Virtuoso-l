@@ -1,6 +1,7 @@
 use std::io;
+use std::time::Duration;
 
-use crate::match_info::{self, ProgramState};
+use crate::match_info::{self, MainTimer, ProgramState};
 use crate::modules::{self, VirtuosoModuleContext};
 
 pub struct ConsoleBackend {
@@ -149,11 +150,13 @@ impl ConsoleBackend {
         match field {
             Field::LeftScore => match_info_data.left_fencer.score = value,
             Field::RightScore => match_info_data.right_fencer.score = value,
-            Field::Time => match_info_data
-                .timer_controller
-                .set_time(0, 0, value / 1000),
+            Field::Time => {
+                let time: Duration = Duration::from_secs(value.into());
+
+                match_info_data.main_timer.set_time(time);
+            }
             Field::LastTenSeconds => match_info_data.last_ten_seconds = value > 0,
-            Field::TimerRunning => match_info_data.timer_running = value > 0,
+            Field::TimerRunning => match_info_data.main_timer.set_timer_running(value > 0),
             Field::Period => match_info_data.period = value,
 
             Field::Weapon => {
@@ -212,9 +215,16 @@ impl ConsoleBackend {
         match field {
             Field::LeftScore => println!("{}", match_info_data.left_fencer.score),
             Field::RightScore => println!("{}", match_info_data.right_fencer.score),
-            Field::Time => println!("{}", match_info_data.timer_controller.get_millis() / 1000),
+            Field::Time => println!("{}", match_info_data.main_timer.to_time_string()),
             Field::LastTenSeconds => println!("{}", match_info_data.last_ten_seconds),
-            Field::TimerRunning => println!("{}", match_info_data.timer_running),
+            Field::TimerRunning => println!(
+                "{}",
+                if let MainTimer::Running(_) = match_info_data.main_timer {
+                    true
+                } else {
+                    false
+                }
+            ),
             Field::Period => println!("{}", match_info_data.period),
 
             Field::Weapon => println!("{}", match_info_data.weapon),

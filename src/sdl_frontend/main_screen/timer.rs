@@ -116,13 +116,13 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     fn update(&mut self, data: &MatchInfo) {
         self.message_update_time = data.display_message_updated;
 
-        let time: std::time::Duration = data.timer_controller.get_time();
+        let time: std::time::Duration = data.main_timer.get_time();
         if self.time != time
-            || self.timer_running != data.timer_running
+            || self.timer_running != data.main_timer.is_running()
             || self.priority != data.priority
         {
             self.time = time;
-            self.timer_running = data.timer_running;
+            self.timer_running = data.main_timer.is_running();
             self.priority = data.priority;
             self.updated = true;
         }
@@ -131,7 +131,11 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     fn render(&mut self) {
         if self.updated || self.timer_running {
             let colon: String = if !self.timer_running || self.time.subsec_millis() > 500 {
-                ":".to_string()
+                if self.time.as_secs() >= 10 {
+                    ":".to_string()
+                } else {
+                    ".".to_string()
+                }
             } else {
                 " ".to_string()
             };

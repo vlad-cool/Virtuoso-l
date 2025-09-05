@@ -9,7 +9,6 @@ pub enum WarningCard {
     Black(u8),
 }
 
-#[allow(dead_code)]
 impl WarningCard {
     const NUM_YELLOW: u8 = 1;
     const NUM_RED: u8 = 15;
@@ -25,15 +24,6 @@ impl WarningCard {
             Self::Red(n) => Self::Red(*n + 1),
             Self::Black(n) => Self::Black(*n + 1),
         };
-    }
-
-    pub fn to_i32(&self) -> i32 {
-        match self {
-            Self::None => 0,
-            Self::Yellow(n) => (1 + *n).into(),
-            Self::Red(n) => (1 + Self::NUM_YELLOW + *n).into(),
-            Self::Black(n) => (1 + Self::NUM_YELLOW + Self::NUM_RED + *n).into(),
-        }
     }
 
     pub fn to_u32(&self) -> u32 {
@@ -369,112 +359,76 @@ impl PassiveTimer {
     }
 }
 
-#[allow(dead_code)]
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-pub struct TimerController {
-    last_second: bool,
-    time: u32,
-    timer_running: bool,
-    prev_second_value: u32,
-    second_changed: bool,
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
+pub enum MainTimer<const MAX_SECONDS: u64> {
     #[serde(
         serialize_with = "serialize_instant_as_elapsed",
         deserialize_with = "deserialize_duration_to_instant"
     )]
-    last_updated: Instant,
-    last_updated_freezed: u32,
+    Running(Instant),
+    Stopped(Duration),
 }
 
-impl PartialEq for TimerController {
-    fn eq(&self, other: &Self) -> bool {
-        self.time == other.time && self.timer_running == other.timer_running
-    }
-}
-
-#[allow(dead_code)]
-impl TimerController {
-    pub fn new() -> Self {
-        Self {
-            last_second: false,
-            time: 3 * 60 * 1000,
-            timer_running: false,
-            prev_second_value: 0,
-            second_changed: false,
-            last_updated: Instant::now(),
-            last_updated_freezed: 0,
+impl<const MAX_SECONDS: u64> MainTimer<MAX_SECONDS> {
+    pub fn is_running(&self) -> bool {
+        match self {
+            Self::Running(_) => true,
+            Self::Stopped(_) => false,
         }
     }
 
-    pub fn set_time(&mut self, timer_m: u32, timer_d: u32, timer_s: u32) {
-        self.last_updated = Instant::now();
-
-        if timer_d >= 6 {
-            self.last_second = true;
-        }
-        if timer_m > 0 {
-            self.last_second = false;
-        }
-
-        if self.last_second {
-            if timer_m != self.prev_second_value {
-                self.second_changed = true;
-            } else {
-                self.second_changed = false;
-            }
-            self.prev_second_value = timer_m;
-
-            self.time = timer_d * 100 + timer_s * 10;
-        } else {
-            if timer_s != self.prev_second_value {
-                self.second_changed = true;
-            } else {
-                self.second_changed = false;
-            }
-            self.prev_second_value = timer_s;
-
-            self.time = (timer_m * 60 + timer_d * 10 + timer_s) * 1000;
+    pub fn start_timer(&mut self) {
+        if let Self::Stopped(time) = self {
+            *self = Self::Running(Instant::now() - *time)
         }
     }
 
     pub fn stop_timer(&mut self) {
-        self.last_updated_freezed = self.last_updated.elapsed().as_millis() as u32;
-        self.timer_running = false;
-    }
-
-    pub fn start_timer(&mut self) {
-        self.timer_running = true;
-        self.last_updated = Instant::now();
-    }
-
-    pub fn get_millis(&self) -> u32 {
-        if self.timer_running {
-            if self.time > self.last_updated.elapsed().as_millis() as u32 {
-                let time: u32 = self.time - self.last_updated.elapsed().as_millis() as u32;
-
-                if (time / 1000 + 1) % 10 != self.prev_second_value {
-                    time - time % 1000
-                } else {
-                    time
-                }
-                // time
-            } else {
-                0
-            }
-        } else {
-            if self.time > self.last_updated_freezed {
-                self.time - self.last_updated_freezed
-            } else {
-                0
-            }
+        if let Self::Running(time) = self {
+            *self = Self::Stopped(time.elapsed())
         }
     }
 
-    pub fn get_second_changed(&self) -> bool {
-        self.second_changed
+    pub fn set_timer_running(&mut self, new_state: bool) {
+        if new_state {
+            self.start_timer();
+        } else {
+            self.stop_timer();
+        }
+    }
+
+    pub fn set_time(&mut self, new_time: Duration) {
+        let new_time: Duration = Duration::from_secs(MAX_SECONDS).checked_sub(new_time).unwrap_or_default();
+        *self = if self.is_running() {
+            Self::Running(Instant::now() - new_time)
+        } else {
+            Self::Stopped(new_time)
+        };
     }
 
     pub fn get_time(&self) -> Duration {
-        Duration::from_millis(self.get_millis() as u64 + 999)
+        let time: Duration = match self {
+            Self::Running(time) => time.elapsed(),
+            Self::Stopped(time) => *time,
+        };
+
+        Duration::from_secs(MAX_SECONDS)
+            .checked_sub(time)
+            .unwrap_or_default()
+    }
+
+    pub fn to_time_string(&self) -> String {
+        let time: Duration = self.get_time();
+
+        if time.as_secs() > 9 {
+            let minutes: u64 = time.as_secs() / 60;
+            let seconds: u64 = time.as_secs() % 60;
+            format!("{}:{:02}", minutes, seconds)
+        } else {
+            let seconds: u64 = time.as_secs();
+            let centiseconds: u32 = time.subsec_millis() / 10;
+            format!("{}.{:02}", seconds, centiseconds)
+        }
     }
 }
 
@@ -542,7 +496,6 @@ pub struct MatchInfo {
     pub weapon: Weapon,
     // pub timer: u32,
     pub last_ten_seconds: bool,
-    pub timer_running: bool,
     pub period: u32,
     pub priority: Priority,
     #[serde(
@@ -569,10 +522,9 @@ pub struct MatchInfo {
         deserialize_with = "deserialize_optional_duration_to_instant"
     )]
     pub display_message_updated: Option<Instant>,
-    // pub stopwatch: String,
     pub competition_type: Option<CompetitionType>,
 
-    pub timer_controller: TimerController,
+    pub main_timer: MainTimer<240>,
     pub passive_timer: PassiveTimer,
 
     pub referee: RefereeInfo,
@@ -590,7 +542,6 @@ impl MatchInfo {
             // right_score: 0,
             // timer: 300,
             last_ten_seconds: false,
-            timer_running: false,
             period: 1,
             priority: Priority::None,
             priority_updated: Instant::now(),
@@ -615,7 +566,7 @@ impl MatchInfo {
             // stopwatch: "".to_string(),
             competition_type: None,
 
-            timer_controller: TimerController::new(),
+            main_timer: MainTimer::Stopped(Duration::from_secs(3 * 60)),
             passive_timer: PassiveTimer::new(),
 
             referee: RefereeInfo::new(),

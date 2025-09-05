@@ -23,6 +23,8 @@ pub struct LegacyBackend {
     weapon_select_btn_pressed: bool,
     rc5_address: u32,
     auto_status_controller: AutoStatusController,
+
+    prev_seconds_value: u64,
 }
 
 impl modules::VirtuosoModule for LegacyBackend {
@@ -126,6 +128,8 @@ impl LegacyBackend {
             weapon_select_btn_pressed: false,
             rc5_address,
             auto_status_controller: AutoStatusController::new(),
+
+            prev_seconds_value: 60 * 3,
         }
     }
 
@@ -135,7 +139,7 @@ impl LegacyBackend {
 
         match_info_data.left_fencer.score = msg.score_left;
         match_info_data.right_fencer.score = msg.score_right;
-        match_info_data.timer_running = msg.on_timer;
+        match_info_data.main_timer.set_timer_running(msg.on_timer);
 
         if msg.symbol {
             let symbol: u32 = msg.dec_seconds * 16 + msg.seconds;
@@ -150,21 +154,31 @@ impl LegacyBackend {
             let timer_d: u32 = msg.dec_seconds;
             let timer_s: u32 = msg.seconds;
 
-            match_info_data
-                .timer_controller
-                .set_time(timer_m, timer_d, timer_s);
+            let last_second: bool =
+                match_info_data.main_timer.get_time() < Duration::from_secs(1) && timer_m == 0;
+
+            let new_time: Duration = if last_second {
+                Duration::from_millis((timer_d * 100 + timer_s * 10) as u64)
+            } else {
+                Duration::from_secs((timer_m * 60 + timer_d * 10 + timer_s) as u64)
+            };
+
+            match_info_data.main_timer.set_time(new_time);
             if msg.on_timer {
-                match_info_data.timer_controller.start_timer();
+                match_info_data.main_timer.start_timer();
                 match_info_data.passive_timer.enable();
             } else {
-                match_info_data.timer_controller.stop_timer();
+                match_info_data.main_timer.stop_timer();
                 match_info_data.passive_timer.disable();
             }
 
-            if match_info_data.timer_controller.get_second_changed() {
+            if self.prev_seconds_value != new_time.as_secs() {
                 match_info_data.passive_timer.tick();
             }
+
+            self.prev_seconds_value = new_time.as_secs();
         }
+
         match_info_data.period = if msg.period > 0 && msg.period < 10 {
             msg.period
         } else {
@@ -193,7 +207,7 @@ impl LegacyBackend {
         match_info_data.right_fencer.color_light = msg.green;
         match_info_data.right_fencer.white_light = msg.white_green;
 
-        if msg.red || msg.white_red || msg.green || msg.white_green {
+        if match_info_data.main_timer.is_running() && (msg.red || msg.white_red || msg.green || msg.white_green) {
             match_info_data.passive_timer.reset();
         }
 
@@ -251,7 +265,7 @@ impl LegacyBackend {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
                         self.context.match_info.lock().unwrap();
 
-                    if !match_info_data.timer_running {
+                    if !match_info_data.main_timer.is_running() {
                         match_info_data.passive_timer.reset();
                     }
                 }

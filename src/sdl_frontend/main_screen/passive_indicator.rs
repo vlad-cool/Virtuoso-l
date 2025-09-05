@@ -40,11 +40,11 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     fn update(&mut self, data: &MatchInfo) {
         if self.passive_indicator != data.passive_timer.get_indicator()
             || self.passive_counter != data.passive_timer.get_counter()
-            || self.time != data.timer_controller.get_time()
+            || self.time != data.main_timer.get_time()
         {
             self.passive_indicator = data.passive_timer.get_indicator();
             self.passive_counter = data.passive_timer.get_counter();
-            self.time = data.timer_controller.get_time();
+            self.time = data.main_timer.get_time();
             self.updated = true;
         }
     }
