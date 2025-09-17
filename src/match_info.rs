@@ -1,6 +1,8 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::time::{Duration, Instant};
 
+use crate::cyrano_server::State;
+
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum WarningCard {
     None,
@@ -610,6 +612,7 @@ pub struct MatchInfo {
 
     pub cyrano_online: bool,
     pub cyrano_active: bool,
+    pub cyrano_state: State,
 
     pub piste: String,
     pub competition_id: String,
@@ -655,6 +658,7 @@ impl MatchInfo {
 
             cyrano_online: false,
             cyrano_active: false,
+            cyrano_state: State::Waiting,
 
             piste: "".to_string(),
             competition_id: "".to_string(),

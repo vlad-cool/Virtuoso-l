@@ -44,6 +44,12 @@ mod piste;
 mod poul_tab;
 #[path = "main_screen/cyrano/start_time.rs"]
 mod start_time;
+#[path = "main_screen/cyrano/cyrano_state.rs"]
+mod cyrano_state;
+#[path = "main_screen/cyrano/referee_name.rs"]
+mod referee_name;
+#[path = "main_screen/cyrano/referee_nation.rs"]
+mod referee_nation;
 
 #[path = "main_screen/auto_status.rs"]
 mod auto_status;
@@ -218,6 +224,12 @@ impl VirtuosoModule for SdlFrontend {
         // widgets.push(Box::new(fencer_nation::Drawer::new(widget_context.clone())));
         // widgets.push(Box::new(cyrano_status::Drawer::new(widget_context.clone())));
 
+        if let Some(widget) = referee_name::Drawer::new(widget_context.clone()) {
+            widgets.push(Box::new(widget));
+        }
+        if let Some(widget) = referee_nation::Drawer::new(widget_context.clone()) {
+            widgets.push(Box::new(widget));
+        }
         if let Some(widget) = fencer_name::Drawer::new(widget_context.clone()) {
             widgets.push(Box::new(widget));
         }
@@ -249,6 +261,9 @@ impl VirtuosoModule for SdlFrontend {
             widgets.push(Box::new(widget));
         }
         if let Some(widget) = start_time::Drawer::new(widget_context.clone()) {
+            widgets.push(Box::new(widget));
+        }
+        if let Some(widget) = cyrano_state::Drawer::new(widget_context.clone()) {
             widgets.push(Box::new(widget));
         }
 

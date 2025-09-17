@@ -52,6 +52,8 @@ pub struct CyranoLayout {
 
     pub start_time: TextProperties,
     pub local_time: TextProperties,
+
+    pub state: TextProperties,
 }
 
 pub struct Layout {

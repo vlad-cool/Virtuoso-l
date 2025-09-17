@@ -823,6 +823,14 @@ pub const LAYOUT_1920X1080: Layout = Layout {
             height: 100,
             font_size: 48,
         },
+
+        state: TextProperties {
+            x: 805,
+            y: 416,
+            width: 300,
+            height: 100,
+            font_size: 48,
+        },
     }),
 };
 
