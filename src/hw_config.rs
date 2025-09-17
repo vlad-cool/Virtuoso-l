@@ -247,14 +247,14 @@ impl HardwareConfig {
                     file_config
                 } else {
                     if file_config != jumpers_config {
-                        jumpers_config.configure_os(logger);
                         jumpers_config.write_config(logger);
+                        jumpers_config.configure_os(logger);
                     }
                     jumpers_config
                 }
             } else {
-                jumpers_config.configure_os(logger);
                 jumpers_config.write_config(logger);
+                jumpers_config.configure_os(logger);
 
                 jumpers_config
             }
