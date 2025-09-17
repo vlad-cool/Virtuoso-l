@@ -46,15 +46,17 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             let passive_timer: Duration = self.timer.get_passive_timer();
             let (color, passive_indicator): (Color, i32) = match passive_timer.as_secs() {
                 0 => (colors::PASSIVE_RED, 1000),
-                1..11 => (
-                    if self.timer.get_main_time().subsec_millis() > 500 {
+                1..10 => (
+                    if self.timer.get_main_time().subsec_millis() > 500
+                        || !self.timer.is_timer_running()
+                    {
                         colors::PASSIVE_RED
                     } else {
                         colors::BACKGROUND
                     },
                     1000,
                 ),
-                11.. => (
+                10.. => (
                     colors::PASSIVE_YELLOW,
                     1000 - ((passive_timer - Duration::from_secs(10)).as_millis() / 50) as i32,
                 ),

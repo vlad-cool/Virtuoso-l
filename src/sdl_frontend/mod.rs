@@ -20,14 +20,33 @@ mod layout_structure;
 mod layouts;
 mod widgets;
 
-#[path = "main_screen/auto_status.rs"]
-mod auto_status;
-#[path = "main_screen/cyrano/cyrano_status.rs"]
-mod cyrano_status;
+// #[path = "main_screen/cyrano/cyrano_status.rs"]
+// mod cyrano_status;
+#[path = "main_screen/cyrano/competition_type.rs"]
+mod competition_type;
+#[path = "main_screen/cyrano/fencer_id.rs"]
+mod fencer_id;
+#[path = "main_screen/cyrano/fencer_medical.rs"]
+mod fencer_medical;
 #[path = "main_screen/cyrano/fencer_name.rs"]
 mod fencer_name;
 #[path = "main_screen/cyrano/fencer_nation.rs"]
 mod fencer_nation;
+#[path = "main_screen/cyrano/fencer_reserve.rs"]
+mod fencer_reserve;
+#[path = "main_screen/cyrano/fencer_status.rs"]
+mod fencer_status;
+#[path = "main_screen/cyrano/phase.rs"]
+mod phase;
+#[path = "main_screen/cyrano/piste.rs"]
+mod piste;
+#[path = "main_screen/cyrano/poul_tab.rs"]
+mod poul_tab;
+#[path = "main_screen/cyrano/start_time.rs"]
+mod start_time;
+
+#[path = "main_screen/auto_status.rs"]
+mod auto_status;
 #[path = "main_screen/led_repeater.rs"]
 mod led_repeater;
 #[path = "settings_menu/menu.rs"]
@@ -195,9 +214,43 @@ impl VirtuosoModule for SdlFrontend {
         widgets.push(Box::new(timer::Drawer::new(widget_context.clone())));
         widgets.push(Box::new(weapon::Drawer::new(widget_context.clone())));
 
-        widgets.push(Box::new(fencer_name::Drawer::new(widget_context.clone())));
-        widgets.push(Box::new(fencer_nation::Drawer::new(widget_context.clone())));
-        widgets.push(Box::new(cyrano_status::Drawer::new(widget_context.clone())));
+        // widgets.push(Box::new(fencer_name::Drawer::new(widget_context.clone())));
+        // widgets.push(Box::new(fencer_nation::Drawer::new(widget_context.clone())));
+        // widgets.push(Box::new(cyrano_status::Drawer::new(widget_context.clone())));
+
+        if let Some(widget) = fencer_name::Drawer::new(widget_context.clone()) {
+            widgets.push(Box::new(widget));
+        }
+        if let Some(widget) = fencer_id::Drawer::new(widget_context.clone()) {
+            widgets.push(Box::new(widget));
+        }
+        if let Some(widget) = fencer_nation::Drawer::new(widget_context.clone()) {
+            widgets.push(Box::new(widget));
+        }
+        if let Some(widget) = fencer_status::Drawer::new(widget_context.clone()) {
+            widgets.push(Box::new(widget));
+        }
+        if let Some(widget) = fencer_medical::Drawer::new(widget_context.clone()) {
+            widgets.push(Box::new(widget));
+        }
+        if let Some(widget) = fencer_reserve::Drawer::new(widget_context.clone()) {
+            widgets.push(Box::new(widget));
+        }
+        if let Some(widget) = piste::Drawer::new(widget_context.clone()) {
+            widgets.push(Box::new(widget));
+        }
+        if let Some(widget) = phase::Drawer::new(widget_context.clone()) {
+            widgets.push(Box::new(widget));
+        }
+        if let Some(widget) = competition_type::Drawer::new(widget_context.clone()) {
+            widgets.push(Box::new(widget));
+        }
+        if let Some(widget) = poul_tab::Drawer::new(widget_context.clone()) {
+            widgets.push(Box::new(widget));
+        }
+        if let Some(widget) = start_time::Drawer::new(widget_context.clone()) {
+            widgets.push(Box::new(widget));
+        }
 
         let mut settings_menu: menu::Drawer<'_> = menu::Drawer::new(widget_context.clone());
 

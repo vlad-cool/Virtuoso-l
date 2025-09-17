@@ -7,6 +7,7 @@ rc5_address = 0
 cyrano_port = 50100
 
 [logger_config]
-stderr = false
+log_level = "ALL"
+stderr = true
 udp = false
 udp_print_ip = false

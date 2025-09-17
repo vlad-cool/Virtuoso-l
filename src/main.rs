@@ -49,6 +49,10 @@ fn main() {
     TODO Flash new score value if was updated automatically
      */
 
+    /*
+    Team score manual counting?
+     */
+
     let config: VirtuosoConfig = VirtuosoConfig::load_config();
 
     let virtuoso_logger: virtuoso_logger::VirtuosoLogger =

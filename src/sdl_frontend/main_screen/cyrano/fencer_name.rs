@@ -18,29 +18,33 @@ pub struct Drawer<'a> {
 }
 
 impl<'a> Drawer<'a> {
-    pub fn new(context: WidgetContext<'a>) -> Self {
-        let font: Rc<Font<'_, '_>> = context.get_font(context.layout.left_name.font_size);
+    pub fn new(context: WidgetContext<'a>) -> Option<Self> {
+        if let Some(layout) = context.layout.cyrano_layout {
+            let font: Rc<Font<'_, '_>> = context.get_font(layout.left_name.font_size);
 
-        Self {
-            left_name_widget: Label::new(
-                context.canvas.clone(),
-                context.texture_creator,
-                font.clone(),
-                context.layout.left_name,
-                context.logger,
-            ),
-            right_name_widget: Label::new(
-                context.canvas.clone(),
-                context.texture_creator,
-                font.clone(),
-                context.layout.right_name,
-                context.logger,
-            ),
+            Some(Self {
+                left_name_widget: Label::new(
+                    context.canvas.clone(),
+                    context.texture_creator,
+                    font.clone(),
+                    layout.left_name,
+                    context.logger,
+                ),
+                right_name_widget: Label::new(
+                    context.canvas.clone(),
+                    context.texture_creator,
+                    font.clone(),
+                    layout.right_name,
+                    context.logger,
+                ),
 
-            left_name: "".to_string(),
-            left_name_updated: true,
-            right_name: "".to_string(),
-            right_name_updated: true,
+                left_name: "".to_string(),
+                left_name_updated: true,
+                right_name: "".to_string(),
+                right_name_updated: true,
+            })
+        } else {
+            None
         }
     }
 }

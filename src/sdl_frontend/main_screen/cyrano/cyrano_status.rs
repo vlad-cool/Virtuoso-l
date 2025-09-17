@@ -18,7 +18,7 @@ pub struct Drawer<'a> {
 
 impl<'a> Drawer<'a> {
     pub fn new(context: WidgetContext<'a>) -> Self {
-        let font: Rc<Font<'_, '_>> = context.get_font(context.layout.left_nation.font_size);
+        let font: Rc<Font<'_, '_>> = context.get_font(layout.left_nation.font_size);
 
         Self {
             status_widget: Card::new(

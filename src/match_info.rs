@@ -456,17 +456,6 @@ impl TimerController {
         }
     }
 
-    // pub fn set_timer_running(&mut self, timer_running: bool) {
-    //     if timer_running == self.is_timer_running() {
-    //         return;
-    //     }
-    //     if timer_running {
-    //         self.sync_time = Some(Instant::now())
-    //     } else {
-    //         self.sync_time = None
-    //     }
-    // }
-
     pub fn is_timer_running(&self) -> bool {
         match self.sync_time {
             Some(_) => true,

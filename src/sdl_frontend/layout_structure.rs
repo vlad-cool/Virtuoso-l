@@ -18,6 +18,7 @@ pub struct TextProperties {
     pub font_size: u16,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CyranoLayout {
     pub left_name: TextProperties,
     pub left_nation: TextProperties,
@@ -55,12 +56,12 @@ pub struct CyranoLayout {
 
 pub struct Layout {
     pub background: RectangleProperties,
-    pub left_nation: TextProperties,
-    pub left_flag: RectangleProperties,
-    pub left_name: TextProperties,
-    pub right_nation: TextProperties,
-    pub right_flag: RectangleProperties,
-    pub right_name: TextProperties,
+    // pub left_nation: TextProperties,
+    // pub left_flag: RectangleProperties,
+    // pub left_name: TextProperties,
+    // pub right_nation: TextProperties,
+    // pub right_flag: RectangleProperties,
+    // pub right_name: TextProperties,
     pub score_l_l: TextProperties,
     pub score_l_r: TextProperties,
     pub score_r_l: TextProperties,

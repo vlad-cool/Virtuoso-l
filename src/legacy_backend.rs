@@ -10,7 +10,7 @@ use std::sync::{MutexGuard, mpsc};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use crate::match_info::{self, Weapon};
+use crate::match_info::{self, Priority, Weapon};
 use crate::modules::{self, VirtuosoModuleContext};
 use crate::virtuoso_config::VirtuosoConfig;
 use crate::virtuoso_logger::Logger;
@@ -227,9 +227,10 @@ impl LegacyBackend {
             && (msg.red || msg.white_red || msg.green || msg.white_green)
         {
             let weapon: Weapon = match_info_data.weapon;
+            let priority: Priority = match_info_data.priority;
             match_info_data
                 .timer_controller
-                .reset_passive_timer(weapon != Weapon::Fleuret);
+                .reset_passive_timer(weapon != Weapon::Fleuret && priority == Priority::None);
         }
 
         std::mem::drop(match_info_data);
@@ -290,9 +291,10 @@ impl LegacyBackend {
 
                     if !match_info_data.timer_controller.is_timer_running() {
                         let weapon: Weapon = match_info_data.weapon;
-                        match_info_data
-                            .timer_controller
-                            .reset_passive_timer(weapon != Weapon::Fleuret);
+                        let priority: Priority = match_info_data.priority;
+                        match_info_data.timer_controller.reset_passive_timer(
+                            weapon != Weapon::Fleuret && priority == Priority::None,
+                        );
                     }
                 }
                 IrCommands::LeftPenaltyCard => {
@@ -322,9 +324,10 @@ impl LegacyBackend {
                         match_info_data.left_fencer.passive_card.inc();
 
                         let weapon: Weapon = match_info_data.weapon;
-                        match_info_data
-                            .timer_controller
-                            .reset_passive_timer(weapon != Weapon::Fleuret);
+                        let priority: Priority = match_info_data.priority;
+                        match_info_data.timer_controller.reset_passive_timer(
+                            weapon != Weapon::Fleuret && priority == Priority::None,
+                        );
 
                         std::mem::drop(match_info_data);
                         self.context.match_info_data_updated();
@@ -337,9 +340,10 @@ impl LegacyBackend {
                         match_info_data.right_fencer.passive_card.inc();
 
                         let weapon: Weapon = match_info_data.weapon;
-                        match_info_data
-                            .timer_controller
-                            .reset_passive_timer(weapon != Weapon::Fleuret);
+                        let priority: Priority = match_info_data.priority;
+                        match_info_data.timer_controller.reset_passive_timer(
+                            weapon != Weapon::Fleuret && priority == Priority::None,
+                        );
 
                         std::mem::drop(match_info_data);
                         self.context.match_info_data_updated();
