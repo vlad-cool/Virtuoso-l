@@ -22,10 +22,35 @@ pub struct CyranoLayout {
     pub left_name: TextProperties,
     pub left_nation: TextProperties,
     pub left_flag: RectangleProperties,
-    pub left_photo: RectangleProperties,
     pub left_score: TextProperties,
+    pub left_status: TextProperties,
+    pub left_video: TextProperties,
+    pub left_medical: TextProperties,
+    pub left_reserve: TextProperties,
+    pub left_id: TextProperties,
+    pub left_photo: RectangleProperties,
 
     pub right_name: TextProperties,
+    pub right_nation: TextProperties,
+    pub right_flag: RectangleProperties,
+    pub right_score: TextProperties,
+    pub right_status: TextProperties,
+    pub right_video: TextProperties,
+    pub right_medical: TextProperties,
+    pub right_reserve: TextProperties,
+    pub right_id: TextProperties,
+    pub right_photo: RectangleProperties,
+
+    pub referee_name: TextProperties,
+    pub referee_nation: TextProperties,
+
+    pub piste: TextProperties,
+    pub competition_phase: TextProperties,
+    pub competition_type: TextProperties,
+    pub poule_tableau_id: TextProperties,
+
+    pub start_time: TextProperties,
+    pub local_time: TextProperties,
 }
 
 pub struct Layout {
@@ -79,4 +104,6 @@ pub struct Layout {
     pub right_white_indicator: RectangleProperties,
     pub recording_indicator: RectangleProperties,
     pub timer_text: TextProperties,
+
+    pub cyrano_layout: Option<CyranoLayout>,
 }

@@ -1,5 +1,5 @@
 use glob::glob;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::fs::{self, File};
 use std::io::{BufReader, BufWriter, Write};
 use std::path::Path;
@@ -76,6 +76,55 @@ struct PenpotNode {
 struct Color {
     color: String,
     name: String,
+}
+
+fn float_to_rounded_u32<'de, D>(deserializer: D) -> Result<u32, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let val: f64 = f64::deserialize(deserializer)?;
+    Ok(val as u32)
+}
+
+fn float_to_rounded_u16<'de, D>(deserializer: D) -> Result<u16, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let val: f64 = f64::deserialize(deserializer)?;
+    Ok(val as u16)
+}
+
+fn float_to_rounded_i32<'de, D>(deserializer: D) -> Result<i32, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let val: f64 = f64::deserialize(deserializer)?;
+    Ok(val as i32)
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct LayoutText {
+    id: String,
+    #[serde(deserialize_with = "float_to_rounded_i32")]
+    x: i32,
+    #[serde(deserialize_with = "float_to_rounded_i32")]
+    y: i32,
+    #[serde(deserialize_with = "float_to_rounded_u32")]
+    width: u32,
+    #[serde(deserialize_with = "float_to_rounded_u32")]
+    height: u32,
+    #[serde(deserialize_with = "float_to_rounded_u16")]
+    font_size: u16,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct LayoutRect {
+    id: String,
+    x: i32,
+    y: i32,
+    width: u32,
+    height: u32,
+    radius: u32,
 }
 
 fn parse_layout(main_id: &String, path: String, writer: &mut BufWriter<File>) {
@@ -263,6 +312,7 @@ use crate::sdl_frontend::layout_structure::*;
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:warning=penpot parsing disabled");
     generate_licenses();
-    parse_penpot();
+    // parse_penpot();
 }

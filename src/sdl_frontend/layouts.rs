@@ -352,6 +352,207 @@ pub const LAYOUT_1920X550: Layout = Layout {
         height: 365,
         font_size: 64,
     },
+
+    cyrano_layout: Some(CyranoLayout {
+        left_name: TextProperties {
+            x: 0,
+            y: -17,
+            width: 700,
+            height: 141,
+            font_size: 140,
+        },
+        left_nation: TextProperties {
+            x: 293,
+            y: 131,
+            width: 101,
+            height: 87,
+            font_size: 72,
+        },
+        left_flag: RectangleProperties {
+            x: 310,
+            y: 212,
+            width: 131,
+            height: 75,
+            radius: 0,
+        },
+        left_score: TextProperties {
+            x: 299,
+            y: 291,
+            width: 152,
+            height: 213,
+            font_size: 210,
+        },
+        left_status: TextProperties {
+            x: 480,
+            y: 120,
+            width: 200,
+            height: 100,
+            font_size: 48,
+        },
+        left_video: TextProperties {
+            x: 480,
+            y: 205,
+            width: 200,
+            height: 100,
+            font_size: 48,
+        },
+        left_medical: TextProperties {
+            x: 480,
+            y: 290,
+            width: 200,
+            height: 100,
+            font_size: 48,
+        },
+        left_reserve: TextProperties {
+            x: 480,
+            y: 375,
+            width: 200,
+            height: 100,
+            font_size: 48,
+        },
+        left_id: TextProperties {
+            x: 6,
+            y: 498,
+            width: 300,
+            height: 100,
+            font_size: 36,
+        },
+        left_photo: RectangleProperties {
+            x: 0,
+            y: 136,
+            width: 280,
+            height: 360,
+            radius: 0,
+        },
+
+        right_name: TextProperties {
+            x: 1221,
+            y: -16,
+            width: 700,
+            height: 153,
+            font_size: 140,
+        },
+        right_nation: TextProperties {
+            x: 1515,
+            y: 122,
+            width: 101,
+            height: 87,
+            font_size: 72,
+        },
+        right_flag: RectangleProperties {
+            x: 1480,
+            y: 217,
+            width: 135,
+            height: 75,
+            radius: 0,
+        },
+        right_score: TextProperties {
+            x: 1477,
+            y: 291,
+            width: 152,
+            height: 213,
+            font_size: 210,
+        },
+        right_status: TextProperties {
+            x: 1250,
+            y: 120,
+            width: 100,
+            height: 200,
+            font_size: 48,
+        },
+        right_video: TextProperties {
+            x: 1250,
+            y: 205,
+            width: 100,
+            height: 200,
+            font_size: 48,
+        },
+        right_medical: TextProperties {
+            x: 1250,
+            y: 290,
+            width: 100,
+            height: 200,
+            font_size: 48,
+        },
+        right_reserve: TextProperties {
+            x: 1250,
+            y: 375,
+            width: 100,
+            height: 200,
+            font_size: 48,
+        },
+        right_id: TextProperties {
+            x: 1602,
+            y: 500,
+            width: 300,
+            height: 100,
+            font_size: 36,
+        },
+        right_photo: RectangleProperties {
+            x: 1626,
+            y: 133,
+            width: 286,
+            height: 366,
+            radius: 0,
+        },
+
+        referee_name: TextProperties {
+            x: 725,
+            y: 527,
+            width: 480,
+            height: 116,
+            font_size: 48,
+        },
+        referee_nation: TextProperties {
+            x: 1182,
+            y: 543,
+            width: 101,
+            height: 87,
+            font_size: 72,
+        },
+        piste: TextProperties {
+            x: 805,
+            y: -4,
+            width: 300,
+            height: 100,
+            font_size: 48,
+        },
+        competition_phase: TextProperties {
+            x: 805,
+            y: 80,
+            width: 300,
+            height: 100,
+            font_size: 48,
+        },
+        competition_type: TextProperties {
+            x: 805,
+            y: 164,
+            width: 300,
+            height: 100,
+            font_size: 48,
+        },
+        poule_tableau_id: TextProperties {
+            x: 805,
+            y: 248,
+            width: 300,
+            height: 100,
+            font_size: 48,
+        },
+        start_time: TextProperties {
+            x: 805,
+            y: 332,
+            width: 300,
+            height: 100,
+            font_size: 48,
+        },
+        local_time: TextProperties {
+            x: 805,
+            y: 416,
+            width: 300,
+            height: 100,
+            font_size: 48,
+        },
+    }),
 };
 
 pub const LAYOUT_1920X1080: Layout = Layout {
@@ -705,6 +906,8 @@ pub const LAYOUT_1920X1080: Layout = Layout {
         height: 365,
         font_size: 64,
     },
+
+    cyrano_layout: None,
 };
 
 pub const LAYOUT_1920X360: Layout = Layout {
@@ -1058,6 +1261,8 @@ pub const LAYOUT_1920X360: Layout = Layout {
         height: 270,
         font_size: 64,
     },
+
+    cyrano_layout: None,
 };
 
 pub const LAYOUT_1920X480: Layout = Layout {
@@ -1411,4 +1616,6 @@ pub const LAYOUT_1920X480: Layout = Layout {
         height: 292,
         font_size: 64,
     },
+
+    cyrano_layout: None,
 };
