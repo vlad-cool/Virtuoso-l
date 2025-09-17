@@ -58,9 +58,13 @@ pub struct GpioFrontendConfig {
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "legacy_backend")]
 pub struct LegacyBackendConfig {
+    #[cfg(feature = "legacy_backend_full")]
     pub weapon_0_pin: PinLocation,
+    #[cfg(feature = "legacy_backend_full")]
     pub weapon_1_pin: PinLocation,
+    #[cfg(feature = "legacy_backend_full")]
     pub weapon_btn_pin: PinLocation,
+    #[cfg(feature = "legacy_backend_full")]
     pub ir_pin: PinLocation,
     pub uart_port: PathBuf,
 }
@@ -206,9 +210,13 @@ impl HardwareConfig {
             },
             #[cfg(feature = "legacy_backend")]
             legacy_backend: LegacyBackendConfig {
+                #[cfg(feature = "legacy_backend_full")]
                 weapon_0_pin: PinLocation::from_phys_number(32).unwrap(),
+                #[cfg(feature = "legacy_backend_full")]
                 weapon_1_pin: PinLocation::from_phys_number(36).unwrap(),
+                #[cfg(feature = "legacy_backend_full")]
                 weapon_btn_pin: PinLocation::from_phys_number(37).unwrap(),
+                #[cfg(feature = "legacy_backend_full")]
                 ir_pin: PinLocation::from_phys_number(3).unwrap(),
                 uart_port: "/dev/ttyS2".into(),
             },
@@ -263,6 +271,11 @@ impl HardwareConfig {
                 display: DisplayConfig {
                     resolution: Resolution::Res1920X1080,
                     swap_sides: false,
+                },
+
+                #[cfg(all(feature = "legacy_backend", not(feature = "legacy_backend_full")))]
+                legacy_backend: LegacyBackendConfig {
+                    uart_port: "/dev/ttyUSB0".into(),
                 },
             };
             file_config.write_config(logger);

@@ -3,26 +3,10 @@ use sdl2::ttf::Font;
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
-use crate::match_info::{MatchInfo, Priority};
+use crate::match_info::{MatchInfo, Priority, TimerController};
 use crate::sdl_frontend::widgets::{Label, LabelHashKey, LabelTextureCache};
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 use crate::sdl_frontend::{colors, message};
-
-fn digit_to_str(digit: u64) -> String {
-    match digit {
-        0 => "0".to_string(),
-        1 => "1".to_string(),
-        2 => "2".to_string(),
-        3 => "3".to_string(),
-        4 => "4".to_string(),
-        5 => "5".to_string(),
-        6 => "6".to_string(),
-        7 => "7".to_string(),
-        8 => "8".to_string(),
-        9 => "9".to_string(),
-        10.. => "-".to_string(),
-    }
-}
 
 pub struct Drawer<'a> {
     timer_0_widget: Label<'a>,
@@ -31,8 +15,7 @@ pub struct Drawer<'a> {
     timer_3_widget: Label<'a>,
     texture_cache: LabelTextureCache<'a>,
 
-    time: Duration,
-    timer_running: bool,
+    timer: TimerController,
     priority: Priority,
     updated: bool,
     message_update_time: Option<Instant>,
@@ -56,7 +39,7 @@ impl<'a> Drawer<'a> {
                 texture_cache.get(key, context.texture_creator, font.clone(), context.logger);
             }
         }
-        for char in " :".chars() {
+        for char in " :.".chars() {
             for color in [
                 colors::TIMER_WHITE,
                 colors::TIMER_ORANGE,
@@ -103,8 +86,7 @@ impl<'a> Drawer<'a> {
             ),
             texture_cache,
 
-            time: Duration::from_secs(3 * 60),
-            timer_running: false,
+            timer: TimerController::new(),
             priority: Priority::None,
             updated: true,
             message_update_time: None,
@@ -116,44 +98,20 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     fn update(&mut self, data: &MatchInfo) {
         self.message_update_time = data.display_message_updated;
 
-        let time: std::time::Duration = data.main_timer.get_time();
-        if self.time != time
-            || self.timer_running != data.main_timer.is_running()
-            || self.priority != data.priority
-        {
-            self.time = time;
-            self.timer_running = data.main_timer.is_running();
+        let timer: TimerController = data.timer_controller;
+        if self.timer != timer || self.priority != data.priority {
+            self.timer = timer;
             self.priority = data.priority;
             self.updated = true;
         }
     }
 
     fn render(&mut self) {
-        if self.updated || self.timer_running {
-            let colon: String = if !self.timer_running || self.time.subsec_millis() > 500 {
-                if self.time.as_secs() >= 10 {
-                    ":".to_string()
-                } else {
-                    ".".to_string()
-                }
-            } else {
-                " ".to_string()
-            };
+        if self.updated || self.timer.is_timer_running() {
+            let (time_string, time): (String, Duration) = self.timer.get_main_time_string();
 
-            let (timer_m, timer_s) = if (self.time + Duration::from_millis(999)).as_secs() >= 11 {
-                let minutes: u64 = self.time.as_secs() / 60;
-                let seconds: u64 = self.time.as_secs() % 60;
-
-                (minutes, seconds)
-            } else {
-                let seconds: u64 = self.time.as_secs();
-                let centiseconds: u32 = self.time.subsec_millis() / 10;
-
-                (seconds, centiseconds as u64)
-            };
-
-            let color: sdl2::pixels::Color = if self.timer_running {
-                if self.time.as_secs() > 10 {
+            let color: sdl2::pixels::Color = if self.timer.is_timer_running() {
+                if time.as_secs() >= 10 {
                     colors::TIMER_WHITE
                 } else {
                     colors::TIMER_BLUE
@@ -162,30 +120,37 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
                 colors::TIMER_ORANGE
             };
 
-            let colon_color: sdl2::pixels::Color = if self.timer_running {
-                match self.priority {
-                    Priority::Left => colors::PRIORITY_RED,
-                    Priority::None => color,
-                    Priority::Right => colors::PRIORITY_GREEN,
+            let colon_color: sdl2::pixels::Color = if self.timer.is_timer_running() {
+                if time.subsec_millis() > 500 {
+                    match self.priority {
+                        Priority::Left => colors::PRIORITY_RED,
+                        Priority::None => color,
+                        Priority::Right => colors::PRIORITY_GREEN,
+                    }
+                } else {
+                    colors::BACKGROUND
                 }
             } else {
                 color
             };
 
             self.timer_0_widget.render(
-                digit_to_str(timer_m % 10),
+                time_string[0..1].to_string(),
                 color,
                 Some(&mut self.texture_cache),
             );
-            self.timer_1_widget
-                .render(colon, colon_color, Some(&mut self.texture_cache));
+            self.timer_1_widget.render(
+                time_string[1..2].to_string(),
+                colon_color,
+                Some(&mut self.texture_cache),
+            );
             self.timer_2_widget.render(
-                digit_to_str(timer_s / 10),
+                time_string[2..3].to_string(),
                 color,
                 Some(&mut self.texture_cache),
             );
             self.timer_3_widget.render(
-                digit_to_str(timer_s % 10),
+                time_string[3..4].to_string(),
                 color,
                 Some(&mut self.texture_cache),
             );

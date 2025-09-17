@@ -1,8 +1,9 @@
-use sdl2;
-use sdl2::pixels::Color;
 use std::time::Duration;
 
-use crate::match_info::MatchInfo;
+use sdl2;
+use sdl2::pixels::Color;
+
+use crate::match_info::{MatchInfo, TimerController};
 use crate::sdl_frontend::colors;
 use crate::sdl_frontend::layout_structure::RectangleProperties;
 use crate::sdl_frontend::widgets::Indicator;
@@ -12,9 +13,7 @@ pub struct Drawer<'a> {
     passive_indicator_widget: Indicator<'a>,
     position: RectangleProperties,
 
-    passive_indicator: u32,
-    passive_counter: u32,
-    time: Duration,
+    timer: TimerController,
     updated: bool,
 }
 
@@ -28,9 +27,7 @@ impl<'a> Drawer<'a> {
                 context.logger,
             ),
             position: context.layout.passive_indicator.clone(),
-            passive_indicator: 0,
-            passive_counter: 60,
-            time: Duration::from_secs(0),
+            timer: TimerController::new(),
             updated: true,
         }
     }
@@ -38,38 +35,37 @@ impl<'a> Drawer<'a> {
 
 impl<'a> VirtuosoWidget for Drawer<'a> {
     fn update(&mut self, data: &MatchInfo) {
-        if self.passive_indicator != data.passive_timer.get_indicator()
-            || self.passive_counter != data.passive_timer.get_counter()
-            || self.time != data.main_timer.get_time()
-        {
-            self.passive_indicator = data.passive_timer.get_indicator();
-            self.passive_counter = data.passive_timer.get_counter();
-            self.time = data.main_timer.get_time();
+        if self.timer != data.timer_controller {
+            self.timer = data.timer_controller;
             self.updated = true;
         }
     }
 
     fn render(&mut self) {
-        // if self.updated {
         {
-            let color: Color = match self.passive_counter {
-                0 => colors::PASSIVE_RED,
-                1..11 => {
-                    if self.time.subsec_millis() > 500 {
+            let passive_timer: Duration = self.timer.get_passive_timer();
+            let (color, passive_indicator): (Color, i32) = match passive_timer.as_secs() {
+                0 => (colors::PASSIVE_RED, 1000),
+                1..11 => (
+                    if self.timer.get_main_time().subsec_millis() > 500 {
                         colors::PASSIVE_RED
                     } else {
                         colors::BACKGROUND
-                    }
-                }
-                11.. => colors::PASSIVE_YELLOW,
+                    },
+                    1000,
+                ),
+                11.. => (
+                    colors::PASSIVE_YELLOW,
+                    1000 - ((passive_timer - Duration::from_secs(10)).as_millis() / 50) as i32,
+                ),
             };
 
             self.passive_indicator_widget.set_x(
                 self.position.x + self.position.width as i32 / 2
-                    - self.position.width as i32 * self.passive_indicator as i32 / 2000,
+                    - self.position.width as i32 * passive_indicator / 2000,
             );
             self.passive_indicator_widget
-                .set_width(self.position.width * self.passive_indicator / 1000);
+                .set_width(self.position.width * passive_indicator as u32 / 1000);
 
             self.passive_indicator_widget.render(color);
             self.updated = false;

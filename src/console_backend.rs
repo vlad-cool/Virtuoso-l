@@ -1,8 +1,10 @@
 use std::io;
 use std::time::Duration;
 
-use crate::match_info::{self, MainTimer, ProgramState};
+use crate::match_info::{self, ProgramState};
+use crate::modules::CyranoCommand;
 use crate::modules::{self, VirtuosoModuleContext};
+use crate::virtuoso_logger::LoggerUnwrap;
 
 pub struct ConsoleBackend {
     context: modules::VirtuosoModuleContext,
@@ -37,6 +39,7 @@ enum Field {
 
     PassiveCounter,
     PassiveIndicator,
+    PassiveTimerRunning,
 
     Unknown,
 }
@@ -71,6 +74,7 @@ impl std::fmt::Display for Field {
 
             Field::PassiveCounter => write!(f, "Passive Counter"),
             Field::PassiveIndicator => write!(f, "Passive Indicator"),
+            Field::PassiveTimerRunning => write!(f, "Passive timer running"),
 
             Field::Unknown => write!(f, "Unknown"),
         }
@@ -82,6 +86,7 @@ enum Command {
     Set(Field, u32),
     Get(Field),
     Show,
+    CyranoCommand(CyranoCommand),
     Unknown,
 }
 
@@ -111,6 +116,7 @@ fn parse_field(input: &str) -> Field {
 
         "passivecounter" => Field::PassiveCounter,
         "passiveindicator" => Field::PassiveIndicator,
+        "passivetimerrunning" => Field::PassiveTimerRunning,
 
         "autoscore" => Field::AutoScore,
         "autotimer" => Field::AutoTimer,
@@ -135,6 +141,14 @@ fn parse_command(input: &str) -> Command {
             field => Command::Get(field),
         },
         ["show"] => Command::Show,
+        ["cyrano", command] => match *command {
+            "prev" => Command::CyranoCommand(CyranoCommand::CyranoPrev),
+            "next" => Command::CyranoCommand(CyranoCommand::CyranoNext),
+            "begin" => Command::CyranoCommand(CyranoCommand::CyranoBegin),
+            "end" => Command::CyranoCommand(CyranoCommand::CyranoEnd),
+            _ => Command::Unknown,
+        },
+
         _ => Command::Unknown,
     }
 }
@@ -153,10 +167,12 @@ impl ConsoleBackend {
             Field::Time => {
                 let time: Duration = Duration::from_secs(value.into());
 
-                match_info_data.main_timer.set_time(time);
+                match_info_data.timer_controller.sync(time, false);
             }
             Field::LastTenSeconds => match_info_data.last_ten_seconds = value > 0,
-            Field::TimerRunning => match_info_data.main_timer.set_timer_running(value > 0),
+            Field::TimerRunning => {} // match_info_data
+            // .timer_controller
+            // .set_timer_running(value > 0),
             Field::Period => match_info_data.period = value,
 
             Field::Weapon => {
@@ -194,9 +210,16 @@ impl ConsoleBackend {
             Field::AutoScore => match_info_data.auto_score_on = value > 0,
             Field::AutoTimer => match_info_data.auto_timer_on = value > 0,
 
-            Field::PassiveCounter => println!("Setting paassive counter is not implemented yet"),
+            Field::PassiveCounter => println!("Setting passive counter is not implemented yet"),
             Field::PassiveIndicator => {
-                println!("Setting paassive indicator is not implemented yet")
+                println!("Setting passive indicator is not implemented yet")
+            }
+            Field::PassiveTimerRunning => {
+                if value > 0 {
+                    // match_info_data.passive_timer.enable();
+                } else {
+                    // match_info_data.passive_timer.disable();
+                }
             }
 
             Field::Unknown => {
@@ -215,16 +238,14 @@ impl ConsoleBackend {
         match field {
             Field::LeftScore => println!("{}", match_info_data.left_fencer.score),
             Field::RightScore => println!("{}", match_info_data.right_fencer.score),
-            Field::Time => println!("{}", match_info_data.main_timer.to_time_string()),
-            Field::LastTenSeconds => println!("{}", match_info_data.last_ten_seconds),
-            Field::TimerRunning => println!(
+            Field::Time => println!(
                 "{}",
-                if let MainTimer::Running(_) = match_info_data.main_timer {
-                    true
-                } else {
-                    false
-                }
+                match_info_data.timer_controller.get_main_time_string().0
             ),
+            Field::LastTenSeconds => println!("{}", match_info_data.last_ten_seconds),
+            Field::TimerRunning => {
+                println!("{}", match_info_data.timer_controller.is_timer_running())
+            }
             Field::Period => println!("{}", match_info_data.period),
 
             Field::Weapon => println!("{}", match_info_data.weapon),
@@ -246,11 +267,18 @@ impl ConsoleBackend {
             Field::AutoTimer => println!("{}", match_info_data.auto_timer_on),
 
             Field::PassiveCounter => {
-                println!("not final {}", match_info_data.passive_timer.get_counter())
+                println!(
+                    "not final {}",
+                    match_info_data.timer_controller.get_passive_counter()
+                )
             }
             Field::PassiveIndicator => {
-                println!("not final {}", match_info_data.passive_timer.get_counter())
+                println!(
+                    "not final {}",
+                    match_info_data.timer_controller.get_passive_counter()
+                )
             }
+            Field::PassiveTimerRunning => {}
 
             Field::Unknown => println!("Unknown field"),
         }
@@ -282,6 +310,12 @@ impl modules::VirtuosoModule for ConsoleBackend {
                 Command::Get(field) => self.print_field(field),
                 Command::Show => println!("{:?}", self.context.match_info.lock().unwrap()),
                 Command::Unknown => println!("Unknown command or invalid format"),
+                Command::CyranoCommand(command) => {
+                    self.context
+                        .cyrano_command_tx
+                        .send(command)
+                        .log_err(&self.context.logger);
+                }
             }
         }
     }

@@ -1,4 +1,6 @@
+#[cfg(feature = "legacy_backend_full")]
 use gpio_cdev;
+#[cfg(feature = "legacy_backend_full")]
 use gpio_cdev::Line;
 use serial::{self, SerialPort};
 use std::io::Read;
@@ -8,10 +10,12 @@ use std::sync::{MutexGuard, mpsc};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use crate::match_info;
+use crate::match_info::{self, Weapon};
 use crate::modules::{self, VirtuosoModuleContext};
 use crate::virtuoso_config::VirtuosoConfig;
-use crate::virtuoso_logger::{Logger, LoggerUnwrap};
+use crate::virtuoso_logger::Logger;
+#[cfg(feature = "legacy_backend_full")]
+use crate::virtuoso_logger::LoggerUnwrap;
 
 const AUTO_STATUS_WAIT_THRESHOLD: std::time::Duration = std::time::Duration::from_millis(200);
 const AUTO_STATUS_ON: u32 = 196;
@@ -20,7 +24,9 @@ const AUTO_STATUS_OFF: u32 = 17;
 pub struct LegacyBackend {
     context: VirtuosoModuleContext,
 
+    #[cfg(feature = "legacy_backend_full")]
     weapon_select_btn_pressed: bool,
+    #[cfg(feature = "legacy_backend_full")]
     rc5_address: u32,
     auto_status_controller: AutoStatusController,
 
@@ -38,53 +44,59 @@ impl modules::VirtuosoModule for LegacyBackend {
             uart_handler(tx_clone, logger_clone, port_path);
         });
 
-        let tx_clone: mpsc::Sender<InputData> = tx.clone();
-        let logger_clone: Logger = self.context.logger.clone();
+        #[cfg(feature = "legacy_backend_full")]
+        {
+            let tx_clone: mpsc::Sender<InputData> = tx.clone();
+            let logger_clone: Logger = self.context.logger.clone();
 
-        let gpio_line_weapon_0: Line = self
-            .context
-            .hw_config
-            .legacy_backend
-            .weapon_0_pin
-            .to_line()
-            .unwrap_with_logger(&self.context.logger);
-        let gpio_line_weapon_1: Line = self
-            .context
-            .hw_config
-            .legacy_backend
-            .weapon_1_pin
-            .to_line()
-            .unwrap_with_logger(&self.context.logger);
-        let gpio_line_weapon_btn: Line = self
-            .context
-            .hw_config
-            .legacy_backend
-            .weapon_btn_pin
-            .to_line()
-            .unwrap_with_logger(&self.context.logger);
+            let gpio_line_weapon_0: Line = self
+                .context
+                .hw_config
+                .legacy_backend
+                .weapon_0_pin
+                .to_line()
+                .unwrap_with_logger(&self.context.logger);
+            let gpio_line_weapon_1: Line = self
+                .context
+                .hw_config
+                .legacy_backend
+                .weapon_1_pin
+                .to_line()
+                .unwrap_with_logger(&self.context.logger);
+            let gpio_line_weapon_btn: Line = self
+                .context
+                .hw_config
+                .legacy_backend
+                .weapon_btn_pin
+                .to_line()
+                .unwrap_with_logger(&self.context.logger);
 
-        thread::spawn(move || {
-            pins_handler(
-                tx_clone,
-                logger_clone,
-                gpio_line_weapon_0,
-                gpio_line_weapon_1,
-                gpio_line_weapon_btn,
-            );
-        });
+            thread::spawn(move || {
+                pins_handler(
+                    tx_clone,
+                    logger_clone,
+                    gpio_line_weapon_0,
+                    gpio_line_weapon_1,
+                    gpio_line_weapon_btn,
+                );
+            });
+        }
 
-        let tx_clone: mpsc::Sender<InputData> = tx.clone();
-        let logger_clone: Logger = self.context.logger.clone();
-        let ir_line: Line = self
-            .context
-            .hw_config
-            .legacy_backend
-            .ir_pin
-            .to_line()
-            .unwrap_with_logger(&self.context.logger);
-        thread::spawn(move || {
-            rc5_receiever(tx_clone, logger_clone, ir_line);
-        });
+        #[cfg(feature = "legacy_backend_full")]
+        {
+            let tx_clone: mpsc::Sender<InputData> = tx.clone();
+            let logger_clone: Logger = self.context.logger.clone();
+            let ir_line: Line = self
+                .context
+                .hw_config
+                .legacy_backend
+                .ir_pin
+                .to_line()
+                .unwrap_with_logger(&self.context.logger);
+            thread::spawn(move || {
+                rc5_receiever(tx_clone, logger_clone, ir_line);
+            });
+        }
 
         loop {
             match rx.recv() {
@@ -94,9 +106,11 @@ impl modules::VirtuosoModule for LegacyBackend {
                         InputData::UartData(msg) => {
                             self.apply_uart_data(msg);
                         }
+                        #[cfg(feature = "legacy_backend_full")]
                         InputData::PinsData(msg) => {
                             self.apply_pins_data(msg);
                         }
+                        #[cfg(feature = "legacy_backend_full")]
                         InputData::IrCommand(msg) => {
                             self.apply_ir_data(msg);
                         }
@@ -110,6 +124,7 @@ impl modules::VirtuosoModule for LegacyBackend {
 
 impl LegacyBackend {
     pub fn new(context: VirtuosoModuleContext) -> Self {
+        #[cfg(feature = "legacy_backend_full")]
         let rc5_address: u32 = context.config.lock().unwrap().legacy_backend.rc5_address;
 
         {
@@ -125,7 +140,9 @@ impl LegacyBackend {
         Self {
             context,
 
+            #[cfg(feature = "legacy_backend_full")]
             weapon_select_btn_pressed: false,
+            #[cfg(feature = "legacy_backend_full")]
             rc5_address,
             auto_status_controller: AutoStatusController::new(),
 
@@ -139,7 +156,7 @@ impl LegacyBackend {
 
         match_info_data.left_fencer.score = msg.score_left;
         match_info_data.right_fencer.score = msg.score_right;
-        match_info_data.main_timer.set_timer_running(msg.on_timer);
+        // match_info_data.timer_controller.set_timer_running(msg.on_timer);
 
         if msg.symbol {
             let symbol: u32 = msg.dec_seconds * 16 + msg.seconds;
@@ -154,8 +171,10 @@ impl LegacyBackend {
             let timer_d: u32 = msg.dec_seconds;
             let timer_s: u32 = msg.seconds;
 
+            let main_timer: Duration = match_info_data.timer_controller.get_main_time();
+
             let last_second: bool =
-                match_info_data.main_timer.get_time() < Duration::from_secs(1) && timer_m == 0;
+                main_timer <= Duration::from_secs_f32(5.0) && timer_m == 0 && timer_s == 9;
 
             let new_time: Duration = if last_second {
                 Duration::from_millis((timer_d * 100 + timer_s * 10) as u64)
@@ -163,17 +182,14 @@ impl LegacyBackend {
                 Duration::from_secs((timer_m * 60 + timer_d * 10 + timer_s) as u64)
             };
 
-            match_info_data.main_timer.set_time(new_time);
-            if msg.on_timer {
-                match_info_data.main_timer.start_timer();
-                match_info_data.passive_timer.enable();
-            } else {
-                match_info_data.main_timer.stop_timer();
-                match_info_data.passive_timer.disable();
-            }
+            match_info_data
+                .timer_controller
+                .sync(new_time, msg.on_timer);
 
-            if self.prev_seconds_value != new_time.as_secs() {
-                match_info_data.passive_timer.tick();
+            if match_info_data.timer_controller.is_passive_timer_enabled()
+                && match_info_data.weapon == Weapon::Fleuret
+            {
+                match_info_data.timer_controller.reset_passive_timer(false);
             }
 
             self.prev_seconds_value = new_time.as_secs();
@@ -207,14 +223,20 @@ impl LegacyBackend {
         match_info_data.right_fencer.color_light = msg.green;
         match_info_data.right_fencer.white_light = msg.white_green;
 
-        if match_info_data.main_timer.is_running() && (msg.red || msg.white_red || msg.green || msg.white_green) {
-            match_info_data.passive_timer.reset();
+        if match_info_data.timer_controller.is_timer_running()
+            && (msg.red || msg.white_red || msg.green || msg.white_green)
+        {
+            let weapon: Weapon = match_info_data.weapon;
+            match_info_data
+                .timer_controller
+                .reset_passive_timer(weapon != Weapon::Fleuret);
         }
 
         std::mem::drop(match_info_data);
         self.context.match_info_data_updated();
     }
 
+    #[cfg(feature = "legacy_backend_full")]
     fn apply_pins_data(&mut self, msg: PinsData) {
         let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
             self.context.match_info.lock().unwrap();
@@ -232,6 +254,7 @@ impl LegacyBackend {
         self.weapon_select_btn_pressed = msg.weapon_select_btn;
     }
 
+    #[cfg(feature = "legacy_backend_full")]
     fn apply_ir_data(&mut self, msg: IrFrame) {
         if self.weapon_select_btn_pressed
             && msg.address != self.rc5_address
@@ -265,41 +288,62 @@ impl LegacyBackend {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
                         self.context.match_info.lock().unwrap();
 
-                    if !match_info_data.main_timer.is_running() {
-                        match_info_data.passive_timer.reset();
+                    if !match_info_data.timer_controller.is_timer_running() {
+                        let weapon: Weapon = match_info_data.weapon;
+                        match_info_data
+                            .timer_controller
+                            .reset_passive_timer(weapon != Weapon::Fleuret);
                     }
                 }
                 IrCommands::LeftPenaltyCard => {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
                         self.context.match_info.lock().unwrap();
-                    match_info_data.left_fencer.warning_card.inc();
+                    if !match_info_data.timer_controller.is_timer_running() {
+                        match_info_data.left_fencer.warning_card.inc();
 
-                    std::mem::drop(match_info_data);
-                    self.context.match_info_data_updated();
+                        std::mem::drop(match_info_data);
+                        self.context.match_info_data_updated();
+                    }
                 }
                 IrCommands::RightPenaltyCard => {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
                         self.context.match_info.lock().unwrap();
-                    match_info_data.right_fencer.warning_card.inc();
+                    if !match_info_data.timer_controller.is_timer_running() {
+                        match_info_data.right_fencer.warning_card.inc();
 
-                    std::mem::drop(match_info_data);
-                    self.context.match_info_data_updated();
+                        std::mem::drop(match_info_data);
+                        self.context.match_info_data_updated();
+                    }
                 }
                 IrCommands::LeftPassiveCard => {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
                         self.context.match_info.lock().unwrap();
-                    match_info_data.left_fencer.passive_card.inc();
+                    if !match_info_data.timer_controller.is_timer_running() {
+                        match_info_data.left_fencer.passive_card.inc();
 
-                    std::mem::drop(match_info_data);
-                    self.context.match_info_data_updated();
+                        let weapon: Weapon = match_info_data.weapon;
+                        match_info_data
+                            .timer_controller
+                            .reset_passive_timer(weapon != Weapon::Fleuret);
+
+                        std::mem::drop(match_info_data);
+                        self.context.match_info_data_updated();
+                    }
                 }
                 IrCommands::RightPassiveCard => {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
                         self.context.match_info.lock().unwrap();
-                    match_info_data.right_fencer.passive_card.inc();
+                    if !match_info_data.timer_controller.is_timer_running() {
+                        match_info_data.right_fencer.passive_card.inc();
 
-                    std::mem::drop(match_info_data);
-                    self.context.match_info_data_updated();
+                        let weapon: Weapon = match_info_data.weapon;
+                        match_info_data
+                            .timer_controller
+                            .reset_passive_timer(weapon != Weapon::Fleuret);
+
+                        std::mem::drop(match_info_data);
+                        self.context.match_info_data_updated();
+                    }
                 }
                 // IrCommands::FlipSides => {
                 //     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
@@ -536,7 +580,9 @@ impl AutoStatusController {
 
 enum InputData {
     UartData(UartData),
+    #[cfg(feature = "legacy_backend_full")]
     PinsData(PinsData),
+    #[cfg(feature = "legacy_backend_full")]
     IrCommand(IrFrame),
 }
 
@@ -757,6 +803,7 @@ impl IrCommands {
     }
 }
 
+#[cfg(feature = "legacy_backend_full")]
 #[derive(Debug)]
 struct IrFrame {
     new: bool,
@@ -764,6 +811,7 @@ struct IrFrame {
     command: IrCommands,
 }
 
+#[cfg(feature = "legacy_backend_full")]
 fn rc5_receiever(tx: mpsc::Sender<InputData>, logger: Logger, line: gpio_cdev::Line) {
     let mut last_interrupt_time: u64 = 0u64;
 
@@ -855,12 +903,14 @@ fn rc5_receiever(tx: mpsc::Sender<InputData>, logger: Logger, line: gpio_cdev::L
     }
 }
 
+#[cfg(feature = "legacy_backend_full")]
 #[derive(Debug, PartialEq, Clone)]
 struct PinsData {
     weapon: u8,
     weapon_select_btn: bool,
 }
 
+#[cfg(feature = "legacy_backend_full")]
 fn pins_handler(
     tx: mpsc::Sender<InputData>,
     logger: Logger,

@@ -23,8 +23,9 @@ serde_json = "1.0.140"
 glob = "0.3.2"
 
 [features]
-default = ["console_backend", "sdl_frontend", "cyrano_server"]
-legacy_backend = ["serial", "gpio-cdev"]
+default = ["console_backend", "sdl_frontend", "cyrano_server", "legacy_backend"]
+legacy_backend = ["serial"]
+legacy_backend_full = ["legacy_backend", "gpio-cdev"]
 console_backend = []
 cyrano_server = []
 sdl_frontend = ["sdl2", "fontdue"]

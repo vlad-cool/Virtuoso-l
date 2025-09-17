@@ -1,11 +1,12 @@
 [legacy_backend]
+auto_score_on = false
+auto_timer_on = false
 rc5_address = 0
 
 [cyrano_server]
 cyrano_port = 50100
 
 [logger_config]
-log_level = "DEBUG"
-stderr = true
+stderr = false
 udp = false
 udp_print_ip = false

@@ -18,6 +18,16 @@ pub struct TextProperties {
     pub font_size: u16,
 }
 
+pub struct CyranoLayout {
+    pub left_name: TextProperties,
+    pub left_nation: TextProperties,
+    pub left_flag: RectangleProperties,
+    pub left_photo: RectangleProperties,
+    pub left_score: TextProperties,
+
+    pub right_name: TextProperties,
+}
+
 pub struct Layout {
     pub background: RectangleProperties,
     pub left_nation: TextProperties,

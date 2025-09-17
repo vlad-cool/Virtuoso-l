@@ -39,7 +39,7 @@ impl VirtuosoModuleContext {
         match_info: MatchInfo,
         settings_menu: SettingsMenu,
     ) -> Self {
-        let (tx, rx) = mpsc::channel::<CyranoCommand>();
+        let (cyrano_tx, cyrano_rx) = mpsc::channel::<CyranoCommand>();
 
         Self {
             logger,
@@ -52,8 +52,8 @@ impl VirtuosoModuleContext {
             settings_menu_shown: Arc::new(AtomicBool::new(false)),
             settings_menu: Arc::new(Mutex::new(settings_menu)),
 
-            cyrano_command_tx: tx,
-            cyrano_command_rx: Arc::new(Mutex::new(Some(rx))),
+            cyrano_command_tx: cyrano_tx,
+            cyrano_command_rx: Arc::new(Mutex::new(Some(cyrano_rx))),
         }
     }
 

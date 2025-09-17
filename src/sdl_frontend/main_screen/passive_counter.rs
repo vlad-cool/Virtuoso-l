@@ -2,7 +2,7 @@ use sdl2;
 use sdl2::ttf::Font;
 use std::rc::Rc;
 
-use crate::match_info::{MatchInfo, Weapon};
+use crate::match_info::{MatchInfo, TimerController};
 use crate::sdl_frontend::colors;
 use crate::sdl_frontend::widgets::{Label, LabelTextureCache};
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
@@ -12,8 +12,8 @@ pub struct Drawer<'a> {
     passive_counter_1_widget: Label<'a>,
     texture_cache: LabelTextureCache<'a>,
 
-    passive_counter: u32,
-    enabled: bool,
+    timer: TimerController,
+
     updated: bool,
 }
 
@@ -37,8 +37,7 @@ impl<'a> Drawer<'a> {
                 context.logger,
             ),
             texture_cache: LabelTextureCache::new(),
-            passive_counter: 60,
-            enabled: false,
+            timer: TimerController::new(),
             updated: true,
         }
     }
@@ -46,25 +45,17 @@ impl<'a> Drawer<'a> {
 
 impl<'a> VirtuosoWidget for Drawer<'a> {
     fn update(&mut self, data: &MatchInfo) {
-        let enabled: bool = data.weapon != Weapon::Sabre;
-        let passive_counter: u32 = data.passive_timer.get_counter();
-
-        if self.passive_counter != passive_counter || self.enabled != enabled {
-            self.passive_counter = passive_counter;
-            self.enabled = enabled;
+        if self.timer != data.timer_controller {
+            self.timer = data.timer_controller;
             self.updated = true;
         }
     }
 
     fn render(&mut self) {
         if self.updated {
-            let passive_counter_text: String = if self.enabled {
-                format!("{}{}", self.passive_counter / 10, self.passive_counter % 10)
-            } else {
-                format!("60")
-            };
+            let passive_counter_text: String = self.timer.get_passive_counter();
 
-            let color: sdl2::pixels::Color = if self.enabled {
+            let color: sdl2::pixels::Color = if self.timer.is_passive_timer_enabled() {
                 colors::PASSIVE_TEXT_LIGHT
             } else {
                 colors::PASSIVE_TEXT_DARK

@@ -39,15 +39,14 @@ fn main() {
     compile_error!("Video recorder feature is not implemented yet");
 
     /*
-    TODO Auto status saving
     TODO Properly swap sides
     TODO Cyrano softer error
     TODO Cyrano
-    TODO Repeater ACK / NAK
     TODO Repeater auto role
     TODO Repeater reorder receiver
     TODO Menu
     TODO Replace mutex with rwlock
+    TODO Flash new score value if was updated automatically
      */
 
     let config: VirtuosoConfig = VirtuosoConfig::load_config();
@@ -103,10 +102,9 @@ fn main() {
     }
 
     #[cfg(feature = "repeater")]
-    let repeater: Result<repeater::Repeater, String> =
-        repeater::Repeater::new(context.with_logger(
-            virtuoso_logger.get_logger("Repeater".to_string()), // .enable_debug(),
-        ));
+    let repeater: Result<repeater::Repeater, String> = repeater::Repeater::new(
+        context.with_logger(virtuoso_logger.get_logger("Repeater".to_string())),
+    );
     #[cfg(feature = "repeater")]
     match &repeater {
         Ok(_) => {}

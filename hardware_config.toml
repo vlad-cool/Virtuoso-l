@@ -1,3 +1,8 @@
+force_file = false
+
 [display]
 resolution = "Res1920X1080"
 swap_sides = false
+
+[legacy_backend]
+uart_port = "/dev/ttyUSB0"
