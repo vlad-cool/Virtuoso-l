@@ -15,7 +15,7 @@ pub struct GpioFrontend {
 }
 
 impl modules::VirtuosoModule for GpioFrontend {
-    fn run(self) {
+    fn run(mut self) {
         let logger: &modules::Logger = &self.context.logger;
         let hw_config: &modules::HardwareConfig = &self.context.hw_config;
 
@@ -54,6 +54,8 @@ impl modules::VirtuosoModule for GpioFrontend {
             let new_modified_count: u32 = self.context.get_modified_count();
 
             if new_modified_count != self.modified_count {
+                self.modified_count = new_modified_count;
+
                 let match_info_data: MutexGuard<'_, match_info::MatchInfo> =
                     self.context.match_info.lock().unwrap();
 

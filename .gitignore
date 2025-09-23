@@ -3,5 +3,7 @@
 /mockup/extracted
 /armbian_build
 /scripts/mnt
+/armbian/target
+/armbian/*.img
 log.txt
 licenses.json

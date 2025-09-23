@@ -333,4 +333,14 @@ impl HardwareConfig {
             }
         }
     }
+
+    #[cfg(feature = "repeater")]
+    pub fn is_main_device(&self) -> bool {
+        self.repeater.role == RepeaterRole::Transmitter
+    }
+
+    #[cfg(not(feature = "repeater"))]
+    pub fn is_main_device(&self) -> bool {
+        true
+    }
 }

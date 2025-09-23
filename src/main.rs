@@ -40,9 +40,8 @@ fn main() {
 
     /*
     TODO Properly swap sides
-    TODO Cyrano softer error
     TODO Cyrano
-    TODO Repeater auto role
+    TODO Cyrano time handling
     TODO Repeater reorder receiver
     TODO Menu
     TODO Replace mutex with rwlock
@@ -124,18 +123,31 @@ fn main() {
     });
 
     #[cfg(feature = "console_backend")]
-    let console_backend_thread: thread::JoinHandle<()> = thread::spawn(move || {
-        console_backend.run();
-    });
+    let console_backend_thread: thread::JoinHandle<()> = if context.hw_config.is_main_device() {
+        thread::spawn(move || {
+            console_backend.run();
+        })
+    } else {
+        thread::spawn(|| {})
+    };
+
     #[cfg(feature = "console_backend")]
-    context.logger.info("Console backend started".to_string());
+    if context.hw_config.is_main_device() {
+        context.logger.info("Console backend started".to_string());
+    }
 
     #[cfg(feature = "legacy_backend")]
-    let legacy_backend_thread: thread::JoinHandle<()> = thread::spawn(move || {
-        legacy_backend.run();
-    });
+    let legacy_backend_thread: thread::JoinHandle<()> = if context.hw_config.is_main_device() {
+        thread::spawn(move || {
+            legacy_backend.run();
+        })
+    } else {
+        thread::spawn(|| {})
+    };
     #[cfg(feature = "legacy_backend")]
-    context.logger.info("Legacy backend started".to_string());
+    if context.hw_config.is_main_device() {
+        context.logger.info("Legacy backend started".to_string());
+    }
 
     #[cfg(feature = "gpio_frontend")]
     let gpio_frontend_thread = thread::spawn(move || {
@@ -145,8 +157,8 @@ fn main() {
     context.logger.info("Gpio frontend started".to_string());
 
     #[cfg(feature = "cyrano_server")]
-    let cyrano_server_thread = if let Ok(cyrano_server) = cyrano_server {
-        let thread = thread::spawn(move || {
+    let cyrano_server_thread: thread::JoinHandle<()> = if context.hw_config.is_main_device() && let Ok(cyrano_server) = cyrano_server {
+        let thread: thread::JoinHandle<()> = thread::spawn(move || {
             cyrano_server.run();
         });
         context.logger.info("Cyrano server started".to_string());

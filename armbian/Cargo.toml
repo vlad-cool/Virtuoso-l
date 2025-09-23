@@ -1,0 +1,11 @@
+[package]
+name = "armbian"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+colored = "3.0.0"
+
+[[bin]]
+name = "setup_script"
+path = "src/main.rs"
