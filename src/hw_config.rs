@@ -101,6 +101,9 @@ pub struct HardwareConfig {
 }
 
 impl HardwareConfig {
+    #[cfg(feature = "legacy_backend_full")]
+    const DEFAULT_PATH: &'static str = "/home/pi/Virtuoso/app/hardware_config.toml";
+    #[cfg(not(feature = "legacy_backend_full"))]
     const DEFAULT_PATH: &'static str = "hardware_config.toml";
 
     fn load_file(logger: &Logger) -> Option<Self> {

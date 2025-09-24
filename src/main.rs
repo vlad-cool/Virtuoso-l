@@ -39,6 +39,7 @@ fn main() {
     compile_error!("Video recorder feature is not implemented yet");
 
     /*
+    TODO wlr-randr (without run.sh)
     TODO Properly swap sides
     TODO Cyrano
     TODO Cyrano time handling

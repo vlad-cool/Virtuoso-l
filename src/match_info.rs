@@ -1,6 +1,7 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::time::{Duration, Instant};
 
+#[cfg(feature = "cyrano_server")]
 use crate::cyrano_server::State;
 
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
@@ -610,8 +611,11 @@ pub struct MatchInfo {
     pub auto_score_on: bool,
     pub auto_timer_on: bool,
 
+    #[cfg(feature = "cyrano_server")]
     pub cyrano_online: bool,
+    #[cfg(feature = "cyrano_server")]
     pub cyrano_active: bool,
+    #[cfg(feature = "cyrano_server")]
     pub cyrano_state: State,
 
     pub piste: String,
@@ -656,8 +660,11 @@ impl MatchInfo {
             auto_score_on: false,
             auto_timer_on: false,
 
-            cyrano_online: false,
-            cyrano_active: false,
+#[cfg(feature = "cyrano_server")]
+cyrano_online: false,
+#[cfg(feature = "cyrano_server")]
+cyrano_active: false,
+#[cfg(feature = "cyrano_server")]
             cyrano_state: State::Waiting,
 
             piste: "".to_string(),

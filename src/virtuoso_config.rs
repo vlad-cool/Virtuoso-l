@@ -89,7 +89,11 @@ pub struct VirtuosoConfig {
 }
 
 impl VirtuosoConfig {
-    const DEFAULT_PATH: &str = "config.toml";
+    #[cfg(feature = "legacy_backend_full")]
+    const DEFAULT_PATH: &'static str = "/home/pi/Virtuoso/app/config.toml";
+    #[cfg(not(feature = "legacy_backend_full"))]
+    const DEFAULT_PATH: &'static str = "config.toml";
+
 
     pub fn load_config() -> VirtuosoConfig {
         let mut loaded: bool = true;
