@@ -158,7 +158,9 @@ fn main() {
     context.logger.info("Gpio frontend started".to_string());
 
     #[cfg(feature = "cyrano_server")]
-    let cyrano_server_thread: thread::JoinHandle<()> = if context.hw_config.is_main_device() && let Ok(cyrano_server) = cyrano_server {
+    let cyrano_server_thread: thread::JoinHandle<()> = if context.hw_config.is_main_device()
+        && let Ok(cyrano_server) = cyrano_server
+    {
         let thread: thread::JoinHandle<()> = thread::spawn(move || {
             cyrano_server.run();
         });

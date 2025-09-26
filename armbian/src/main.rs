@@ -522,13 +522,6 @@ ExecStart=-/sbin/agetty --autologin pi --noclear %I $TERM
             .as_bytes(),
     )
     .expect(&"Failed to write to file".red());
-
-    // run_in_target(
-    //     &["/usr/bin/systemctl", "enable", "getty@tty1.service"],
-    //     &main_partition,
-    //     qemu,
-    //     "",
-    // );
 }
 
 fn configure_gpio(main_partition: &PathBuf, qemu: &str) {

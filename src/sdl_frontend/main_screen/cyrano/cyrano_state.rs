@@ -48,11 +48,8 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
 
     fn render(&mut self) {
         if self.state_updated {
-            self.state_widget.render(
-                format!("State {}", self.state),
-                FENCER_NAME_TEXT,
-                None,
-            );
+            self.state_widget
+                .render(format!("State {}", self.state), FENCER_NAME_TEXT, None);
             self.state_updated = false;
         }
 

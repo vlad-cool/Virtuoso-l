@@ -47,8 +47,11 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
 
     fn render(&mut self) {
         if self.referee_name_updated {
-            self.referee_name_widget
-                .render(format!("Arbitre {}", self.referee_name.clone()), FENCER_NAME_TEXT, None);
+            self.referee_name_widget.render(
+                format!("Arbitre {}", self.referee_name.clone()),
+                FENCER_NAME_TEXT,
+                None,
+            );
             self.referee_name_updated = false;
         }
 

@@ -94,7 +94,6 @@ impl VirtuosoConfig {
     #[cfg(not(feature = "legacy_backend_full"))]
     const DEFAULT_PATH: &'static str = "config.toml";
 
-
     pub fn load_config() -> VirtuosoConfig {
         let mut loaded: bool = true;
         let config: VirtuosoConfig = match std::fs::read_to_string(String::from(Self::DEFAULT_PATH))

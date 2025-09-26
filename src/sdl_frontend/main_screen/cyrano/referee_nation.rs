@@ -47,8 +47,11 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
 
     fn render(&mut self) {
         if self.referee_nation_updated {
-            self.referee_nation_widget
-                .render(format!("{}", self.referee_nation.clone()), FENCER_NAME_TEXT, None);
+            self.referee_nation_widget.render(
+                format!("{}", self.referee_nation.clone()),
+                FENCER_NAME_TEXT,
+                None,
+            );
             self.referee_nation_updated = false;
         }
 

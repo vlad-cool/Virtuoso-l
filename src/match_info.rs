@@ -660,11 +660,11 @@ impl MatchInfo {
             auto_score_on: false,
             auto_timer_on: false,
 
-#[cfg(feature = "cyrano_server")]
-cyrano_online: false,
-#[cfg(feature = "cyrano_server")]
-cyrano_active: false,
-#[cfg(feature = "cyrano_server")]
+            #[cfg(feature = "cyrano_server")]
+            cyrano_online: false,
+            #[cfg(feature = "cyrano_server")]
+            cyrano_active: false,
+            #[cfg(feature = "cyrano_server")]
             cyrano_state: State::Waiting,
 
             piste: "".to_string(),
