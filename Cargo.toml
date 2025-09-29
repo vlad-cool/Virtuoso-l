@@ -32,7 +32,12 @@ sdl_frontend = ["sdl2", "fontdue"]
 video_recorder = []
 gpio_frontend = ["gpio-cdev"]
 repeater = ["serial", "crc", "postcard"]
+embeded_device = []
 
 [[bin]]
 name = "Virtuoso"
 path = "src/main.rs"
+
+[[bin]]
+name = "initial_setup"
+path = "src/initial_setup.rs"

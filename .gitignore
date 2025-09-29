@@ -2,7 +2,7 @@
 /target
 /mockup/extracted
 /armbian_build
-/scripts/mnt
+/armbian/mnt
 /armbian/target
 /armbian/*.img
 log.txt

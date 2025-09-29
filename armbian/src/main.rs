@@ -519,7 +519,7 @@ fn enable_autologin(main_partition: &PathBuf) {
 ExecStart=
 ExecStart=-/sbin/agetty --autologin pi --noclear %I $TERM
 "
-            .as_bytes(),
+        .as_bytes(),
     )
     .expect(&"Failed to write to file".red());
 }
@@ -540,7 +540,8 @@ fn configure_gpio(main_partition: &PathBuf, qemu: &str) {
 
     conf.write_all(
         "SUBSYSTEM==\"gpio\", KERNEL==\"gpiochip[0-4]\", GROUP=\"gpio\", MODE=\"0660\"
-".as_bytes(),
+"
+        .as_bytes(),
     )
     .expect(&"Failed to write to file".red());
 
@@ -576,7 +577,6 @@ root    ALL=(ALL:ALL) ALL
 %sudo   ALL=(ALL:ALL) ALL
 @includedir /etc/sudoers.d
 pi ALL=(ALL) NOPASSWD: /usr/bin/plymouth
-pi ALL=(ALL) NOPASSWD: /home/pi/setup.sh
 ".as_bytes(),
     )
     .expect(&"Failed to write to file".red());
@@ -625,16 +625,10 @@ fn copy_assets(main_partition: &PathBuf, qemu: &str) {
         qemu,
         "",
     );
-    run_in_target(
-        &["/usr/bin/chmod", "+x", "/home/pi/setup.sh"],
-        &main_partition,
-        qemu,
-        "",
-    );
 }
 
-fn copy_executables(second_partition: &PathBuf, main_executable: &PathBuf) {
-    eprintln!("{}", "Copying executables".green());
+fn copy_main_executable(second_partition: &PathBuf, main_executable: &PathBuf) {
+    eprintln!("{}", "Copying main executable".green());
 
     let mut path: PathBuf = second_partition.clone();
     path.push("app");
@@ -646,38 +640,40 @@ fn copy_executables(second_partition: &PathBuf, main_executable: &PathBuf) {
     copy_file(main_executable, &path);
 }
 
+fn copy_initial_setup(main_partition: &PathBuf, initial_setup: &PathBuf, qemu: &str) {
+    eprintln!("{}", "Copying initial setup".green());
+
+    let mut path: PathBuf = main_partition.clone();
+    path.push("home");
+    path.push("pi");
+    path.push("initial_setup");
+
+    copy_file(initial_setup, &path);
+
+    run_in_target(
+        &["/usr/bin/chown", "root:root", "/home/pi/initial_setup"],
+        &main_partition,
+        qemu,
+        "",
+    );
+
+    run_in_target(
+        &["/usr/bin/chmod", "4711", "/home/pi/initial_setup"],
+        &main_partition,
+        qemu,
+        "",
+    );
+}
+
 fn main() {
     const SECOND_PARTITION_SIZE: u64 = 2 * 1024 * 1024 * 1024;
     const QEMU_NAME: &str = "qemu-arm-static";
-    /*
-    HELPERS
-
-    Virtual partition struct
-    Command runner
-     */
-
-    /*
-    MAIN STEPS
-
-    root password
-    pi user
-    setup pi user (groups)
-    delete  /root/.not_logged_in_yet
-    create /root/.no_rootfs_resize
-    install packages (sway mingetty overlayroot libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 libsdl2-ttf-2.0-0)
-    configure mingetty
-    udev gpio rules
-    extend image with for partition
-    create new partition
-    configure sudo
-    add Virtuoso
-     */
 
     let args: Vec<String> = env::args().collect();
 
-    if args.len() < 4 {
+    if args.len() != 5 {
         println!(
-            "Usage: {} source_image destination_image main_executable",
+            "Usage: {} source_image destination_image main_executable initial_setup_executable",
             args[0]
         );
         return;
@@ -685,6 +681,7 @@ fn main() {
 
     let image: PathBuf = args[2].clone().into();
     let main_executable: PathBuf = args[3].clone().into();
+    let initial_setup: PathBuf = args[4].clone().into();
 
     copy_file(&args[1].clone().into(), &image);
     let original_size: u64 = get_file_size(&image);
@@ -759,7 +756,8 @@ fn main() {
     configure_gpio(&main_partition, QEMU_NAME);
     configure_sudo(&main_partition);
     copy_assets(&main_partition, QEMU_NAME);
-    copy_executables(&second_partition, &main_executable);
+    copy_main_executable(&second_partition, &main_executable);
+    copy_initial_setup(&main_partition, &initial_setup, QEMU_NAME);
 
     let mut input: String = String::new();
     eprintln!("{}", "Press return to finish".cyan());

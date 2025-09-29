@@ -140,6 +140,68 @@ impl SdlFrontend {
 
 impl VirtuosoModule for SdlFrontend {
     fn run(self) {
+        #[cfg(feature = "embeded_device")]
+        {
+            use std::borrow::Cow;
+            use std::process::{Command, Output};
+
+            let output: Result<Output, std::io::Error> =
+                match self.context.hw_config.display.resolution {
+                    Resolution::Res1920X1080 => Command::new("wlr-randr")
+                        .arg("--output")
+                        .arg("HDMI-A-1")
+                        .arg("--custom-mode")
+                        .arg("1920x1080@60")
+                        .output(),
+                    Resolution::Res1920X550 => Command::new("wlr-randr")
+                        .arg("--output")
+                        .arg("HDMI-A-1")
+                        .arg("--custom-mode")
+                        .arg("1920x550@60")
+                        .output(),
+                    Resolution::Res1920X480 => Command::new("wlr-randr")
+                        .arg("--output")
+                        .arg("HDMI-A-1")
+                        .arg("--custom-mode")
+                        .arg("1920x480@60")
+                        .arg("--transform")
+                        .arg("--90")
+                        .output(),
+                    Resolution::Res1920X360 => Command::new("wlr-randr")
+                        .arg("--output")
+                        .arg("HDMI-A-1")
+                        .arg("--custom-mode")
+                        .arg("1920x360@60")
+                        .output(),
+                };
+
+            match output {
+                Ok(output) => {
+                    let stdout: Cow<'_, str> = String::from_utf8_lossy(&output.stdout);
+                    let stderr: Cow<'_, str> = String::from_utf8_lossy(&output.stderr);
+
+                    if !stdout.trim().is_empty() {
+                        self.context.logger.error(format!(
+                            "{} {}",
+                            "Warning: wlr-randr stdout is not empty, stdout:", stdout
+                        ));
+                    }
+
+                    if !stderr.trim().is_empty() {
+                        self.context.logger.error(format!(
+                            "{} {}",
+                            "Warning: wlr-randr stderr is not empty, stdout:", stdout
+                        ));
+                    }
+                }
+                Err(err) => {
+                    self.context
+                        .logger
+                        .error(format!("Failed to run wlr-randr, err: {err}"));
+                }
+            }
+        }
+
         let sdl_context: sdl2::Sdl = match sdl2::init() {
             Ok(sdl_context) => sdl_context,
             Err(err) => {

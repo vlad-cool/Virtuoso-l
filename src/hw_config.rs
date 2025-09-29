@@ -1,4 +1,5 @@
 use crate::virtuoso_logger::Logger;
+use std::borrow::Cow;
 
 #[cfg(feature = "legacy_backend")]
 use std::path::PathBuf;
@@ -84,11 +85,22 @@ pub struct RepeaterConfig {
     pub role: RepeaterRole,
 }
 
+fn is_false(b: &bool) -> bool {
+    !*b
+}
+
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct HardwareConfig {
-    force_file: Option<bool>,
     #[serde(default, skip_serializing)]
     reinit: bool,
+    #[serde(default, skip_serializing_if = "is_false")]
+    force_file: bool,
+    #[serde(default, skip_serializing_if = "is_false")]
+    no_protect_fs: bool,
+    #[serde(default, skip_serializing_if = "is_false")]
+    no_update_initramfs: bool,
+    #[serde(default, skip_serializing_if = "is_false")]
+    no_reboot: bool,
 
     #[cfg(feature = "sdl_frontend")]
     pub display: DisplayConfig,
@@ -197,8 +209,12 @@ impl HardwareConfig {
         };
 
         Self {
-            force_file: None,
+            force_file: false,
             reinit: false,
+            no_protect_fs: false,
+            no_update_initramfs: false,
+            no_reboot: false,
+
             #[cfg(feature = "sdl_frontend")]
             display: DisplayConfig {
                 resolution,
@@ -240,7 +256,7 @@ impl HardwareConfig {
             let jumpers_config: HardwareConfig = Self::load_jumpers(logger);
 
             if let Some(file_config) = file_config {
-                let force_file: bool = file_config.force_file.unwrap_or(false);
+                let force_file: bool = file_config.force_file;
 
                 if force_file {
                     if file_config.reinit {
@@ -306,35 +322,87 @@ impl HardwareConfig {
         }
     }
 
-    #[allow(dead_code)]
+    #[cfg(feature = "embeded_device")]
     fn configure_os(&self, logger: &Logger) {
+        logger.info("Running setup script".to_string());
+
+        // let output: Result<std::process::Output, std::io::Error> =
+        let mut command: std::process::Command =
+            std::process::Command::new("/home/pi/initial_setup");
+
         #[cfg(feature = "sdl_frontend")]
-        {
-            logger.info("Running setup script".to_string());
+        let command: &mut std::process::Command = {
+            let command = command
+                .arg("--set-bootlogo")
+                .arg(self.display.resolution.to_config_dir())
+                .arg("--enable-bootlogo");
 
-            let output: Result<std::process::Output, std::io::Error> =
-                std::process::Command::new("sudo")
-                    .arg("/home/pi/setup.sh")
-                    .arg(self.display.resolution.to_config_dir())
-                    .output();
-
-            let output: std::process::Output = match output {
-                Ok(output) => output,
-                Err(err) => {
-                    logger.critical_error(format!("Failed to run setup script, error: {err}"));
-                    return;
-                }
-            };
-
-            if output.status.success() {
-                logger.info("Setup script ran successfully".to_string());
-            } else {
-                logger.critical_error(format!(
-                    "Setup script did not run successfully, stderr: {}",
-                    String::from_utf8_lossy(&output.stderr)
-                ));
+            match self.display.resolution {
+                Resolution::Res1920X1080 => command
+                    .arg("--config-extraargs")
+                    .arg("video=HDMI-A-1:960x540@60"),
+                Resolution::Res1920X360 => command
+                    .arg("--config-extraargs")
+                    .arg("video=HDMI-A-1:1920x360@60"),
+                _ => command,
             }
+        };
+
+        command.arg("--config-overlays").arg("uart2 uart3");
+
+        let command = if self.no_update_initramfs {
+            command
+        } else {
+            command.arg("--update-initamfs")
+        };
+
+        let command: &mut std::process::Command = if self.no_protect_fs {
+            command
+        } else {
+            command.arg("--protect-fs")
+        };
+
+        let command = if self.no_reboot {
+            command
+        } else {
+            command.arg("--reboot")
+        };
+
+        let output: std::process::Output = match command.output() {
+            Ok(output) => output,
+            Err(err) => {
+                logger.critical_error(format!("Failed to run setup script, error: {err}"));
+                return;
+            }
+        };
+
+        if output.status.success() {
+            logger.info("Setup script ran successfully".to_string());
+        } else {
+            logger.critical_error(format!(
+                "Setup script did not run successfully, stderr: {}",
+                String::from_utf8_lossy(&output.stderr)
+            ));
         }
+
+        let stdout: Cow<'_, str> = String::from_utf8_lossy(&output.stdout);
+        let stderr: Cow<'_, str> = String::from_utf8_lossy(&output.stderr);
+
+        if !stderr.trim().is_empty() {
+            logger.error(format!(
+                "{} {}",
+                "stderr of initial_setup is not empty, stderr:",
+                stderr.trim()
+            ));
+        }
+        if !stdout.trim().is_empty() {
+            logger.error(format!("{} {}", "stdout of initial_setup:", stdout.trim()));
+        }
+    }
+
+    #[cfg(not(feature = "embeded_device"))]
+    fn configure_os(&self, logger: &Logger) {
+        eprintln!("Configuring os disabled on non-embeded device")
     }
 
     #[cfg(feature = "repeater")]
