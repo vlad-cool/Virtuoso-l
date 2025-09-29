@@ -25,8 +25,8 @@ mod legacy_backend;
 #[cfg(feature = "console_backend")]
 mod console_backend;
 
-#[cfg(feature = "sdl_frontend")]
-mod sdl_frontend;
+#[cfg(feature = "gui_frontend")]
+mod gui_frontend;
 
 #[cfg(feature = "gpio_frontend")]
 mod gpio_frontend;
@@ -84,8 +84,8 @@ fn main() {
         context.with_logger(virtuoso_logger.get_logger("Gpio frontend".to_string())),
     );
 
-    #[cfg(feature = "sdl_frontend")]
-    let sdl_frontend: sdl_frontend::SdlFrontend = sdl_frontend::SdlFrontend::new(
+    #[cfg(feature = "gui_frontend")]
+    let gui_frontend: gui_frontend::GuiFrontend = gui_frontend::GuiFrontend::new(
         context.with_logger(virtuoso_logger.get_logger("sdl frontend".to_string())),
     );
 
@@ -190,14 +190,14 @@ fn main() {
     // };
     // #[cfg(feature = "repeater")]
 
-    #[cfg(feature = "sdl_frontend")]
+    #[cfg(feature = "gui_frontend")]
     {
         use crate::match_info::ProgramState;
 
         context
             .logger
             .info("sdl frontend started in main thread".to_string());
-        sdl_frontend.run();
+        gui_frontend.run();
         context
             .logger
             .info("sdl frontend stopped in main thread".to_string());

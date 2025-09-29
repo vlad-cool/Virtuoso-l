@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use crate::gpio::PinLocation;
 
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
-#[cfg(feature = "sdl_frontend")]
+#[cfg(feature = "gui_frontend")]
 pub enum Resolution {
     Res1920X1080,
     Res1920X550,
@@ -16,7 +16,7 @@ pub enum Resolution {
     Res1920X360,
 }
 
-#[cfg(feature = "sdl_frontend")]
+#[cfg(feature = "gui_frontend")]
 impl std::fmt::Display for Resolution {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -28,7 +28,7 @@ impl std::fmt::Display for Resolution {
     }
 }
 
-#[cfg(feature = "sdl_frontend")]
+#[cfg(feature = "gui_frontend")]
 impl Resolution {
     pub fn to_config_dir(&self) -> String {
         match self {
@@ -41,7 +41,7 @@ impl Resolution {
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
-#[cfg(feature = "sdl_frontend")]
+#[cfg(feature = "gui_frontend")]
 pub struct DisplayConfig {
     pub resolution: Resolution,
     pub swap_sides: bool,
@@ -91,18 +91,23 @@ fn is_false(b: &bool) -> bool {
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct HardwareConfig {
+    #[cfg(feature = "embeded_device")]
     #[serde(default, skip_serializing)]
     reinit: bool,
+    #[cfg(feature = "embeded_device")]
     #[serde(default, skip_serializing_if = "is_false")]
     force_file: bool,
+    #[cfg(feature = "embeded_device")]
     #[serde(default, skip_serializing_if = "is_false")]
     no_protect_fs: bool,
+    #[cfg(feature = "embeded_device")]
     #[serde(default, skip_serializing_if = "is_false")]
     no_update_initramfs: bool,
+    #[cfg(feature = "embeded_device")]
     #[serde(default, skip_serializing_if = "is_false")]
     no_reboot: bool,
 
-    #[cfg(feature = "sdl_frontend")]
+    #[cfg(feature = "gui_frontend")]
     pub display: DisplayConfig,
     #[cfg(feature = "gpio_frontend")]
     pub gpio: GpioFrontendConfig,
@@ -171,7 +176,7 @@ impl HardwareConfig {
 
     #[cfg(feature = "gpio-cdev")]
     fn load_jumpers(logger: &Logger) -> HardwareConfig {
-        #[cfg(feature = "sdl_frontend")]
+        #[cfg(feature = "gui_frontend")]
         let (resolution, swap_sides) = {
             let swap_sides_pin: PinLocation = PinLocation::from_phys_number(7).unwrap();
             let res_1920x550_pin: PinLocation = PinLocation::from_phys_number(15).unwrap();
@@ -215,7 +220,7 @@ impl HardwareConfig {
             no_update_initramfs: false,
             no_reboot: false,
 
-            #[cfg(feature = "sdl_frontend")]
+            #[cfg(feature = "gui_frontend")]
             display: DisplayConfig {
                 resolution,
                 swap_sides,
@@ -283,10 +288,12 @@ impl HardwareConfig {
             file_config
         } else {
             let file_config: HardwareConfig = HardwareConfig {
+                #[cfg(feature = "embeded_device")]
                 force_file: Some(false),
+                #[cfg(feature = "embeded_device")]
                 reinit: false,
 
-                #[cfg(feature = "sdl_frontend")]
+                #[cfg(feature = "gui_frontend")]
                 display: DisplayConfig {
                     resolution: Resolution::Res1920X1080,
                     swap_sides: false,
@@ -330,7 +337,7 @@ impl HardwareConfig {
         let mut command: std::process::Command =
             std::process::Command::new("/home/pi/initial_setup");
 
-        #[cfg(feature = "sdl_frontend")]
+        #[cfg(feature = "gui_frontend")]
         let command: &mut std::process::Command = {
             let command = command
                 .arg("--set-bootlogo")
