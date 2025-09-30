@@ -190,8 +190,9 @@ fn parse_argument(args: &Vec<String>, n: usize) -> usize {
                 .arg("/usr/share/plymouth/themes/default.plymouth")
                 .arg("default.plymouth")
                 .arg("/usr/share/plymouth/themes/Virtuoso/Virtuoso.plymouth")
+                .arg("100")
                 .output()
-                .expect(&"Failed to update initramfs");
+                .expect(&"Failed to install theme");
 
             let stdout: Cow<'_, str> = String::from_utf8_lossy(&output.stdout);
             let stderr: Cow<'_, str> = String::from_utf8_lossy(&output.stderr);
@@ -215,8 +216,9 @@ fn parse_argument(args: &Vec<String>, n: usize) -> usize {
                 .arg("--set")
                 .arg("default.plymouth")
                 .arg("/usr/share/plymouth/themes/Virtuoso/Virtuoso.plymouth")
+                .arg("100")
                 .output()
-                .expect(&"Failed to update initramfs");
+                .expect(&"Failed to set theme");
 
             let stderr: Cow<'_, str> = String::from_utf8_lossy(&output.stderr);
 
