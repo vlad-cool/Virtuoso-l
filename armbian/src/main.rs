@@ -486,6 +486,8 @@ fn install_packages(main_partition: &PathBuf, qemu_name: &str) {
             "libsdl2-mixer-2.0-0",
             "libsdl2-net-2.0-0",
             "libsdl2-ttf-2.0-0",
+            "wlr-randr",
+            "xwayland",
         ],
         &main_partition,
         qemu_name,

@@ -48,17 +48,21 @@ pub enum LogLevelOption {
     None,
 }
 
+fn is_false(b: &bool) -> bool {
+    !*b
+}
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct LoggerConfig {
     pub log_level: Option<LogLevelOption>,
     pub log_path: Option<String>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_false")]
     pub stderr: bool,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_false")]
     pub udp: bool,
     pub udp_port: Option<u16>,
     pub udp_ip: Option<String>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_false")]
     pub udp_print_ip: bool,
 }
 
