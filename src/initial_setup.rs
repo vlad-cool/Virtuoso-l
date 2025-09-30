@@ -103,6 +103,36 @@ fn parse_argument(args: &Vec<String>, n: usize) -> usize {
                 );
             }
 
+            let wallpaper_path: PathBuf = PathBuf::from(format!(
+                "/home/pi/device_configurations/{}/wallpaper.png",
+                args[n + 1]
+            )); 
+            println!("Copying wallpaper");
+            let output: Output = Command::new("cp")
+                .arg("")
+                .arg(wallpaper_path)
+                .arg("/home/pi")
+                .output()
+                .expect(&"Failed to copy wallpaper");
+
+            let stdout: Cow<'_, str> = String::from_utf8_lossy(&output.stdout);
+            let stderr: Cow<'_, str> = String::from_utf8_lossy(&output.stderr);
+
+            if !stderr.trim().is_empty() {
+                eprintln!(
+                    "{} {}",
+                    "Warning: stderr is not empty, stderr:",
+                    stderr.trim()
+                );
+            }
+            if !stdout.trim().is_empty() {
+                eprintln!(
+                    "{} {}",
+                    "Warning: stdout is not empty, stderr:",
+                    stdout.trim()
+                );
+            }
+
             n + 2
         }
         "--update-initramfs" => {
@@ -216,7 +246,6 @@ fn parse_argument(args: &Vec<String>, n: usize) -> usize {
                 .arg("--set")
                 .arg("default.plymouth")
                 .arg("/usr/share/plymouth/themes/Virtuoso/Virtuoso.plymouth")
-                .arg("100")
                 .output()
                 .expect(&"Failed to set theme");
 
