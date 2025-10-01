@@ -508,7 +508,10 @@ impl TimerController {
 
     pub fn reset_passive_timer(&mut self, active: bool) {
         self.passive_timer_offset = if active {
-            self.get_main_time().checked_sub(Duration::from_secs(60))
+            match self.get_main_time().checked_sub(Duration::from_secs(60)) {
+                Some(Duration::ZERO) => None,
+                dur => dur,
+            }
         } else {
             None
         }

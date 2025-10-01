@@ -102,6 +102,8 @@ pub struct HardwareConfig {
     #[serde(default, skip_serializing_if = "is_false")]
     no_reboot: bool,
 
+    pub update_repo: Option<String>,
+
     #[cfg(feature = "sdl_frontend")]
     pub display: DisplayConfig,
     #[cfg(feature = "gpio_frontend")]
@@ -214,6 +216,8 @@ impl HardwareConfig {
             no_protect_fs: false,
             no_update_initramfs: false,
             no_reboot: false,
+
+            update_repo: None,
 
             #[cfg(feature = "sdl_frontend")]
             display: DisplayConfig {

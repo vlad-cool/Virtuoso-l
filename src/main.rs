@@ -64,7 +64,7 @@ fn main() {
 
     let hw_config: HardwareConfig = HardwareConfig::get_config(&logger);
 
-    let settings_menu: SettingsMenu = SettingsMenu::new();
+    let settings_menu: SettingsMenu = SettingsMenu::new(hw_config.clone());
 
     let context: VirtuosoModuleContext =
         VirtuosoModuleContext::new(logger, config, hw_config, match_info, settings_menu);
@@ -76,7 +76,11 @@ fn main() {
 
     #[cfg(feature = "legacy_backend")]
     let legacy_backend: legacy_backend::LegacyBackend = legacy_backend::LegacyBackend::new(
-        context.with_logger(virtuoso_logger.get_logger("Legacy backend".to_string())),
+        context.with_logger(
+            virtuoso_logger
+                .get_logger("Legacy backend".to_string())
+                .enable_debug(),
+        ),
     );
 
     #[cfg(feature = "gpio_frontend")]

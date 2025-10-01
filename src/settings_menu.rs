@@ -2,6 +2,8 @@ use pnet::datalink;
 use pnet::ipnetwork::IpNetwork;
 use std::vec::Vec;
 
+use crate::modules::HardwareConfig;
+
 /*
 IP info / settings
 Mirroring
@@ -16,10 +18,19 @@ pub enum MenuItem {
 }
 
 #[derive(Debug, Clone)]
+enum UpdateState {
+    NoUpdate,
+    Pending,
+    Latest,
+    Update,
+    Downloading,
+}
+
+#[derive(Debug, Clone)]
 pub enum MenuElement {
     IpAddressWln,
     IpAddressEth,
-    UpdateBtn,
+    UpdateBtn(UpdateState, String),
 }
 
 impl MenuElement {
@@ -82,7 +93,60 @@ impl MenuElement {
                     MenuItem::Label(format!("No\ninterface\nfound"))
                 }
             }
-            Self::UpdateBtn => MenuItem::Button(format!("Update button")),
+            Self::UpdateBtn(state, _) => MenuItem::Button(
+                // match state {
+                //     UpdateState::NoUpdate => "Pending",
+                //     UpdateState::Pending => "Latest",
+                //     UpdateState::Latest => "Update",
+                //     UpdateState::Update => "Downloading",
+                //     UpdateState::Downloading => "NoUpdate",
+                // }
+                "Update".into(),
+            ),
+        }
+    }
+
+    pub fn press(&mut self) {
+        match self {
+            Self::UpdateBtn(state, repo) => {
+                *state = match state {
+                    UpdateState::NoUpdate => {
+                        // let client = Client::new();
+                        // let resp = client
+                        //     .get(repo.clone())
+                        //     .header("User-Agent", "rust-reqwest")
+                        //     .send()
+                        //     // .await?
+                        //     .error_for_status()?;
+                        // fn get_latest_release_version(
+                        //     owner: &str,
+                        //     repo: &str,
+                        // ) -> Result<String, reqwest::Error> {
+                        //     let url = format!(
+                        //         "https://api.github.com/repos/{}/{}/releases/latest",
+                        //         owner, repo
+                        //     );
+
+                        //     let client = Client::new();
+                        //     let resp = client
+                        //         .get(&url)
+                        //         .header("User-Agent", "rust-reqwest") // GitHub API requires a UA
+                        //         .send()?
+                        //         .error_for_status()?;
+
+                        //     let release: Release = resp.json()?;
+                        //     Ok(release.tag_name)
+                        // // }
+
+                        UpdateState::Pending
+                    }
+                    UpdateState::Pending => UpdateState::Latest,
+                    UpdateState::Latest => UpdateState::Update,
+                    UpdateState::Update => UpdateState::Downloading,
+                    UpdateState::Downloading => UpdateState::NoUpdate,
+                }
+            }
+            _ => {}
         }
     }
 }
@@ -99,8 +163,16 @@ impl MenuTab {
         self.name.clone()
     }
 
-    pub fn get_elements(&self) -> Vec<MenuElement> {
-        self.elements.clone()
+    pub fn get_elements(&self) -> &Vec<MenuElement> {
+        &self.elements
+    }
+
+    pub fn get_active(&self) -> &MenuElement {
+        &self.elements[self.index]
+    }
+
+    pub fn get_active_mut(&mut self) -> &mut MenuElement {
+        &mut self.elements[self.index]
     }
 
     pub fn get_index(&self) -> usize {
@@ -123,7 +195,7 @@ pub struct SettingsMenu {
 }
 
 impl SettingsMenu {
-    pub fn new() -> Self {
+    pub fn new(hw_config: HardwareConfig) -> Self {
         Self {
             tabs: vec![
                 MenuTab {
@@ -133,7 +205,13 @@ impl SettingsMenu {
                 },
                 MenuTab {
                     name: "Update".to_string(),
-                    elements: vec![MenuElement::UpdateBtn],
+                    elements: vec![MenuElement::UpdateBtn(
+                        UpdateState::NoUpdate,
+                        hw_config.update_repo.unwrap_or(
+                            "https://api.github.com/vlad-cool/Virtuoso-l/releases/latest"
+                                .to_string(),
+                        ),
+                    )],
                     index: 0,
                 },
             ],

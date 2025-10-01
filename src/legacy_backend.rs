@@ -201,8 +201,8 @@ impl LegacyBackend {
             match_info_data.period
         };
         match_info_data.priority = match msg.period {
-            0b1110 => match_info::Priority::Right,
-            0b1111 => match_info::Priority::Left,
+            0b1110 => match_info::Priority::Left,
+            0b1111 => match_info::Priority::Right,
             0b1011 => match_info::Priority::None,
             _ => match match_info_data.priority {
                 match_info::Priority::Right => match_info::Priority::Right,
@@ -210,6 +210,10 @@ impl LegacyBackend {
                 match_info::Priority::None => match_info::Priority::None,
             },
         };
+
+        if match_info_data.priority != match_info::Priority::None {
+            match_info_data.timer_controller.reset_passive_timer(false);
+        }
 
         // match_info_data.left_fencer.yellow_card =
         //     (msg.yellow_card_left || msg.red_card_left) as u32;
@@ -289,6 +293,14 @@ impl LegacyBackend {
                         Self::reset_passive_timer(&mut match_info_data);
                     }
                 }
+                IrCommands::PriorityRaffle => {
+                    let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
+                        self.context.match_info.lock().unwrap();
+
+                    if !match_info_data.timer_controller.is_timer_running() {
+                        Self::reset_passive_timer(&mut match_info_data);
+                    }
+                }
                 IrCommands::LeftPenaltyCard => {
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
                         self.context.match_info.lock().unwrap();
@@ -347,7 +359,7 @@ impl LegacyBackend {
                     }
                 }
 
-                IrCommands::AuxLL => {
+                IrCommands::Previous => {
                     if self
                         .context
                         .settings_menu_shown
@@ -361,7 +373,7 @@ impl LegacyBackend {
                             .log_err(&self.context.logger);
                     }
                 }
-                IrCommands::AuxRR => {
+                IrCommands::Next => {
                     if self
                         .context
                         .settings_menu_shown
@@ -375,7 +387,7 @@ impl LegacyBackend {
                             .log_err(&self.context.logger);
                     }
                 }
-                IrCommands::AuxL => {
+                IrCommands::Begin => {
                     if self
                         .context
                         .settings_menu_shown
@@ -394,7 +406,7 @@ impl LegacyBackend {
                             .log_err(&self.context.logger);
                     }
                 }
-                IrCommands::AuxR => {
+                IrCommands::End => {
                     if self
                         .context
                         .settings_menu_shown
@@ -411,6 +423,21 @@ impl LegacyBackend {
                             .cyrano_command_tx
                             .send(modules::CyranoCommand::CyranoEnd)
                             .log_err(&self.context.logger);
+                    }
+                }
+                IrCommands::Aux => {
+                    if self
+                        .context
+                        .settings_menu_shown
+                        .load(std::sync::atomic::Ordering::Relaxed)
+                    {
+                        self.context
+                            .settings_menu
+                            .lock()
+                            .unwrap()
+                            .get_item_mut()
+                            .get_active_mut()
+                            .press();
                     }
                 }
 
@@ -576,15 +603,15 @@ enum InputData {
 
 #[derive(Debug)]
 struct UartData {
+    red: bool,
+    white_red: bool,
     #[allow(dead_code)]
     yellow_red: bool,
-    white_red: bool,
-    red: bool,
 
+    green: bool,
+    white_green: bool,
     #[allow(dead_code)]
     yellow_green: bool,
-    white_green: bool,
-    green: bool,
 
     #[allow(dead_code)]
     apparel_sound: bool,
@@ -616,12 +643,14 @@ struct UartData {
 impl UartData {
     fn from_8bytes(src: [u8; 8]) -> Self {
         UartData {
-            yellow_red: src[0] >> 4 & 1 == 1,
-            red: src[0] >> 3 & 1 == 1,
-            white_green: src[0] >> 2 & 1 == 1,
-            yellow_green: src[0] >> 1 & 1 == 1,
-            green: src[0] >> 0 & 1 == 1,
-            white_red: src[1] >> 4 & 1 == 1,
+            red: src[0] >> 0 & 1 == 1,
+            white_red: src[0] >> 2 & 1 == 1,
+            yellow_red: src[0] >> 1 & 1 == 1,
+
+            green: src[0] >> 3 & 1 == 1,
+            white_green: src[1] >> 4 & 1 == 1,
+            yellow_green: src[0] >> 4 & 1 == 1,
+
             apparel_sound: src[1] >> 3 & 1 == 1,
             symbol: src[1] >> 2 & 1 == 1,
             on_timer: src[2] >> 4 & 1 == 1,
@@ -738,11 +767,12 @@ enum IrCommands {
 
     PeriodIncrement,
 
-    AuxLL,
-    AuxL,
-    AuxM,
-    AuxR,
-    AuxRR,
+    Previous,
+    Next,
+    End,
+    Begin,
+
+    Aux,
 
     Unknown,
 }
@@ -780,11 +810,11 @@ impl IrCommands {
 
             8 => IrCommands::PeriodIncrement,
 
-            20 => IrCommands::AuxLL,
-            23 => IrCommands::AuxL,
-            24 => IrCommands::AuxM,
-            22 => IrCommands::AuxR,
-            21 => IrCommands::AuxRR,
+            21 => IrCommands::Previous,
+            20 => IrCommands::Next,
+            19 => IrCommands::Begin,
+            24 => IrCommands::End,
+            38 => IrCommands::Aux,
 
             _ => IrCommands::Unknown,
         }
@@ -869,11 +899,12 @@ fn rc5_receiever(tx: mpsc::SyncSender<InputData>, logger: Logger, line: gpio_cde
             if index == 14 {
                 let toggle_bit: u32 = receieve_buf[2];
 
-                tx.send(InputData::IrCommand(IrFrame::from_buf(
-                    receieve_buf,
-                    toggle_bit != last_toggle_value,
-                )))
-                .log_err(&logger);
+                logger.debug(format!("Got ir packet: {receieve_buf:?}"));
+
+                let frame: IrFrame =
+                    IrFrame::from_buf(receieve_buf, toggle_bit != last_toggle_value);
+
+                tx.send(InputData::IrCommand(frame)).log_err(&logger);
 
                 index = 1;
                 last_toggle_value = toggle_bit;

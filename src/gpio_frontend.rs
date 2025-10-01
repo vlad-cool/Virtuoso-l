@@ -72,10 +72,11 @@ impl modules::VirtuosoModule for GpioFrontend {
 
                 std::mem::drop(match_info_data);
 
-                self.set_led_state("left color", &gpio_left_color_led, left_color_led_state);
-                self.set_led_state("left white", &gpio_left_white_led, left_white_led_state);
-                self.set_led_state("right color", &gpio_right_color_led, right_color_led_state);
-                self.set_led_state("right white", &gpio_right_white_led, right_white_led_state);
+                // TODO Bad fix for sides swap
+                self.set_led_state("left color", &gpio_right_color_led, left_color_led_state);
+                self.set_led_state("left white", &gpio_right_white_led, left_white_led_state);
+                self.set_led_state("right color", &gpio_left_color_led, right_color_led_state);
+                self.set_led_state("right white", &gpio_left_white_led, right_white_led_state);
             }
 
             thread::sleep(Duration::from_millis(50));

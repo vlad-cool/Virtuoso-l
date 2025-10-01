@@ -74,7 +74,9 @@ impl Logger {
 
     #[allow(dead_code)]
     pub fn enable_debug(mut self) -> Self {
-        self.debug = true;
+        if self.log_levels.contains(&LogLevel::Debug) {
+            self.debug = true;
+        }
         self
     }
 

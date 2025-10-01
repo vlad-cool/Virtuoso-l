@@ -140,7 +140,7 @@ impl<'a> Drawer<'a> {
     }
 
     pub fn update(&mut self, data: &SettingsMenu) {
-        let elements: Vec<MenuElement> = data.get_item().get_elements();
+        let elements: &Vec<MenuElement> = data.get_item().get_elements();
         let index: usize = data.get_item().get_index();
         // for i in 0..(std::cmp::min(elements.len(), 4)) {
         for i in 0..(self.elements_widgets.len() - 1) {
