@@ -106,7 +106,7 @@ fn parse_argument(args: &Vec<String>, n: usize) -> usize {
             let wallpaper_path: PathBuf = PathBuf::from(format!(
                 "/home/pi/device_configurations/{}/wallpaper.png",
                 args[n + 1]
-            )); 
+            ));
             println!("Copying wallpaper");
             let output: Output = Command::new("cp")
                 .arg(wallpaper_path)

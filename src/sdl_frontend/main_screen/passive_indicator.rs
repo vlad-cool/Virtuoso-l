@@ -56,10 +56,11 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
                     },
                     1000,
                 ),
-                10.. => (
+                10..61 => (
                     colors::PASSIVE_YELLOW,
                     1000 - ((passive_timer - Duration::from_secs(10)).as_millis() / 50) as i32,
                 ),
+                61.. => (colors::BACKGROUND, 0),
             };
 
             self.passive_indicator_widget.set_x(

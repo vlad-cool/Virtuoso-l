@@ -118,14 +118,15 @@ impl VirtuosoConfig {
         };
 
         if !loaded {
-            config.write_config();
+            let _ = config.write_config();
         }
 
         config
     }
 
-    pub fn write_config(&self) {
-        let toml_str: String = toml::to_string(&self).expect("Failed to serialize config");
-        std::fs::write(Self::DEFAULT_PATH, toml_str).expect("Failed to write output.toml");
+    pub fn write_config(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let toml_str: String = toml::to_string(&self)?;
+        std::fs::write(Self::DEFAULT_PATH, toml_str)?;
+        Ok(())
     }
 }

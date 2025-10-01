@@ -10,8 +10,8 @@ use std::sync::{MutexGuard, mpsc};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use crate::match_info::{self, Priority, Weapon};
-use crate::modules::{self, VirtuosoModuleContext};
+use crate::match_info::{self, Weapon};
+use crate::modules::{self, MatchInfo, VirtuosoModuleContext};
 use crate::virtuoso_config::VirtuosoConfig;
 use crate::virtuoso_logger::Logger;
 #[cfg(feature = "legacy_backend_full")]
@@ -35,9 +35,9 @@ pub struct LegacyBackend {
 
 impl modules::VirtuosoModule for LegacyBackend {
     fn run(mut self) {
-        let (tx, rx) = mpsc::channel::<InputData>();
+        let (tx, rx) = mpsc::sync_channel::<InputData>(8);
 
-        let tx_clone: mpsc::Sender<InputData> = tx.clone();
+        let tx_clone: mpsc::SyncSender<InputData> = tx.clone();
         let logger_clone: Logger = self.context.logger.clone();
         let port_path: PathBuf = self.context.hw_config.legacy_backend.uart_port.clone();
         thread::spawn(move || {
@@ -46,7 +46,7 @@ impl modules::VirtuosoModule for LegacyBackend {
 
         #[cfg(feature = "legacy_backend_full")]
         {
-            let tx_clone: mpsc::Sender<InputData> = tx.clone();
+            let tx_clone: mpsc::SyncSender<InputData> = tx.clone();
             let logger_clone: Logger = self.context.logger.clone();
 
             let gpio_line_weapon_0: Line = self
@@ -84,7 +84,7 @@ impl modules::VirtuosoModule for LegacyBackend {
 
         #[cfg(feature = "legacy_backend_full")]
         {
-            let tx_clone: mpsc::Sender<InputData> = tx.clone();
+            let tx_clone: mpsc::SyncSender<InputData> = tx.clone();
             let logger_clone: Logger = self.context.logger.clone();
             let ir_line: Line = self
                 .context
@@ -150,6 +150,12 @@ impl LegacyBackend {
         }
     }
 
+    fn reset_passive_timer(match_info: &mut MatchInfo) {
+        match_info
+            .timer_controller
+            .reset_passive_timer(match_info.weapon != Weapon::Sabre);
+    }
+
     fn apply_uart_data(&mut self, msg: UartData) {
         let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
             self.context.match_info.lock().unwrap();
@@ -186,12 +192,6 @@ impl LegacyBackend {
                 .timer_controller
                 .sync(new_time, msg.on_timer);
 
-            if match_info_data.timer_controller.is_passive_timer_enabled()
-                && match_info_data.weapon == Weapon::Fleuret
-            {
-                match_info_data.timer_controller.reset_passive_timer(false);
-            }
-
             self.prev_seconds_value = new_time.as_secs();
         }
 
@@ -226,11 +226,7 @@ impl LegacyBackend {
         if match_info_data.timer_controller.is_timer_running()
             && (msg.red || msg.white_red || msg.green || msg.white_green)
         {
-            let weapon: Weapon = match_info_data.weapon;
-            let priority: Priority = match_info_data.priority;
-            match_info_data
-                .timer_controller
-                .reset_passive_timer(weapon != Weapon::Fleuret && priority == Priority::None);
+            Self::reset_passive_timer(&mut match_info_data);
         }
 
         std::mem::drop(match_info_data);
@@ -264,7 +260,7 @@ impl LegacyBackend {
             self.rc5_address = msg.address;
             let mut config: MutexGuard<'_, VirtuosoConfig> = self.context.config.lock().unwrap();
             config.legacy_backend.rc5_address = msg.address;
-            config.write_config();
+            config.write_config().log_err(&self.context.logger);
         } else if msg.new && msg.address == self.rc5_address {
             match msg.command {
                 IrCommands::FlipSides => {
@@ -290,11 +286,7 @@ impl LegacyBackend {
                         self.context.match_info.lock().unwrap();
 
                     if !match_info_data.timer_controller.is_timer_running() {
-                        let weapon: Weapon = match_info_data.weapon;
-                        let priority: Priority = match_info_data.priority;
-                        match_info_data.timer_controller.reset_passive_timer(
-                            weapon != Weapon::Fleuret && priority == Priority::None,
-                        );
+                        Self::reset_passive_timer(&mut match_info_data);
                     }
                 }
                 IrCommands::LeftPenaltyCard => {
@@ -323,11 +315,7 @@ impl LegacyBackend {
                     if !match_info_data.timer_controller.is_timer_running() {
                         match_info_data.left_fencer.passive_card.inc();
 
-                        let weapon: Weapon = match_info_data.weapon;
-                        let priority: Priority = match_info_data.priority;
-                        match_info_data.timer_controller.reset_passive_timer(
-                            weapon != Weapon::Fleuret && priority == Priority::None,
-                        );
+                        Self::reset_passive_timer(&mut match_info_data);
 
                         std::mem::drop(match_info_data);
                         self.context.match_info_data_updated();
@@ -339,11 +327,7 @@ impl LegacyBackend {
                     if !match_info_data.timer_controller.is_timer_running() {
                         match_info_data.right_fencer.passive_card.inc();
 
-                        let weapon: Weapon = match_info_data.weapon;
-                        let priority: Priority = match_info_data.priority;
-                        match_info_data.timer_controller.reset_passive_timer(
-                            weapon != Weapon::Fleuret && priority == Priority::None,
-                        );
+                        Self::reset_passive_timer(&mut match_info_data);
 
                         std::mem::drop(match_info_data);
                         self.context.match_info_data_updated();
@@ -473,14 +457,14 @@ impl LegacyBackend {
                 let mut config: MutexGuard<'_, VirtuosoConfig> =
                     self.context.config.lock().unwrap();
                 config.legacy_backend.auto_score_on = new_state.to_bool();
-                config.write_config();
+                config.write_config().log_err(&self.context.logger);
             }
             AutoStatusFields::Timer => {
                 match_info_data.auto_timer_on = new_state.to_bool();
                 let mut config: MutexGuard<'_, VirtuosoConfig> =
                     self.context.config.lock().unwrap();
                 config.legacy_backend.auto_timer_on = new_state.to_bool();
-                config.write_config();
+                config.write_config().log_err(&self.context.logger);
             }
             _ => {}
         }
@@ -660,7 +644,7 @@ impl UartData {
     }
 }
 
-fn uart_handler(tx: mpsc::Sender<InputData>, logger: Logger, port_path: PathBuf) {
+fn uart_handler(tx: mpsc::SyncSender<InputData>, logger: Logger, port_path: PathBuf) {
     let mut port: serial::unix::TTYPort = match serial::open(&port_path) {
         Ok(port) => port,
         Err(err) => {
@@ -815,14 +799,36 @@ struct IrFrame {
     command: IrCommands,
 }
 
+impl IrFrame {
+    pub fn from_buf(buf: [u32; 14], new: bool) -> Self {
+        let mut address: u32 = 0;
+        let mut command: u32 = 0;
+
+        for i in 3..8 {
+            address *= 2;
+            address += buf[i];
+        }
+
+        for i in 8..14 {
+            command *= 2;
+            command += buf[i];
+        }
+
+        Self {
+            new,
+            address,
+            command: IrCommands::from_int(command),
+        }
+    }
+}
+
 #[cfg(feature = "legacy_backend_full")]
-fn rc5_receiever(tx: mpsc::Sender<InputData>, logger: Logger, line: gpio_cdev::Line) {
+fn rc5_receiever(tx: mpsc::SyncSender<InputData>, logger: Logger, line: gpio_cdev::Line) {
     let mut last_interrupt_time: u64 = 0u64;
 
-    let mut receieve_buf: [i32; 28] = [0; 28];
-    let mut index: usize = 0;
-
-    let mut last_toggle_value: i32 = -1;
+    let mut receieve_buf: [u32; 14] = [1; 14];
+    let mut index: usize = 1;
+    let mut last_toggle_value: u32 = 2;
 
     for event in line
         .events(
@@ -833,77 +839,46 @@ fn rc5_receiever(tx: mpsc::Sender<InputData>, logger: Logger, line: gpio_cdev::L
         .unwrap()
     {
         let event: gpio_cdev::LineEvent = event.unwrap();
+        let event_delta: u64 = event.timestamp() - last_interrupt_time;
+        last_interrupt_time = event.timestamp();
 
-        let val: i32 = match event.event_type() {
-            gpio_cdev::EventType::RisingEdge => 0,
-            gpio_cdev::EventType::FallingEdge => 1,
-        };
-        let mut count: i32 = 0;
-
-        if event.timestamp() - last_interrupt_time > 889 * 1000 * 5 / 2 {
-            receieve_buf[0] = val;
+        if event_delta > 889 * 1000 * 3 {
             index = 1;
-            count = 0;
-        } else if event.timestamp() - last_interrupt_time > 889 * 1000 * 3 / 2 {
-            count = 2;
-        } else if event.timestamp() - last_interrupt_time > 889 * 1000 * 1 / 2 {
-            count = 1;
+            receieve_buf = [1; 14];
+            continue;
         }
 
-        for _ in 0..count {
-            receieve_buf[index] = val;
+        let delta: i32 = if event_delta > 889 * 1000 * 3 / 2 {
+            2
+        } else {
+            1
+        };
+
+        let next_value: Option<u32> = match (receieve_buf[index - 1], event.event_type(), delta) {
+            (1, gpio_cdev::EventType::RisingEdge, 1) => Some(1),
+            (1, gpio_cdev::EventType::RisingEdge, 2) => Some(0),
+            (0, gpio_cdev::EventType::FallingEdge, 1) => Some(0),
+            (0, gpio_cdev::EventType::FallingEdge, 2) => Some(1),
+            _ => None,
+        };
+
+        if let Some(next_value) = next_value {
+            receieve_buf[index] = next_value;
             index += 1;
 
-            if index == 27 {
-                receieve_buf[index] = 1 - val;
-                index += 1;
-            }
+            if index == 14 {
+                let toggle_bit: u32 = receieve_buf[2];
 
-            if index == 28 {
-                for i in 0..14 {
-                    if receieve_buf[i * 2] + receieve_buf[i * 2 + 1] != 1 {
-                        logger.error("rc 5 receiver got bad buffer".to_string());
-                        index = 0;
-                        break;
-                    }
-                }
-            }
+                tx.send(InputData::IrCommand(IrFrame::from_buf(
+                    receieve_buf,
+                    toggle_bit != last_toggle_value,
+                )))
+                .log_err(&logger);
 
-            if index == 28 {
-                let rc5_frame: Vec<i32> = receieve_buf.iter().step_by(2).cloned().collect();
-
-                let toggle_bit = rc5_frame[2];
-
-                let mut address = 0;
-                let mut command = 0;
-
-                for i in 3..8 {
-                    address *= 2;
-                    address += rc5_frame[i];
-                }
-
-                for i in 8..14 {
-                    command *= 2;
-                    command += rc5_frame[i];
-                }
-
-                logger.info(format!("Got rc5 command {command}"));
-
-                tx.send(InputData::IrCommand(IrFrame {
-                    new: toggle_bit != last_toggle_value,
-                    address: address as u32,
-                    command: IrCommands::from_int(command as u32),
-                }))
-                .unwrap();
-
+                index = 1;
                 last_toggle_value = toggle_bit;
-
-                index = 0;
-                break;
             }
         }
-
-        last_interrupt_time = event.timestamp();
     }
 }
 
@@ -916,7 +891,7 @@ struct PinsData {
 
 #[cfg(feature = "legacy_backend_full")]
 fn pins_handler(
-    tx: mpsc::Sender<InputData>,
+    tx: mpsc::SyncSender<InputData>,
     logger: Logger,
     gpio_line_weapon_0: Line,
     gpio_line_weapon_1: Line,
