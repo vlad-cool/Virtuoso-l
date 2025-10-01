@@ -109,7 +109,6 @@ fn parse_argument(args: &Vec<String>, n: usize) -> usize {
             )); 
             println!("Copying wallpaper");
             let output: Output = Command::new("cp")
-                .arg("")
                 .arg(wallpaper_path)
                 .arg("/home/pi")
                 .output()

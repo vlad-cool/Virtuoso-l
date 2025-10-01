@@ -113,9 +113,9 @@ pub struct HardwareConfig {
 }
 
 impl HardwareConfig {
-    #[cfg(feature = "legacy_backend_full")]
+    #[cfg(feature = "embeded_device")]
     const DEFAULT_PATH: &'static str = "/home/pi/Virtuoso/app/hardware_config.toml";
-    #[cfg(not(feature = "legacy_backend_full"))]
+    #[cfg(not(feature = "embeded_device"))]
     const DEFAULT_PATH: &'static str = "hardware_config.toml";
 
     fn load_file(logger: &Logger) -> Option<Self> {
@@ -353,7 +353,7 @@ impl HardwareConfig {
         let command = if self.no_update_initramfs {
             command
         } else {
-            command.arg("--update-initamfs")
+            command.arg("--update-initramfs")
         };
 
         let command: &mut std::process::Command = if self.no_protect_fs {
