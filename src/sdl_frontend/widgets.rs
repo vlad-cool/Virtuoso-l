@@ -35,8 +35,10 @@ fn render_text<'a>(
     let mut height: u32 = 0;
 
     for line in text.split("\n") {
-        let surface: sdl2::surface::Surface<'a> =
-            font.render(line).blended(color).unwrap_with_logger(logger);
+        let surface: sdl2::surface::Surface<'a> = font.render(line).blended(color).unwrap_or(
+            sdl2::surface::Surface::new(1, 1, sdl2::pixels::PixelFormatEnum::RGBA8888)
+                .unwrap_with_logger(logger),
+        );
 
         width = std::cmp::max(width, surface.width());
         height += surface.height();

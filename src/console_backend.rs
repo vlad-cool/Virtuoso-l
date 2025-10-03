@@ -41,6 +41,11 @@ enum Field {
     PassiveIndicator,
     PassiveTimerRunning,
 
+    SettingsMenu,
+    SettingsNextMenu,
+    SettingsNextElement,
+    SettingsPress,
+
     Unknown,
 }
 
@@ -75,6 +80,11 @@ impl std::fmt::Display for Field {
             Field::PassiveCounter => write!(f, "Passive Counter"),
             Field::PassiveIndicator => write!(f, "Passive Indicator"),
             Field::PassiveTimerRunning => write!(f, "Passive timer running"),
+
+            Field::SettingsMenu => write!(f, "Settings Menu"),
+            Field::SettingsNextMenu => write!(f, "Settings Next Menu"),
+            Field::SettingsNextElement => write!(f, "Settings Next Element"),
+            Field::SettingsPress => write!(f, "Settings Press"),
 
             Field::Unknown => write!(f, "Unknown"),
         }
@@ -120,6 +130,11 @@ fn parse_field(input: &str) -> Field {
 
         "autoscore" => Field::AutoScore,
         "autotimer" => Field::AutoTimer,
+
+        "settingsmenu" => Field::SettingsMenu,
+        "menunext" => Field::SettingsNextMenu,
+        "elementnext" => Field::SettingsNextElement,
+        "menupress" => Field::SettingsPress,
 
         _ => Field::Unknown,
     }
@@ -222,6 +237,29 @@ impl ConsoleBackend {
                 }
             }
 
+            Field::SettingsMenu => {
+                self.context
+                    .settings_menu_shown
+                    .store(value > 0, std::sync::atomic::Ordering::Relaxed);
+            }
+            Field::SettingsNextMenu => {
+                let mut menu: std::sync::MutexGuard<'_, modules::SettingsMenu> =
+                    self.context.settings_menu.lock().unwrap();
+                menu.next();
+            }
+            Field::SettingsNextElement => {
+                let mut menu: std::sync::MutexGuard<'_, modules::SettingsMenu> =
+                    self.context.settings_menu.lock().unwrap();
+                menu.get_item_mut().next();
+            }
+            Field::SettingsPress => {
+                let mut menu: std::sync::MutexGuard<'_, modules::SettingsMenu> =
+                    self.context.settings_menu.lock().unwrap();
+                menu.get_item_mut()
+                    .get_active_mut()
+                    .press(&self.context.logger);
+            }
+
             Field::Unknown => {
                 println!("Unknown field");
                 return;
@@ -279,6 +317,11 @@ impl ConsoleBackend {
                 )
             }
             Field::PassiveTimerRunning => {}
+
+            Field::SettingsMenu => {}
+            Field::SettingsNextMenu => {}
+            Field::SettingsNextElement => {}
+            Field::SettingsPress => {}
 
             Field::Unknown => println!("Unknown field"),
         }

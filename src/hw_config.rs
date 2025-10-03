@@ -91,18 +91,21 @@ fn is_false(b: &bool) -> bool {
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct HardwareConfig {
+    #[cfg(feature = "embeded_device")]
     #[serde(default, skip_serializing)]
     reinit: bool,
+    #[cfg(feature = "embeded_device")]
     #[serde(default, skip_serializing_if = "is_false")]
     force_file: bool,
+    #[cfg(feature = "embeded_device")]
     #[serde(default, skip_serializing_if = "is_false")]
     no_protect_fs: bool,
+    #[cfg(feature = "embeded_device")]
     #[serde(default, skip_serializing_if = "is_false")]
     no_update_initramfs: bool,
+    #[cfg(feature = "embeded_device")]
     #[serde(default, skip_serializing_if = "is_false")]
     no_reboot: bool,
-
-    pub update_repo: Option<String>,
 
     #[cfg(feature = "sdl_frontend")]
     pub display: DisplayConfig,
@@ -217,8 +220,6 @@ impl HardwareConfig {
             no_update_initramfs: false,
             no_reboot: false,
 
-            update_repo: None,
-
             #[cfg(feature = "sdl_frontend")]
             display: DisplayConfig {
                 resolution,
@@ -287,9 +288,6 @@ impl HardwareConfig {
             file_config
         } else {
             let file_config: HardwareConfig = HardwareConfig {
-                force_file: Some(false),
-                reinit: false,
-
                 #[cfg(feature = "sdl_frontend")]
                 display: DisplayConfig {
                     resolution: Resolution::Res1920X1080,

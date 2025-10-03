@@ -14,7 +14,7 @@ use crate::match_info::{self, Weapon};
 use crate::modules::{self, MatchInfo, VirtuosoModuleContext};
 use crate::virtuoso_config::VirtuosoConfig;
 use crate::virtuoso_logger::Logger;
-#[cfg(feature = "legacy_backend_full")]
+#[cfg(feature = "legacy_backend")]
 use crate::virtuoso_logger::LoggerUnwrap;
 
 const AUTO_STATUS_WAIT_THRESHOLD: std::time::Duration = std::time::Duration::from_millis(200);
@@ -437,7 +437,7 @@ impl LegacyBackend {
                             .unwrap()
                             .get_item_mut()
                             .get_active_mut()
-                            .press();
+                            .press(&self.context.logger);
                     }
                 }
 
@@ -829,6 +829,7 @@ struct IrFrame {
     command: IrCommands,
 }
 
+#[cfg(feature = "legacy_backend_full")]
 impl IrFrame {
     pub fn from_buf(buf: [u32; 14], new: bool) -> Self {
         let mut address: u32 = 0;

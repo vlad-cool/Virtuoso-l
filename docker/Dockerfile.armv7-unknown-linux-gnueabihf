@@ -4,4 +4,5 @@ RUN dpkg --add-architecture armhf && \
     apt-get update && \
     apt-get install --assume-yes \
         libsdl2-dev:armhf \
-        libsdl2-ttf-dev:armhf
+        libsdl2-ttf-dev:armhf \
+        libssl-dev:armhf
