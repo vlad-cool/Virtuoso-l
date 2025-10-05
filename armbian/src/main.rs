@@ -471,7 +471,9 @@ fn configure_dns(main_partition: &PathBuf) {
 fn install_packages(main_partition: &PathBuf, qemu_name: &str) {
     eprintln!("{}", "Installing packages".green());
 
+    // apt update
     run_in_target(&["/usr/bin/apt", "update"], &main_partition, qemu_name, "");
+    // apt install -y sway mingetty overlayroot libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 libsdl2-ttf-2.0-0 wlr-randr xwayland
     run_in_target(
         &[
             "/usr/bin/apt",
@@ -667,7 +669,42 @@ fn copy_initial_setup(main_partition: &PathBuf, initial_setup: &PathBuf, qemu: &
     );
 }
 
+fn make_mount_directorry(main_partition: &PathBuf) {
+    eprintln!("{}", "Making /home/pi/Virtuoso directory".green());
+
+    let mut path: PathBuf = main_partition.clone();
+    path.push("home");
+    path.push("pi");
+    path.push("Virtuoso");
+
+    let output: std::process::Output = Command::new("mkdir")
+        .arg(path)
+        .output()
+        .expect(&"Failed to Create directory".red());
+
+    let stdout: Cow<'_, str> = String::from_utf8_lossy(&output.stdout);
+    let stderr: Cow<'_, str> = String::from_utf8_lossy(&output.stderr);
+
+    if !stdout.trim().is_empty() {
+        eprintln!(
+            "{} {}",
+            "Warning: stdout is not empty, stdout:".yellow(),
+            stdout
+        );
+    }
+
+    if !stderr.trim().is_empty() {
+        eprintln!(
+            "{} {}",
+            "Warning: stderr is not empty, stderr:".yellow(),
+            stderr
+        );
+    }
+}
+
 fn main() {
+    // TODO apt-get download $(apt-rdepends <package_name> | grep -v "^ ")
+
     const SECOND_PARTITION_SIZE: u64 = 2 * 1024 * 1024 * 1024;
     const QEMU_NAME: &str = "qemu-arm-static";
 
@@ -760,6 +797,7 @@ fn main() {
     copy_assets(&main_partition, QEMU_NAME);
     copy_main_executable(&second_partition, &main_executable);
     copy_initial_setup(&main_partition, &initial_setup, QEMU_NAME);
+    make_mount_directorry(&main_partition);
 
     let mut input: String = String::new();
     eprintln!("{}", "Press return to finish".cyan());
