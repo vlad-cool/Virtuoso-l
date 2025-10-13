@@ -18,6 +18,7 @@ pnet = "0.35.0"
 atomic-wait = "1.1.0"
 self_update = "0.42.0"
 openssl = { version = "0.10.59", features = ["vendored"] }
+serde-inline-default = "1.0.0"
 
 [build-dependencies]
 zip = "4.2.0"

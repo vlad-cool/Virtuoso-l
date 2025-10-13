@@ -1,4 +1,6 @@
-use crate::virtuoso_logger::Logger;
+use serde_inline_default::serde_inline_default;
+
+use crate::virtuoso_logger::{Logger, LoggerUnwrap};
 use std::borrow::Cow;
 
 #[cfg(feature = "legacy_backend")]
@@ -40,33 +42,102 @@ impl Resolution {
     }
 }
 
+#[cfg(feature = "gpio-cdev")]
+fn read_pin_value(pin: PinLocation) -> bool {
+    let line: gpio_cdev::Line = pin.to_line().unwrap();
+
+    let handler: gpio_cdev::LineHandle = match line.request(
+        gpio_cdev::LineRequestFlags::INPUT,
+        0,
+        "hardware configuration",
+    ) {
+        Ok(line_handler) => line_handler,
+        Err(_err) => {
+            return false;
+        }
+    };
+
+    match handler.get_value() {
+        Ok(val) => val != 0,
+        Err(_err) => false,
+    }
+}
+
+#[cfg(feature = "sdl_frontend")]
+fn load_pins_resolution() -> Resolution {
+    #[cfg(feature = "gpio-cdev")]
+    {
+        let res_1920x550_pin: PinLocation = PinLocation::from_phys_number(15).unwrap();
+        let res_1920x480_pin: PinLocation = PinLocation::from_phys_number(27).unwrap();
+        let res_1920x360_pin: PinLocation = PinLocation::from_phys_number(28).unwrap();
+
+        let res_1920x550: bool = read_pin_value(res_1920x550_pin);
+        let res_1920x480: bool = read_pin_value(res_1920x480_pin);
+        let res_1920x360: bool = read_pin_value(res_1920x360_pin);
+
+        return match (res_1920x550, res_1920x480, res_1920x360) {
+            (false, false, false) => Resolution::Res1920X1080,
+            (true, false, false) => Resolution::Res1920X550,
+            (false, true, false) => Resolution::Res1920X480,
+            (false, false, true) => Resolution::Res1920X360,
+            (_, _, _) => Resolution::Res1920X360,
+        };
+    }
+    #[cfg(not(feature = "gpio-cdev"))]
+    return Resolution::Res1920X1080;
+}
+
+#[cfg(feature = "sdl_frontend")]
+fn load_pins_swap_sides() -> bool {
+    #[cfg(feature = "gpio-cdev")]
+    {
+        let swap_sides_pin: PinLocation = PinLocation::from_phys_number(7).unwrap();
+        return read_pin_value(swap_sides_pin);
+    }
+    #[cfg(not(feature = "gpio-cdev"))]
+    return false;
+}
+
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "sdl_frontend")]
 pub struct DisplayConfig {
+    #[serde(default = "load_pins_resolution")]
     pub resolution: Resolution,
+    #[serde(default = "load_pins_swap_sides")]
     pub swap_sides: bool,
 }
 
+#[serde_inline_default]
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "gpio_frontend")]
 pub struct GpioFrontendConfig {
+    #[serde_inline_default(PinLocation::from_phys_number(31).unwrap())]
     pub left_white_led_pin: PinLocation,
+    #[serde_inline_default(PinLocation::from_phys_number(29).unwrap())]
     pub left_color_led_pin: PinLocation,
+    #[serde_inline_default(PinLocation::from_phys_number(35).unwrap())]
     pub right_color_led_pin: PinLocation,
+    #[serde_inline_default(PinLocation::from_phys_number(38).unwrap())]
     pub right_white_led_pin: PinLocation,
 }
 
+#[serde_inline_default]
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "legacy_backend")]
 pub struct LegacyBackendConfig {
     #[cfg(feature = "legacy_backend_full")]
+    #[serde_inline_default(PinLocation::from_phys_number(32).unwrap())]
     pub weapon_0_pin: PinLocation,
     #[cfg(feature = "legacy_backend_full")]
+    #[serde_inline_default(PinLocation::from_phys_number(36).unwrap())]
     pub weapon_1_pin: PinLocation,
     #[cfg(feature = "legacy_backend_full")]
+    #[serde_inline_default(PinLocation::from_phys_number(37).unwrap())]
     pub weapon_btn_pin: PinLocation,
     #[cfg(feature = "legacy_backend_full")]
+    #[serde_inline_default(PinLocation::from_phys_number(3).unwrap())]
     pub ir_pin: PinLocation,
+    #[serde_inline_default("/dev/ttyS2".into())]
     pub uart_port: PathBuf,
 }
 
@@ -77,11 +148,34 @@ pub enum RepeaterRole {
     Receiver,
 }
 
+#[cfg(feature = "repeater")]
+fn load_pins_repeater_role() -> RepeaterRole {
+    #[cfg(feature = "gpio-cdev")]
+    {
+        let btn_1: PinLocation = PinLocation::from_phys_number(32).unwrap();
+        let btn_2: PinLocation = PinLocation::from_phys_number(36).unwrap();
+
+        return if read_pin_value(btn_1) | read_pin_value(btn_2) {
+            RepeaterRole::Transmitter
+        } else {
+            RepeaterRole::Receiver
+        };
+    }
+    #[cfg(not(feature = "gpio-cdev"))]
+    {
+        return RepeaterRole::Transmitter;
+    }
+}
+
+#[serde_inline_default]
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "repeater")]
 pub struct RepeaterConfig {
+    #[serde_inline_default("/dev/ttyS3".into())]
     pub uart_port: PathBuf,
+    #[serde_inline_default(115200)]
     pub uart_speed: usize,
+    #[serde(default = "load_pins_repeater_role")]
     pub role: RepeaterRole,
 }
 
@@ -89,6 +183,7 @@ fn is_false(b: &bool) -> bool {
     !*b
 }
 
+#[serde_inline_default]
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct HardwareConfig {
     #[cfg(feature = "embeded_device")]
@@ -108,12 +203,16 @@ pub struct HardwareConfig {
     no_reboot: bool,
 
     #[cfg(feature = "sdl_frontend")]
+    #[serde_inline_default(toml::from_str("".into()).unwrap())]
     pub display: DisplayConfig,
     #[cfg(feature = "gpio_frontend")]
+    #[serde_inline_default(toml::from_str("".into()).unwrap())]
     pub gpio: GpioFrontendConfig,
     #[cfg(feature = "legacy_backend")]
+    #[serde_inline_default(toml::from_str("".into()).unwrap())]
     pub legacy_backend: LegacyBackendConfig,
     #[cfg(feature = "repeater")]
+    #[serde_inline_default(toml::from_str("".into()).unwrap())]
     pub repeater: RepeaterConfig,
 }
 
@@ -123,205 +222,36 @@ impl HardwareConfig {
     #[cfg(not(feature = "embeded_device"))]
     const DEFAULT_PATH: &'static str = "hardware_config.toml";
 
-    fn load_file(logger: &Logger) -> Option<Self> {
-        match std::fs::read_to_string(Self::DEFAULT_PATH) {
-            Ok(content) => match toml::from_str(&content) {
-                Ok(config) => Some(config),
-                Err(err) => {
-                    logger.warning(format!(
-                        "Failed to parse hardware config file, error: {err}"
-                    ));
-                    None
-                }
-            },
-            Err(err) => {
-                logger.warning(format!(
-                    "Failed to open hardware config file, error: {err}. First run?"
-                ));
-                None
-            }
-        }
-    }
+    fn load_file(logger: &Logger) -> Self {
+        let config_str: String = match std::fs::read_to_string(Self::DEFAULT_PATH) {
+            Ok(content) => content,
+            Err(_) => "".to_string(),
+        };
 
-    #[cfg(feature = "gpio-cdev")]
-    fn read_pin_value(pin: PinLocation, logger: &Logger) -> bool {
-        use crate::virtuoso_logger::LoggerUnwrap;
-
-        let line: gpio_cdev::Line = pin.to_line().unwrap_with_logger(logger);
-
-        let handler: gpio_cdev::LineHandle = match line.request(
-            gpio_cdev::LineRequestFlags::INPUT,
-            0,
-            "hardware configuration",
-        ) {
-            Ok(line_handler) => line_handler,
-            Err(err) => {
-                logger.error(format!(
-                    "Failed to request line handler for pin {pin:?}, error: {err}"
-                ));
-                return false;
+        let config: Self = match toml::from_str(&config_str) {
+            Ok(config) => config,
+            Err(_) => {
+                logger.error(
+                    "Failed to parse hardware config file, falling back to default".to_string(),
+                );
+                toml::from_str("".into()).unwrap_with_logger(logger)
             }
         };
 
-        match handler.get_value() {
-            Ok(val) => val != 0,
-            Err(err) => {
-                logger.error(format!(
-                    "Failed to read pin value for pin {pin:?}, error: {err}"
-                ));
-                false
-            }
-        }
+        config
     }
 
-    #[cfg(feature = "gpio-cdev")]
-    fn load_jumpers(logger: &Logger) -> HardwareConfig {
-        #[cfg(feature = "sdl_frontend")]
-        let (resolution, swap_sides) = {
-            let swap_sides_pin: PinLocation = PinLocation::from_phys_number(7).unwrap();
-            let res_1920x550_pin: PinLocation = PinLocation::from_phys_number(15).unwrap();
-            let res_1920x480_pin: PinLocation = PinLocation::from_phys_number(27).unwrap();
-            let res_1920x360_pin: PinLocation = PinLocation::from_phys_number(28).unwrap();
+    pub fn get_config(logger: &Logger) -> Self {
+        let hw_config: Self = Self::load_file(logger);
 
-            let swap_sides: bool = Self::read_pin_value(swap_sides_pin, logger);
-            let res_1920x550: bool = Self::read_pin_value(res_1920x550_pin, logger);
-            let res_1920x480: bool = Self::read_pin_value(res_1920x480_pin, logger);
-            let res_1920x360: bool = Self::read_pin_value(res_1920x360_pin, logger);
+        let path: &std::path::Path = std::path::Path::new("configured");
 
-            let resolution = match (res_1920x550, res_1920x480, res_1920x360) {
-                (false, false, false) => Resolution::Res1920X1080,
-                (true, false, false) => Resolution::Res1920X550,
-                (false, true, false) => Resolution::Res1920X480,
-                (false, false, true) => Resolution::Res1920X360,
-                (_, _, _) => {
-                    logger.error(format!("More than one resolution selected: 1920x550: {res_1920x550}, 1920x480: {res_1920x480}, 1920x360: {res_1920x360}, Falling back to 1920x360"));
-                    Resolution::Res1920X360
-                }
-            };
-            (resolution, swap_sides)
-        };
-
-        #[cfg(feature = "repeater")]
-        let repeater_role: RepeaterRole = {
-            let btn_1: PinLocation = PinLocation::from_phys_number(32).unwrap();
-            let btn_2: PinLocation = PinLocation::from_phys_number(36).unwrap();
-
-            if Self::read_pin_value(btn_1, logger) | Self::read_pin_value(btn_2, logger) {
-                RepeaterRole::Transmitter
-            } else {
-                RepeaterRole::Receiver
-            }
-        };
-
-        Self {
-            force_file: false,
-            reinit: false,
-            no_protect_fs: false,
-            no_update_initramfs: false,
-            no_reboot: false,
-
-            #[cfg(feature = "sdl_frontend")]
-            display: DisplayConfig {
-                resolution,
-                swap_sides,
-            },
-            #[cfg(feature = "gpio_frontend")]
-            gpio: GpioFrontendConfig {
-                left_color_led_pin: PinLocation::from_phys_number(29).unwrap(),
-                left_white_led_pin: PinLocation::from_phys_number(31).unwrap(),
-                right_color_led_pin: PinLocation::from_phys_number(35).unwrap(),
-                right_white_led_pin: PinLocation::from_phys_number(38).unwrap(),
-            },
-            #[cfg(feature = "legacy_backend")]
-            legacy_backend: LegacyBackendConfig {
-                #[cfg(feature = "legacy_backend_full")]
-                weapon_0_pin: PinLocation::from_phys_number(32).unwrap(),
-                #[cfg(feature = "legacy_backend_full")]
-                weapon_1_pin: PinLocation::from_phys_number(36).unwrap(),
-                #[cfg(feature = "legacy_backend_full")]
-                weapon_btn_pin: PinLocation::from_phys_number(37).unwrap(),
-                #[cfg(feature = "legacy_backend_full")]
-                ir_pin: PinLocation::from_phys_number(3).unwrap(),
-                uart_port: "/dev/ttyS2".into(),
-            },
-            #[cfg(feature = "repeater")]
-            repeater: RepeaterConfig {
-                uart_port: "/dev/ttyS3".into(),
-                uart_speed: 115200,
-                role: repeater_role,
-            },
+        if !path.exists() {
+            std::fs::File::create(path).log_err(logger);
+            hw_config.configure_os(logger);
         }
-    }
 
-    pub fn get_config(logger: &Logger) -> HardwareConfig {
-        let file_config: Option<HardwareConfig> = Self::load_file(logger);
-
-        #[cfg(feature = "gpio-cdev")]
-        {
-            let jumpers_config: HardwareConfig = Self::load_jumpers(logger);
-
-            if let Some(file_config) = file_config {
-                let force_file: bool = file_config.force_file;
-
-                if force_file {
-                    if file_config.reinit {
-                        file_config.write_config(logger);
-                        file_config.configure_os(logger);
-                    }
-                    file_config
-                } else {
-                    if file_config != jumpers_config {
-                        jumpers_config.write_config(logger);
-                        jumpers_config.configure_os(logger);
-                    }
-                    jumpers_config
-                }
-            } else {
-                jumpers_config.write_config(logger);
-                jumpers_config.configure_os(logger);
-
-                jumpers_config
-            }
-        }
-        #[cfg(not(feature = "gpio-cdev"))]
-        if let Some(file_config) = file_config {
-            file_config
-        } else {
-            let file_config: HardwareConfig = HardwareConfig {
-                #[cfg(feature = "sdl_frontend")]
-                display: DisplayConfig {
-                    resolution: Resolution::Res1920X1080,
-                    swap_sides: false,
-                },
-
-                #[cfg(all(feature = "legacy_backend", not(feature = "legacy_backend_full")))]
-                legacy_backend: LegacyBackendConfig {
-                    uart_port: "/dev/ttyUSB0".into(),
-                },
-            };
-            file_config.write_config(logger);
-            file_config
-        }
-    }
-
-    fn write_config(&self, logger: &Logger) {
-        let toml_str: String = match toml::to_string(&self) {
-            Ok(toml_str) => toml_str,
-            Err(err) => {
-                logger.error(format!("Failed to serialize hardware config, error: {err}"));
-                return;
-            }
-        };
-
-        match std::fs::write(Self::DEFAULT_PATH, toml_str) {
-            Ok(()) => {}
-            Err(err) => {
-                logger.error(format!(
-                    "Failed to write hardware config to file, error: {err}"
-                ));
-                return;
-            }
-        }
+        hw_config
     }
 
     #[cfg(feature = "embeded_device")]

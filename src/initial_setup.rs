@@ -219,7 +219,7 @@ fn parse_argument(args: &Vec<String>, n: usize) -> usize {
                 .arg("/usr/share/plymouth/themes/default.plymouth")
                 .arg("default.plymouth")
                 .arg("/usr/share/plymouth/themes/Virtuoso/Virtuoso.plymouth")
-                .arg("100")
+                .arg("200")
                 .output()
                 .expect(&"Failed to install theme");
 

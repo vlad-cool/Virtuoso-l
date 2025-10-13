@@ -330,7 +330,7 @@ pub const LAYOUT_1920X1080: Layout = Layout {
         font_size: 550,
     },
     score_l_r: TextProperties {
-        x: 239,
+        x: 240,
         y: 540,
         width: 240,
         height: 540,

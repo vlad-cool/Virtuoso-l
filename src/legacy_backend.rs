@@ -31,6 +31,8 @@ pub struct LegacyBackend {
     auto_status_controller: AutoStatusController,
 
     prev_seconds_value: u64,
+
+    reset_passive: bool,
 }
 
 impl modules::VirtuosoModule for LegacyBackend {
@@ -147,6 +149,8 @@ impl LegacyBackend {
             auto_status_controller: AutoStatusController::new(),
 
             prev_seconds_value: 60 * 3,
+
+            reset_passive: false,
         }
     }
 
@@ -232,6 +236,10 @@ impl LegacyBackend {
         {
             Self::reset_passive_timer(&mut match_info_data);
         }
+        if self.reset_passive {
+            Self::reset_passive_timer(&mut match_info_data);
+            self.reset_passive = false;
+        }
 
         std::mem::drop(match_info_data);
         self.context.match_info_data_updated();
@@ -286,11 +294,11 @@ impl LegacyBackend {
                         .set_field(AutoStatusFields::Timer);
                 }
                 IrCommands::SetTime => {
-                    let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
+                    let match_info_data: MutexGuard<'_, match_info::MatchInfo> =
                         self.context.match_info.lock().unwrap();
 
                     if !match_info_data.timer_controller.is_timer_running() {
-                        Self::reset_passive_timer(&mut match_info_data);
+                        self.reset_passive = true;
                     }
                 }
                 IrCommands::PriorityRaffle => {
