@@ -8,34 +8,28 @@ use crate::sdl_frontend::colors;
 use crate::sdl_frontend::widgets::Card;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
-fn parse_caution_card<'a>(card: PassiveCard) -> (&'a str, u32, Color, Color, Color) {
-    if card != PassiveCard::None {
-        (
-            "P",
-            0,
-            colors::PASSIVE_YELLOW,
-            colors::BACKGROUND,
-            colors::PASSIVE_TEXT_LIGHT,
-        )
-    } else {
-        (
-            "P",
+fn parse_penalty_card<'a>(card: PassiveCard) -> (String, u32, Color, Color, Color) {
+    match card {
+        PassiveCard::None => (
+            "P".to_string(),
             0,
             colors::PASSIVE_DARK_YELLOW,
             colors::BACKGROUND,
             colors::PASSIVE_TEXT_DARK,
-        )
-    }
-}
-
-fn parse_penalty_card<'a>(card: PassiveCard) -> (String, u32, Color, Color, Color) {
-    match card {
-        PassiveCard::None | PassiveCard::Yellow(_) => (
+        ),
+        PassiveCard::Yellow(1) => (
             "P".to_string(),
             0,
-            colors::PASSIVE_DARK_RED,
+            colors::PASSIVE_YELLOW,
             colors::BACKGROUND,
-            colors::PASSIVE_TEXT_DARK,
+            colors::PASSIVE_TEXT_LIGHT,
+        ),
+        PassiveCard::Yellow(n) => (
+            format!("P x {}", n),
+            0,
+            colors::PASSIVE_YELLOW,
+            colors::BACKGROUND,
+            colors::PASSIVE_TEXT_LIGHT,
         ),
         PassiveCard::Red(1) => (
             "P".to_string(),
@@ -69,9 +63,7 @@ fn parse_penalty_card<'a>(card: PassiveCard) -> (String, u32, Color, Color, Colo
 }
 
 pub struct Drawer<'a> {
-    card_l_caution_widget: Card<'a>,
     card_l_penalty_widget: Card<'a>,
-    card_r_caution_widget: Card<'a>,
     card_r_penalty_widget: Card<'a>,
 
     cards_l: PassiveCard,
@@ -85,28 +77,12 @@ impl<'a> Drawer<'a> {
         let font: Rc<Font<'_, '_>> = context.get_font(context.layout.passive_l_top_text.font_size);
 
         Self {
-            card_l_caution_widget: Card::new(
-                context.canvas.clone(),
-                context.texture_creator,
-                font.clone(),
-                context.layout.passive_l_bot_text,
-                context.layout.passive_l_bot_rect,
-                context.logger,
-            ),
             card_l_penalty_widget: Card::new(
                 context.canvas.clone(),
                 context.texture_creator,
                 font.clone(),
                 context.layout.passive_l_top_text,
                 context.layout.passive_l_top_rect,
-                context.logger,
-            ),
-            card_r_caution_widget: Card::new(
-                context.canvas.clone(),
-                context.texture_creator,
-                font.clone(),
-                context.layout.passive_r_bot_text,
-                context.layout.passive_r_bot_rect,
                 context.logger,
             ),
             card_r_penalty_widget: Card::new(
@@ -141,16 +117,6 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     fn render(&mut self) {
         if self.cards_l_updated {
             let (text, border_width, card_color, border_color, text_color) =
-                parse_caution_card(self.cards_l);
-            self.card_l_caution_widget.render(
-                text,
-                border_width,
-                card_color,
-                border_color,
-                text_color,
-            );
-
-            let (text, border_width, card_color, border_color, text_color) =
                 parse_penalty_card(self.cards_l);
             self.card_l_penalty_widget.render(
                 text.as_str(),
@@ -164,16 +130,6 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
 
         if self.cards_r_updated {
             let (text, border_width, card_color, border_color, text_color) =
-                parse_caution_card(self.cards_r);
-            self.card_r_caution_widget.render(
-                text,
-                border_width,
-                card_color,
-                border_color,
-                text_color,
-            );
-
-            let (text, border_width, card_color, border_color, text_color) =
                 parse_penalty_card(self.cards_r);
             self.card_r_penalty_widget.render(
                 text.as_str(),
@@ -185,9 +141,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             self.cards_r_updated = false;
         }
 
-        self.card_l_caution_widget.draw();
         self.card_l_penalty_widget.draw();
-        self.card_r_caution_widget.draw();
         self.card_r_penalty_widget.draw();
     }
 }

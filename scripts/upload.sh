@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-BANANA_IPS=("192.168.50.198")
+BANANA_IPS=("192.168.1.38")
 
-cross build --target armv7-unknown-linux-gnueabihf --release --no-default-features --features=embeded_device,sdl_frontend,legacy_backend_full,gpio_frontend,repeater,cyrano
+cross build --target armv7-unknown-linux-gnueabihf --release --no-default-features --features=embeded_device,sdl_frontend,legacy_backend_full,gpio_frontend,repeater,cyrano_server
 
 for BANANA_IP in "${BANANA_IPS[@]}"
 do

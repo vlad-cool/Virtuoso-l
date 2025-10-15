@@ -136,7 +136,8 @@ fn parse_argument(args: &Vec<String>, n: usize) -> usize {
         }
         "--update-initramfs" => {
             println!("Generating initramfs");
-            let output: Output = Command::new("update-initramfs")
+            let output: Output = Command::new("sudo")
+                .arg("update-initramfs")
                 .arg("-u")
                 .output()
                 .expect(&"Failed to update initramfs");

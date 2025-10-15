@@ -282,7 +282,7 @@ impl HardwareConfig {
 
         command.arg("--config-overlays").arg("uart2 uart3");
 
-        let command = if self.no_update_initramfs {
+        let command: &mut std::process::Command = if self.no_update_initramfs {
             command
         } else {
             command.arg("--update-initramfs")
@@ -294,7 +294,7 @@ impl HardwareConfig {
             command.arg("--protect-fs")
         };
 
-        let command = if self.no_reboot {
+        let command: &mut std::process::Command = if self.no_reboot {
             command
         } else {
             command.arg("--reboot")

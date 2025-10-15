@@ -164,6 +164,8 @@ impl LegacyBackend {
         let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
             self.context.match_info.lock().unwrap();
 
+        let mut update: bool = true;
+
         match_info_data.left_fencer.score = msg.score_left;
         match_info_data.right_fencer.score = msg.score_right;
         // match_info_data.timer_controller.set_timer_running(msg.on_timer);
@@ -191,6 +193,10 @@ impl LegacyBackend {
             } else {
                 Duration::from_secs((timer_m * 60 + timer_d * 10 + timer_s) as u64)
             };
+
+            if new_time < Duration::from_millis(900) && msg.on_timer {
+                update = false;
+            }
 
             match_info_data
                 .timer_controller
@@ -242,7 +248,9 @@ impl LegacyBackend {
         }
 
         std::mem::drop(match_info_data);
-        self.context.match_info_data_updated();
+        if update {
+            self.context.match_info_data_updated();
+        }
     }
 
     #[cfg(feature = "legacy_backend_full")]
@@ -353,12 +361,6 @@ impl LegacyBackend {
                         self.context.match_info_data_updated();
                     }
                 }
-                // IrCommands::FlipSides => {
-                //     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-                //         self.match_info.lock().unwrap();
-
-                //     match_info_data.
-                // }
                 IrCommands::ChangeWeapon => {
                     if self.weapon_select_btn_pressed {
                         self.context
@@ -366,7 +368,6 @@ impl LegacyBackend {
                             .fetch_xor(true, std::sync::atomic::Ordering::Relaxed);
                     }
                 }
-
                 IrCommands::Previous => {
                     if self
                         .context
