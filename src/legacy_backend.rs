@@ -286,10 +286,12 @@ impl LegacyBackend {
                 IrCommands::FlipSides => {
                     let mut match_info_data: MutexGuard<'_, modules::MatchInfo> =
                         self.context.match_info.lock().unwrap();
-                    (match_info_data.left_fencer, match_info_data.right_fencer) = (
-                        match_info_data.right_fencer.clone(),
-                        match_info_data.left_fencer.clone(),
-                    );
+                    if !match_info_data.timer_controller.is_timer_running() {
+                        (match_info_data.left_fencer, match_info_data.right_fencer) = (
+                            match_info_data.right_fencer.clone(),
+                            match_info_data.left_fencer.clone(),
+                        );
+                    }
                     std::mem::drop(match_info_data);
                     self.context.match_info_data_updated();
                 }
