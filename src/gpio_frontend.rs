@@ -50,6 +50,16 @@ impl modules::VirtuosoModule for GpioFrontend {
             .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "led indicators")
             .unwrap_with_logger(logger);
 
+        let beeper_pin = hw_config
+            .gpio
+            .beeper_pin
+            .to_line()
+            .unwrap()
+            .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "beeper")
+            .unwrap();
+
+        self.set_led_state("beeper", &beeper_pin, false);
+
         loop {
             let new_modified_count: u32 = self.context.get_modified_count();
 

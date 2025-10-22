@@ -110,14 +110,14 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         if self.updated || self.timer.is_timer_running() {
             let (time_string, time): (String, Duration) = self.timer.get_main_time_string();
 
-            let color: sdl2::pixels::Color = if self.timer.is_timer_running() {
-                if time.as_secs() >= 10 {
+            let color: sdl2::pixels::Color = if time.as_secs() >= 10 {
+                if self.timer.is_timer_running() {
                     colors::TIMER_WHITE
                 } else {
-                    colors::TIMER_BLUE
+                    colors::TIMER_ORANGE
                 }
             } else {
-                colors::TIMER_ORANGE
+                colors::TIMER_BLUE
             };
 
             let colon_color: sdl2::pixels::Color = if self.timer.is_timer_running() {

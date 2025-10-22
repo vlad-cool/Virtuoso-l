@@ -19,15 +19,15 @@ impl PinLocation {
                 chip: "/dev/gpiochip0".into(),
                 line: 12,
             }),
-            05 => Some(PinLocation {
+            5 => Some(PinLocation {
                 chip: "/dev/gpiochip0".into(),
                 line: 11,
             }),
-            07 => Some(PinLocation {
+            7 => Some(PinLocation {
                 chip: "/dev/gpiochip0".into(),
                 line: 06,
             }),
-            08 => Some(PinLocation {
+            8 => Some(PinLocation {
                 chip: "/dev/gpiochip0".into(),
                 line: 13,
             }),

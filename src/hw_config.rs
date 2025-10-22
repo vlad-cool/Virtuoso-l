@@ -119,6 +119,8 @@ pub struct GpioFrontendConfig {
     pub right_color_led_pin: PinLocation,
     #[serde_inline_default(PinLocation::from_phys_number(38).unwrap())]
     pub right_white_led_pin: PinLocation,
+    #[serde_inline_default(PinLocation::from_phys_number(5).unwrap())]
+    pub beeper_pin: PinLocation,
 }
 
 #[serde_inline_default]
@@ -246,7 +248,7 @@ impl HardwareConfig {
 
         let path: &std::path::Path = std::path::Path::new("configured");
 
-        if !path.exists() {
+        if !path.exists() || hw_config.reinit {
             std::fs::File::create(path).log_err(logger);
             hw_config.configure_os(logger);
         }
