@@ -578,7 +578,7 @@ Defaults        !requiretty
 Defaults        use_pty
 root    ALL=(ALL:ALL) ALL
 %admin  ALL=(ALL) ALL
-%sudo   ALL=(ALL:ALL) ALL
+%sudo ALL=(ALL:ALL) ALL, NOPASSWD: /usr/sbin/update-initramfs
 @includedir /etc/sudoers.d
 pi ALL=(ALL) NOPASSWD: /usr/bin/plymouth
 ".as_bytes(),
