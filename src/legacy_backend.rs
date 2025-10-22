@@ -38,6 +38,7 @@ pub struct LegacyBackend {
 
     reset_passive: bool,
     last_second: bool,
+    was_timer_running: bool,
 }
 
 impl modules::VirtuosoModule for LegacyBackend {
@@ -160,6 +161,7 @@ impl LegacyBackend {
 
             reset_passive: false,
             last_second: false,
+            was_timer_running: false,
         }
     }
 
@@ -175,15 +177,24 @@ impl LegacyBackend {
 
         let mut update: bool = true;
 
+        if self.was_timer_running {
+            if msg.score_left == match_info_data.left_fencer.score + 1 && !msg.on_timer {
+                match_info_data.left_fencer.score_auto_updated = Some(Instant::now())
+            }
+            if msg.score_right == match_info_data.right_fencer.score + 1 && !msg.on_timer {
+                match_info_data.right_fencer.score_auto_updated = Some(Instant::now())
+            }
+        }
+
+        self.was_timer_running = match_info_data.timer_controller.is_timer_running();
+
         match_info_data.left_fencer.score = msg.score_left;
         match_info_data.right_fencer.score = msg.score_right;
-        // match_info_data.timer_controller.set_timer_running(msg.on_timer);
 
         if match_info_data.timer_controller.is_timer_running()
             && (msg.red || msg.white_red || msg.green || msg.white_green)
         {
             self.reset_passive = true;
-            // Self::reset_passive_timer(&mut match_info_data);
         }
 
         if msg.symbol {
@@ -211,12 +222,6 @@ impl LegacyBackend {
             } else {
                 Duration::from_secs((timer_m * 60 + timer_d * 10 + timer_s) as u64)
             };
-
-            // eprintln!(
-            //     "last_second: {last_second}, {} {}",
-            //     main_timer.as_secs_f32(),
-            //     new_time.as_secs_f32()
-            // );
 
             if new_time < Duration::from_millis(900) && msg.on_timer {
                 update = false;

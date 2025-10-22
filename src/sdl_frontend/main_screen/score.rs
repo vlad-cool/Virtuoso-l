@@ -1,6 +1,7 @@
 use sdl2;
 use sdl2::ttf::Font;
 use std::rc::Rc;
+use std::time::{Duration, Instant};
 
 use crate::match_info::MatchInfo;
 use crate::sdl_frontend::colors;
@@ -16,8 +17,10 @@ pub struct Drawer<'a> {
 
     score_l: u32,
     score_l_updated: bool,
+    score_l_update_time: Option<Instant>,
     score_r: u32,
     score_r_updated: bool,
+    score_r_update_time: Option<Instant>,
 }
 
 impl<'a> Drawer<'a> {
@@ -68,8 +71,10 @@ impl<'a> Drawer<'a> {
 
             score_l: 0,
             score_l_updated: true,
+            score_l_update_time: None,
             score_r: 0,
             score_r_updated: true,
+            score_r_update_time: None,
         }
     }
 }
@@ -79,10 +84,12 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         if self.score_l != data.left_fencer.score {
             self.score_l = data.left_fencer.score;
             self.score_l_updated = true;
+            self.score_l_update_time = data.left_fencer.score_auto_updated;
         }
         if self.score_r != data.right_fencer.score {
             self.score_r = data.right_fencer.score;
             self.score_r_updated = true;
+            self.score_r_update_time = data.right_fencer.score_auto_updated;
         }
     }
 
@@ -136,9 +143,38 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             );
             self.score_r_updated = false;
         }
-        self.score_l_l_widget.draw();
-        self.score_l_r_widget.draw();
-        self.score_r_l_widget.draw();
-        self.score_r_r_widget.draw();
+
+        let draw_l: bool = if let Some(time) = self.score_l_update_time {
+            let time: Duration = time.elapsed();
+            if time > Duration::from_millis(500) && time < Duration::from_millis(1000) {
+                true
+            } else if time > Duration::from_millis(1500) {
+                true
+            } else {
+                false
+            }
+        } else {
+            true
+        };
+        let draw_r: bool = if let Some(time) = self.score_r_update_time {
+            let time: Duration = time.elapsed();
+            if time > Duration::from_millis(500) && time < Duration::from_millis(1000) {
+                true
+            } else if time > Duration::from_millis(1500) {
+                true
+            } else {
+                false
+            }
+        } else {
+            true
+        };
+        if draw_l {
+            self.score_l_l_widget.draw();
+            self.score_l_r_widget.draw();
+        }
+        if draw_r {
+            self.score_r_l_widget.draw();
+            self.score_r_r_widget.draw();
+        }
     }
 }

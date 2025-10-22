@@ -605,6 +605,11 @@ pub struct FencerInfo {
     pub name: String,   // 20
     pub nation: String, // 3
     pub score: u32,
+    #[serde(
+        serialize_with = "serialize_optional_instant_as_elapsed",
+        deserialize_with = "deserialize_optional_duration_to_instant"
+    )]
+    pub score_auto_updated: Option<Instant>,
     pub status: FencerStatus,
     pub color_light: bool,
     pub white_light: bool,
@@ -622,6 +627,7 @@ impl FencerInfo {
             name: "".to_string(),
             nation: "".to_string(),
             score: 0,
+            score_auto_updated: None,
             status: FencerStatus::Undefined,
             color_light: false,
             white_light: false,

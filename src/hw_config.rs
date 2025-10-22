@@ -248,6 +248,7 @@ impl HardwareConfig {
 
         let path: &std::path::Path = std::path::Path::new("configured");
 
+        #[cfg(feature = "embeded_device")]
         if !path.exists() || hw_config.reinit {
             std::fs::File::create(path).log_err(logger);
             hw_config.configure_os(logger);
@@ -332,11 +333,6 @@ impl HardwareConfig {
         if !stdout.trim().is_empty() {
             logger.error(format!("{} {}", "stdout of initial_setup:", stdout.trim()));
         }
-    }
-
-    #[cfg(not(feature = "embeded_device"))]
-    fn configure_os(&self, logger: &Logger) {
-        eprintln!("Configuring os disabled on non-embeded device")
     }
 
     #[cfg(feature = "repeater")]
