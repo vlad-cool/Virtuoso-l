@@ -79,6 +79,17 @@ impl<'a> Drawer<'a> {
     }
 }
 
+fn score_flash_pattern(time: Duration) -> bool {
+    match time.as_millis() {
+        0..250 => false,
+        250..500 => true,
+        500..750 => false,
+        750..1000 => true,
+        1000..1250 => false,
+        _ => true,
+    }
+}
+
 impl<'a> VirtuosoWidget for Drawer<'a> {
     fn update(&mut self, data: &MatchInfo) {
         if self.score_l != data.left_fencer.score {
@@ -146,25 +157,13 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
 
         let draw_l: bool = if let Some(time) = self.score_l_update_time {
             let time: Duration = time.elapsed();
-            if time > Duration::from_millis(500) && time < Duration::from_millis(1000) {
-                true
-            } else if time > Duration::from_millis(1500) {
-                true
-            } else {
-                false
-            }
+            score_flash_pattern(time)
         } else {
             true
         };
         let draw_r: bool = if let Some(time) = self.score_r_update_time {
             let time: Duration = time.elapsed();
-            if time > Duration::from_millis(500) && time < Duration::from_millis(1000) {
-                true
-            } else if time > Duration::from_millis(1500) {
-                true
-            } else {
-                false
-            }
+            score_flash_pattern(time)
         } else {
             true
         };

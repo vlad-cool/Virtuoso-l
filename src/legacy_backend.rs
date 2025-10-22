@@ -2,8 +2,12 @@
 use gpio_cdev;
 #[cfg(feature = "legacy_backend_full")]
 use gpio_cdev::Line;
+use nix::poll::PollTimeout;
+use nix::poll::{PollFd, PollFlags, poll};
 use serial::{self, SerialPort};
 use std::io::Read;
+use std::os::fd::AsRawFd;
+use std::os::fd::BorrowedFd;
 use std::path::PathBuf;
 #[cfg(feature = "legacy_backend_full")]
 use std::sync::Arc;
@@ -36,9 +40,14 @@ pub struct LegacyBackend {
 
     prev_seconds_value: u64,
 
+    rc5_tx: Option<mpsc::SyncSender<IrFrame>>,
+
     reset_passive: bool,
     last_second: bool,
     was_timer_running: bool,
+
+    was_l_card_inc: bool,
+    was_r_card_inc: bool,
 }
 
 impl modules::VirtuosoModule for LegacyBackend {
@@ -103,9 +112,25 @@ impl modules::VirtuosoModule for LegacyBackend {
                 .to_line()
                 .unwrap_with_logger(&self.context.logger);
 
+            let line_clone: Line = ir_line.clone();
             let pause_ir_receiver_1: Arc<AtomicBool> = pause_ir_receiver.clone();
+            let pause_ir_receiver_2: Arc<AtomicBool> = pause_ir_receiver_1.clone();
             thread::spawn(move || {
-                rc5_receiever(tx_clone, logger_clone, ir_line, pause_ir_receiver_1);
+                rc5_receiever(tx_clone, logger_clone, line_clone, pause_ir_receiver_1);
+            });
+
+            let (ir_transmitter_tx, ir_transmitter_rx) = mpsc::sync_channel::<IrFrame>(8);
+
+            self.rc5_tx = Some(ir_transmitter_tx);
+
+            let logger_clone: Logger = self.context.logger.clone();
+            thread::spawn(move || {
+                rc5_transmitter(
+                    ir_transmitter_rx,
+                    logger_clone,
+                    ir_line,
+                    pause_ir_receiver_2,
+                );
             });
         }
 
@@ -159,9 +184,14 @@ impl LegacyBackend {
 
             prev_seconds_value: 60 * 3,
 
+            rc5_tx: None,
+
             reset_passive: false,
             last_second: false,
             was_timer_running: false,
+
+            was_l_card_inc: false,
+            was_r_card_inc: false,
         }
     }
 
@@ -171,18 +201,74 @@ impl LegacyBackend {
             .reset_passive_timer(match_info.weapon != Weapon::Sabre);
     }
 
-    fn apply_uart_data(&mut self, msg: UartData) {
+    fn apply_uart_data(&mut self, mut msg: UartData) {
         let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
             self.context.match_info.lock().unwrap();
 
         let mut update: bool = true;
 
+        let score_changed: bool = match_info_data.left_fencer.score
+            + match_info_data.right_fencer.score
+            != msg.score_left + msg.score_right;
+
+        if score_changed
+            && match_info_data.right_fencer.score + 1 == msg.score_right
+            && self.was_l_card_inc
+            && !msg.yellow_card_left
+            && msg.red_card_left
+        {
+            if let Some(rc5_tx) = &self.rc5_tx {
+                rc5_tx
+                    .send(IrFrame {
+                        new: true,
+                        address: self
+                            .context
+                            .config
+                            .lock()
+                            .unwrap()
+                            .legacy_backend
+                            .rc5_address,
+                        command: IrCommands::RightScoreDecrement,
+                    })
+                    .log_err(&self.context.logger);
+            }
+            msg.score_right = msg.score_right.saturating_sub(1);
+
+            self.was_l_card_inc = false;
+        }
+
+        if score_changed
+            && match_info_data.left_fencer.score + 1 == msg.score_left
+            && self.was_r_card_inc
+            && !msg.yellow_card_right
+            && msg.red_card_right
+        {
+            if let Some(rc5_tx) = &self.rc5_tx {
+                rc5_tx
+                    .send(IrFrame {
+                        new: true,
+                        address: self
+                            .context
+                            .config
+                            .lock()
+                            .unwrap()
+                            .legacy_backend
+                            .rc5_address,
+                        command: IrCommands::LeftScoreDecrement,
+                    })
+                    .log_err(&self.context.logger);
+            }
+            msg.score_left = msg.score_left.saturating_sub(1);
+
+            self.was_r_card_inc = false;
+        }
+
         if self.was_timer_running {
             if msg.score_left == match_info_data.left_fencer.score + 1 && !msg.on_timer {
-                match_info_data.left_fencer.score_auto_updated = Some(Instant::now())
+                match_info_data.left_fencer.score_auto_updated = Some(Instant::now());
             }
             if msg.score_right == match_info_data.right_fencer.score + 1 && !msg.on_timer {
-                match_info_data.right_fencer.score_auto_updated = Some(Instant::now())
+                match_info_data.right_fencer.score_auto_updated = Some(Instant::now());
             }
         }
 
@@ -255,13 +341,6 @@ impl LegacyBackend {
         {
             Self::reset_passive_timer(&mut match_info_data);
         }
-
-        // match_info_data.left_fencer.yellow_card =
-        //     (msg.yellow_card_left || msg.red_card_left) as u32;
-        // match_info_data.left_fencer.red_card = msg.red_card_left as u32;
-        // match_info_data.right_fencer.yellow_card =
-        //     (msg.yellow_card_right || msg.red_card_right) as u32;
-        // match_info_data.right_fencer.red_card = msg.red_card_right as u32;
 
         match_info_data.left_fencer.color_light = msg.red;
         match_info_data.left_fencer.white_light = msg.white_red;
@@ -346,6 +425,7 @@ impl LegacyBackend {
                     }
                 }
                 IrCommands::LeftPenaltyCard => {
+                    self.was_l_card_inc = true;
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
                         self.context.match_info.lock().unwrap();
                     if !match_info_data.timer_controller.is_timer_running() {
@@ -356,6 +436,7 @@ impl LegacyBackend {
                     }
                 }
                 IrCommands::RightPenaltyCard => {
+                    self.was_r_card_inc = true;
                     let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
                         self.context.match_info.lock().unwrap();
                     if !match_info_data.timer_controller.is_timer_running() {
@@ -490,6 +571,12 @@ impl LegacyBackend {
                         std::mem::drop(match_info_data);
                         self.context.match_info_data_updated();
                     }
+                }
+                IrCommands::LeftScoreIncrement => {
+                    self.was_r_card_inc = false;
+                }
+                IrCommands::RightScoreIncrement => {
+                    self.was_l_card_inc = false;
                 }
                 _ => {}
             }
@@ -680,13 +767,9 @@ struct UartData {
     score_right: u32,
     period: u32,
 
-    #[allow(dead_code)]
     yellow_card_left: bool,
-    #[allow(dead_code)]
     red_card_left: bool,
-    #[allow(dead_code)]
     yellow_card_right: bool,
-    #[allow(dead_code)]
     red_card_right: bool,
 }
 
@@ -828,7 +911,7 @@ enum IrCommands {
 }
 
 impl IrCommands {
-    pub fn from_int(command: u32) -> Self {
+    pub fn from_u32(command: u32) -> Self {
         match command {
             13 => IrCommands::TimerStartStop,
 
@@ -869,6 +952,48 @@ impl IrCommands {
             _ => IrCommands::Unknown,
         }
     }
+
+    pub fn to_u32(&self) -> u32 {
+        match self {
+            IrCommands::TimerStartStop => 13,
+
+            IrCommands::AutoTimerOnOff => 1,
+            IrCommands::AutoScoreOnOff => 16,
+
+            IrCommands::LeftScoreIncrement => 2,
+            IrCommands::LeftScoreDecrement => 3,
+            IrCommands::RightScoreIncrement => 9,
+            IrCommands::RightScoreDecrement => 15,
+
+            IrCommands::LeftPassiveCard => 17,
+            IrCommands::RightPassiveCard => 18,
+
+            IrCommands::LeftPenaltyCard => 4,
+            IrCommands::RightPenaltyCard => 11,
+
+            IrCommands::SecondsIncrement => 14,
+            IrCommands::SecondsDecrement => 6,
+
+            IrCommands::PriorityRaffle => 12,
+
+            IrCommands::SetTime => 7,
+            IrCommands::FlipSides => 0,
+
+            IrCommands::ChangeWeapon => 5,
+
+            IrCommands::Reset => 10,
+
+            IrCommands::PeriodIncrement => 8,
+
+            IrCommands::Previous => 21,
+            IrCommands::Next => 20,
+            IrCommands::Begin => 19,
+            IrCommands::End => 24,
+            IrCommands::Aux => 38,
+
+            IrCommands::Unknown => 0,
+        }
+    }
 }
 
 #[cfg(feature = "legacy_backend_full")]
@@ -898,8 +1023,64 @@ impl IrFrame {
         Self {
             new,
             address,
-            command: IrCommands::from_int(command),
+            command: IrCommands::from_u32(command),
         }
+    }
+}
+
+#[cfg(feature = "legacy_backend_full")]
+fn rc5_transmitter(
+    rx: mpsc::Receiver<IrFrame>,
+    logger: Logger,
+    line: gpio_cdev::Line,
+    pause: Arc<AtomicBool>,
+) {
+    'main_loop: for frame in rx.iter() {
+        pause.store(true, std::sync::atomic::Ordering::Relaxed);
+        // thread::sleep(Duration::from_millis(500));
+
+        let mut buf: [u8; 14] = [0; 14];
+
+        buf[0] = 1;
+        buf[1] = 1;
+        buf[2] = if frame.new { 1 } else { 0 };
+
+        for i in 0..5 {
+            buf[7 - i] = (frame.address as u8 >> i) & 1;
+        }
+
+        for i in 0..6 {
+            buf[13 - i] = (frame.command.to_u32() as u8 >> i) & 1;
+        }
+
+        let mut handler: Result<gpio_cdev::LineHandle, gpio_cdev::Error> =
+            line.request(gpio_cdev::LineRequestFlags::OUTPUT, 1, "beeper");
+
+        let start_time: Instant = Instant::now();
+        let mut i: i32 = 0;
+        while let Err(_err) = handler {
+            i += 1;
+            if start_time.elapsed() > Duration::from_millis(200) {
+                logger.error(format!("Cannot get ir line as output {}", i));
+                continue 'main_loop;
+            }
+            handler = line.request(gpio_cdev::LineRequestFlags::OUTPUT, 1, "beeper");
+        }
+
+        let handler: gpio_cdev::LineHandle = handler.unwrap();
+
+        for i in 0..14 {
+            let time: Instant = Instant::now();
+            handler.set_value(buf[i]).log_err(&logger);
+            while time.elapsed() < Duration::from_micros(889) {}
+            let time: Instant = Instant::now();
+            handler.set_value(1 - buf[i]).log_err(&logger);
+            while time.elapsed() < Duration::from_micros(889) {}
+        }
+        std::mem::drop(handler);
+        thread::sleep(Duration::from_micros(889 * 2));
+
+        pause.store(false, std::sync::atomic::Ordering::Relaxed);
     }
 }
 
@@ -925,52 +1106,66 @@ fn rc5_receiever(
             )
             .unwrap();
         while !pause.load(std::sync::atomic::Ordering::Relaxed) {
-            if let Ok(event) = events.get_event() {
-                let event: gpio_cdev::LineEvent = event;
-                let event_delta: u64 = event.timestamp() - last_interrupt_time;
-                last_interrupt_time = event.timestamp();
+            let mut fds = unsafe {
+                [PollFd::new(
+                    BorrowedFd::borrow_raw(events.as_raw_fd()),
+                    PollFlags::POLLIN,
+                )]
+            };
 
-                if event_delta > 889 * 1000 * 3 {
-                    index = 1;
-                    receieve_buf = [1; 14];
-                    continue;
-                }
+            poll(&mut fds, PollTimeout::from(50 as u16)).unwrap();
+            if let Some(revents) = fds[0].revents() {
+                if revents.contains(PollFlags::POLLIN) {
+                    let event: gpio_cdev::LineEvent = events.get_event().unwrap();
 
-                let delta: i32 = if event_delta > 889 * 1000 * 3 / 2 {
-                    2
-                } else {
-                    1
-                };
+                    let event_delta: u64 = event.timestamp() - last_interrupt_time;
+                    last_interrupt_time = event.timestamp();
 
-                let next_value: Option<u32> =
-                    match (receieve_buf[index - 1], event.event_type(), delta) {
-                        (1, gpio_cdev::EventType::RisingEdge, 1) => Some(1),
-                        (1, gpio_cdev::EventType::RisingEdge, 2) => Some(0),
-                        (0, gpio_cdev::EventType::FallingEdge, 1) => Some(0),
-                        (0, gpio_cdev::EventType::FallingEdge, 2) => Some(1),
-                        _ => None,
+                    if event_delta > 889 * 1000 * 3 {
+                        index = 1;
+                        receieve_buf = [1; 14];
+                        continue;
+                    }
+
+                    let delta: i32 = if event_delta > 889 * 1000 * 3 / 2 {
+                        2
+                    } else {
+                        1
                     };
 
-                if let Some(next_value) = next_value {
-                    receieve_buf[index] = next_value;
-                    index += 1;
+                    let next_value: Option<u32> =
+                        match (receieve_buf[index - 1], event.event_type(), delta) {
+                            (1, gpio_cdev::EventType::RisingEdge, 1) => Some(1),
+                            (1, gpio_cdev::EventType::RisingEdge, 2) => Some(0),
+                            (0, gpio_cdev::EventType::FallingEdge, 1) => Some(0),
+                            (0, gpio_cdev::EventType::FallingEdge, 2) => Some(1),
+                            _ => None,
+                        };
 
-                    if index == 14 {
-                        let toggle_bit: u32 = receieve_buf[2];
+                    if let Some(next_value) = next_value {
+                        receieve_buf[index] = next_value;
+                        index += 1;
 
-                        logger.debug(format!("Got ir packet: {receieve_buf:?}"));
+                        if index == 14 {
+                            let toggle_bit: u32 = receieve_buf[2];
 
-                        let frame: IrFrame =
-                            IrFrame::from_buf(receieve_buf, toggle_bit != last_toggle_value);
+                            logger.debug(format!("Got ir packet: {receieve_buf:?}"));
 
-                        tx.send(InputData::IrCommand(frame)).log_err(&logger);
+                            let frame: IrFrame =
+                                IrFrame::from_buf(receieve_buf, toggle_bit != last_toggle_value);
 
-                        index = 1;
-                        last_toggle_value = toggle_bit;
+                            tx.send(InputData::IrCommand(frame)).log_err(&logger);
+
+                            index = 1;
+                            last_toggle_value = toggle_bit;
+                        }
                     }
                 }
             }
         }
+        std::mem::drop(events);
+
+        while pause.load(std::sync::atomic::Ordering::Relaxed) {}
     }
 }
 
