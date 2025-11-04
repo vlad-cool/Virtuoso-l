@@ -16,7 +16,7 @@ pub struct Drawer<'a> {
 
 impl<'a> Drawer<'a> {
     pub fn new(context: WidgetContext<'a>) -> Option<Self> {
-        if let Some(layout) = context.layout.cyrano_layout {
+        if let Some(layout) = &context.layout.cyrano_layout {
             let font: Rc<Font<'_, '_>> = context.get_font(layout.competition_type.font_size);
 
             Some(Self {
@@ -50,7 +50,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     fn render(&mut self) {
         if self.competition_type_updated {
             self.competition_type_widget.render(
-                format!("Competition type {}", self.competition_type),
+                format!("{}", self.competition_type),
                 FENCER_NAME_TEXT,
                 None,
             );

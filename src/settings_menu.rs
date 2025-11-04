@@ -73,21 +73,19 @@ impl MenuElement {
                         "-".to_string()
                     };
 
-                       MenuItem::Label(format!("Wi-Fi\n{}", ipv4))
+                    MenuItem::Label(format!("Wi-Fi\n{}", ipv4))
                 } else {
                     MenuItem::Label(format!("No\ninterface\nfound"))
                 }
             }
-            Self::UpdateBtn(status) => MenuItem::Button(
-                  format!("Update\n{status}"),
-            ),
+            Self::UpdateBtn(status) => MenuItem::Button(format!("Update\n{status}")),
         }
     }
 
     pub fn press(&mut self, logger: &Logger) {
         match self {
             Self::UpdateBtn(res_status) => {
-                    let mut backend: self_update::backends::github::UpdateBuilder =
+                let mut backend: self_update::backends::github::UpdateBuilder =
                     self_update::backends::github::Update::configure();
 
                 let update_builder: &mut self_update::backends::github::UpdateBuilder = backend

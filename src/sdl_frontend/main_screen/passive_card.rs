@@ -74,23 +74,23 @@ pub struct Drawer<'a> {
 
 impl<'a> Drawer<'a> {
     pub fn new(context: WidgetContext<'a>) -> Self {
-        let font: Rc<Font<'_, '_>> = context.get_font(context.layout.passive_l_top_text.font_size);
+        let font: Rc<Font<'_, '_>> = context.get_font(context.layout.passive_l_text.font_size);
 
         Self {
             card_l_penalty_widget: Card::new(
                 context.canvas.clone(),
                 context.texture_creator,
                 font.clone(),
-                context.layout.passive_l_top_text,
-                context.layout.passive_l_top_rect,
+                context.layout.passive_l_text,
+                context.layout.passive_l_rect,
                 context.logger,
             ),
             card_r_penalty_widget: Card::new(
                 context.canvas.clone(),
                 context.texture_creator,
                 font.clone(),
-                context.layout.passive_r_top_text,
-                context.layout.passive_r_top_rect,
+                context.layout.passive_r_text,
+                context.layout.passive_r_rect,
                 context.logger,
             ),
 

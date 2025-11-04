@@ -16,7 +16,7 @@ pub struct Drawer<'a> {
 
 impl<'a> Drawer<'a> {
     pub fn new(context: WidgetContext<'a>) -> Option<Self> {
-        if let Some(layout) = context.layout.cyrano_layout {
+        if let Some(layout) = &context.layout.cyrano_layout {
             let font: Rc<Font<'_, '_>> = context.get_font(layout.poule_tableau_id.font_size);
 
             Some(Self {
@@ -40,9 +40,9 @@ impl<'a> Drawer<'a> {
 impl<'a> VirtuosoWidget for Drawer<'a> {
     fn update(&mut self, data: &MatchInfo) {
         let poul_tab: String = if data.poul_tab.chars().all(|c| c.is_ascii_digit()) {
-            format!("Poule Identifier{}", data.poul_tab)
+            format!("{}", data.poul_tab)
         } else {
-            format!("Tableau Identifier{}", data.poul_tab)
+            format!("{}", data.poul_tab)
         };
 
         if self.poul_tab != poul_tab {

@@ -13,6 +13,8 @@ pub struct Drawer<'a> {
     fleuret_widget: Label<'a>,
     texture_cache: LabelTextureCache<'a>,
 
+    disable_inactive_weapon: bool,
+
     weapon: Weapon,
     updated: bool,
 }
@@ -43,6 +45,9 @@ impl<'a> Drawer<'a> {
                 context.layout.fleuret,
                 context.logger,
             ),
+
+            disable_inactive_weapon: context.layout.disable_inactive_weapon,
+
             texture_cache: LabelTextureCache::new(),
 
             updated: true,
@@ -92,8 +97,17 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             );
             self.updated = false;
         }
-        self.epee_widget.draw();
-        self.sabre_widget.draw();
-        self.fleuret_widget.draw();
+
+        if self.disable_inactive_weapon {
+            match self.weapon {
+                Weapon::Epee => self.epee_widget.draw(),
+                Weapon::Sabre => self.sabre_widget.draw(),
+                Weapon::Fleuret => self.fleuret_widget.draw(),
+            }
+        } else {
+            self.epee_widget.draw();
+            self.sabre_widget.draw();
+            self.fleuret_widget.draw();
+        }
     }
 }

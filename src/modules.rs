@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex, mpsc};
 
 pub use crate::hw_config::HardwareConfig;
 pub use crate::match_info::MatchInfo;
+pub use crate::port_manager::PortManager;
 pub use crate::settings_menu::SettingsMenu;
 pub use crate::virtuoso_config::VirtuosoConfig;
 pub use crate::virtuoso_logger::Logger;
@@ -29,6 +30,8 @@ pub struct VirtuosoModuleContext {
 
     pub cyrano_command_tx: mpsc::Sender<CyranoCommand>,
     pub cyrano_command_rx: Arc<Mutex<Option<mpsc::Receiver<CyranoCommand>>>>,
+
+    pub port_manager: Arc<Mutex<PortManager>>,
 }
 
 impl VirtuosoModuleContext {
@@ -54,6 +57,8 @@ impl VirtuosoModuleContext {
 
             cyrano_command_tx: cyrano_tx,
             cyrano_command_rx: Arc::new(Mutex::new(Some(cyrano_rx))),
+
+            port_manager: Arc::new(Mutex::new(PortManager::new()))
         }
     }
 

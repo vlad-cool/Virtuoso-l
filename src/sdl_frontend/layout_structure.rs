@@ -18,7 +18,7 @@ pub struct TextProperties {
     pub font_size: u16,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CyranoLayout {
     pub left_name: TextProperties,
     pub left_nation: TextProperties,
@@ -54,6 +54,7 @@ pub struct CyranoLayout {
     pub local_time: TextProperties,
 
     pub state: TextProperties,
+    pub status: TextProperties,
 }
 
 pub struct Layout {
@@ -71,28 +72,22 @@ pub struct Layout {
     pub epee: TextProperties,
     pub sabre: TextProperties,
     pub fleuret: TextProperties,
+    pub disable_inactive_weapon: bool,
     pub auto_score_status: TextProperties,
     pub auto_timer_status: TextProperties,
+    pub auto_status_only: bool,
     pub priority_l_cap: TextProperties,
     pub priority_l_text: TextProperties,
     pub priority_r_cap: TextProperties,
     pub priority_r_text: TextProperties,
     pub caution_l_rect: RectangleProperties,
     pub caution_l_text: TextProperties,
-    pub penalty_l_rect: RectangleProperties,
-    pub penalty_l_text: TextProperties,
-    pub passive_l_bot_rect: RectangleProperties,
-    pub passive_l_bot_text: TextProperties,
-    pub passive_l_top_rect: RectangleProperties,
-    pub passive_l_top_text: TextProperties,
+    pub passive_l_rect: RectangleProperties,
+    pub passive_l_text: TextProperties,
     pub caution_r_rect: RectangleProperties,
     pub caution_r_text: TextProperties,
-    pub penalty_r_rect: RectangleProperties,
-    pub penalty_r_text: TextProperties,
-    pub passive_r_bot_rect: RectangleProperties,
-    pub passive_r_bot_text: TextProperties,
-    pub passive_r_top_rect: RectangleProperties,
-    pub passive_r_top_text: TextProperties,
+    pub passive_r_rect: RectangleProperties,
+    pub passive_r_text: TextProperties,
     pub period: TextProperties,
     pub passive_counter_dec: TextProperties,
     pub passive_counter_sec: TextProperties,
@@ -105,7 +100,7 @@ pub struct Layout {
     pub right_color_indicator: RectangleProperties,
     pub left_white_indicator: RectangleProperties,
     pub right_white_indicator: RectangleProperties,
-    pub recording_indicator: RectangleProperties,
+    // pub recording_indicator: RectangleProperties,
     pub timer_text: TextProperties,
 
     pub cyrano_layout: Option<CyranoLayout>,

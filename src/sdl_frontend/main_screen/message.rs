@@ -61,7 +61,6 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             && update_time.elapsed() < Self::MESSAGE_DISPLAY_TIME
         {
             self.message_widget.draw();
-            eprintln!("N>NJHJGFD");
         }
     }
 }

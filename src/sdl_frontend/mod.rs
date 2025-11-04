@@ -20,15 +20,15 @@ mod layout_structure;
 mod layouts;
 mod widgets;
 
-// #[path = "main_screen/cyrano/cyrano_status.rs"]
-// mod cyrano_status;
-
 #[cfg(feature = "cyrano_server")]
 #[path = "main_screen/cyrano/competition_type.rs"]
 mod competition_type;
 #[cfg(feature = "cyrano_server")]
 #[path = "main_screen/cyrano/cyrano_state.rs"]
 mod cyrano_state;
+#[cfg(feature = "cyrano_server")]
+#[path = "main_screen/cyrano/cyrano_status.rs"]
+mod cyrano_status;
 #[cfg(feature = "cyrano_server")]
 #[path = "main_screen/cyrano/fencer_id.rs"]
 mod fencer_id;
@@ -89,6 +89,8 @@ mod period;
 mod priority;
 #[path = "main_screen/score.rs"]
 mod score;
+#[path = "main_screen/static_widget.rs"]
+mod static_widget;
 #[path = "main_screen/timer.rs"]
 mod timer;
 #[path = "main_screen/weapon.rs"]
@@ -302,6 +304,22 @@ impl VirtuosoModule for SdlFrontend {
         // widgets.push(Box::new(fencer_nation::Drawer::new(widget_context.clone())));
         // widgets.push(Box::new(cyrano_status::Drawer::new(widget_context.clone())));
 
+        let static_widgets: Vec<(
+            layout_structure::TextProperties,
+            sdl2::pixels::Color,
+            String,
+        )> = if self.context.hw_config.display.resolution == Resolution::Res1920X1080 {
+            layouts::get_static_layout_1920x1080()
+        } else {
+            vec![]
+        };
+
+        for (layout, color, text) in static_widgets {
+            let widget: static_widget::Drawer<'_> =
+                static_widget::Drawer::new(widget_context.clone(), layout, text, color);
+            widgets.push(Box::new(widget));
+        }
+
         #[cfg(feature = "cyrano_server")]
         {
             if let Some(widget) = referee_name::Drawer::new(widget_context.clone()) {
@@ -344,6 +362,9 @@ impl VirtuosoModule for SdlFrontend {
                 widgets.push(Box::new(widget));
             }
             if let Some(widget) = cyrano_state::Drawer::new(widget_context.clone()) {
+                widgets.push(Box::new(widget));
+            }
+            if let Some(widget) = cyrano_status::Drawer::new(widget_context.clone()) {
                 widgets.push(Box::new(widget));
             }
         }

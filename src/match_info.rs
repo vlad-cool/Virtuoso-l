@@ -501,23 +501,45 @@ impl TimerController {
         self.main_timer.saturating_sub(self.get_sync_time())
     }
 
+    pub fn duration_to_string(time: Duration) -> String {
+        if time.as_secs() >= 10 {
+            let time: u64 = (time + Duration::from_millis(999)).as_secs();
+
+            let minutes: u64 = time / 60;
+            let seconds: u64 = time % 60;
+            format!("{}:{:02}", minutes, seconds)
+        } else {
+            let seconds: u64 = time.as_secs();
+            let centiseconds: u32 = time.subsec_millis() / 10;
+            format!("{}.{:02}", seconds, centiseconds)
+        }
+    }
+
+    pub fn duration_to_cyrano_1_0_string(time: Duration) -> String {
+        let time: u64 = (time + Duration::from_millis(999)).as_secs();
+
+        let minutes: u64 = time / 60;
+        let seconds: u64 = time % 60;
+        format!("{}:{:02}", minutes, seconds)
+    }
+
+    pub fn duration_to_cyrano_1_1_string(time: Duration) -> String {
+        if time.as_secs() >= 10 {
+            let time: u64 = (time + Duration::from_millis(999)).as_secs();
+
+            let minutes: u64 = time / 60;
+            let seconds: u64 = time % 60;
+            format!("{}:{:02}", minutes, seconds)
+        } else {
+            let seconds: u64 = time.as_secs();
+            let centiseconds: u32 = time.subsec_millis() / 10;
+            format!("0:{:02}.{:02}", seconds, centiseconds)
+        }
+    }
+
     pub fn get_main_time_string(&self) -> (String, Duration) {
         let time: Duration = self.get_main_time();
-
-        (
-            if time.as_secs() >= 10 {
-                let time: u64 = (time + Duration::from_millis(999)).as_secs();
-
-                let minutes: u64 = time / 60;
-                let seconds: u64 = time % 60;
-                format!("{}:{:02}", minutes, seconds)
-            } else {
-                let seconds: u64 = time.as_secs();
-                let centiseconds: u32 = time.subsec_millis() / 10;
-                format!("{}.{:02}", seconds, centiseconds)
-            },
-            time,
-        )
+        (Self::duration_to_string(time), time)
     }
 
     pub fn reset_passive_timer(&mut self, active: bool) {
@@ -685,6 +707,8 @@ pub struct MatchInfo {
     pub referee: RefereeInfo,
     pub left_fencer: FencerInfo,
     pub right_fencer: FencerInfo,
+
+    pub sides_swapped: bool,
 }
 
 impl MatchInfo {
@@ -732,6 +756,8 @@ impl MatchInfo {
             referee: RefereeInfo::new(),
             left_fencer: FencerInfo::new(),
             right_fencer: FencerInfo::new(),
+
+            sides_swapped: false,
         }
     }
 }

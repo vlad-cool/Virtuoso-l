@@ -19,7 +19,7 @@ pub struct Drawer<'a> {
 
 impl<'a> Drawer<'a> {
     pub fn new(context: WidgetContext<'a>) -> Option<Self> {
-        if let Some(layout) = context.layout.cyrano_layout {
+        if let Some(layout) = &context.layout.cyrano_layout {
             let font: Rc<Font<'_, '_>> = context.get_font(layout.left_id.font_size);
 
             Some(Self {

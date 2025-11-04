@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use serial::{self, SerialPort};
+use serialport::SerialPort;
 use std::io::{Read, Write};
 use std::time::Duration;
 
@@ -22,7 +22,7 @@ const SKIP_BYTE_REPLACEMENT: u8 = 0xFD;
 
 pub struct Repeater {
     context: VirtuosoModuleContext,
-    port: serial::unix::TTYPort,
+    port: serialport::TTYPort,
     raw_buffer: Vec<u8>,
     encoded_buffer: Vec<u8>,
 }
@@ -90,33 +90,19 @@ impl modules::VirtuosoModule for Repeater {
 
 impl Repeater {
     pub fn new(context: VirtuosoModuleContext) -> Result<Self, String> {
-        let settings: serial::PortSettings = serial::PortSettings {
-            baud_rate: serial::BaudRate::from_speed(context.hw_config.repeater.uart_speed),
-            char_size: serial::CharSize::Bits8,
-            parity: serial::Parity::ParityNone,
-            stop_bits: serial::StopBits::Stop1,
-            flow_control: serial::FlowControl::FlowNone,
+        let mut port: serialport::TTYPort = if let Ok(port) =
+            context.port_manager.lock().unwrap().get_port(
+                context.hw_config.repeater.uart_port.clone(),
+                context.hw_config.repeater.uart_speed,
+            ) {
+            port
+        } else {
+            context
+                .logger
+                .critical_error("Failed to get port".to_string());
+            return Err("Failed to get port".to_string());
         };
 
-        let mut port: serial::unix::TTYPort =
-            match serial::open(&context.hw_config.repeater.uart_port) {
-                Ok(port) => port,
-                Err(err) => {
-                    context
-                        .logger
-                        .critical_error(format!("Failed to open port, error: {err}"));
-                    return Err("Failed to open port".to_string());
-                }
-            };
-        match port.configure(&settings) {
-            Ok(()) => {}
-            Err(err) => {
-                context
-                    .logger
-                    .critical_error(format!("Failed to configure port, error: {err}"));
-                return Err("Failed to configure port".to_string());
-            }
-        }
         match port.set_timeout(RECV_TIMEOUT) {
             Ok(()) => {}
             Err(err) => {

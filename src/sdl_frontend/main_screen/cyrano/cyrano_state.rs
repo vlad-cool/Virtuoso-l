@@ -17,7 +17,7 @@ pub struct Drawer<'a> {
 
 impl<'a> Drawer<'a> {
     pub fn new(context: WidgetContext<'a>) -> Option<Self> {
-        if let Some(layout) = context.layout.cyrano_layout {
+        if let Some(layout) = &context.layout.cyrano_layout {
             let font: Rc<Font<'_, '_>> = context.get_font(layout.state.font_size);
 
             Some(Self {
@@ -48,8 +48,20 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
 
     fn render(&mut self) {
         if self.state_updated {
-            self.state_widget
-                .render(format!("State {}", self.state), FENCER_NAME_TEXT, None);
+            self.state_widget.render(
+                format!(
+                    "{}",
+                    match self.state {
+                        State::Ending => "Ending",
+                        State::Fencing => "Fencing",
+                        State::Halt => "Halt",
+                        State::Pause => "Pause",
+                        State::Waiting => "Waiting",
+                    }
+                ),
+                FENCER_NAME_TEXT,
+                None,
+            );
             self.state_updated = false;
         }
 

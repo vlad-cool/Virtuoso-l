@@ -12,6 +12,8 @@ pub struct Drawer<'a> {
     score_widget: Label<'a>,
     texture_cache: LabelTextureCache<'a>,
 
+    status_only: bool,
+
     auto_timer_on: bool,
     auto_timer_updated: bool,
     auto_score_on: bool,
@@ -39,6 +41,8 @@ impl<'a> Drawer<'a> {
             ),
             texture_cache: LabelTextureCache::new(),
 
+            status_only: context.layout.auto_status_only,
+
             auto_score_on: false,
             auto_score_updated: true,
             auto_timer_on: false,
@@ -61,10 +65,12 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
 
     fn render(&mut self) {
         if self.auto_timer_updated {
+            let prefix: &'static str = if self.status_only { "" } else { "auto\ntimer " };
+
             let (text, color) = if self.auto_timer_on {
-                ("auto\ntimer on".to_string(), colors::AUTO_STATUS_TEXT_LIGHT)
+                (format!("{}on", prefix), colors::AUTO_STATUS_TEXT_LIGHT)
             } else {
-                ("auto\ntimer off".to_string(), colors::AUTO_STATUS_TEXT_DARK)
+                (format!("{}off", prefix), colors::AUTO_STATUS_TEXT_DARK)
             };
 
             self.timer_widget
@@ -73,10 +79,12 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         }
 
         if self.auto_score_updated {
+            let prefix: &'static str = if self.status_only { "" } else { "auto\nscore " };
+
             let (text, color) = if self.auto_score_on {
-                ("auto\nscore on".to_string(), colors::AUTO_STATUS_TEXT_LIGHT)
+                (format!("{}on", prefix), colors::AUTO_STATUS_TEXT_LIGHT)
             } else {
-                ("auto\nscore off".to_string(), colors::AUTO_STATUS_TEXT_DARK)
+                (format!("{}off", prefix), colors::AUTO_STATUS_TEXT_DARK)
             };
 
             self.score_widget

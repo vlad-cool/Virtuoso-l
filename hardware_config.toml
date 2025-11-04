@@ -4,3 +4,8 @@ swap_sides = false
 
 [legacy_backend]
 uart_port = "/dev/ttyUSB0"
+
+[repeater]
+uart_port = "/dev/ttyUSB0"
+uart_speed = 38400
+repeater_role = "Transmitter"

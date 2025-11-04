@@ -19,7 +19,7 @@ pub struct Drawer<'a> {
 
 impl<'a> Drawer<'a> {
     pub fn new(context: WidgetContext<'a>) -> Option<Self> {
-        if let Some(layout) = context.layout.cyrano_layout {
+        if let Some(layout) = &context.layout.cyrano_layout {
             let font: Rc<Font<'_, '_>> = context.get_font(layout.left_reserve.font_size);
 
             Some(Self {
@@ -64,7 +64,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     fn render(&mut self) {
         if self.left_reserve_updated {
             self.left_reserve_widget.render(
-                format!("{} Reserve", if self.left_reserve { "R" } else { "N" }),
+                format!("{}", if self.left_reserve { "R" } else { "N" }),
                 WHITE_LABELS_LIGHT,
                 None,
             );
@@ -72,7 +72,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         }
         if self.right_reserve_updated {
             self.right_reserve_widget.render(
-                format!("{} Reserve", if self.right_reserve { "R" } else { "N" }),
+                format!("{}", if self.right_reserve { "R" } else { "N" }),
                 FENCER_NATION_TEXT,
                 None,
             );

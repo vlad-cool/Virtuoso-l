@@ -19,7 +19,7 @@ pub struct Drawer<'a> {
 
 impl<'a> Drawer<'a> {
     pub fn new(context: WidgetContext<'a>) -> Option<Self> {
-        if let Some(layout) = context.layout.cyrano_layout {
+        if let Some(layout) = &context.layout.cyrano_layout {
             let font: Rc<Font<'_, '_>> = context.get_font(layout.left_medical.font_size);
 
             Some(Self {
@@ -64,7 +64,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     fn render(&mut self) {
         if self.left_medical_updated {
             self.left_medical_widget.render(
-                format!("{} Medical", self.left_medical),
+                format!("{}", self.left_medical),
                 WHITE_LABELS_LIGHT,
                 None,
             );
@@ -72,7 +72,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         }
         if self.right_medical_updated {
             self.right_medical_widget.render(
-                format!("{} Medical", self.right_medical),
+                format!("{}", self.right_medical),
                 FENCER_NATION_TEXT,
                 None,
             );

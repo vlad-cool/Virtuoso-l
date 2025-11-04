@@ -3,6 +3,7 @@ use std::thread;
 mod hw_config;
 mod match_info;
 mod modules;
+mod port_manager;
 mod settings_menu;
 mod virtuoso_config;
 mod virtuoso_logger;
@@ -39,15 +40,21 @@ fn main() {
     compile_error!("Video recorder feature is not implemented yet");
 
     /*
-    TODO wlr-randr (without run.sh)
     TODO Properly swap sides
     TODO Cyrano
     TODO Cyrano time handling
     TODO Repeater reorder receiver
-    TODO Menu
-    TODO Replace mutex with rwlock
-    TODO Flash new score value if was updated automatically
      */
+
+    /*
+    Выбор оружия и деактивация таймера пассивности
+    Уведомление об активации (нажатие кнопки begin когда waiting)
+
+    Тест 3, задание 6 ничего не произошло. Дисп не нажималась
+    В задании 7 вместо фенсеров 3 отобразились фенсеры 2
+    Тест 4 задание 1. Карточки и счёт поменялись местами, а фамилии нет
+    Задание 2. Не понятно как активировать поединок.
+    */
 
     /*
     Team score manual counting?
@@ -68,6 +75,20 @@ fn main() {
 
     let context: VirtuosoModuleContext =
         VirtuosoModuleContext::new(logger, config, hw_config, match_info, settings_menu);
+
+    #[cfg(feature = "repeater")]
+    let repeater: Result<repeater::Repeater, String> = repeater::Repeater::new(
+        context.with_logger(virtuoso_logger.get_logger("Repeater".to_string())),
+    );
+    #[cfg(feature = "repeater")]
+    match &repeater {
+        Ok(_) => {}
+        Err(err) => {
+            context
+                .logger
+                .critical_error(format!("Failed to create repeater, error: {err}"));
+        }
+    }
 
     #[cfg(feature = "console_backend")]
     let console_backend: console_backend::ConsoleBackend = console_backend::ConsoleBackend::new(
@@ -106,20 +127,6 @@ fn main() {
             context
                 .logger
                 .critical_error(format!("Failed to create cyrano server, error: {err}"));
-        }
-    }
-
-    #[cfg(feature = "repeater")]
-    let repeater: Result<repeater::Repeater, String> = repeater::Repeater::new(
-        context.with_logger(virtuoso_logger.get_logger("Repeater".to_string())),
-    );
-    #[cfg(feature = "repeater")]
-    match &repeater {
-        Ok(_) => {}
-        Err(err) => {
-            context
-                .logger
-                .critical_error(format!("Failed to create repeater, error: {err}"));
         }
     }
 

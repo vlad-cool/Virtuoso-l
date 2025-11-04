@@ -123,10 +123,29 @@ pub struct GpioFrontendConfig {
     pub beeper_pin: PinLocation,
 }
 
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub enum LegacyBackendResync {
+    Always,
+    Once,
+    Never,
+}
+
+impl Default for LegacyBackendResync {
+    fn default() -> Self {
+        Self::Once
+    }
+}
+
 #[serde_inline_default]
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "legacy_backend")]
 pub struct LegacyBackendConfig {
+    #[cfg(feature = "legacy_backend_full")]
+    #[serde(default)]
+    pub rc5_resync: LegacyBackendResync,
+    #[cfg(feature = "legacy_backend_full")]
+    #[serde_inline_default(0)]
+    pub rc5_output_addr: u32,
     #[cfg(feature = "legacy_backend_full")]
     #[serde_inline_default(PinLocation::from_phys_number(32).unwrap())]
     pub weapon_0_pin: PinLocation,
@@ -138,7 +157,10 @@ pub struct LegacyBackendConfig {
     pub weapon_btn_pin: PinLocation,
     #[cfg(feature = "legacy_backend_full")]
     #[serde_inline_default(PinLocation::from_phys_number(3).unwrap())]
-    pub ir_pin: PinLocation,
+    pub ir_pin_rx: PinLocation,
+    #[cfg(feature = "legacy_backend_full")]
+    #[serde_inline_default(PinLocation::from_phys_number(26).unwrap())]
+    pub ir_pin_tx: PinLocation,
     #[serde_inline_default("/dev/ttyS2".into())]
     pub uart_port: PathBuf,
 }
@@ -176,7 +198,7 @@ pub struct RepeaterConfig {
     #[serde_inline_default("/dev/ttyS3".into())]
     pub uart_port: PathBuf,
     #[serde_inline_default(115200)]
-    pub uart_speed: usize,
+    pub uart_speed: u32,
     #[serde(default = "load_pins_repeater_role")]
     pub role: RepeaterRole,
 }
@@ -261,7 +283,6 @@ impl HardwareConfig {
     fn configure_os(&self, logger: &Logger) {
         logger.info("Running setup script".to_string());
 
-        // let output: Result<std::process::Output, std::io::Error> =
         let mut command: std::process::Command =
             std::process::Command::new("/home/pi/initial_setup");
 
