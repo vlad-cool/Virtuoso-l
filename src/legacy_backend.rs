@@ -339,15 +339,23 @@ impl LegacyBackend {
         let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
             self.context.match_info.lock().unwrap();
 
-        match_info_data.weapon = match msg.weapon {
+        let weapon: Weapon = match msg.weapon {
             3 => match_info::Weapon::Epee,
             1 => match_info::Weapon::Sabre,
             2 => match_info::Weapon::Fleuret,
             _ => match_info_data.weapon,
         };
 
-        std::mem::drop(match_info_data);
-        self.context.match_info_data_updated();
+        if match_info_data.weapon != weapon {
+            match_info_data.weapon = weapon;
+            match_info_data
+                .timer_controller
+                .set_passive_timer_active(weapon != match_info::Weapon::Sabre);
+            std::mem::drop(match_info_data);
+            self.context.match_info_data_updated();
+        } else {
+            std::mem::drop(match_info_data);
+        }
 
         self.weapon_select_btn_pressed = msg.weapon_select_btn;
     }
@@ -355,15 +363,6 @@ impl LegacyBackend {
     #[cfg(feature = "legacy_backend_full")]
     fn apply_ir_data(&mut self, msg: IrFrame) {
         if let Some(tx) = self.rc5_tx.as_ref() {
-            // if self.weapon_select_btn_pressed && msg.command == IrCommands::SetTime {
-            //     tx.send(IrFrame {
-            //         new: msg.new,
-            //         address: self.context.hw_config.legacy_backend.rc5_output_addr,
-            //         command: IrCommands::SetTime,
-            //     })
-            //     .log_err(&self.context.logger);
-            // }
-
             if msg.address == self.rc5_address {
                 match msg.command {
                     IrCommands::LeftPenaltyCard => {}
@@ -398,18 +397,6 @@ impl LegacyBackend {
             self.context.match_info_data_updated();
         } else if msg.new && msg.address == self.rc5_address {
             match msg.command {
-                // IrCommands::FlipSides => {
-                //     let mut match_info_data: MutexGuard<'_, modules::MatchInfo> =
-                //         self.context.match_info.lock().unwrap();
-                //     if !match_info_data.timer_controller.is_timer_running() {
-                //         (match_info_data.left_fencer, match_info_data.right_fencer) = (
-                //             match_info_data.right_fencer.clone(),
-                //             match_info_data.left_fencer.clone(),
-                //         );
-                //     }
-                //     std::mem::drop(match_info_data);
-                //     self.context.match_info_data_updated();
-                // }
                 IrCommands::AutoScoreOnOff => {
                     self.auto_status_controller
                         .set_field(AutoStatusFields::Score);
@@ -833,40 +820,6 @@ impl UartData {
 }
 
 fn uart_handler(tx: mpsc::SyncSender<InputData>, port: serialport::TTYPort) {
-    // let mut port: serial::unix::TTYPort = match serial::open(&port_path) {
-    //     Ok(port) => port,
-    //     Err(err) => {
-    //         logger.critical_error(format!("Failed to open uart port, error: {err}"));
-    //         return;
-    //     }
-    // };
-
-    // let mut port: self.cont
-
-    // let settings: serial::PortSettings = serial::PortSettings {
-    //     baud_rate: serial::BaudRate::Baud38400,
-    //     char_size: serial::CharSize::Bits8,
-    //     parity: serial::Parity::ParityNone,
-    //     stop_bits: serial::StopBits::Stop1,
-    //     flow_control: serial::FlowControl::FlowNone,
-    // };
-
-    // match port.configure(&settings) {
-    //     Ok(()) => {}
-    //     Err(err) => {
-    //         logger.critical_error(format!("Failed to configure uart port, error: {err}"));
-    //         return;
-    //     }
-    // }
-
-    // match port.set_timeout(Duration::from_secs(60)) {
-    //     Ok(()) => {}
-    //     Err(err) => {
-    //         logger.critical_error(format!("Failed to set uart port timeout, error: {err}"));
-    //         return;
-    //     }
-    // }
-
     let mut buf: [u8; 8] = [0; 8];
     let mut ind: usize = 0;
 

@@ -298,145 +298,6 @@ impl std::fmt::Display for FencerStatus {
     }
 }
 
-// #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
-// pub struct PassiveTimer {
-//     enabled: bool,
-//     passive_counter: u32,
-//     #[serde(
-//         serialize_with = "serialize_instant_as_elapsed",
-//         deserialize_with = "deserialize_duration_to_instant"
-//     )]
-//     last_updated: Instant,
-// }
-
-// #[allow(dead_code)]
-// impl PassiveTimer {
-//     pub fn new() -> PassiveTimer {
-//         Self {
-//             enabled: false,
-//             passive_counter: 60,
-//             last_updated: Instant::now(),
-//         }
-//     }
-
-//     pub fn tick(&mut self) {
-//         if self.enabled && self.passive_counter != 0 {
-//             self.passive_counter -= 1;
-//             self.last_updated = Instant::now();
-//         }
-//     }
-
-//     pub fn reset(&mut self) {
-//         self.enabled = false;
-//         self.passive_counter = 60;
-//         self.last_updated = Instant::now();
-//     }
-
-//     pub fn enable(&mut self) {
-//         self.enabled = true;
-//         self.last_updated = Instant::now();
-//     }
-
-//     pub fn disable(&mut self) {
-//         self.enabled = false;
-//         self.last_updated = Instant::now();
-//     }
-
-//     pub fn get_counter(&self) -> u32 {
-//         self.passive_counter
-//     }
-
-//     pub fn get_indicator(&self) -> u32 {
-//         let res: u32 = if self.enabled {
-//             ((60 - self.passive_counter) * 1000 + self.last_updated.elapsed().as_millis() as u32)
-//                 / 50
-//         } else {
-//             (60 - self.passive_counter) * 1000 / 50
-//         };
-//         if res > 1000 { 1000 } else { res }
-//     }
-
-//     /// Returns true if timer has minimal or maximal value
-//     pub fn on_edge(&self) -> bool {
-//         self.get_counter() == 0 || self.get_counter() == 60
-//     }
-// }
-
-// #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
-// pub enum MainTimer<const MAX_SECONDS: u64> {
-//     #[serde(
-//         serialize_with = "serialize_instant_as_elapsed",
-//         deserialize_with = "deserialize_duration_to_instant"
-//     )]
-//     Running(Instant),
-//     Stopped(Duration),
-// }
-
-// impl<const MAX_SECONDS: u64> MainTimer<MAX_SECONDS> {
-//     pub fn is_running(&self) -> bool {
-//         match self {
-//             Self::Running(_) => true,
-//             Self::Stopped(_) => false,
-//         }
-//     }
-
-//     pub fn start_timer(&mut self) {
-//         if let Self::Stopped(time) = self {
-//             *self = Self::Running(Instant::now() - *time)
-//         }
-//     }
-
-//     pub fn stop_timer(&mut self) {
-//         if let Self::Running(time) = self {
-//             *self = Self::Stopped(time.elapsed())
-//         }
-//     }
-
-//     pub fn set_timer_running(&mut self, new_state: bool) {
-//         if new_state {
-//             self.start_timer();
-//         } else {
-//             self.stop_timer();
-//         }
-//     }
-
-//     pub fn set_time(&mut self, new_time: Duration) {
-//         let new_time: Duration = Duration::from_secs(MAX_SECONDS)
-//             .checked_sub(new_time)
-//             .unwrap_or_default();
-//         *self = if self.is_running() {
-//             Self::Running(Instant::now() - new_time)
-//         } else {
-//             Self::Stopped(new_time)
-//         };
-//     }
-
-//     pub fn get_time(&self) -> Duration {
-//         let time: Duration = match self {
-//             Self::Running(time) => time.elapsed(),
-//             Self::Stopped(time) => *time,
-//         };
-
-//         Duration::from_secs(MAX_SECONDS)
-//             .checked_sub(time)
-//             .unwrap_or_default()
-//     }
-
-//     pub fn to_time_string(&self) -> String {
-//         let time: Duration = self.get_time();
-
-//         if time.as_secs() > 9 {
-//             let minutes: u64 = time.as_secs() / 60;
-//             let seconds: u64 = time.as_secs() % 60;
-//             format!("{}:{:02}", minutes, seconds)
-//         } else {
-//             let seconds: u64 = time.as_secs();
-//             let centiseconds: u32 = time.subsec_millis() / 10;
-//             format!("{}.{:02}", seconds, centiseconds)
-//         }
-//     }
-// }
-
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct TimerController {
     #[serde(
@@ -447,6 +308,7 @@ pub struct TimerController {
     main_timer: Duration,
     running: bool,
     passive_timer_offset: Option<Duration>,
+    passive_timer_active: bool,
 }
 
 impl TimerController {
@@ -471,6 +333,7 @@ impl TimerController {
             main_timer: Duration::from_secs(60 * 3),
             running: false,
             passive_timer_offset: Some(Duration::from_secs(60)),
+            passive_timer_active: true,
         }
     }
 
@@ -591,10 +454,14 @@ impl TimerController {
 
     pub fn is_passive_timer_enabled(&self) -> bool {
         if let Some(_) = self.passive_timer_offset {
-            true
+            self.passive_timer_active
         } else {
             false
         }
+    }
+
+    pub fn set_passive_timer_active(&mut self, active: bool) {
+        self.passive_timer_active = active;
     }
 }
 
