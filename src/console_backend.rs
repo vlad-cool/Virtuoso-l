@@ -182,7 +182,7 @@ impl ConsoleBackend {
             Field::Time => {
                 let time: Duration = Duration::from_secs(value.into());
 
-                match_info_data.timer_controller.sync(time, false);
+                match_info_data.timer_controller.sync(time, false, false);
             }
             Field::LastTenSeconds => match_info_data.last_ten_seconds = value > 0,
             Field::TimerRunning => {} // match_info_data

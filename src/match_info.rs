@@ -309,6 +309,8 @@ pub struct TimerController {
     running: bool,
     passive_timer_offset: Option<Duration>,
     passive_timer_active: bool,
+
+    old_time: Option<Duration>,
 }
 
 impl TimerController {
@@ -334,16 +336,23 @@ impl TimerController {
             running: false,
             passive_timer_offset: Some(Duration::from_secs(60)),
             passive_timer_active: true,
+            old_time: None,
         }
     }
 
-    pub fn sync(&mut self, time: Duration, running: bool) {
+    pub fn sync(&mut self, time: Duration, running: bool, keep_old_time: bool) {
+        let old_time: Option<Duration> = if keep_old_time {
+            Some(self.get_main_time())
+        } else {
+            None
+        };
+
         if running {
             self.sync_time = Some(Instant::now());
             if !self.running {
                 if let Some(offset) = self.passive_timer_offset {
-                    if self.main_timer > Duration::from_secs(60) {
-                        self.passive_timer_offset = self.main_timer.checked_sub(offset);
+                    if self.main_timer > offset {
+                        self.passive_timer_offset = Some(self.main_timer - offset);
                     } else {
                         self.passive_timer_offset = None
                     }
@@ -358,10 +367,15 @@ impl TimerController {
 
         self.running = running;
         self.main_timer = time;
+        self.old_time = old_time;
     }
 
     pub fn get_main_time(&self) -> Duration {
-        self.main_timer.saturating_sub(self.get_sync_time())
+        if let Some(time) = self.old_time {
+            time
+        } else {
+            self.main_timer.saturating_sub(self.get_sync_time())
+        }
     }
 
     pub fn duration_to_string(time: Duration) -> String {
@@ -576,6 +590,8 @@ pub struct MatchInfo {
     pub right_fencer: FencerInfo,
 
     pub sides_swapped: bool,
+
+    pub epee_5: bool,
 }
 
 impl MatchInfo {
@@ -625,6 +641,8 @@ impl MatchInfo {
             right_fencer: FencerInfo::new(),
 
             sides_swapped: false,
+
+            epee_5: false,
         }
     }
 }

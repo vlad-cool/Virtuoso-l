@@ -89,7 +89,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         if self.updated {
             let (text, color) = match (self.online, self.connected) {
                 (_, false) => ("OFF".into(), WEAPON_TEXT_DARK),
-                (true, true) => ("LAN".into(), CYRANO_ONLINE),
+                (true, true) => ("LAN".into(), WEAPON_TEXT_DARK),
                 (false, true) => ("LAN".into(), WEAPON_TEXT_LIGHT),
             };
 

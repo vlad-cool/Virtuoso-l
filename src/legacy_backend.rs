@@ -30,14 +30,14 @@ pub struct LegacyBackend {
     rc5_address: u32,
     auto_status_controller: AutoStatusController,
 
-    prev_seconds_value: u64,
-
     #[cfg(feature = "legacy_backend_full")]
     rc5_tx: Option<mpsc::SyncSender<IrFrame>>,
 
     reset_passive: bool,
     last_second: bool,
     was_timer_running: bool,
+
+    epee_5_counter: u32,
 }
 
 impl modules::VirtuosoModule for LegacyBackend {
@@ -185,14 +185,14 @@ impl LegacyBackend {
             rc5_address,
             auto_status_controller: AutoStatusController::new(),
 
-            prev_seconds_value: 60 * 3,
-
             #[cfg(feature = "legacy_backend_full")]
             rc5_tx: None,
 
             reset_passive: false,
             last_second: false,
             was_timer_running: false,
+
+            epee_5_counter: 0,
         }
     }
 
@@ -289,11 +289,17 @@ impl LegacyBackend {
                 update = false;
             }
 
+            let keep_old_time: bool = match (
+                msg.on_timer,
+                match_info_data.timer_controller.is_timer_running(),
+            ) {
+                (false, true) => true,
+                _ => false,
+            };
+
             match_info_data
                 .timer_controller
-                .sync(new_time, msg.on_timer);
-
-            self.prev_seconds_value = new_time.as_secs();
+                .sync(new_time, msg.on_timer, keep_old_time);
         }
 
         match_info_data.period = if msg.period > 0 && msg.period < 10 {
@@ -346,6 +352,10 @@ impl LegacyBackend {
             _ => match_info_data.weapon,
         };
 
+        if weapon != match_info::Weapon::Epee {
+            self.epee_5_counter = 0;
+        }
+
         if match_info_data.weapon != weapon {
             match_info_data.weapon = weapon;
             match_info_data
@@ -363,29 +373,25 @@ impl LegacyBackend {
     #[cfg(feature = "legacy_backend_full")]
     fn apply_ir_data(&mut self, msg: IrFrame) {
         if let Some(tx) = self.rc5_tx.as_ref() {
-            if msg.address == self.rc5_address {
-                match msg.command {
-                    IrCommands::LeftPenaltyCard => {}
-                    IrCommands::RightPenaltyCard => {}
-                    command => {
-                        tx.send(IrFrame {
-                            new: msg.new,
-                            address: self.context.hw_config.legacy_backend.rc5_output_addr,
-                            command,
-                        })
-                        .log_err(&self.context.logger);
-                    }
-                }
+            if msg.address == self.rc5_address && msg.command.retranslate() {
+                tx.send(IrFrame {
+                    new: msg.new,
+                    address: self.context.hw_config.legacy_backend.rc5_output_addr,
+                    command: msg.command,
+                })
+                .log_err(&self.context.logger);
             }
         }
 
         if self.weapon_select_btn_pressed && msg.command == IrCommands::SetTime {
             self.rc5_address = msg.address;
             {
-                let mut config: MutexGuard<'_, VirtuosoConfig> =
-                    self.context.config.lock().unwrap();
-                config.legacy_backend.rc5_address = msg.address;
-                config.write_config().log_err(&self.context.logger);
+                {
+                    let mut config: MutexGuard<'_, VirtuosoConfig> =
+                        self.context.config.lock().unwrap();
+                    config.legacy_backend.rc5_address = msg.address;
+                    config.write_config().log_err(&self.context.logger);
+                }
 
                 let mut match_info_data: MutexGuard<'_, MatchInfo> =
                     self.context.match_info.lock().unwrap();
@@ -396,6 +402,10 @@ impl LegacyBackend {
             }
             self.context.match_info_data_updated();
         } else if msg.new && msg.address == self.rc5_address {
+            if msg.command != IrCommands::Reset {
+                self.epee_5_counter = 0;
+            }
+
             match msg.command {
                 IrCommands::AutoScoreOnOff => {
                     self.auto_status_controller
@@ -583,6 +593,17 @@ impl LegacyBackend {
 
                         Self::reset_passive_timer(&mut match_info_data);
 
+                        if !self.context.hw_config.legacy_backend.disable_epee_5 {
+                            if match_info_data.weapon == Weapon::Epee {
+                                self.epee_5_counter += 1;
+
+                                if self.epee_5_counter == 5 {
+                                    match_info_data.epee_5 = !match_info_data.epee_5;
+                                    self.epee_5_counter = 0;
+                                }
+                            }
+                        }
+
                         std::mem::drop(match_info_data);
                         self.context.match_info_data_updated();
                     }
@@ -624,9 +645,15 @@ impl LegacyBackend {
         let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
             self.context.match_info.lock().unwrap();
 
+        match_info_data.display_message = format!("{} {}", modified_field, new_state);
+        match_info_data.display_message_updated = Some(Instant::now());
+
         match modified_field {
             AutoStatusFields::Score => {
                 match_info_data.auto_score_on = new_state.to_bool();
+                std::mem::drop(match_info_data);
+                self.context.match_info_data_updated();
+
                 let mut config: MutexGuard<'_, VirtuosoConfig> =
                     self.context.config.lock().unwrap();
                 config.legacy_backend.auto_score_on = new_state.to_bool();
@@ -634,6 +661,9 @@ impl LegacyBackend {
             }
             AutoStatusFields::Timer => {
                 match_info_data.auto_timer_on = new_state.to_bool();
+                std::mem::drop(match_info_data);
+                self.context.match_info_data_updated();
+
                 let mut config: MutexGuard<'_, VirtuosoConfig> =
                     self.context.config.lock().unwrap();
                 config.legacy_backend.auto_timer_on = new_state.to_bool();
@@ -641,12 +671,6 @@ impl LegacyBackend {
             }
             _ => {}
         }
-
-        match_info_data.display_message = format!("{} {}", modified_field, new_state);
-        match_info_data.display_message_updated = Some(Instant::now());
-
-        std::mem::drop(match_info_data);
-        self.context.match_info_data_updated();
     }
 }
 
@@ -888,7 +912,7 @@ enum IrCommands {
 
     Aux,
 
-    Unknown,
+    Unknown(u32),
 }
 
 impl IrCommands {
@@ -928,9 +952,9 @@ impl IrCommands {
             20 => IrCommands::Next,
             19 => IrCommands::Begin,
             24 => IrCommands::End,
-            38 => IrCommands::Aux,
+            28 => IrCommands::Aux,
 
-            _ => IrCommands::Unknown,
+            unknown => IrCommands::Unknown(unknown),
         }
     }
 
@@ -970,9 +994,37 @@ impl IrCommands {
             IrCommands::Next => 20,
             IrCommands::Begin => 19,
             IrCommands::End => 24,
-            IrCommands::Aux => 38,
+            IrCommands::Aux => 28,
 
-            IrCommands::Unknown => 0,
+            IrCommands::Unknown(unknown) => *unknown,
+        }
+    }
+
+    pub fn retranslate(&self) -> bool {
+        match self {
+            IrCommands::TimerStartStop => true,
+
+            IrCommands::AutoTimerOnOff => true,
+            IrCommands::AutoScoreOnOff => true,
+
+            IrCommands::LeftScoreIncrement => true,
+            IrCommands::LeftScoreDecrement => true,
+            IrCommands::RightScoreIncrement => true,
+            IrCommands::RightScoreDecrement => true,
+
+            IrCommands::SecondsIncrement => true,
+            IrCommands::SecondsDecrement => true,
+
+            IrCommands::PriorityRaffle => true,
+
+            IrCommands::SetTime => true,
+            IrCommands::FlipSides => true,
+
+            IrCommands::ChangeWeapon => true,
+
+            IrCommands::Reset => true,
+
+            _ => false,
         }
     }
 }

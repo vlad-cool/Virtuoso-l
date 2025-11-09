@@ -163,6 +163,8 @@ pub struct LegacyBackendConfig {
     pub ir_pin_tx: PinLocation,
     #[serde_inline_default("/dev/ttyS2".into())]
     pub uart_port: PathBuf,
+    #[serde_inline_default(false)]
+    pub disable_epee_5: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]

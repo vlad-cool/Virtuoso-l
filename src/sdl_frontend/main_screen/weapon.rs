@@ -16,6 +16,7 @@ pub struct Drawer<'a> {
     disable_inactive_weapon: bool,
 
     weapon: Weapon,
+    epee_5: bool,
     updated: bool,
 }
 
@@ -52,14 +53,16 @@ impl<'a> Drawer<'a> {
 
             updated: true,
             weapon: Weapon::Epee,
+            epee_5: false,
         }
     }
 }
 
 impl<'a> VirtuosoWidget for Drawer<'a> {
     fn update(&mut self, data: &MatchInfo) {
-        if self.weapon != data.weapon {
+        if self.weapon != data.weapon || self.epee_5 != data.epee_5 {
             self.weapon = data.weapon;
+            self.epee_5 = data.epee_5;
             self.updated = true;
         }
     }
@@ -67,7 +70,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     fn render(&mut self) {
         if self.updated {
             self.epee_widget.render(
-                "epee".to_string(),
+                format!("epee{}", if self.epee_5 { " 5" } else { "" }),
                 if self.weapon == Weapon::Epee {
                     colors::WEAPON_TEXT_LIGHT
                 } else {
