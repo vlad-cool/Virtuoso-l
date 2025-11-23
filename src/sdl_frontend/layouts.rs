@@ -689,11 +689,11 @@ pub const LAYOUT_1920X1080: Layout = Layout {
             font_size: 72,
         },
         start_time: TextProperties {
-            x: 805,
-            y: 332,
-            width: 300,
-            height: 100,
-            font_size: 48,
+            x: 880,
+            y: 360,
+            width: 340,
+            height: 90,
+            font_size: 72,
         },
         local_time: TextProperties {
             x: 805,
@@ -1467,6 +1467,28 @@ pub fn get_static_layout_1920x1080() -> Vec<(TextProperties, sdl2::pixels::Color
             },
             colors::STATIC_TEXT,
             "Tableau Identifier".into(),
+        ),
+        (
+            TextProperties {
+                x: 652,
+                y: 316,
+                width: 228,
+                height: 44,
+                font_size: 36,
+            },
+            colors::STATIC_TEXT,
+            "Competition Phase".into(),
+        ),
+        (
+            TextProperties {
+                x: 591,
+                y: 405,
+                width: 289,
+                height: 44,
+                font_size: 36,
+            },
+            colors::STATIC_TEXT,
+            "Time to start the match".into(),
         ),
     ]
 }

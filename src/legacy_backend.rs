@@ -35,9 +35,9 @@ pub struct LegacyBackend {
 
     reset_passive: bool,
     last_second: bool,
-    was_timer_running: bool,
 
     epee_5_counter: u32,
+    prev_got_time: Duration,
 }
 
 impl modules::VirtuosoModule for LegacyBackend {
@@ -190,23 +190,21 @@ impl LegacyBackend {
 
             reset_passive: false,
             last_second: false,
-            was_timer_running: false,
 
             epee_5_counter: 0,
+            prev_got_time: Duration::from_secs(3 * 60),
         }
     }
 
     fn reset_passive_timer(match_info: &mut MatchInfo) {
+        match_info.timer_controller.reset_passive_timer();
         match_info
             .timer_controller
-            .reset_passive_timer(match_info.weapon != Weapon::Sabre);
+            .set_passive_timer_active(match_info.weapon != Weapon::Sabre);
     }
 
-    fn apply_uart_data(&mut self, msg: UartData) {
-        let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-            self.context.match_info.lock().unwrap();
-
-        #[cfg(feature = "legacy_backend_full")]
+    #[cfg(feature = "legacy_backend_full")]
+    fn mark_left_fencer(&mut self, msg: UartData) {
         if !msg.on_timer {
             if !(msg.yellow_card_left
                 || msg.red_card_left
@@ -223,11 +221,86 @@ impl LegacyBackend {
                 }
             }
         }
+    }
 
+    fn set_time(
+        match_info: &mut MatchInfo,
+        msg: UartData,
+        prev_got_time: &mut Duration,
+        last_second: &mut bool,
+    ) {
+        let timer_m: u32 = if msg.period == 0b1100 { 4 } else { msg.minutes };
+        let timer_d: u32 = msg.dec_seconds;
+        let timer_s: u32 = msg.seconds;
+
+        *last_second = match (timer_m, timer_d, timer_s) {
+            (0, 0, 0) => false,
+            (0, 9, _) => true,
+            (_, 0, 0) => false,
+            _ => *last_second,
+        };
+
+        let new_time: Duration = if *last_second {
+            Duration::from_millis((timer_d * 100 + timer_s * 10) as u64)
+        } else {
+            Duration::from_secs((timer_m * 60 + timer_d * 10 + timer_s) as u64)
+        };
+
+        match (match_info.timer_controller.is_timer_running(), msg.on_timer) {
+            (true, true) => match_info.timer_controller.sync(new_time, false),
+            (true, false) => {}
+            (false, true) => {}
+            (false, false) => match_info.timer_controller.sync(new_time, true),
+        }
+        // if !(msg.on_timer & )
+        // if new_time != *prev_got_time {
+        //
+        // }
+        match_info.timer_controller.start_stop(msg.on_timer);
+
+        *prev_got_time = new_time;
+    }
+
+    fn set_score(match_info: &mut MatchInfo, msg: UartData) {
+        if match_info.timer_controller.is_timer_running() {
+            if msg.score_left == match_info.left_fencer.score + 1 && !msg.on_timer {
+                match_info.left_fencer.score_auto_updated = Some(Instant::now());
+            }
+            if msg.score_right == match_info.right_fencer.score + 1 && !msg.on_timer {
+                match_info.right_fencer.score_auto_updated = Some(Instant::now());
+            }
+        }
+
+        match_info.left_fencer.score = msg.score_left;
+        match_info.right_fencer.score = msg.score_right;
+    }
+
+    fn set_priotity(match_info: &mut MatchInfo, msg: UartData) {
+        match_info.priority = match msg.period {
+            0b1110 => match_info::Priority::Left,
+            0b1111 => match_info::Priority::Right,
+            0b1011 => match_info::Priority::None,
+            _ => match match_info.priority {
+                match_info::Priority::Right => match_info::Priority::Right,
+                match_info::Priority::Left => match_info::Priority::Left,
+                match_info::Priority::None => match_info::Priority::None,
+            },
+        };
+    }
+
+    fn apply_uart_data(&mut self, msg: UartData) {
+        #[cfg(feature = "legacy_backend_full")]
+        self.mark_left_fencer(msg);
+
+        let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
+            self.context.match_info.lock().unwrap();
+
+        #[cfg(feature = "legacy_backend_full")]
         let sides_swapped: bool = !(msg.yellow_card_left || msg.red_card_left) && {
             msg.yellow_card_right || msg.red_card_right
         };
 
+        #[cfg(feature = "legacy_backend_full")]
         if match_info_data.sides_swapped != sides_swapped {
             match_info_data.sides_swapped = sides_swapped;
 
@@ -237,27 +310,10 @@ impl LegacyBackend {
             );
         }
 
-        let mut update: bool = true;
+        Self::set_score(&mut match_info_data, msg);
 
-        if self.was_timer_running {
-            if msg.score_left == match_info_data.left_fencer.score + 1 && !msg.on_timer {
-                match_info_data.left_fencer.score_auto_updated = Some(Instant::now());
-            }
-            if msg.score_right == match_info_data.right_fencer.score + 1 && !msg.on_timer {
-                match_info_data.right_fencer.score_auto_updated = Some(Instant::now());
-            }
-        }
-
-        self.was_timer_running = match_info_data.timer_controller.is_timer_running();
-
-        match_info_data.left_fencer.score = msg.score_left;
-        match_info_data.right_fencer.score = msg.score_right;
-
-        if match_info_data.timer_controller.is_timer_running()
-            && (msg.red || msg.white_red || msg.green || msg.white_green)
-        {
-            self.reset_passive = true;
-        }
+        let reset_passive: bool = match_info_data.timer_controller.is_timer_running()
+            && (msg.red || msg.white_red || msg.green || msg.white_green);
 
         if msg.symbol {
             let symbol: u32 = msg.dec_seconds * 16 + msg.seconds;
@@ -268,55 +324,15 @@ impl LegacyBackend {
                 _ => AutoStatusStates::Unknown,
             });
         } else {
-            let timer_m: u32 = if msg.period == 0b1100 { 4 } else { msg.minutes };
-            let timer_d: u32 = msg.dec_seconds;
-            let timer_s: u32 = msg.seconds;
-
-            self.last_second = match (timer_m, timer_d, timer_s) {
-                (0, 0, 0) => false,
-                (0, 9, _) => true,
-                (_, 0, 0) => false,
-                _ => self.last_second,
-            };
-
-            let new_time: Duration = if self.last_second {
-                Duration::from_millis((timer_d * 100 + timer_s * 10) as u64)
-            } else {
-                Duration::from_secs((timer_m * 60 + timer_d * 10 + timer_s) as u64)
-            };
-
-            if new_time < Duration::from_millis(900) && msg.on_timer {
-                update = false;
-            }
-
-            let keep_old_time: bool = match (
-                msg.on_timer,
-                match_info_data.timer_controller.is_timer_running(),
-            ) {
-                (false, true) => true,
-                _ => false,
-            };
-
-            match_info_data
-                .timer_controller
-                .sync(new_time, msg.on_timer, keep_old_time);
+            Self::set_time(
+                &mut match_info_data,
+                msg,
+                &mut self.prev_got_time,
+                &mut self.last_second,
+            );
         }
 
-        match_info_data.period = if msg.period > 0 && msg.period < 10 {
-            msg.period
-        } else {
-            match_info_data.period
-        };
-        match_info_data.priority = match msg.period {
-            0b1110 => match_info::Priority::Left,
-            0b1111 => match_info::Priority::Right,
-            0b1011 => match_info::Priority::None,
-            _ => match match_info_data.priority {
-                match_info::Priority::Right => match_info::Priority::Right,
-                match_info::Priority::Left => match_info::Priority::Left,
-                match_info::Priority::None => match_info::Priority::None,
-            },
-        };
+        Self::set_priotity(&mut match_info_data, msg);
 
         if match_info_data.priority != match_info::Priority::None
             && match_info_data.timer_controller.get_main_time() <= Duration::from_secs(60)
@@ -329,15 +345,13 @@ impl LegacyBackend {
         match_info_data.right_fencer.color_light = msg.green;
         match_info_data.right_fencer.white_light = msg.white_green;
 
-        if self.reset_passive {
+        if self.reset_passive || reset_passive {
             Self::reset_passive_timer(&mut match_info_data);
             self.reset_passive = false;
         }
 
         std::mem::drop(match_info_data);
-        if update {
-            self.context.match_info_data_updated();
-        }
+        self.context.match_info_data_updated();
     }
 
     #[cfg(feature = "legacy_backend_full")]
@@ -398,7 +412,8 @@ impl LegacyBackend {
 
                 match_info_data.display_message =
                     format!("Synced remote\nwith address {}", msg.address);
-                match_info_data.display_message_updated = Some(Instant::now());
+                match_info_data.display_message_updated =
+                    Some(Instant::now() + Duration::from_secs(2));
             }
             self.context.match_info_data_updated();
         } else if msg.new && msg.address == self.rc5_address {
@@ -591,7 +606,7 @@ impl LegacyBackend {
                         match_info_data.priority = match_info::Priority::None;
                         match_info_data.period = 1;
 
-                        Self::reset_passive_timer(&mut match_info_data);
+                        self.reset_passive = true;
 
                         if !self.context.hw_config.legacy_backend.disable_epee_5 {
                             if match_info_data.weapon == Weapon::Epee {
@@ -646,7 +661,7 @@ impl LegacyBackend {
             self.context.match_info.lock().unwrap();
 
         match_info_data.display_message = format!("{} {}", modified_field, new_state);
-        match_info_data.display_message_updated = Some(Instant::now());
+        match_info_data.display_message_updated = Some(Instant::now() + Duration::from_secs(2));
 
         match modified_field {
             AutoStatusFields::Score => {
@@ -771,7 +786,7 @@ enum InputData {
     IrCommand(IrFrame),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 struct UartData {
     red: bool,
     white_red: bool,
@@ -847,6 +862,8 @@ fn uart_handler(tx: mpsc::SyncSender<InputData>, port: serialport::TTYPort) {
     let mut buf: [u8; 8] = [0; 8];
     let mut ind: usize = 0;
 
+    let mut prev_msg: Option<UartData> = None;
+
     for byte in port.bytes() {
         match byte {
             Err(_) => {
@@ -864,8 +881,15 @@ fn uart_handler(tx: mpsc::SyncSender<InputData>, port: serialport::TTYPort) {
                     if ind == 8 {
                         ind = 0;
 
-                        tx.send(InputData::UartData(UartData::from_8bytes(buf)))
-                            .unwrap();
+                        let data: UartData = UartData::from_8bytes(buf);
+
+                        if Some(data) != prev_msg {
+                            tx.send(InputData::UartData(data)).unwrap();
+                        } else {
+                            eprintln!("Got uart packet duplicate");
+                        }
+
+                        prev_msg = Some(data);
                     }
                 }
             }
@@ -1164,7 +1188,7 @@ fn rc5_receiever(tx: mpsc::SyncSender<InputData>, logger: Logger, line: gpio_cde
 }
 
 #[cfg(feature = "legacy_backend_full")]
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 struct PinsData {
     weapon: u8,
     weapon_select_btn: bool,

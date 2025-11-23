@@ -53,11 +53,8 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
 
     fn render(&mut self) {
         if self.phase_updated {
-            self.phase_widget.render(
-                format!("{}", self.phase),
-                FENCER_NAME_TEXT,
-                None,
-            );
+            self.phase_widget
+                .render(format!("{}", self.phase), FENCER_NAME_TEXT, None);
             self.phase_updated = false;
         }
 

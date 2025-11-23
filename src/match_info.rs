@@ -301,13 +301,19 @@ impl std::fmt::Display for FencerStatus {
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct TimerController {
     #[serde(
+        serialize_with = "serialize_instant_as_elapsed",
+        deserialize_with = "deserialize_duration_to_instant"
+    )]
+    sync_time: Instant,
+    #[serde(
         serialize_with = "serialize_optional_instant_as_elapsed",
         deserialize_with = "deserialize_optional_duration_to_instant"
     )]
-    sync_time: Option<Instant>,
+    stop_time: Option<Instant>,
+
     main_timer: Duration,
-    running: bool,
-    passive_timer_offset: Option<Duration>,
+
+    passive_timer_offset: Duration,
     passive_timer_active: bool,
 
     old_time: Option<Duration>,
@@ -315,67 +321,63 @@ pub struct TimerController {
 
 impl TimerController {
     fn get_sync_time(&self) -> Duration {
-        if let Some(sync_time) = self.sync_time {
-            sync_time.elapsed()
+        if let Some(stop_time) = self.stop_time {
+            stop_time.duration_since(self.sync_time)
         } else {
-            Duration::ZERO
+            self.sync_time.elapsed()
         }
     }
 
     pub fn is_timer_running(&self) -> bool {
-        match self.sync_time {
-            Some(_) => true,
-            None => false,
+        if let Some(_) = self.stop_time {
+            false
+        } else {
+            true
         }
     }
 
     pub fn new() -> Self {
         Self {
-            sync_time: None,
+            sync_time: Instant::now(),
+            stop_time: Some(Instant::now()),
+
             main_timer: Duration::from_secs(60 * 3),
-            running: false,
-            passive_timer_offset: Some(Duration::from_secs(60)),
+
+            passive_timer_offset: Duration::from_secs(60),
             passive_timer_active: true,
+
             old_time: None,
         }
     }
 
-    pub fn sync(&mut self, time: Duration, running: bool, keep_old_time: bool) {
-        let old_time: Option<Duration> = if keep_old_time {
-            Some(self.get_main_time())
-        } else {
-            None
-        };
+    pub fn sync(&mut self, time: Duration, keep_passive: bool) {
+        let passive_time: Option<Duration> = self.get_passive_timer();
 
-        if running {
-            self.sync_time = Some(Instant::now());
-            if !self.running {
-                if let Some(offset) = self.passive_timer_offset {
-                    if self.main_timer > offset {
-                        self.passive_timer_offset = Some(self.main_timer - offset);
-                    } else {
-                        self.passive_timer_offset = None
-                    }
-                }
-            }
-        } else {
-            self.sync_time = None;
-            if self.running {
-                self.passive_timer_offset = Some(self.get_passive_timer());
+        self.sync_time = Instant::now();
+        self.main_timer = time;
+
+        if keep_passive {
+            if let Some(passive_time) = passive_time {
+                self.passive_timer_offset = self.get_main_time() - passive_time;
+            } else {
+                self.reset_passive_timer();
             }
         }
+    }
 
-        self.running = running;
-        self.main_timer = time;
-        self.old_time = old_time;
+    pub fn start_stop(&mut self, start: bool) {
+        if start != self.is_timer_running() {
+            if start {
+                self.sync_time = Instant::now() - self.get_sync_time();
+                self.stop_time = None;
+            } else {
+                self.stop_time = Some(Instant::now());
+            }
+        }
     }
 
     pub fn get_main_time(&self) -> Duration {
-        if let Some(time) = self.old_time {
-            time
-        } else {
-            self.main_timer.saturating_sub(self.get_sync_time())
-        }
+        self.main_timer.saturating_sub(self.get_sync_time())
     }
 
     pub fn duration_to_string(time: Duration) -> String {
@@ -419,59 +421,33 @@ impl TimerController {
         (Self::duration_to_string(time), time)
     }
 
-    pub fn reset_passive_timer(&mut self, active: bool) {
-        self.passive_timer_offset = if active {
-            if self.running {
-                match self.get_main_time().checked_sub(Duration::from_secs(60)) {
-                    Some(Duration::ZERO) => None,
-                    dur => dur,
-                }
-            } else {
-                if self.get_main_time() > Duration::from_secs(60) {
-                    Some(Duration::from_secs(60))
-                } else {
-                    None
-                }
-            }
-        } else {
-            None
-        }
+    pub fn reset_passive_timer(&mut self) {
+        self.passive_timer_offset = self.get_main_time().saturating_sub(Duration::from_secs(60));
     }
 
-    pub fn get_passive_timer(&self) -> Duration {
-        let res: Duration = if let Some(offset) = self.passive_timer_offset {
-            if self.running {
-                self.get_main_time().saturating_sub(offset)
-            } else {
-                offset
-            }
-        } else {
-            Duration::from_secs(60)
-        };
+    pub fn get_passive_timer(&self) -> Option<Duration> {
+        let res: Duration = self
+            .get_main_time()
+            .saturating_sub(self.passive_timer_offset);
 
-        if res < Duration::from_secs(0) {
-            Duration::from_secs(0)
+        if res == Duration::ZERO {
+            None
+        } else if res > Duration::from_secs(60) {
+            Some(Duration::from_secs(60))
         } else {
-            if res > Duration::from_secs(60) {
-                Duration::from_secs(60)
-            } else {
-                res
-            }
+            Some(res)
         }
     }
 
     pub fn get_passive_counter(&self) -> String {
-        let time: Duration = self.get_passive_timer();
-
-        format!("{:02}", time.as_secs_f32().ceil() as u32)
+        match self.get_passive_timer() {
+            Some(time) => format!("{:02}", time.as_secs_f32().ceil() as u32),
+            None => "60".to_string(),
+        }
     }
 
     pub fn is_passive_timer_enabled(&self) -> bool {
-        if let Some(_) = self.passive_timer_offset {
-            self.passive_timer_active
-        } else {
-            false
-        }
+        self.passive_timer_active && self.get_passive_timer() != None
     }
 
     pub fn set_passive_timer_active(&mut self, active: bool) {
@@ -581,8 +557,6 @@ pub struct MatchInfo {
     pub display_message_updated: Option<Instant>,
     pub competition_type: Option<CompetitionType>,
 
-    // pub main_timer: MainTimer<240>,
-    // pub passive_timer: PassiveTimer,
     pub timer_controller: TimerController,
 
     pub referee: RefereeInfo,

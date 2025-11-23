@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-BANANA_IPS=("192.168.1.38")
+BANANA_IPS=("192.168.1.41")
 
 cross build --target armv7-unknown-linux-gnueabihf --release --no-default-features --features=embeded_device,sdl_frontend,legacy_backend_full,gpio_frontend,repeater,cyrano_server
 

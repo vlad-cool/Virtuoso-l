@@ -58,7 +58,7 @@ impl VirtuosoModuleContext {
             cyrano_command_tx: cyrano_tx,
             cyrano_command_rx: Arc::new(Mutex::new(Some(cyrano_rx))),
 
-            port_manager: Arc::new(Mutex::new(PortManager::new()))
+            port_manager: Arc::new(Mutex::new(PortManager::new())),
         }
     }
 

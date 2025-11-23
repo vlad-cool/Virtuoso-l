@@ -182,12 +182,10 @@ impl ConsoleBackend {
             Field::Time => {
                 let time: Duration = Duration::from_secs(value.into());
 
-                match_info_data.timer_controller.sync(time, false, false);
+                match_info_data.timer_controller.sync(time, false);
             }
             Field::LastTenSeconds => match_info_data.last_ten_seconds = value > 0,
-            Field::TimerRunning => {} // match_info_data
-            // .timer_controller
-            // .set_timer_running(value > 0),
+            Field::TimerRunning => match_info_data.timer_controller.start_stop(value > 0),
             Field::Period => match_info_data.period = value,
 
             Field::Weapon => {

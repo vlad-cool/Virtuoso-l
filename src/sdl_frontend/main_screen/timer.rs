@@ -4,9 +4,9 @@ use std::rc::Rc;
 use std::time::{Duration, Instant};
 
 use crate::match_info::{MatchInfo, Priority, TimerController};
+use crate::sdl_frontend::colors;
 use crate::sdl_frontend::widgets::{Label, LabelHashKey, LabelTextureCache};
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
-use crate::sdl_frontend::{colors, message};
 
 pub struct Drawer<'a> {
     timer_0_widget: Label<'a>,
@@ -158,7 +158,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         }
 
         if let Some(update_time) = self.message_update_time
-            && update_time.elapsed() < message::Drawer::MESSAGE_DISPLAY_TIME
+            && update_time.elapsed() == Duration::ZERO
         {
         } else {
             self.timer_0_widget.draw();

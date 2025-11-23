@@ -23,9 +23,8 @@ impl PortManager {
             self.ports.insert(path.clone(), port);
         }
 
-        let port = self.ports[&path]
-            .try_clone_native()?;
-        
+        let port = self.ports[&path].try_clone_native()?;
+
         Ok(port)
     }
 }

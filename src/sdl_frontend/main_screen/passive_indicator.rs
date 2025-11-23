@@ -43,7 +43,10 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
 
     fn render(&mut self) {
         {
-            let passive_timer: Duration = self.timer.get_passive_timer();
+            let passive_timer: Duration = self
+                .timer
+                .get_passive_timer()
+                .unwrap_or(Duration::from_secs(60));
             let (color, passive_indicator): (Color, i32) = match passive_timer.as_secs() {
                 0 => (colors::PASSIVE_RED, 1000),
                 1..10 => (

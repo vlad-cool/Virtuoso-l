@@ -18,8 +18,6 @@ pub struct Drawer<'a> {
 }
 
 impl<'a> Drawer<'a> {
-    pub const MESSAGE_DISPLAY_TIME: Duration = Duration::from_secs(2);
-
     pub fn new(context: WidgetContext<'a>) -> Self {
         let font: Rc<Font<'_, '_>> = context.get_font(context.layout.timer_text.font_size);
 
@@ -58,7 +56,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             self.message_updated = false;
         }
         if let Some(update_time) = self.update_time
-            && update_time.elapsed() < Self::MESSAGE_DISPLAY_TIME
+            && update_time.elapsed() == Duration::ZERO
         {
             self.message_widget.draw();
         }
