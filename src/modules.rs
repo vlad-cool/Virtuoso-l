@@ -14,6 +14,15 @@ pub enum CyranoCommand {
     CyranoPrev,
     CyranoBegin,
     CyranoEnd,
+
+    LeftStatus,
+    RightStatus,
+    LeftVideoAppeal,
+    RightVideoAppeal,
+    LeftMedical,
+    RightMedical,
+    LeftReserve,
+    RightReserve,
 }
 
 #[derive(Clone)]

@@ -49,6 +49,9 @@ mod fencer_reserve;
 #[path = "main_screen/cyrano/fencer_status.rs"]
 mod fencer_status;
 #[cfg(feature = "cyrano_server")]
+#[path = "main_screen/cyrano/fencer_video.rs"]
+mod fencer_video;
+#[cfg(feature = "cyrano_server")]
 #[path = "main_screen/cyrano/phase.rs"]
 mod phase;
 #[cfg(feature = "cyrano_server")]
@@ -338,6 +341,9 @@ impl VirtuosoModule for SdlFrontend {
                 widgets.push(Box::new(widget));
             }
             if let Some(widget) = fencer_status::Drawer::new(widget_context.clone()) {
+                widgets.push(Box::new(widget));
+            }
+            if let Some(widget) = fencer_video::Drawer::new(widget_context.clone()) {
                 widgets.push(Box::new(widget));
             }
             if let Some(widget) = fencer_medical::Drawer::new(widget_context.clone()) {

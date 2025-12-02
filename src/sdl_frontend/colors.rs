@@ -72,3 +72,4 @@ pub const FENCER_NATION_TEXT: Color = Color::RGB(0xff, 0xff, 0xff);
 pub const CYRANO_ONLINE: Color = Color::RGB(0xff, 0x00, 0x00);
 
 pub const STATIC_TEXT: Color = Color::RGB(0x00, 0xa0, 0xe3);
+pub const STATIC_TEXT_GRAY: Color = Color::RGB(0x4c, 0x4c, 0x4c);

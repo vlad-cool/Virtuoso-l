@@ -38,7 +38,7 @@ impl WarningCard {
         }
     }
 
-    pub fn has_yellow(&self) -> u32 {
+    pub fn num_yellow(&self) -> u32 {
         match self {
             Self::None => 0,
             _ => 1,
@@ -76,7 +76,6 @@ pub enum PassiveCard {
     Black(u8),
 }
 
-#[allow(dead_code)]
 impl PassiveCard {
     const NUM_YELLOW: u8 = 1;
     const NUM_RED: u8 = 2;
@@ -92,15 +91,6 @@ impl PassiveCard {
             Self::Red(n) => Self::Red(*n + 1),
             Self::Black(n) => Self::Black(*n + 1),
         };
-    }
-
-    pub fn to_i32(&self) -> i32 {
-        match self {
-            Self::None => 0,
-            Self::Yellow(n) => (1 + *n).into(),
-            Self::Red(n) => (1 + Self::NUM_YELLOW + *n).into(),
-            Self::Black(n) => (1 + Self::NUM_YELLOW + Self::NUM_RED + *n).into(),
-        }
     }
 
     pub fn to_u32(&self) -> u32 {
@@ -317,6 +307,7 @@ pub struct TimerController {
     passive_timer_active: bool,
 
     old_time: Option<Duration>,
+    medical: bool,
 }
 
 impl TimerController {
@@ -343,10 +334,11 @@ impl TimerController {
 
             main_timer: Duration::from_secs(60 * 3),
 
-            passive_timer_offset: Duration::from_secs(60),
+            passive_timer_offset: Duration::from_secs(2 * 60),
             passive_timer_active: true,
 
             old_time: None,
+            medical: false,
         }
     }
 
@@ -358,7 +350,7 @@ impl TimerController {
 
         if keep_passive {
             if let Some(passive_time) = passive_time {
-                self.passive_timer_offset = self.get_main_time() - passive_time;
+                self.passive_timer_offset = self.get_main_time().saturating_sub(passive_time);
             } else {
                 self.reset_passive_timer();
             }
@@ -386,6 +378,13 @@ impl TimerController {
 
             let minutes: u64 = time / 60;
             let seconds: u64 = time % 60;
+
+            let (minutes, seconds) = if minutes == 10 {
+                (9, 60)
+            } else {
+                (minutes, seconds)
+            };
+
             format!("{}:{:02}", minutes, seconds)
         } else {
             let seconds: u64 = time.as_secs();
@@ -426,11 +425,15 @@ impl TimerController {
     }
 
     pub fn get_passive_timer(&self) -> Option<Duration> {
+        if self.medical {
+            return None;
+        }
+
         let res: Duration = self
             .get_main_time()
             .saturating_sub(self.passive_timer_offset);
 
-        if res == Duration::ZERO {
+        if self.get_main_time() <= res {
             None
         } else if res > Duration::from_secs(60) {
             Some(Duration::from_secs(60))
@@ -452,6 +455,16 @@ impl TimerController {
 
     pub fn set_passive_timer_active(&mut self, active: bool) {
         self.passive_timer_active = active;
+    }
+
+    pub fn start_medical_emergency(&mut self) {
+        self.medical = true;
+        self.sync(Duration::from_secs(60 * 10), true);
+        self.start_stop(true);
+    }
+
+    pub fn stop_medical_emergency(&mut self) {
+        self.medical = false;
     }
 }
 
@@ -497,6 +510,7 @@ pub struct FencerInfo {
 
     pub warning_card: WarningCard,
     pub passive_card: PassiveCard,
+    pub video_appeal: u32,
 }
 
 impl FencerInfo {
@@ -514,6 +528,7 @@ impl FencerInfo {
             reserve_introduction: false,
             warning_card: WarningCard::None,
             passive_card: PassiveCard::None,
+            video_appeal: 0,
         }
     }
 }
@@ -523,6 +538,7 @@ pub struct MatchInfo {
     pub program_state: ProgramState,
 
     pub weapon: Weapon,
+    pub medical_emergency: bool,
     // pub timer: u32,
     pub last_ten_seconds: bool,
     pub period: u32,
@@ -572,6 +588,7 @@ impl MatchInfo {
     pub fn new() -> Self {
         Self {
             program_state: ProgramState::Running,
+            medical_emergency: false,
 
             weapon: Weapon::Epee,
             // left_score: 0,

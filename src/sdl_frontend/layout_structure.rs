@@ -55,6 +55,12 @@ pub struct CyranoLayout {
 
     pub state: TextProperties,
     pub status: TextProperties,
+
+    pub static_piste: TextProperties,
+    pub static_competition_type: TextProperties,
+    pub static_competition_phase: TextProperties,
+    pub static_poule_tableau_id: TextProperties,
+    pub static_start_time: TextProperties,
 }
 
 pub struct Layout {

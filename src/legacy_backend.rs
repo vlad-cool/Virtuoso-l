@@ -11,7 +11,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use crate::match_info::{self, Weapon};
-use crate::modules::{self, MatchInfo, VirtuosoModuleContext};
+use crate::modules::{self, CyranoCommand, MatchInfo, VirtuosoModuleContext};
 use crate::virtuoso_config::VirtuosoConfig;
 use crate::virtuoso_logger::Logger;
 #[cfg(feature = "legacy_backend")]
@@ -38,6 +38,8 @@ pub struct LegacyBackend {
 
     epee_5_counter: u32,
     prev_got_time: Duration,
+
+    prev_uart_msg: Option<UartData>,
 }
 
 impl modules::VirtuosoModule for LegacyBackend {
@@ -193,6 +195,8 @@ impl LegacyBackend {
 
             epee_5_counter: 0,
             prev_got_time: Duration::from_secs(3 * 60),
+
+            prev_uart_msg: None,
         }
     }
 
@@ -246,11 +250,13 @@ impl LegacyBackend {
             Duration::from_secs((timer_m * 60 + timer_d * 10 + timer_s) as u64)
         };
 
-        match (match_info.timer_controller.is_timer_running(), msg.on_timer) {
-            (true, true) => match_info.timer_controller.sync(new_time, false),
-            (true, false) => {}
-            (false, true) => {}
-            (false, false) => match_info.timer_controller.sync(new_time, true),
+        if new_time != *prev_got_time {
+            match (match_info.timer_controller.is_timer_running(), msg.on_timer) {
+                (true, true) => match_info.timer_controller.sync(new_time, false),
+                (true, false) => {}
+                (false, true) => {}
+                (false, false) => match_info.timer_controller.sync(new_time, true),
+            }
         }
         // if !(msg.on_timer & )
         // if new_time != *prev_got_time {
@@ -275,7 +281,7 @@ impl LegacyBackend {
         match_info.right_fencer.score = msg.score_right;
     }
 
-    fn set_priotity(match_info: &mut MatchInfo, msg: UartData) {
+    fn set_priority(match_info: &mut MatchInfo, msg: UartData) {
         match_info.priority = match msg.period {
             0b1110 => match_info::Priority::Left,
             0b1111 => match_info::Priority::Right,
@@ -294,6 +300,10 @@ impl LegacyBackend {
 
         let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
             self.context.match_info.lock().unwrap();
+
+        if match_info_data.medical_emergency {
+            return;
+        }
 
         #[cfg(feature = "legacy_backend_full")]
         let sides_swapped: bool = !(msg.yellow_card_left || msg.red_card_left) && {
@@ -324,15 +334,28 @@ impl LegacyBackend {
                 _ => AutoStatusStates::Unknown,
             });
         } else {
+            let _update: bool = if let Some(mut prev_msg) = self.prev_uart_msg {
+                prev_msg.minutes = msg.minutes;
+                prev_msg.dec_seconds = msg.dec_seconds;
+                prev_msg.seconds = msg.seconds;
+                prev_msg.on_timer = msg.on_timer;
+
+                prev_msg == msg
+            } else {
+                true
+            };
+
+            // if _update {
             Self::set_time(
                 &mut match_info_data,
                 msg,
                 &mut self.prev_got_time,
                 &mut self.last_second,
             );
+            // }
         }
 
-        Self::set_priotity(&mut match_info_data, msg);
+        Self::set_priority(&mut match_info_data, msg);
 
         if match_info_data.priority != match_info::Priority::None
             && match_info_data.timer_controller.get_main_time() <= Duration::from_secs(60)
@@ -352,12 +375,18 @@ impl LegacyBackend {
 
         std::mem::drop(match_info_data);
         self.context.match_info_data_updated();
+
+        self.prev_uart_msg = Some(msg);
     }
 
     #[cfg(feature = "legacy_backend_full")]
     fn apply_pins_data(&mut self, msg: PinsData) {
         let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
             self.context.match_info.lock().unwrap();
+
+        if match_info_data.medical_emergency {
+            return;
+        }
 
         let weapon: Weapon = match msg.weapon {
             3 => match_info::Weapon::Epee,
@@ -417,6 +446,20 @@ impl LegacyBackend {
             }
             self.context.match_info_data_updated();
         } else if msg.new && msg.address == self.rc5_address {
+            let mut match_info_data: MutexGuard<'_, MatchInfo> =
+                self.context.match_info.lock().unwrap();
+
+            if match_info_data.medical_emergency {
+                if msg.command == IrCommands::TimerStartStop {
+                    match_info_data.medical_emergency = false;
+                    match_info_data.timer_controller.stop_medical_emergency();
+                    std::mem::drop(match_info_data);
+                    self.context.match_info_data_updated();
+                }
+                return;
+            }
+            std::mem::drop(match_info_data);
+
             if msg.command != IrCommands::Reset {
                 self.epee_5_counter = 0;
             }
@@ -507,18 +550,13 @@ impl LegacyBackend {
                         self.context.match_info_data_updated();
                     }
                 }
-                IrCommands::Previous => {
+                IrCommands::Prev => {
                     if self
                         .context
                         .settings_menu_shown
                         .load(std::sync::atomic::Ordering::Relaxed)
                     {
                         self.context.settings_menu.lock().unwrap().prev();
-                    } else {
-                        self.context
-                            .cyrano_command_tx
-                            .send(modules::CyranoCommand::CyranoPrev)
-                            .log_err(&self.context.logger);
                     }
                 }
                 IrCommands::Next => {
@@ -528,11 +566,6 @@ impl LegacyBackend {
                         .load(std::sync::atomic::Ordering::Relaxed)
                     {
                         self.context.settings_menu.lock().unwrap().next();
-                    } else {
-                        self.context
-                            .cyrano_command_tx
-                            .send(modules::CyranoCommand::CyranoNext)
-                            .log_err(&self.context.logger);
                     }
                 }
                 IrCommands::Begin => {
@@ -547,11 +580,6 @@ impl LegacyBackend {
                             .unwrap()
                             .get_item_mut()
                             .prev();
-                    } else {
-                        self.context
-                            .cyrano_command_tx
-                            .send(modules::CyranoCommand::CyranoBegin)
-                            .log_err(&self.context.logger);
                     }
                 }
                 IrCommands::End => {
@@ -566,32 +594,28 @@ impl LegacyBackend {
                             .unwrap()
                             .get_item_mut()
                             .next();
-                    } else {
-                        self.context
-                            .cyrano_command_tx
-                            .send(modules::CyranoCommand::CyranoEnd)
-                            .log_err(&self.context.logger);
                     }
                 }
                 IrCommands::Aux => {
-                    if self.weapon_select_btn_pressed {
+                    if self
+                        .context
+                        .settings_menu_shown
+                        .load(std::sync::atomic::Ordering::Relaxed)
+                    {
+                        self.context
+                            .settings_menu
+                            .lock()
+                            .unwrap()
+                            .get_item_mut()
+                            .get_active_mut()
+                            .press(
+                                &self.context.logger,
+                                self.context.settings_menu_shown.clone(),
+                            );
+                    } else {
                         self.context
                             .settings_menu_shown
-                            .fetch_xor(true, std::sync::atomic::Ordering::Relaxed);
-                    } else {
-                        if self
-                            .context
-                            .settings_menu_shown
-                            .load(std::sync::atomic::Ordering::Relaxed)
-                        {
-                            self.context
-                                .settings_menu
-                                .lock()
-                                .unwrap()
-                                .get_item_mut()
-                                .get_active_mut()
-                                .press(&self.context.logger);
-                        }
+                            .store(true, std::sync::atomic::Ordering::Relaxed);
                     }
                 }
                 IrCommands::Reset => {
@@ -624,6 +648,19 @@ impl LegacyBackend {
                     }
                 }
                 _ => {}
+            }
+
+            if !self
+                .context
+                .settings_menu_shown
+                .load(std::sync::atomic::Ordering::Relaxed)
+            {
+                if let Some(cyrano_command) = msg.command.to_cyrano() {
+                    self.context
+                        .cyrano_command_tx
+                        .send(cyrano_command)
+                        .log_err(&self.context.logger);
+                }
             }
         }
     }
@@ -929,10 +966,19 @@ enum IrCommands {
 
     PeriodIncrement,
 
-    Previous,
+    Prev,
     Next,
     End,
     Begin,
+
+    LeftStatus,
+    RightStatus,
+    LeftVideoAppeal,
+    RightVideoAppeal,
+    LeftMedical,
+    RightMedical,
+    LeftReserve,
+    RightReserve,
 
     Aux,
 
@@ -972,11 +1018,20 @@ impl IrCommands {
 
             8 => IrCommands::PeriodIncrement,
 
-            21 => IrCommands::Previous,
+            21 => IrCommands::Prev,
             20 => IrCommands::Next,
             19 => IrCommands::Begin,
             24 => IrCommands::End,
-            28 => IrCommands::Aux,
+            33 => IrCommands::Aux,
+
+            25 => IrCommands::LeftStatus,
+            26 => IrCommands::RightStatus,
+            27 => IrCommands::LeftVideoAppeal,
+            28 => IrCommands::RightVideoAppeal,
+            29 => IrCommands::LeftMedical,
+            30 => IrCommands::RightMedical,
+            31 => IrCommands::LeftReserve,
+            32 => IrCommands::RightReserve,
 
             unknown => IrCommands::Unknown(unknown),
         }
@@ -1014,11 +1069,20 @@ impl IrCommands {
 
             IrCommands::PeriodIncrement => 8,
 
-            IrCommands::Previous => 21,
+            IrCommands::Prev => 21,
             IrCommands::Next => 20,
             IrCommands::Begin => 19,
             IrCommands::End => 24,
-            IrCommands::Aux => 28,
+            IrCommands::Aux => 33,
+
+            IrCommands::LeftStatus => 25,
+            IrCommands::RightStatus => 26,
+            IrCommands::LeftVideoAppeal => 27,
+            IrCommands::RightVideoAppeal => 28,
+            IrCommands::LeftMedical => 29,
+            IrCommands::RightMedical => 30,
+            IrCommands::LeftReserve => 31,
+            IrCommands::RightReserve => 32,
 
             IrCommands::Unknown(unknown) => *unknown,
         }
@@ -1049,6 +1113,26 @@ impl IrCommands {
             IrCommands::Reset => true,
 
             _ => false,
+        }
+    }
+
+    pub fn to_cyrano(&self) -> Option<CyranoCommand> {
+        match self {
+            Self::Next => Some(CyranoCommand::CyranoNext),
+            Self::Prev => Some(CyranoCommand::CyranoPrev),
+            Self::Begin => Some(CyranoCommand::CyranoBegin),
+            Self::End => Some(CyranoCommand::CyranoEnd),
+
+            Self::LeftStatus => Some(CyranoCommand::LeftStatus),
+            Self::RightStatus => Some(CyranoCommand::RightStatus),
+            Self::LeftVideoAppeal => Some(CyranoCommand::LeftVideoAppeal),
+            Self::RightVideoAppeal => Some(CyranoCommand::RightVideoAppeal),
+            Self::LeftMedical => Some(CyranoCommand::LeftMedical),
+            Self::RightMedical => Some(CyranoCommand::RightMedical),
+            Self::LeftReserve => Some(CyranoCommand::LeftReserve),
+            Self::RightReserve => Some(CyranoCommand::RightReserve),
+
+            _ => None,
         }
     }
 }

@@ -253,9 +253,10 @@ impl ConsoleBackend {
             Field::SettingsPress => {
                 let mut menu: std::sync::MutexGuard<'_, modules::SettingsMenu> =
                     self.context.settings_menu.lock().unwrap();
-                menu.get_item_mut()
-                    .get_active_mut()
-                    .press(&self.context.logger);
+                menu.get_item_mut().get_active_mut().press(
+                    &self.context.logger,
+                    self.context.settings_menu_shown.clone(),
+                );
             }
 
             Field::Unknown => {

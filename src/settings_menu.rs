@@ -1,6 +1,9 @@
 use pnet::datalink;
 use pnet::ipnetwork::IpNetwork;
-use std::vec::Vec;
+use std::{
+    sync::{Arc, atomic::AtomicBool},
+    vec::Vec,
+};
 
 use self_update::cargo_crate_version;
 
@@ -24,6 +27,7 @@ pub enum MenuElement {
     IpAddressWln,
     IpAddressEth,
     UpdateBtn(String),
+    ExitBtn,
 }
 
 impl MenuElement {
@@ -79,10 +83,11 @@ impl MenuElement {
                 }
             }
             Self::UpdateBtn(status) => MenuItem::Button(format!("Update\n{status}")),
+            Self::ExitBtn => MenuItem::Button(format!("Exit")),
         }
     }
 
-    pub fn press(&mut self, logger: &Logger) {
+    pub fn press(&mut self, logger: &Logger, menu_shown: Arc<AtomicBool>) {
         match self {
             Self::UpdateBtn(res_status) => {
                 let mut backend: self_update::backends::github::UpdateBuilder =
@@ -119,6 +124,9 @@ impl MenuElement {
                 } else {
                     *res_status = format!("Up to date");
                 }
+            }
+            Self::ExitBtn => {
+                menu_shown.store(false, std::sync::atomic::Ordering::Relaxed);
             }
             _ => {}
         }
@@ -181,6 +189,11 @@ impl SettingsMenu {
                 MenuTab {
                     name: "Update".to_string(),
                     elements: vec![MenuElement::UpdateBtn("".to_string())],
+                    index: 0,
+                },
+                MenuTab {
+                    name: "Exit settings".to_string(),
+                    elements: vec![MenuElement::ExitBtn],
                     index: 0,
                 },
             ],

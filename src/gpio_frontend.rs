@@ -69,14 +69,30 @@ impl modules::VirtuosoModule for GpioFrontend {
                 let match_info_data: MutexGuard<'_, match_info::MatchInfo> =
                     self.context.match_info.lock().unwrap();
 
-                let left_color_led_state: bool = match_info_data.left_fencer.color_light;
-                let right_color_led_state: bool = match_info_data.right_fencer.color_light;
-                // let left_color_led_state: bool = match_info_data.left_fencer.color_light
-                //     && (match_info_data.priority != Priority::Left
-                //         || match_info_data.priority_updated.elapsed() < PRIORITY_LED_DELAY);
-                // let right_color_led_state: bool = match_info_data.right_fencer.color_light
-                //     && (match_info_data.priority != Priority::Right
-                //         || match_info_data.priority_updated.elapsed() < PRIORITY_LED_DELAY);
+                let (left_color_led_state, right_color_led_state) =
+                    if match_info_data.medical_emergency {
+                        (
+                            match_info_data.left_fencer.medical_interventions > 0
+                                && match_info_data
+                                    .timer_controller
+                                    .get_main_time()
+                                    .subsec_millis()
+                                    % 500
+                                    < 250,
+                            match_info_data.right_fencer.medical_interventions > 0
+                                && match_info_data
+                                    .timer_controller
+                                    .get_main_time()
+                                    .subsec_millis()
+                                    % 500
+                                    < 250,
+                        )
+                    } else {
+                        (
+                            match_info_data.left_fencer.color_light,
+                            match_info_data.right_fencer.color_light,
+                        )
+                    };
                 let left_white_led_state: bool = match_info_data.left_fencer.white_light;
                 let right_white_led_state: bool = match_info_data.right_fencer.white_light;
 
