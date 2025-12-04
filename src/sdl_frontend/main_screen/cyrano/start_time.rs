@@ -19,7 +19,8 @@ impl<'a> Drawer<'a> {
     pub fn new(context: WidgetContext<'a>) -> Option<Self> {
         if let Some(layout) = &context.layout.cyrano_layout {
             let font: Rc<Font<'_, '_>> = context.get_font(layout.start_time.font_size);
-            let font_static: Rc<Font<'_, '_>> = context.get_font(layout.static_start_time.font_size);
+            let font_static: Rc<Font<'_, '_>> =
+                context.get_font(layout.static_start_time.font_size);
 
             Some(Self {
                 start_time_widget: Label::new(

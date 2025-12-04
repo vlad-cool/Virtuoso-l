@@ -307,7 +307,11 @@ pub struct TimerController {
     passive_timer_active: bool,
 
     old_time: Option<Duration>,
-    medical: bool,
+    #[serde(
+        serialize_with = "serialize_optional_instant_as_elapsed",
+        deserialize_with = "deserialize_optional_duration_to_instant"
+    )]
+    medical_start: Option<Instant>,
 }
 
 impl TimerController {
@@ -338,7 +342,7 @@ impl TimerController {
             passive_timer_active: true,
 
             old_time: None,
-            medical: false,
+            medical_start: None,
         }
     }
 
@@ -368,8 +372,29 @@ impl TimerController {
         }
     }
 
+    fn get_medical_time(&self) -> Option<Duration> {
+        if let Some(medical) = self.medical_start {
+            let time: Duration = Duration::from_secs(60 * 10).saturating_sub(medical.elapsed());
+            if time != Duration::ZERO {
+                Some(time)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn is_medical_active(&self) -> bool {
+        self.get_medical_time().is_some()
+    }
+
     pub fn get_main_time(&self) -> Duration {
-        self.main_timer.saturating_sub(self.get_sync_time())
+        if let Some(time) = self.get_medical_time() {
+            time
+        } else {
+            self.main_timer.saturating_sub(self.get_sync_time())
+        }
     }
 
     pub fn duration_to_string(time: Duration) -> String {
@@ -425,7 +450,7 @@ impl TimerController {
     }
 
     pub fn get_passive_timer(&self) -> Option<Duration> {
-        if self.medical {
+        if self.medical_start.is_some() {
             return None;
         }
 
@@ -458,13 +483,11 @@ impl TimerController {
     }
 
     pub fn start_medical_emergency(&mut self) {
-        self.medical = true;
-        self.sync(Duration::from_secs(60 * 10), true);
-        self.start_stop(true);
+        self.medical_start = Some(Instant::now());
     }
 
     pub fn stop_medical_emergency(&mut self) {
-        self.medical = false;
+        self.medical_start = None;
     }
 }
 
@@ -528,7 +551,7 @@ impl FencerInfo {
             reserve_introduction: false,
             warning_card: WarningCard::None,
             passive_card: PassiveCard::None,
-            video_appeal: 0,
+            video_appeal: 1,
         }
     }
 }
@@ -538,7 +561,6 @@ pub struct MatchInfo {
     pub program_state: ProgramState,
 
     pub weapon: Weapon,
-    pub medical_emergency: bool,
     // pub timer: u32,
     pub last_ten_seconds: bool,
     pub period: u32,
@@ -588,7 +610,6 @@ impl MatchInfo {
     pub fn new() -> Self {
         Self {
             program_state: ProgramState::Running,
-            medical_emergency: false,
 
             weapon: Weapon::Epee,
             // left_score: 0,

@@ -70,7 +70,7 @@ impl modules::VirtuosoModule for GpioFrontend {
                     self.context.match_info.lock().unwrap();
 
                 let (left_color_led_state, right_color_led_state) =
-                    if match_info_data.medical_emergency {
+                    if match_info_data.timer_controller.is_medical_active() {
                         (
                             match_info_data.left_fencer.medical_interventions > 0
                                 && match_info_data

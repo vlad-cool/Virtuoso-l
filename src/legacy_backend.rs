@@ -301,10 +301,6 @@ impl LegacyBackend {
         let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
             self.context.match_info.lock().unwrap();
 
-        if match_info_data.medical_emergency {
-            return;
-        }
-
         #[cfg(feature = "legacy_backend_full")]
         let sides_swapped: bool = !(msg.yellow_card_left || msg.red_card_left) && {
             msg.yellow_card_right || msg.red_card_right
@@ -384,10 +380,6 @@ impl LegacyBackend {
         let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
             self.context.match_info.lock().unwrap();
 
-        if match_info_data.medical_emergency {
-            return;
-        }
-
         let weapon: Weapon = match msg.weapon {
             3 => match_info::Weapon::Epee,
             1 => match_info::Weapon::Sabre,
@@ -449,9 +441,8 @@ impl LegacyBackend {
             let mut match_info_data: MutexGuard<'_, MatchInfo> =
                 self.context.match_info.lock().unwrap();
 
-            if match_info_data.medical_emergency {
+            if match_info_data.timer_controller.is_medical_active() {
                 if msg.command == IrCommands::TimerStartStop {
-                    match_info_data.medical_emergency = false;
                     match_info_data.timer_controller.stop_medical_emergency();
                     std::mem::drop(match_info_data);
                     self.context.match_info_data_updated();
@@ -645,6 +636,25 @@ impl LegacyBackend {
 
                         std::mem::drop(match_info_data);
                         self.context.match_info_data_updated();
+                    }
+                }
+                IrCommands::LeftMedical | IrCommands::RightMedical => {
+                    if self
+                        .context
+                        .match_info
+                        .lock()
+                        .unwrap()
+                        .timer_controller
+                        .is_timer_running()
+                    {
+                        if let Some(tx) = self.rc5_tx.as_ref() {
+                            tx.send(IrFrame {
+                                new: true,
+                                address: self.context.hw_config.legacy_backend.rc5_output_addr,
+                                command: IrCommands::TimerStartStop,
+                            })
+                            .log_err(&self.context.logger);
+                        }
                     }
                 }
                 _ => {}
