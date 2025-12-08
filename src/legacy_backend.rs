@@ -1032,7 +1032,7 @@ impl IrCommands {
             20 => IrCommands::Next,
             19 => IrCommands::Begin,
             24 => IrCommands::End,
-            33 => IrCommands::Aux,
+            38 => IrCommands::Aux,
 
             25 => IrCommands::LeftStatus,
             26 => IrCommands::RightStatus,
@@ -1040,7 +1040,7 @@ impl IrCommands {
             28 => IrCommands::RightVideoAppeal,
             29 => IrCommands::LeftMedical,
             30 => IrCommands::RightMedical,
-            31 => IrCommands::LeftReserve,
+            37 => IrCommands::LeftReserve,
             32 => IrCommands::RightReserve,
 
             unknown => IrCommands::Unknown(unknown),
@@ -1083,7 +1083,7 @@ impl IrCommands {
             IrCommands::Next => 20,
             IrCommands::Begin => 19,
             IrCommands::End => 24,
-            IrCommands::Aux => 33,
+            IrCommands::Aux => 38,
 
             IrCommands::LeftStatus => 25,
             IrCommands::RightStatus => 26,
@@ -1091,7 +1091,7 @@ impl IrCommands {
             IrCommands::RightVideoAppeal => 28,
             IrCommands::LeftMedical => 29,
             IrCommands::RightMedical => 30,
-            IrCommands::LeftReserve => 31,
+            IrCommands::LeftReserve => 37,
             IrCommands::RightReserve => 32,
 
             IrCommands::Unknown(unknown) => *unknown,
