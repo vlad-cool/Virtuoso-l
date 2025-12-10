@@ -1040,8 +1040,8 @@ impl IrCommands {
             28 => IrCommands::RightVideoAppeal,
             29 => IrCommands::LeftMedical,
             30 => IrCommands::RightMedical,
-            37 => IrCommands::LeftReserve,
-            32 => IrCommands::RightReserve,
+            31 => IrCommands::LeftReserve,
+            37 => IrCommands::RightReserve,
 
             unknown => IrCommands::Unknown(unknown),
         }
@@ -1091,8 +1091,8 @@ impl IrCommands {
             IrCommands::RightVideoAppeal => 28,
             IrCommands::LeftMedical => 29,
             IrCommands::RightMedical => 30,
-            IrCommands::LeftReserve => 37,
-            IrCommands::RightReserve => 32,
+            IrCommands::LeftReserve => 31,
+            IrCommands::RightReserve => 37,
 
             IrCommands::Unknown(unknown) => *unknown,
         }
