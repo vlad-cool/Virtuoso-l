@@ -443,6 +443,12 @@ impl LegacyBackend {
 
             if match_info_data.timer_controller.is_medical_active() {
                 if msg.command == IrCommands::TimerStartStop {
+                    match_info_data.timer_controller.start_stop_medical();
+                    std::mem::drop(match_info_data);
+                    self.context.match_info_data_updated();
+                } else if !match_info_data.timer_controller.is_timer_running()
+                    && msg.command == IrCommands::Aux
+                {
                     match_info_data.timer_controller.stop_medical_emergency();
                     std::mem::drop(match_info_data);
                     self.context.match_info_data_updated();

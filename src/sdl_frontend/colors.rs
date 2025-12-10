@@ -66,6 +66,7 @@ pub const MENU_BUTTON_BACKGROUND: Color = Color::RGB(0x33, 0x33, 0x33);
 pub const MENU_BUTTON_TEXT: Color = Color::RGB(0xff, 0xff, 0xff);
 
 pub const FENCER_NAME_TEXT: Color = Color::RGB(0xff, 0xff, 0xff);
+pub const FENCER_NAME_TEXT_DARK: Color = Color::RGB(0x66, 0x66, 0x66);
 pub const FENCER_NATION_TEXT: Color = Color::RGB(0xff, 0xff, 0xff);
 
 // pub const CYRANO_ONLINE: Color = Color::RGB(0xcc, 0xcc, 0x00);

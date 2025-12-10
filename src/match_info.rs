@@ -318,6 +318,11 @@ pub struct TimerController {
         deserialize_with = "deserialize_optional_duration_to_instant"
     )]
     medical_start: Option<Instant>,
+    #[serde(
+        serialize_with = "serialize_optional_instant_as_elapsed",
+        deserialize_with = "deserialize_optional_duration_to_instant"
+    )]
+    medical_pause: Option<Instant>,
     medical_side: Option<Side>,
 }
 
@@ -332,11 +337,9 @@ impl TimerController {
 
     pub fn is_timer_running(&self) -> bool {
         if self.is_medical_active() {
-            true
-        } else if let Some(_) = self.stop_time {
-            false
+            self.medical_pause.is_none()
         } else {
-            true
+            self.stop_time.is_none()
         }
     }
 
@@ -352,6 +355,7 @@ impl TimerController {
 
             old_time: None,
             medical_start: None,
+            medical_pause: None,
             medical_side: None,
         }
     }
@@ -384,7 +388,14 @@ impl TimerController {
 
     fn get_medical_time(&self) -> Option<Duration> {
         if let Some(medical) = self.medical_start {
-            let time: Duration = Duration::from_secs(60 * 10).saturating_sub(medical.elapsed());
+            let stop_time: Duration = if let Some(time) = self.medical_pause {
+                time.elapsed()
+            } else {
+                Duration::ZERO
+            };
+
+            let time: Duration = Duration::from_secs(60 * 10)
+                .saturating_sub(medical.elapsed().saturating_sub(stop_time));
             if time != Duration::ZERO {
                 Some(time)
             } else {
@@ -397,6 +408,19 @@ impl TimerController {
 
     pub fn is_medical_active(&self) -> bool {
         self.get_medical_time().is_some()
+    }
+
+    pub fn start_stop_medical(&mut self) {
+        if !self.is_medical_active() {
+            return;
+        }
+
+        if self.is_timer_running() {
+            self.medical_pause = Some(Instant::now());
+        } else {
+            self.medical_start = Some(Instant::now() - self.get_main_time());
+            self.medical_pause = None;
+        }
     }
 
     pub fn get_main_time(&self) -> Duration {

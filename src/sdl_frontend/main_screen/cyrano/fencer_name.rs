@@ -3,7 +3,7 @@ use sdl2::ttf::Font;
 use std::rc::Rc;
 
 use crate::match_info::MatchInfo;
-use crate::sdl_frontend::colors::FENCER_NAME_TEXT;
+use crate::sdl_frontend::colors::{FENCER_NAME_TEXT, FENCER_NAME_TEXT_DARK};
 use crate::sdl_frontend::widgets::Label;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
@@ -63,13 +63,29 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
 
     fn render(&mut self) {
         if self.left_name_updated {
-            self.left_name_widget
-                .render(self.left_name.clone(), FENCER_NAME_TEXT, None);
+            if self.left_name == "" {
+                self.left_name_widget.render(
+                    "Left Fencer".to_string(),
+                    FENCER_NAME_TEXT_DARK,
+                    None,
+                );
+            } else {
+                self.left_name_widget
+                    .render(self.left_name.clone(), FENCER_NAME_TEXT, None);
+            }
             self.left_name_updated = false;
         }
         if self.right_name_updated {
-            self.right_name_widget
-                .render(self.right_name.clone(), FENCER_NAME_TEXT, None);
+            if self.right_name == "" {
+                self.right_name_widget.render(
+                    "Right Fencer".to_string(),
+                    FENCER_NAME_TEXT_DARK,
+                    None,
+                );
+            } else {
+                self.right_name_widget
+                    .render(self.right_name.clone(), FENCER_NAME_TEXT, None);
+            }
             self.right_name_updated = false;
         }
 
