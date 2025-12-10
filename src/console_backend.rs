@@ -46,6 +46,8 @@ enum Field {
     SettingsNextElement,
     SettingsPress,
 
+    LeftFlag,
+
     Medical,
 
     Unknown,
@@ -87,6 +89,8 @@ impl std::fmt::Display for Field {
             Field::SettingsNextMenu => write!(f, "Settings Next Menu"),
             Field::SettingsNextElement => write!(f, "Settings Next Element"),
             Field::SettingsPress => write!(f, "Settings Press"),
+
+            Field::LeftFlag => write!(f, "Left Flag"),
 
             Field::Medical => write!(f, "Medical"),
 
@@ -139,6 +143,8 @@ fn parse_field(input: &str) -> Field {
         "menunext" => Field::SettingsNextMenu,
         "elementnext" => Field::SettingsNextElement,
         "menupress" => Field::SettingsPress,
+
+        "leftflag" => Field::LeftFlag,
 
         "medical" => Field::Medical,
 
@@ -279,6 +285,8 @@ impl ConsoleBackend {
                 }
             }
 
+            Field::LeftFlag => match_info_data.left_fencer.nation = "RUS".into(),
+
             Field::Unknown => {
                 return;
             }
@@ -342,6 +350,8 @@ impl ConsoleBackend {
             Field::SettingsPress => {}
 
             Field::Medical => {}
+
+            Field::LeftFlag => {}
 
             Field::Unknown => println!("Unknown field"),
         }

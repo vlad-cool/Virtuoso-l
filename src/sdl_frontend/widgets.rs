@@ -1,4 +1,5 @@
 use sdl2;
+use sdl2::image::LoadTexture;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::{Texture, TextureCreator};
@@ -8,6 +9,7 @@ use std::cmp::PartialEq;
 use std::cmp::{max, min};
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::path::PathBuf;
 use std::rc::Rc;
 
 use crate::sdl_frontend::layout_structure;
@@ -499,6 +501,80 @@ impl<'a> Indicator<'a> {
                 .borrow_mut()
                 .copy(texture, None, Some(target_rect))
                 .unwrap_with_logger(&self.logger);
+        }
+    }
+}
+
+pub struct Image<'a> {
+    canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
+    texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
+    texture: Option<sdl2::render::Texture<'a>>,
+
+    x: i32,
+    y: i32,
+    width: u32,
+    height: u32,
+
+    logger: &'a Logger,
+}
+
+impl<'a> Image<'a> {
+    pub fn new(
+        canvas: Rc<RefCell<sdl2::render::Canvas<sdl2::video::Window>>>,
+        texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
+
+        position: layout_structure::RectangleProperties,
+
+        logger: &'a Logger,
+    ) -> Self {
+        Self {
+            canvas,
+            texture_creator,
+            texture: None,
+
+            x: position.x,
+            y: position.y,
+            width: position.width,
+            height: position.height,
+
+            logger,
+        }
+    }
+
+    pub fn render(&mut self, path: PathBuf) {
+        self.texture = Some(
+            self.texture_creator
+                .load_texture(path)
+                .unwrap_with_logger(self.logger),
+        );
+    }
+
+    pub fn draw(&mut self) {
+        if let Some(texture) = &self.texture {
+            let query: sdl2::render::TextureQuery = texture.query();
+            let orig_width: f32 = query.width as f32;
+            let orig_height: f32 = query.height as f32;
+
+            let target_width: f32 = self.width as f32;
+            let target_height: f32 = self.height as f32;
+
+            let scale_x: f32 = target_width / orig_width;
+            let scale_y: f32 = target_height / orig_height;
+
+            let scale: f32 = scale_x.min(scale_y);
+
+            let new_width: u32 = (orig_width * scale).round() as u32;
+            let new_height: u32 = (orig_height * scale).round() as u32;
+
+            let offset_x: i32 = self.x + ((self.width - new_width) / 2) as i32;
+            let offset_y: i32 = self.y + ((self.height - new_height) / 2) as i32;
+
+            let target_rect = sdl2::rect::Rect::new(offset_x, offset_y, new_width, new_height);
+
+            self.canvas
+                .borrow_mut()
+                .copy(texture, None, Some(target_rect))
+                .unwrap_with_logger(self.logger);
         }
     }
 }

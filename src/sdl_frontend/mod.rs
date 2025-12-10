@@ -30,6 +30,9 @@ mod cyrano_state;
 #[path = "main_screen/cyrano/cyrano_status.rs"]
 mod cyrano_status;
 #[cfg(feature = "cyrano_server")]
+#[path = "main_screen/cyrano/fencer_flag.rs"]
+mod fencer_flag;
+#[cfg(feature = "cyrano_server")]
 #[path = "main_screen/cyrano/fencer_id.rs"]
 mod fencer_id;
 #[cfg(feature = "cyrano_server")]
@@ -237,6 +240,16 @@ impl VirtuosoModule for SdlFrontend {
             }
         };
 
+        let _image_context: sdl2::image::Sdl2ImageContext = match sdl2::image::init(sdl2::image::InitFlag::PNG) {
+            Ok(image_context) => image_context,
+            Err(err) => {
+                self.context
+                    .logger
+                    .critical_error(format!("Failed to init image context, error: {err}"));
+                return;
+            }
+        };
+
         let window: Window = match video_subsystem
             .window(
                 "Virtuoso",
@@ -371,6 +384,9 @@ impl VirtuosoModule for SdlFrontend {
                 widgets.push(Box::new(widget));
             }
             if let Some(widget) = cyrano_status::Drawer::new(widget_context.clone()) {
+                widgets.push(Box::new(widget));
+            }
+            if let Some(widget) = fencer_flag::Drawer::new(widget_context.clone()) {
                 widgets.push(Box::new(widget));
             }
         }

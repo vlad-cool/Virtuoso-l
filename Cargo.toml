@@ -10,7 +10,7 @@ serde = { version = "1.0", features = ["derive"] }
 toml = "0.7"
 postcard = { version = "1.1.2", features = ["use-std"], optional = true }
 crc = { version = "3.3.0", optional = true }
-sdl2 = { version = "0.38.0", features = ["ttf"], optional = true }
+sdl2 = { version = "0.38.0", features = ["ttf", "image"], optional = true }
 once_cell = "1.21.3"
 pnet = "0.35.0"
 atomic-wait = "1.1.0"
@@ -18,6 +18,7 @@ self_update = "0.42.0"
 openssl = { version = "0.10.59", features = ["vendored"] }
 serde-inline-default = "1.0.0"
 serialport = { version = "4.8.1", optional = true }
+rust_iso3166 = { version = "0.1.14", optional = true }
 
 [build-dependencies]
 zip = "4.2.0"
@@ -26,12 +27,18 @@ serde_json = "1.0.140"
 glob = "0.3.2"
 
 [features]
-default = ["console_backend", "sdl_frontend", "cyrano_server", "legacy_backend", "repeater"]
+default = [
+    "console_backend",
+    "sdl_frontend",
+    "cyrano_server",
+    "legacy_backend",
+    "repeater",
+]
 legacy_backend = ["serialport"]
 legacy_backend_full = ["legacy_backend", "gpio-cdev"]
 console_backend = []
 cyrano_server = []
-sdl_frontend = ["sdl2"]
+sdl_frontend = ["sdl2", "rust_iso3166"]
 video_recorder = []
 gpio_frontend = ["gpio-cdev"]
 repeater = ["serialport", "crc", "postcard"]
