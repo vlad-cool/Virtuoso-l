@@ -3,7 +3,7 @@ use sdl2::ttf::Font;
 use std::rc::Rc;
 
 use crate::match_info::MatchInfo;
-use crate::sdl_frontend::colors::WHITE_LABELS_LIGHT;
+use crate::sdl_frontend::colors::{COLOR_LABELS_RED, COLOR_LABELS_GREEN};
 use crate::sdl_frontend::widgets::Label;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
@@ -65,7 +65,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         if self.left_reserve_updated {
             self.left_reserve_widget.render(
                 format!("{}", if self.left_reserve { "R" } else { "N" }),
-                WHITE_LABELS_LIGHT,
+                COLOR_LABELS_RED,
                 None,
             );
             self.left_reserve_updated = false;
@@ -73,7 +73,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         if self.right_reserve_updated {
             self.right_reserve_widget.render(
                 format!("{}", if self.right_reserve { "R" } else { "N" }),
-                WHITE_LABELS_LIGHT,
+                COLOR_LABELS_GREEN,
                 None,
             );
             self.right_reserve_updated = false;

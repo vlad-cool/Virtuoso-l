@@ -1,48 +1,71 @@
-use sdl2;
-
-use crate::match_info::MatchInfo;
+use crate::match_info::{MatchInfo, TimerController};
 use crate::sdl_frontend::colors;
 use crate::sdl_frontend::widgets::Indicator;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
 pub struct Drawer<'a> {
-    l_color_widget: Indicator<'a>,
-    l_white_widget: Indicator<'a>,
-    r_color_widget: Indicator<'a>,
-    r_white_widget: Indicator<'a>,
+    l_color_widget_active: Indicator<'a>,
+    l_white_widget_active: Indicator<'a>,
+    r_color_widget_active: Indicator<'a>,
+    r_white_widget_active: Indicator<'a>,
+    l_color_widget_passive: Indicator<'a>,
+    l_white_widget_passive: Indicator<'a>,
+    r_color_widget_passive: Indicator<'a>,
+    r_white_widget_passive: Indicator<'a>,
 
     l_color_led_on: bool,
-    l_color_led_updated: bool,
     l_white_led_on: bool,
-    l_white_led_updated: bool,
     r_color_led_on: bool,
-    r_color_led_updated: bool,
     r_white_led_on: bool,
-    r_white_led_updated: bool,
+    timer: Option<TimerController>,
 }
 
 impl<'a> Drawer<'a> {
     pub fn new(context: WidgetContext<'a>) -> Self {
-        Self {
-            l_color_widget: Indicator::new(
+        let mut res: Drawer<'a> = Self {
+            l_color_widget_active: Indicator::new(
                 context.canvas.clone(),
                 context.texture_creator,
                 context.layout.left_color_indicator,
                 context.logger,
             ),
-            l_white_widget: Indicator::new(
+            l_white_widget_active: Indicator::new(
                 context.canvas.clone(),
                 context.texture_creator,
                 context.layout.left_white_indicator,
                 context.logger,
             ),
-            r_color_widget: Indicator::new(
+            r_color_widget_active: Indicator::new(
                 context.canvas.clone(),
                 context.texture_creator,
                 context.layout.right_color_indicator,
                 context.logger,
             ),
-            r_white_widget: Indicator::new(
+            r_white_widget_active: Indicator::new(
+                context.canvas.clone(),
+                context.texture_creator,
+                context.layout.right_white_indicator,
+                context.logger,
+            ),
+            l_color_widget_passive: Indicator::new(
+                context.canvas.clone(),
+                context.texture_creator,
+                context.layout.left_color_indicator,
+                context.logger,
+            ),
+            l_white_widget_passive: Indicator::new(
+                context.canvas.clone(),
+                context.texture_creator,
+                context.layout.left_white_indicator,
+                context.logger,
+            ),
+            r_color_widget_passive: Indicator::new(
+                context.canvas.clone(),
+                context.texture_creator,
+                context.layout.right_color_indicator,
+                context.logger,
+            ),
+            r_white_widget_passive: Indicator::new(
                 context.canvas.clone(),
                 context.texture_creator,
                 context.layout.right_white_indicator,
@@ -50,78 +73,69 @@ impl<'a> Drawer<'a> {
             ),
 
             l_color_led_on: false,
-            l_color_led_updated: true,
             l_white_led_on: false,
-            l_white_led_updated: true,
             r_color_led_on: false,
-            r_color_led_updated: true,
             r_white_led_on: false,
-            r_white_led_updated: true,
-        }
+            timer: None,
+        };
+
+        res.l_color_widget_active.render(colors::COLOR_LABELS_RED);
+        res.l_white_widget_active.render(colors::WHITE_LABELS_LIGHT);
+        res.r_color_widget_active.render(colors::COLOR_LABELS_GREEN);
+        res.r_white_widget_active.render(colors::WHITE_LABELS_LIGHT);
+        res.l_color_widget_passive
+            .render(colors::COLOR_LABELS_DARK_RED);
+        res.l_white_widget_passive.render(colors::WHITE_LABELS_DARK);
+        res.r_color_widget_passive
+            .render(colors::COLOR_LABELS_DARK_GREEN);
+        res.r_white_widget_passive.render(colors::WHITE_LABELS_DARK);
+
+        return res;
     }
 }
 
 impl<'a> VirtuosoWidget for Drawer<'a> {
     fn update(&mut self, data: &MatchInfo) {
-        if self.l_color_led_on != data.left_fencer.color_light {
-            self.l_color_led_on = data.left_fencer.color_light;
-            self.l_color_led_updated = true;
-        }
-        if self.l_white_led_on != data.left_fencer.white_light {
-            self.l_white_led_on = data.left_fencer.white_light;
-            self.l_white_led_updated = true;
-        }
-        if self.r_color_led_on != data.right_fencer.color_light {
-            self.r_color_led_on = data.right_fencer.color_light;
-            self.r_color_led_updated = true;
-        }
-        if self.r_white_led_on != data.right_fencer.white_light {
-            self.r_white_led_on = data.right_fencer.white_light;
-            self.r_white_led_updated = true;
-        }
+        self.timer = Some(data.timer_controller);
+
+        self.l_color_led_on = data.left_fencer.color_light;
+        self.l_white_led_on = data.left_fencer.white_light;
+        self.r_color_led_on = data.right_fencer.color_light;
+        self.r_white_led_on = data.right_fencer.white_light;
     }
 
     fn render(&mut self) {
-        if self.l_color_led_updated {
-            let color: sdl2::pixels::Color = if self.l_color_led_on {
-                colors::COLOR_LABELS_RED
-            } else {
-                colors::COLOR_LABELS_DARK_RED
-            };
-            self.l_color_widget.render(color);
-            self.l_color_led_updated = false;
+        let left_medical: bool = if let Some(timer) = self.timer {
+            timer.medical_left_flash()
+        } else {
+            false
+        };
+        let right_medical = if let Some(timer) = self.timer {
+            timer.medical_right_flash()
+        } else {
+            false
+        };
+
+        if self.l_color_led_on || left_medical {
+            self.l_color_widget_active.draw();
+        } else {
+            self.l_color_widget_passive.draw();
         }
-        if self.l_white_led_updated {
-            let color: sdl2::pixels::Color = if self.l_white_led_on {
-                colors::WHITE_LABELS_LIGHT
-            } else {
-                colors::WHITE_LABELS_DARK
-            };
-            self.l_white_widget.render(color);
-            self.l_white_led_updated = false;
-        }
-        if self.r_color_led_updated {
-            let color: sdl2::pixels::Color = if self.r_color_led_on {
-                colors::COLOR_LABELS_GREEN
-            } else {
-                colors::COLOR_LABELS_DARK_GREEN
-            };
-            self.r_color_widget.render(color);
-            self.r_color_led_updated = false;
-        }
-        if self.r_white_led_updated {
-            let color: sdl2::pixels::Color = if self.r_white_led_on {
-                colors::WHITE_LABELS_LIGHT
-            } else {
-                colors::WHITE_LABELS_DARK
-            };
-            self.r_white_widget.render(color);
-            self.r_white_led_updated = false;
+        if self.l_white_led_on {
+            self.l_white_widget_active.draw();
+        } else {
+            self.l_white_widget_passive.draw();
         }
 
-        self.l_color_widget.draw();
-        self.l_white_widget.draw();
-        self.r_color_widget.draw();
-        self.r_white_widget.draw();
+        if self.r_color_led_on || right_medical {
+            self.r_color_widget_active.draw();
+        } else {
+            self.r_color_widget_passive.draw();
+        }
+        if self.r_white_led_on {
+            self.r_white_widget_active.draw();
+        } else {
+            self.r_white_widget_passive.draw();
+        }
     }
 }

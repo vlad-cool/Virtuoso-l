@@ -46,6 +46,8 @@ enum Field {
     SettingsNextElement,
     SettingsPress,
 
+    Medical,
+
     Unknown,
 }
 
@@ -85,6 +87,8 @@ impl std::fmt::Display for Field {
             Field::SettingsNextMenu => write!(f, "Settings Next Menu"),
             Field::SettingsNextElement => write!(f, "Settings Next Element"),
             Field::SettingsPress => write!(f, "Settings Press"),
+
+            Field::Medical => write!(f, "Medical"),
 
             Field::Unknown => write!(f, "Unknown"),
         }
@@ -135,6 +139,8 @@ fn parse_field(input: &str) -> Field {
         "menunext" => Field::SettingsNextMenu,
         "elementnext" => Field::SettingsNextElement,
         "menupress" => Field::SettingsPress,
+
+        "medical" => Field::Medical,
 
         _ => Field::Unknown,
     }
@@ -259,8 +265,21 @@ impl ConsoleBackend {
                 );
             }
 
+            Field::Medical => {
+                if value == 0 {
+                    match_info_data.timer_controller.stop_medical_emergency();
+                } else {
+                    match_info_data
+                        .timer_controller
+                        .start_medical_emergency(if value % 2 == 0 {
+                            match_info::Side::Left
+                        } else {
+                            match_info::Side::Right
+                        });
+                }
+            }
+
             Field::Unknown => {
-                println!("Unknown field");
                 return;
             }
         }
@@ -321,6 +340,8 @@ impl ConsoleBackend {
             Field::SettingsNextMenu => {}
             Field::SettingsNextElement => {}
             Field::SettingsPress => {}
+
+            Field::Medical => {}
 
             Field::Unknown => println!("Unknown field"),
         }

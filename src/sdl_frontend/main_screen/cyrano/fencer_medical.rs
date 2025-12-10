@@ -3,7 +3,7 @@ use sdl2::ttf::Font;
 use std::rc::Rc;
 
 use crate::match_info::MatchInfo;
-use crate::sdl_frontend::colors::{FENCER_NATION_TEXT, WHITE_LABELS_LIGHT};
+use crate::sdl_frontend::colors::{COLOR_LABELS_RED, COLOR_LABELS_GREEN};
 use crate::sdl_frontend::widgets::Label;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
@@ -65,7 +65,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         if self.left_medical_updated {
             self.left_medical_widget.render(
                 format!("{}", self.left_medical),
-                WHITE_LABELS_LIGHT,
+                COLOR_LABELS_RED,
                 None,
             );
             self.left_medical_updated = false;
@@ -73,7 +73,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         if self.right_medical_updated {
             self.right_medical_widget.render(
                 format!("{}", self.right_medical),
-                FENCER_NATION_TEXT,
+                COLOR_LABELS_GREEN,
                 None,
             );
             self.right_medical_updated = false;

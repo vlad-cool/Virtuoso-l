@@ -3,7 +3,7 @@ use sdl2::ttf::Font;
 use std::rc::Rc;
 
 use crate::match_info::{FencerStatus, MatchInfo};
-use crate::sdl_frontend::colors::WHITE_LABELS_LIGHT;
+use crate::sdl_frontend::colors::{COLOR_LABELS_RED, COLOR_LABELS_GREEN};
 use crate::sdl_frontend::widgets::Label;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
@@ -65,7 +65,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         if self.left_status_updated {
             self.left_status_widget.render(
                 format!("{:1}", self.left_status),
-                WHITE_LABELS_LIGHT,
+                COLOR_LABELS_RED,
                 None,
             );
             self.left_status_updated = false;
@@ -73,7 +73,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         if self.right_status_updated {
             self.right_status_widget.render(
                 format!("{:1}", self.right_status),
-                WHITE_LABELS_LIGHT,
+                COLOR_LABELS_GREEN,
                 None,
             );
             self.right_status_updated = false;

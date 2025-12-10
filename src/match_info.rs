@@ -5,6 +5,12 @@ use std::time::{Duration, Instant};
 use crate::cyrano_server::State;
 
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
+pub enum Side {
+    Left,
+    Right,
+}
+
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum WarningCard {
     None,
     Yellow(u8),
@@ -312,6 +318,7 @@ pub struct TimerController {
         deserialize_with = "deserialize_optional_duration_to_instant"
     )]
     medical_start: Option<Instant>,
+    medical_side: Option<Side>,
 }
 
 impl TimerController {
@@ -324,7 +331,9 @@ impl TimerController {
     }
 
     pub fn is_timer_running(&self) -> bool {
-        if let Some(_) = self.stop_time {
+        if self.is_medical_active() {
+            true
+        } else if let Some(_) = self.stop_time {
             false
         } else {
             true
@@ -343,6 +352,7 @@ impl TimerController {
 
             old_time: None,
             medical_start: None,
+            medical_side: None,
         }
     }
 
@@ -482,12 +492,36 @@ impl TimerController {
         self.passive_timer_active = active;
     }
 
-    pub fn start_medical_emergency(&mut self) {
+    pub fn start_medical_emergency(&mut self, side: Side) {
         self.medical_start = Some(Instant::now());
+        self.medical_side = Some(side)
     }
 
     pub fn stop_medical_emergency(&mut self) {
         self.medical_start = None;
+        self.medical_side = None;
+    }
+
+    pub fn medical_left_flash(&self) -> bool {
+        if !self.is_medical_active() {
+            return false;
+        }
+        if self.medical_side != Some(Side::Left) {
+            return false;
+        }
+
+        return self.get_main_time().subsec_millis() % 500 < 250;
+    }
+
+    pub fn medical_right_flash(&self) -> bool {
+        if !self.is_medical_active() {
+            return false;
+        }
+        if self.medical_side != Some(Side::Right) {
+            return false;
+        }
+
+        return self.get_main_time().subsec_millis() % 500 < 250;
     }
 }
 
