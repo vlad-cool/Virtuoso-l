@@ -272,6 +272,28 @@ impl VirtuosoLogger {
     }
 }
 
+pub fn setup_panic_hook(logger: Logger) {
+    let default_hook = std::panic::take_hook();
+
+    std::panic::set_hook(Box::new(move |info| {
+        let message: String = if let Some(s) = info.payload().downcast_ref::<&str>() {
+            s.to_string()
+        } else if let Some(s) = info.payload().downcast_ref::<String>() {
+            s.clone()
+        } else {
+            "Unknown panic".to_string()
+        };
+
+        let location = info
+            .location()
+            .map(|l| format!("{}:{}", l.file(), l.line()))
+            .unwrap_or_else(|| "unknown location".to_string());
+
+        logger.error(format!("PANIC at {}: {}", location, message));
+        default_hook(info);
+    }));
+}
+
 pub trait LoggerUnwrap<T> {
     fn log_err(self, logger: &Logger);
     fn unwrap_with_logger(self, logger: &Logger) -> T;

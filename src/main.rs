@@ -62,6 +62,8 @@ fn main() {
 
     let logger: virtuoso_logger::Logger = virtuoso_logger.get_logger("Main thread".to_string());
 
+    virtuoso_logger::setup_panic_hook(logger.clone());
+
     let match_info: MatchInfo = MatchInfo::new();
 
     let hw_config: HardwareConfig = HardwareConfig::get_config(&logger);
