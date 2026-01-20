@@ -3,7 +3,7 @@ use sdl2::ttf::Font;
 use std::rc::Rc;
 
 use crate::match_info::MatchInfo;
-use crate::sdl_frontend::colors::{COLOR_LABELS_RED, COLOR_LABELS_GREEN};
+use crate::sdl_frontend::colors::{COLOR_LABELS_GREEN, COLOR_LABELS_RED};
 use crate::sdl_frontend::widgets::Label;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
@@ -63,11 +63,8 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
 
     fn render(&mut self) {
         if self.left_status_updated {
-            self.left_status_widget.render(
-                format!("{}", self.left_status),
-                COLOR_LABELS_RED,
-                None,
-            );
+            self.left_status_widget
+                .render(format!("{}", self.left_status), COLOR_LABELS_RED, None);
             self.left_status_updated = false;
         }
         if self.right_status_updated {

@@ -240,15 +240,16 @@ impl VirtuosoModule for SdlFrontend {
             }
         };
 
-        let _image_context: sdl2::image::Sdl2ImageContext = match sdl2::image::init(sdl2::image::InitFlag::PNG) {
-            Ok(image_context) => image_context,
-            Err(err) => {
-                self.context
-                    .logger
-                    .critical_error(format!("Failed to init image context, error: {err}"));
-                return;
-            }
-        };
+        let _image_context: sdl2::image::Sdl2ImageContext =
+            match sdl2::image::init(sdl2::image::InitFlag::PNG) {
+                Ok(image_context) => image_context,
+                Err(err) => {
+                    self.context
+                        .logger
+                        .critical_error(format!("Failed to init image context, error: {err}"));
+                    return;
+                }
+            };
 
         let window: Window = match video_subsystem
             .window(
@@ -315,10 +316,6 @@ impl VirtuosoModule for SdlFrontend {
         widgets.push(Box::new(score::Drawer::new(widget_context.clone())));
         widgets.push(Box::new(timer::Drawer::new(widget_context.clone())));
         widgets.push(Box::new(weapon::Drawer::new(widget_context.clone())));
-
-        // widgets.push(Box::new(fencer_name::Drawer::new(widget_context.clone())));
-        // widgets.push(Box::new(fencer_nation::Drawer::new(widget_context.clone())));
-        // widgets.push(Box::new(cyrano_status::Drawer::new(widget_context.clone())));
 
         let static_widgets: Vec<(
             layout_structure::TextProperties,

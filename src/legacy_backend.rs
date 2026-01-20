@@ -645,14 +645,12 @@ impl LegacyBackend {
                     }
                 }
                 IrCommands::LeftMedical | IrCommands::RightMedical => {
-                    if self
-                        .context
-                        .match_info
-                        .lock()
-                        .unwrap()
-                        .timer_controller
-                        .is_timer_running()
-                    {
+                    let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
+                        self.context.match_info.lock().unwrap();
+
+                    if match_info_data.timer_controller.is_timer_running() {
+                        match_info_data.timer_controller.start_stop(false);
+
                         if let Some(tx) = self.rc5_tx.as_ref() {
                             tx.send(IrFrame {
                                 new: true,
@@ -662,6 +660,9 @@ impl LegacyBackend {
                             .log_err(&self.context.logger);
                         }
                     }
+
+                    std::mem::drop(match_info_data);
+                    self.context.match_info_data_updated();
                 }
                 _ => {}
             }
