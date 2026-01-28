@@ -323,6 +323,8 @@ impl VirtuosoModule for SdlFrontend {
             String,
         )> = if self.context.hw_config.display.resolution == Resolution::Res1920X1080 {
             layouts::get_static_layout_1920x1080()
+        } else if self.context.hw_config.display.resolution == Resolution::Res1920X550 {
+            layouts::get_static_layout_1920x550()
         } else {
             vec![]
         };

@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct RectangleProperties {
     pub x: i32,
     pub y: i32,
@@ -9,7 +9,19 @@ pub struct RectangleProperties {
     pub radius: u32,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+impl RectangleProperties {
+    pub const fn get_empty() -> Self {
+        Self {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+            radius: 0,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct TextProperties {
     pub x: i32,
     pub y: i32,
@@ -18,7 +30,19 @@ pub struct TextProperties {
     pub font_size: u16,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+impl TextProperties {
+    pub const fn get_empty() -> Self {
+        Self {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+            font_size: 0,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CyranoLayout {
     pub left_name: TextProperties,
     pub left_nation: TextProperties,
@@ -61,6 +85,7 @@ pub struct CyranoLayout {
     pub static_competition_phase: TextProperties,
     pub static_poule_tableau_id: TextProperties,
     pub static_start_time: TextProperties,
+    pub static_referee: TextProperties,
 }
 
 pub struct Layout {
@@ -110,4 +135,53 @@ pub struct Layout {
     pub timer_text: TextProperties,
 
     pub cyrano_layout: Option<CyranoLayout>,
+}
+
+impl CyranoLayout {
+    pub const fn empty_layout() -> Self {
+        Self {
+            left_name: TextProperties::get_empty(),
+            left_nation: TextProperties::get_empty(),
+            left_flag: RectangleProperties::get_empty(),
+            left_score: TextProperties::get_empty(),
+            left_status: TextProperties::get_empty(),
+            left_video: TextProperties::get_empty(),
+            left_medical: TextProperties::get_empty(),
+            left_reserve: TextProperties::get_empty(),
+            left_id: TextProperties::get_empty(),
+            left_photo: RectangleProperties::get_empty(),
+
+            right_name: TextProperties::get_empty(),
+            right_nation: TextProperties::get_empty(),
+            right_flag: RectangleProperties::get_empty(),
+            right_score: TextProperties::get_empty(),
+            right_status: TextProperties::get_empty(),
+            right_video: TextProperties::get_empty(),
+            right_medical: TextProperties::get_empty(),
+            right_reserve: TextProperties::get_empty(),
+            right_id: TextProperties::get_empty(),
+            right_photo: RectangleProperties::get_empty(),
+
+            referee_name: TextProperties::get_empty(),
+            referee_nation: TextProperties::get_empty(),
+
+            piste: TextProperties::get_empty(),
+            competition_phase: TextProperties::get_empty(),
+            competition_type: TextProperties::get_empty(),
+            poule_tableau_id: TextProperties::get_empty(),
+
+            start_time: TextProperties::get_empty(),
+            local_time: TextProperties::get_empty(),
+
+            state: TextProperties::get_empty(),
+            status: TextProperties::get_empty(),
+
+            static_piste: TextProperties::get_empty(),
+            static_competition_type: TextProperties::get_empty(),
+            static_competition_phase: TextProperties::get_empty(),
+            static_poule_tableau_id: TextProperties::get_empty(),
+            static_start_time: TextProperties::get_empty(),
+            static_referee: TextProperties::get_empty(),
+        }
+    }
 }
