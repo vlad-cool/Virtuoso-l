@@ -702,6 +702,48 @@ fn make_mount_directorry(main_partition: &PathBuf) {
     }
 }
 
+fn create_run_firstlogin(main_partition: &PathBuf, qemu_name: &str) {
+    eprintln!("{}", "Creating firstlogin configuration".green());
+
+    let mut path: PathBuf = main_partition.clone();
+    path.push("root");
+    path.push(".not_logged_in_yet");
+
+    let mut firstlogin: std::fs::File = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .append(false)
+        .truncate(true)
+        .open(path)
+        .expect("Failed to open file");
+
+    firstlogin
+        .write_all(
+            "SET_LANG_BASED_ON_LOCATION=\"n\"
+PRESET_LOCALE=\"en_US.UTF-8\"
+PRESET_TIMEZONE=\"Etc/UTC\"
+
+PRESET_ROOT_PASSWORD=\"VirtuosoRoot\"
+PRESET_ROOT_KEY=\"\"
+
+PRESET_USER_NAME=\"pi\"
+PRESET_USER_PASSWORD=\"Virtuoso\"
+PRESET_USER_KEY=\"\"
+PRESET_DEFAULT_REALNAME=\"Pi\"
+PRESET_USER_SHELL=\"bash\"
+"
+            .as_bytes(),
+        )
+        .expect(&"Failed to write to file".red());
+
+    run_in_target(
+        &["/usr/bin/bash", "/usr/lib/armbian/armbian-firstlogin"],
+        &main_partition,
+        qemu_name,
+        "",
+    );
+}
+
 fn main() {
     // TODO apt-get download $(apt-rdepends <package_name> | grep -v "^ ")
 
@@ -753,42 +795,7 @@ fn main() {
 
     let qemu_path: PathBuf = copy_qemu(&main_partition, QEMU_NAME);
 
-    // run_in_target(
-    //     &["/usr/sbin/chpasswd"],
-    //     &main_partition,
-    //     QEMU_NAME,
-    //     "root:VirtuosoRoot",
-    // );
-
-    // run_in_target(
-    //     &[
-    //         "/usr/sbin/adduser",
-    //         "--quiet",
-    //         "--disabled-password",
-    //         "--gecos",
-    //         "\"\"",
-    //         "pi",
-    //     ],
-    //     &main_partition,
-    //     QEMU_NAME,
-    //     "",
-    // );
-    // run_in_target(
-    //     &["/usr/sbin/chpasswd"],
-    //     &main_partition,
-    //     QEMU_NAME,
-    //     "pi:Virtuoso",
-    // );
-
-    eprintln!(
-        "{} sudo chroot mnt/1 /bin/bash /usr/lib/armbian/armbian-firstlogin",
-        "Run and setup manually".cyan()
-    );
-
-    let mut input: String = String::new();
-    eprintln!("{}", "Press return to continue".cyan());
-    std::io::stdin().read_line(&mut input).unwrap();
-
+    create_run_firstlogin(&main_partition, QEMU_NAME);
     configure_dns(&main_partition);
     install_packages(&main_partition, QEMU_NAME);
     enable_autologin(&main_partition);
