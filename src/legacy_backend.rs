@@ -10,7 +10,7 @@ use std::sync::{MutexGuard, mpsc};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use crate::match_info::{self, Weapon};
+use crate::match_info::{self, WarningCard, Weapon};
 use crate::modules::{self, CyranoCommand, MatchInfo, VirtuosoModuleContext};
 use crate::virtuoso_config::VirtuosoConfig;
 use crate::virtuoso_logger::Logger;
@@ -302,18 +302,35 @@ impl LegacyBackend {
             self.context.match_info.lock().unwrap();
 
         #[cfg(feature = "legacy_backend_full")]
-        let sides_swapped: bool = !(msg.yellow_card_left || msg.red_card_left) && {
-            msg.yellow_card_right || msg.red_card_right
-        };
+        if !self.context.hw_config.legacy_backend.legacy_remote_cards {
+            let sides_swapped: bool = !(msg.yellow_card_left || msg.red_card_left) && {
+                msg.yellow_card_right || msg.red_card_right
+            };
 
-        #[cfg(feature = "legacy_backend_full")]
-        if match_info_data.sides_swapped != sides_swapped {
-            match_info_data.sides_swapped = sides_swapped;
+            #[cfg(feature = "legacy_backend_full")]
+            if match_info_data.sides_swapped != sides_swapped {
+                match_info_data.sides_swapped = sides_swapped;
 
-            (match_info_data.left_fencer, match_info_data.right_fencer) = (
-                match_info_data.right_fencer.clone(),
-                match_info_data.left_fencer.clone(),
-            );
+                (match_info_data.left_fencer, match_info_data.right_fencer) = (
+                    match_info_data.right_fencer.clone(),
+                    match_info_data.left_fencer.clone(),
+                );
+            }
+        }
+
+        fn parse_legacy_warning_card(yellow_card: bool, red_card: bool) -> WarningCard {
+            match (yellow_card, red_card) {
+                (false, false) => WarningCard::None,
+                (true, false) => WarningCard::Yellow(1),
+                (_, true) => WarningCard::Red(1),
+            }
+        }
+
+        if self.context.hw_config.legacy_backend.legacy_remote_cards {
+            match_info_data.left_fencer.warning_card =
+                parse_legacy_warning_card(msg.yellow_card_left, msg.red_card_left);
+            match_info_data.right_fencer.warning_card =
+                parse_legacy_warning_card(msg.yellow_card_right, msg.red_card_right);
         }
 
         Self::set_score(&mut match_info_data, msg);
@@ -407,14 +424,16 @@ impl LegacyBackend {
 
     #[cfg(feature = "legacy_backend_full")]
     fn apply_ir_data(&mut self, msg: IrFrame) {
-        if let Some(tx) = self.rc5_tx.as_ref() {
-            if msg.address == self.rc5_address && msg.command.retranslate() {
-                tx.send(IrFrame {
-                    new: msg.new,
-                    address: self.context.hw_config.legacy_backend.rc5_output_addr,
-                    command: msg.command,
-                })
-                .log_err(&self.context.logger);
+        if !self.context.hw_config.legacy_backend.legacy_remote_cards {
+            if let Some(tx) = self.rc5_tx.as_ref() {
+                if msg.address == self.rc5_address && msg.command.retranslate() {
+                    tx.send(IrFrame {
+                        new: msg.new,
+                        address: self.context.hw_config.legacy_backend.rc5_output_addr,
+                        command: msg.command,
+                    })
+                    .log_err(&self.context.logger);
+                }
             }
         }
 
@@ -505,22 +524,26 @@ impl LegacyBackend {
                     }
                 }
                 IrCommands::LeftPenaltyCard => {
-                    let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-                        self.context.match_info.lock().unwrap();
-                    if !match_info_data.timer_controller.is_timer_running() {
-                        match_info_data.left_fencer.warning_card.inc();
+                    if !self.context.hw_config.legacy_backend.legacy_remote_cards {
+                        let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
+                            self.context.match_info.lock().unwrap();
+                        if !match_info_data.timer_controller.is_timer_running() {
+                            match_info_data.left_fencer.warning_card.inc();
 
-                        std::mem::drop(match_info_data);
-                        self.context.match_info_data_updated();
+                            std::mem::drop(match_info_data);
+                            self.context.match_info_data_updated();
+                        }
                     }
                 }
                 IrCommands::RightPenaltyCard => {
-                    let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
-                        self.context.match_info.lock().unwrap();
-                    if !match_info_data.timer_controller.is_timer_running() {
-                        match_info_data.right_fencer.warning_card.inc();
-                        std::mem::drop(match_info_data);
-                        self.context.match_info_data_updated();
+                    if !self.context.hw_config.legacy_backend.legacy_remote_cards {
+                        let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
+                            self.context.match_info.lock().unwrap();
+                        if !match_info_data.timer_controller.is_timer_running() {
+                            match_info_data.right_fencer.warning_card.inc();
+                            std::mem::drop(match_info_data);
+                            self.context.match_info_data_updated();
+                        }
                     }
                 }
                 IrCommands::LeftPassiveCard => {

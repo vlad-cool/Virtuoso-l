@@ -3,6 +3,7 @@ resolution = "Res1920X1080"
 swap_sides = false
 
 [legacy_backend]
+legacy_remote_cards = true
 uart_port = "/dev/ttyUSB0"
 
 [repeater]

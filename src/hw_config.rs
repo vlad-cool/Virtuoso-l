@@ -165,6 +165,8 @@ pub struct LegacyBackendConfig {
     pub uart_port: PathBuf,
     #[serde_inline_default(false)]
     pub disable_epee_5: bool,
+    #[serde_inline_default(false)]
+    pub legacy_remote_cards: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
