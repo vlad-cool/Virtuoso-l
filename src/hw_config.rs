@@ -111,16 +111,18 @@ pub struct DisplayConfig {
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "gpio_frontend")]
 pub struct GpioFrontendConfig {
-    #[serde_inline_default(PinLocation::from_phys_number(31).unwrap())]
-    pub left_white_led_pin: PinLocation,
+    // #[serde_inline_default(PinLocation::from_phys_number(31).unwrap())]
+    // pub left_white_led_pin: PinLocation,
     #[serde_inline_default(PinLocation::from_phys_number(29).unwrap())]
     pub left_color_led_pin: PinLocation,
     #[serde_inline_default(PinLocation::from_phys_number(35).unwrap())]
     pub right_color_led_pin: PinLocation,
-    #[serde_inline_default(PinLocation::from_phys_number(38).unwrap())]
-    pub right_white_led_pin: PinLocation,
+    // #[serde_inline_default(PinLocation::from_phys_number(38).unwrap())]
+    // pub right_white_led_pin: PinLocation,
     #[serde_inline_default(PinLocation::from_phys_number(5).unwrap())]
     pub beeper_pin: PinLocation,
+    #[serde_inline_default(PinLocation::from_phys_number(38).unwrap())]
+    pub wireless_state_pin: PinLocation,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]

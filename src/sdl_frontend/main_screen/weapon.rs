@@ -17,6 +17,7 @@ pub struct Drawer<'a> {
 
     weapon: Weapon,
     epee_5: bool,
+    epee_wl: bool,
     updated: bool,
 }
 
@@ -54,15 +55,18 @@ impl<'a> Drawer<'a> {
             updated: true,
             weapon: Weapon::Epee,
             epee_5: false,
+            epee_wl: false,
         }
     }
 }
 
 impl<'a> VirtuosoWidget for Drawer<'a> {
     fn update(&mut self, data: &MatchInfo) {
-        if self.weapon != data.weapon || self.epee_5 != data.epee_5 {
+        if self.weapon != data.weapon || self.epee_5 != data.epee_5 || self.epee_wl != data.epee_wl
+        {
             self.weapon = data.weapon;
             self.epee_5 = data.epee_5;
+            self.epee_wl = data.epee_wl;
             self.updated = true;
         }
     }
@@ -70,7 +74,11 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     fn render(&mut self) {
         if self.updated {
             self.epee_widget.render(
-                format!("epee{}", if self.epee_5 { " 5" } else { "" }),
+                format!(
+                    "epee{}{}",
+                    if self.epee_5 { " 5" } else { "" },
+                    if self.epee_wl { " WL" } else { "" }
+                ),
                 if self.weapon == Weapon::Epee {
                     colors::WEAPON_TEXT_LIGHT
                 } else {

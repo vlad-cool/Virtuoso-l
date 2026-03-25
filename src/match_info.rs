@@ -662,6 +662,7 @@ pub struct MatchInfo {
     pub sides_swapped: bool,
 
     pub epee_5: bool,
+    pub epee_wl: bool,
 }
 
 impl MatchInfo {
@@ -713,6 +714,7 @@ impl MatchInfo {
             sides_swapped: false,
 
             epee_5: false,
+            epee_wl: false,
         }
     }
 }

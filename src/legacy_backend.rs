@@ -409,6 +409,10 @@ impl LegacyBackend {
         }
 
         if match_info_data.weapon != weapon {
+            if match_info_data.weapon == match_info::Weapon::Epee {
+                match_info_data.epee_wl = !match_info_data.epee_wl;
+            }
+
             match_info_data.weapon = weapon;
             match_info_data
                 .timer_controller
