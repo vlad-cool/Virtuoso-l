@@ -121,8 +121,6 @@ pub struct GpioFrontendConfig {
     // pub right_white_led_pin: PinLocation,
     #[serde_inline_default(PinLocation::from_phys_number(5).unwrap())]
     pub beeper_pin: PinLocation,
-    #[serde_inline_default(PinLocation::from_phys_number(38).unwrap())]
-    pub wireless_state_pin: PinLocation,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -163,6 +161,9 @@ pub struct LegacyBackendConfig {
     #[cfg(feature = "legacy_backend_full")]
     #[serde_inline_default(PinLocation::from_phys_number(26).unwrap())]
     pub ir_pin_tx: PinLocation,
+    #[cfg(feature = "legacy_backend_full")]
+    #[serde_inline_default(PinLocation::from_phys_number(26).unwrap())]
+    pub epee_wl_pin: PinLocation,
     #[serde_inline_default("/dev/ttyS2".into())]
     pub uart_port: PathBuf,
     #[serde_inline_default(false)]

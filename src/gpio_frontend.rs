@@ -1,7 +1,6 @@
-use gpio_cdev::{self, LineHandle};
-use std::sync::atomic::AtomicBool;
-use std::sync::{Arc, MutexGuard};
-use std::thread::{self, sleep};
+use gpio_cdev;
+use std::sync::MutexGuard;
+use std::thread;
 use std::time::Duration;
 
 use crate::match_info;
@@ -13,20 +12,6 @@ use crate::virtuoso_logger::LoggerUnwrap;
 pub struct GpioFrontend {
     context: VirtuosoModuleContext,
     modified_count: u32,
-}
-
-fn epee_wl_flasher(enable: Arc<AtomicBool>, gpio_line: LineHandle, logger: modules::Logger) {
-    loop {
-        if enable.load(std::sync::atomic::Ordering::Relaxed) {
-            gpio_line.set_value(1).unwrap_with_logger(&logger);
-            sleep(Duration::from_millis(250));
-            gpio_line.set_value(0).unwrap_with_logger(&logger);
-            sleep(Duration::from_millis(250));
-        } else {
-            gpio_line.set_value(0).unwrap_with_logger(&logger);
-            sleep(Duration::from_millis(250));
-        }
-    }
 }
 
 impl modules::VirtuosoModule for GpioFrontend {
@@ -73,21 +58,6 @@ impl modules::VirtuosoModule for GpioFrontend {
             .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "beeper")
             .unwrap_with_logger(logger);
 
-        let wireless_state_pin = hw_config
-            .gpio
-            .wireless_state_pin
-            .to_line()
-            .unwrap_with_logger(logger)
-            .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "wireless_state")
-            .unwrap_with_logger(logger);
-        let wireless_state: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
-        let wireless_state_clone: Arc<AtomicBool> = wireless_state.clone();
-        let logger_clone = logger.clone();
-
-        let _wireless_state_thread: thread::JoinHandle<()> = thread::spawn(move || {
-            epee_wl_flasher(wireless_state_clone, wireless_state_pin, logger_clone);
-        });
-
         self.set_led_state("beeper", &beeper_pin, false);
 
         loop {
@@ -98,13 +68,6 @@ impl modules::VirtuosoModule for GpioFrontend {
 
                 let match_info_data: MutexGuard<'_, match_info::MatchInfo> =
                     self.context.match_info.lock().unwrap();
-
-                let new_wireless_state: bool =
-                    match_info_data.weapon == match_info::Weapon::Epee && match_info_data.epee_wl;
-
-                if wireless_state.load(std::sync::atomic::Ordering::Relaxed) != new_wireless_state {
-                    wireless_state.store(new_wireless_state, std::sync::atomic::Ordering::Relaxed);
-                }
 
                 let left_color_led_state: bool = match_info_data.left_fencer.color_light
                     || match_info_data.left_fencer.medical_interventions > 0

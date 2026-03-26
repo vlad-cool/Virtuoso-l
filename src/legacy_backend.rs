@@ -90,6 +90,13 @@ impl modules::VirtuosoModule for LegacyBackend {
                 .weapon_btn_pin
                 .to_line()
                 .unwrap_with_logger(&self.context.logger);
+            let gpio_line_epee_wl: Line = self
+                .context
+                .hw_config
+                .legacy_backend
+                .epee_wl_pin
+                .to_line()
+                .unwrap_with_logger(&self.context.logger);
 
             thread::spawn(move || {
                 pins_handler(
@@ -98,6 +105,7 @@ impl modules::VirtuosoModule for LegacyBackend {
                     gpio_line_weapon_0,
                     gpio_line_weapon_1,
                     gpio_line_weapon_btn,
+                    gpio_line_epee_wl,
                 );
             });
         }
@@ -408,11 +416,8 @@ impl LegacyBackend {
             self.epee_5_counter = 0;
         }
 
-        if match_info_data.weapon != weapon {
-            if match_info_data.weapon == match_info::Weapon::Epee {
-                match_info_data.epee_wl = !match_info_data.epee_wl;
-            }
-
+        if match_info_data.weapon != weapon || match_info_data.epee_wl != msg.epee_wl {
+            match_info_data.epee_wl = msg.epee_wl;
             match_info_data.weapon = weapon;
             match_info_data
                 .timer_controller
@@ -1320,6 +1325,7 @@ fn rc5_receiever(tx: mpsc::SyncSender<InputData>, logger: Logger, line: gpio_cde
 struct PinsData {
     weapon: u8,
     weapon_select_btn: bool,
+    epee_wl: bool,
 }
 
 #[cfg(feature = "legacy_backend_full")]
@@ -1329,6 +1335,7 @@ fn pins_handler(
     gpio_line_weapon_0: Line,
     gpio_line_weapon_1: Line,
     gpio_line_weapon_btn: Line,
+    gpio_line_epee_wl: Line,
 ) {
     let gpio_handle_weapon_0: gpio_cdev::LineHandle = gpio_line_weapon_0
         .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read weapon 1")
@@ -1341,9 +1348,21 @@ fn pins_handler(
         .request(gpio_cdev::LineRequestFlags::INPUT, 0, "read weapon button")
         .unwrap_with_logger(&logger);
 
+    let gpio_handle_epee_wl: gpio_cdev::LineHandle = gpio_line_epee_wl
+        .request(gpio_cdev::LineRequestFlags::INPUT, 0, "wireless status")
+        .unwrap_with_logger(&logger);
+
     let mut old_pins_data: Option<PinsData> = Option::None;
+    let mut epee_wl_updated: Instant = Instant::now() - Duration::from_secs(2);
+    let mut wl_was_0: bool = false;
 
     loop {
+        if gpio_handle_epee_wl.get_value().unwrap_with_logger(&logger) == 0 {
+            wl_was_0 = true;
+        } else {
+            epee_wl_updated = Instant::now();
+        }
+
         let new_pins_data: PinsData = PinsData {
             weapon: gpio_handle_weapon_0.get_value().unwrap_with_logger(&logger) * 2
                 + gpio_handle_weapon_1.get_value().unwrap_with_logger(&logger),
@@ -1351,6 +1370,7 @@ fn pins_handler(
                 .get_value()
                 .unwrap_with_logger(&logger)
                 == 0u8,
+            epee_wl: epee_wl_updated.elapsed() < Duration::from_millis(500) && wl_was_0,
         };
 
         if old_pins_data.as_ref() != Some(&new_pins_data) {
