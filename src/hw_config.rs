@@ -162,7 +162,7 @@ pub struct LegacyBackendConfig {
     #[serde_inline_default(PinLocation::from_phys_number(26).unwrap())]
     pub ir_pin_tx: PinLocation,
     #[cfg(feature = "legacy_backend_full")]
-    #[serde_inline_default(PinLocation::from_phys_number(26).unwrap())]
+    #[serde_inline_default(PinLocation::from_phys_number(38).unwrap())]
     pub epee_wl_pin: PinLocation,
     #[serde_inline_default("/dev/ttyS2".into())]
     pub uart_port: PathBuf,
@@ -220,9 +220,6 @@ pub struct HardwareConfig {
     #[cfg(feature = "embeded_device")]
     #[serde(default, skip_serializing)]
     reinit: bool,
-    #[cfg(feature = "embeded_device")]
-    #[serde(default, skip_serializing_if = "is_false")]
-    force_file: bool,
     #[cfg(feature = "embeded_device")]
     #[serde(default, skip_serializing_if = "is_false")]
     no_protect_fs: bool,

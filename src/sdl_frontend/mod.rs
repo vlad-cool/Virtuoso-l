@@ -173,7 +173,7 @@ impl VirtuosoModule for SdlFrontend {
                         .arg("--custom-mode")
                         .arg("1920x480@60")
                         .arg("--transform")
-                        .arg("--90")
+                        .arg("90")
                         .output(),
                     Resolution::Res1920X360 => Command::new("wlr-randr")
                         .arg("--output")
@@ -198,7 +198,7 @@ impl VirtuosoModule for SdlFrontend {
                     if !stderr.trim().is_empty() {
                         self.context.logger.error(format!(
                             "{} {}",
-                            "Warning: wlr-randr stderr is not empty, stdout:", stdout
+                            "Warning: wlr-randr stderr is not empty, stderr:", stderr
                         ));
                     }
                 }
