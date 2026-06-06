@@ -15,6 +15,8 @@ pub struct Drawer<'a> {
     texture_cache_cap: LabelTextureCache<'a>,
     texture_cache_word: LabelTextureCache<'a>,
 
+    sides_swapped: bool,
+
     priority: Priority,
     updated: bool,
 }
@@ -57,6 +59,8 @@ impl<'a> Drawer<'a> {
             texture_cache_cap: LabelTextureCache::new(),
             texture_cache_word: LabelTextureCache::new(),
 
+            sides_swapped: false,
+
             priority: Priority::None,
             updated: true,
         }
@@ -69,13 +73,23 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             self.priority = data.priority;
             self.updated = true;
         }
+
+        if data.repeater_swap_sides_is_repeater != self.sides_swapped {
+            self.sides_swapped = data.repeater_swap_sides_is_repeater;
+        }
     }
 
     fn render(&mut self) {
         if self.updated {
             let (left_cap_color, left_word_color) = match self.priority {
-                Priority::Left => (colors::PRIORITY_RED, colors::PRIORITY_TEXT_LIGHT),
-                _ => (colors::PRIORITY_DARK_RED, colors::PRIORITY_TEXT_DARK),
+                Priority::Left => (
+                    colors::get_priority_left(self.sides_swapped),
+                    colors::PRIORITY_TEXT_LIGHT,
+                ),
+                _ => (
+                    colors::get_priority_left_dark(self.sides_swapped),
+                    colors::PRIORITY_TEXT_DARK,
+                ),
             };
             self.l_cap_widget.render(
                 "P".to_string(),
@@ -89,8 +103,14 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             );
 
             let (right_cap_color, right_word_color) = match self.priority {
-                Priority::Right => (colors::PRIORITY_GREEN, colors::PRIORITY_TEXT_LIGHT),
-                _ => (colors::PRIORITY_DARK_GREEN, colors::PRIORITY_TEXT_DARK),
+                Priority::Right => (
+                    colors::get_priority_right(self.sides_swapped),
+                    colors::PRIORITY_TEXT_LIGHT,
+                ),
+                _ => (
+                    colors::get_priority_right_dark(self.sides_swapped),
+                    colors::PRIORITY_TEXT_DARK,
+                ),
             };
             self.r_cap_widget.render(
                 "P".to_string(),

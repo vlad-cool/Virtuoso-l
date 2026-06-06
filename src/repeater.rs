@@ -56,10 +56,20 @@ impl modules::VirtuosoModule for Repeater {
         match self.context.hw_config.repeater.role {
             RepeaterRole::Receiver => loop {
                 match self.receive() {
-                    Ok(Message::MatchInfo(modified_count, match_info)) => {
+                    Ok(Message::MatchInfo(modified_count, mut match_info)) => {
                         self.context
                             .logger
                             .debug(format!("Got match info [{}]", modified_count));
+
+                        match_info.repeater_swap_sides_is_repeater =
+                            self.context.hw_config.repeater.swap_sides
+                                ^ match_info.repeater_swap_sides;
+
+                        if match_info.repeater_swap_sides_is_repeater {
+                            (match_info.left_fencer, match_info.right_fencer) =
+                                (match_info.right_fencer, match_info.left_fencer)
+                        }
+
                         self.context
                             .match_info
                             .lock()

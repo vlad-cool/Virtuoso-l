@@ -15,6 +15,8 @@ pub struct Drawer<'a> {
     timer_3_widget: Label<'a>,
     texture_cache: LabelTextureCache<'a>,
 
+    sides_swapped: bool,
+
     timer: TimerController,
     priority: Priority,
     updated: bool,
@@ -44,8 +46,8 @@ impl<'a> Drawer<'a> {
                 colors::TIMER_WHITE,
                 colors::TIMER_ORANGE,
                 colors::TIMER_BLUE,
-                colors::PRIORITY_RED,
-                colors::PRIORITY_GREEN,
+                colors::get_priority_left(false),
+                colors::get_priority_right(false),
             ] {
                 let key: LabelHashKey = LabelHashKey {
                     color,
@@ -86,6 +88,8 @@ impl<'a> Drawer<'a> {
             ),
             texture_cache,
 
+            sides_swapped: false,
+
             timer: TimerController::new(),
             priority: Priority::None,
             updated: true,
@@ -103,6 +107,10 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             self.timer = timer;
             self.priority = data.priority;
             self.updated = true;
+        }
+
+        if data.repeater_swap_sides_is_repeater != self.sides_swapped {
+            self.sides_swapped = data.repeater_swap_sides_is_repeater;
         }
     }
 
@@ -123,9 +131,9 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             let colon_color: sdl2::pixels::Color = if self.timer.is_timer_running() {
                 if time.subsec_millis() > 500 {
                     match self.priority {
-                        Priority::Left => colors::PRIORITY_RED,
+                        Priority::Left => colors::get_priority_left(self.sides_swapped),
                         Priority::None => color,
-                        Priority::Right => colors::PRIORITY_GREEN,
+                        Priority::Right => colors::get_priority_right(self.sides_swapped),
                     }
                 } else {
                     colors::BACKGROUND

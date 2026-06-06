@@ -15,6 +15,8 @@ pub struct Drawer<'a> {
     score_r_r_widget: Label<'a>,
     texture_cache: LabelTextureCache<'a>,
 
+    sides_swapped: bool,
+
     score_l: u32,
     score_l_updated: bool,
     score_l_update_time: Option<Instant>,
@@ -29,7 +31,10 @@ impl<'a> Drawer<'a> {
         let mut texture_cache: LabelTextureCache<'a> = LabelTextureCache::new();
 
         for char in "0123456789 ".chars() {
-            for color in [colors::SCORE_LEFT, colors::SCORE_RIGHT] {
+            for color in [
+                colors::get_score_left(false),
+                colors::get_score_right(false),
+            ] {
                 let key: LabelHashKey = LabelHashKey {
                     color,
                     text: char.to_string(),
@@ -69,6 +74,8 @@ impl<'a> Drawer<'a> {
             ),
             texture_cache,
 
+            sides_swapped: false,
+
             score_l: 0,
             score_l_updated: true,
             score_l_update_time: None,
@@ -102,6 +109,10 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             self.score_r_updated = true;
             self.score_r_update_time = data.right_fencer.score_auto_updated;
         }
+
+        if data.repeater_swap_sides_is_repeater != self.sides_swapped {
+            self.sides_swapped = data.repeater_swap_sides_is_repeater;
+        }
     }
 
     fn render(&mut self) {
@@ -113,7 +124,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             };
             self.score_l_l_widget.render(
                 score_l_l_text,
-                colors::SCORE_LEFT,
+                colors::get_score_left(self.sides_swapped),
                 Some(&mut self.texture_cache),
             );
 
@@ -124,7 +135,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             };
             self.score_l_r_widget.render(
                 score_l_r_text,
-                colors::SCORE_LEFT,
+                colors::get_score_left(self.sides_swapped),
                 Some(&mut self.texture_cache),
             );
             self.score_l_updated = false;
@@ -138,7 +149,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             };
             self.score_r_l_widget.render(
                 score_r_l_text,
-                colors::SCORE_RIGHT,
+                colors::get_score_right(self.sides_swapped),
                 Some(&mut self.texture_cache),
             );
 
@@ -149,7 +160,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             };
             self.score_r_r_widget.render(
                 score_r_r_text,
-                colors::SCORE_RIGHT,
+                colors::get_score_right(self.sides_swapped),
                 Some(&mut self.texture_cache),
             );
             self.score_r_updated = false;

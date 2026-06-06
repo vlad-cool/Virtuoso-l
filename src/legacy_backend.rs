@@ -2,11 +2,12 @@
 use gpio_cdev;
 #[cfg(feature = "legacy_backend_full")]
 use gpio_cdev::Line;
+use sdl2::mouse::SystemCursor::No;
 use serialport::SerialPort;
 
 use std::io::Read;
 use std::sync::mpsc::RecvError;
-use std::sync::{MutexGuard, mpsc};
+use std::sync::{Arc, Mutex, MutexGuard, mpsc};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -32,6 +33,8 @@ pub struct LegacyBackend {
 
     #[cfg(feature = "legacy_backend_full")]
     rc5_tx: Option<mpsc::SyncSender<IrFrame>>,
+    #[cfg(feature = "legacy_backend_full")]
+    swap_sides_tx: Option<mpsc::SyncSender<IrFrame>>,
 
     reset_passive: bool,
     last_second: bool,
@@ -113,6 +116,8 @@ impl modules::VirtuosoModule for LegacyBackend {
         #[cfg(feature = "legacy_backend_full")]
         {
             let tx: mpsc::SyncSender<InputData> = tx.clone();
+            let tx_1: mpsc::SyncSender<InputData> = tx.clone();
+
             let logger_clone: Logger = self.context.logger.clone();
             let ir_line_rx: Line = self
                 .context
@@ -134,16 +139,25 @@ impl modules::VirtuosoModule for LegacyBackend {
             // let pause_ir_receiver_1: Arc<AtomicBool> = pause_ir_receiver.clone();
             // let pause_ir_receiver_2: Arc<AtomicBool> = pause_ir_receiver_1.clone();
             thread::spawn(move || {
-                rc5_receiever(tx, logger_clone, ir_line_rx);
+                rc5_receiver(tx, logger_clone, ir_line_rx);
             });
 
             let (ir_transmitter_tx, ir_transmitter_rx) = mpsc::sync_channel::<IrFrame>(8);
+            let ir_transmitter_tx_1 = ir_transmitter_tx.clone();
 
             self.rc5_tx = Some(ir_transmitter_tx);
 
             let logger_clone: Logger = self.context.logger.clone();
             thread::spawn(move || {
                 rc5_transmitter(ir_transmitter_rx, logger_clone, ir_line_tx);
+            });
+
+            let (swap_sides_tx, swap_sides_rx) = mpsc::sync_channel::<IrFrame>(8);
+
+            self.swap_sides_tx = Some(swap_sides_tx);
+
+            thread::spawn(move || {
+                swap_sides_handler(swap_sides_rx, ir_transmitter_tx_1, tx_1);
             });
         }
 
@@ -162,6 +176,13 @@ impl modules::VirtuosoModule for LegacyBackend {
                         #[cfg(feature = "legacy_backend_full")]
                         InputData::IrCommand(msg) => {
                             self.apply_ir_data(msg);
+                        }
+                        #[cfg(feature = "legacy_backend_full")]
+                        InputData::SwapSides => {
+                            let mut match_info_data = self.context.match_info.lock().unwrap();
+                            match_info_data.repeater_swap_sides ^= true;
+                            std::mem::drop(match_info_data);
+                            self.context.match_info_data_updated();
                         }
                     };
                     self.set_auto_statuses();
@@ -197,6 +218,8 @@ impl LegacyBackend {
 
             #[cfg(feature = "legacy_backend_full")]
             rc5_tx: None,
+            #[cfg(feature = "legacy_backend_full")]
+            swap_sides_tx: None,
 
             reset_passive: false,
             last_second: false,
@@ -304,7 +327,9 @@ impl LegacyBackend {
 
     fn apply_uart_data(&mut self, msg: UartData) {
         #[cfg(feature = "legacy_backend_full")]
-        self.mark_left_fencer(msg);
+        if !self.context.hw_config.legacy_backend.legacy_remote_cards {
+            self.mark_left_fencer(msg);
+        }
 
         let mut match_info_data: MutexGuard<'_, match_info::MatchInfo> =
             self.context.match_info.lock().unwrap();
@@ -315,7 +340,6 @@ impl LegacyBackend {
                 msg.yellow_card_right || msg.red_card_right
             };
 
-            #[cfg(feature = "legacy_backend_full")]
             if match_info_data.sides_swapped != sides_swapped {
                 match_info_data.sides_swapped = sides_swapped;
 
@@ -465,6 +489,10 @@ impl LegacyBackend {
                     Some(Instant::now() + Duration::from_secs(2));
             }
             self.context.match_info_data_updated();
+        } else if msg.address == self.rc5_address && msg.command == IrCommands::FlipSides {
+            if let Some(tx) = &self.swap_sides_tx {
+                tx.send(msg);
+            }
         } else if msg.new && msg.address == self.rc5_address {
             let mut match_info_data: MutexGuard<'_, MatchInfo> =
                 self.context.match_info.lock().unwrap();
@@ -538,7 +566,6 @@ impl LegacyBackend {
                             self.context.match_info.lock().unwrap();
                         if !match_info_data.timer_controller.is_timer_running() {
                             match_info_data.left_fencer.warning_card.inc();
-
                             std::mem::drop(match_info_data);
                             self.context.match_info_data_updated();
                         }
@@ -870,6 +897,8 @@ enum InputData {
     PinsData(PinsData),
     #[cfg(feature = "legacy_backend_full")]
     IrCommand(IrFrame),
+    #[cfg(feature = "legacy_backend_full")]
+    SwapSides,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -1155,8 +1184,7 @@ impl IrCommands {
             IrCommands::PriorityRaffle => true,
 
             IrCommands::SetTime => true,
-            IrCommands::FlipSides => true,
-
+            // IrCommands::FlipSides => true,
             IrCommands::ChangeWeapon => true,
 
             IrCommands::Reset => true,
@@ -1260,7 +1288,7 @@ fn rc5_transmitter(rx: mpsc::Receiver<IrFrame>, logger: Logger, line: gpio_cdev:
 }
 
 #[cfg(feature = "legacy_backend_full")]
-fn rc5_receiever(tx: mpsc::SyncSender<InputData>, logger: Logger, line: gpio_cdev::Line) {
+fn rc5_receiver(tx: mpsc::SyncSender<InputData>, logger: Logger, line: gpio_cdev::Line) {
     let mut last_interrupt_time: u64 = 0u64;
 
     let mut receieve_buf: [u32; 14] = [1; 14];
@@ -1314,6 +1342,7 @@ fn rc5_receiever(tx: mpsc::SyncSender<InputData>, logger: Logger, line: gpio_cde
                 tx.send(InputData::IrCommand(frame)).log_err(&logger);
 
                 index = 1;
+                receieve_buf = [1; 14];
                 last_toggle_value = toggle_bit;
             }
         }
@@ -1381,5 +1410,28 @@ fn pins_handler(
         old_pins_data = Some(new_pins_data);
 
         thread::sleep(Duration::from_millis(10));
+    }
+}
+
+#[cfg(feature = "legacy_backend_full")]
+fn swap_sides_handler(
+    rx: mpsc::Receiver<IrFrame>,
+    ir_tx: mpsc::SyncSender<IrFrame>,
+    main_tx: mpsc::SyncSender<InputData>,
+) {
+    loop {
+        match rx.recv() {
+            Err(RecvError) => {}
+            Ok(msg) => {
+                if msg.new {
+                    std::thread::sleep(Duration::from_millis(500));
+                    if rx.try_recv().is_err() {
+                        ir_tx.send(msg);
+                    } else {
+                        main_tx.send(InputData::SwapSides);
+                    }
+                }
+            }
+        }
     }
 }

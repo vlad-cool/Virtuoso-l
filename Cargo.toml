@@ -19,6 +19,7 @@ openssl = { version = "0.10.59", features = ["vendored"] }
 serde-inline-default = "1.0.0"
 serialport = { version = "4.8.1", optional = true }
 rust_iso3166 = { version = "0.1.14", optional = true }
+gpiod = { version = "0.3.0", optional = true }
 
 [build-dependencies]
 zip = "4.2.0"
@@ -42,7 +43,7 @@ sdl_frontend = ["sdl2", "rust_iso3166"]
 video_recorder = []
 gpio_frontend = ["gpio-cdev"]
 repeater = ["serialport", "crc", "postcard"]
-embeded_device = []
+embeded_device = ["gpio-cdev", "gpiod"]
 
 [[bin]]
 name = "Virtuoso"

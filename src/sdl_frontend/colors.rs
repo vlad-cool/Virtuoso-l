@@ -4,8 +4,8 @@ use sdl2::pixels::Color;
 
 pub const BACKGROUND: Color = Color::RGB(0x00, 0x00, 0x00);
 
-pub const SCORE_LEFT: Color = Color::RGB(0xe3, 0x1e, 0x24);
-pub const SCORE_RIGHT: Color = Color::RGB(0x00, 0x98, 0x46);
+const SCORE_LEFT: Color = Color::RGB(0xe3, 0x1e, 0x24);
+const SCORE_RIGHT: Color = Color::RGB(0x00, 0x98, 0x46);
 
 pub const PERIOD: Color = Color::RGB(0x00, 0xa0, 0xe3);
 
@@ -34,10 +34,10 @@ pub const COLOR_LABELS_DARK_GREEN: Color = Color::RGB(0x00, 0x1e, 0x0e);
 pub const WHITE_LABELS_LIGHT: Color = Color::RGB(0xe6, 0xe6, 0xe6);
 pub const WHITE_LABELS_DARK: Color = Color::RGB(0x22, 0x22, 0x22);
 
-pub const PRIORITY_RED: Color = Color::RGB(0xe3, 0x1e, 0x24);
-pub const PRIORITY_DARK_RED: Color = Color::RGB(0x2d, 0x06, 0x07);
-pub const PRIORITY_GREEN: Color = Color::RGB(0x00, 0x98, 0x46);
-pub const PRIORITY_DARK_GREEN: Color = Color::RGB(0x00, 0x1e, 0x0e);
+const PRIORITY_LEFT: Color = Color::RGB(0xe3, 0x1e, 0x24);
+const PRIORITY_LEFT_DARK: Color = Color::RGB(0x2d, 0x06, 0x07);
+const PRIORITY_RIGHT: Color = Color::RGB(0x00, 0x98, 0x46);
+const PRIORITY_RIGHT_DARK: Color = Color::RGB(0x00, 0x1e, 0x0e);
 pub const PRIORITY_TEXT_LIGHT: Color = Color::RGB(0xe6, 0xe6, 0xe6);
 pub const PRIORITY_TEXT_DARK: Color = Color::RGB(0x66, 0x66, 0x66);
 
@@ -74,3 +74,51 @@ pub const CYRANO_ONLINE: Color = Color::RGB(0xff, 0x00, 0x00);
 
 pub const STATIC_TEXT: Color = Color::RGB(0x00, 0xa0, 0xe3);
 pub const STATIC_TEXT_GRAY: Color = Color::RGB(0x4c, 0x4c, 0x4c);
+
+pub fn get_score_left(sides_swapped: bool) -> Color {
+    if sides_swapped {
+        SCORE_RIGHT
+    } else {
+        SCORE_LEFT
+    }
+}
+
+pub fn get_score_right(sides_swapped: bool) -> Color {
+    if sides_swapped {
+        SCORE_LEFT
+    } else {
+        SCORE_RIGHT
+    }
+}
+
+pub fn get_priority_left(sides_swapped: bool) -> Color {
+    if sides_swapped {
+        PRIORITY_RIGHT
+    } else {
+        PRIORITY_LEFT
+    }
+}
+
+pub fn get_priority_left_dark(sides_swapped: bool) -> Color {
+    if sides_swapped {
+        PRIORITY_RIGHT_DARK
+    } else {
+        PRIORITY_LEFT_DARK
+    }
+}
+
+pub fn get_priority_right(sides_swapped: bool) -> Color {
+    if sides_swapped {
+        PRIORITY_LEFT
+    } else {
+        PRIORITY_RIGHT
+    }
+}
+
+pub fn get_priority_right_dark(sides_swapped: bool) -> Color {
+    if sides_swapped {
+        PRIORITY_LEFT_DARK
+    } else {
+        PRIORITY_RIGHT_DARK
+    }
+}

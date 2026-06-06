@@ -259,6 +259,23 @@ fn parse_argument(args: &Vec<String>, n: usize) -> usize {
                 );
             }
 
+            // TODO
+            // let output: Output = Command::new("systemctl")
+            //     .arg("mask")
+            //     .arg("plymouth-quit.service")
+            //     .output()
+            //     .expect(&"Failed to set theme");
+
+            // let stderr: Cow<'_, str> = String::from_utf8_lossy(&output.stderr);
+
+            // if !stderr.trim().is_empty() {
+            //     eprintln!(
+            //         "{} {}",
+            //         "Warning: stderr is not empty, stderr:",
+            //         stderr.trim()
+            //     );
+            // }
+
             n + 1
         }
         "--config-overlays" => {

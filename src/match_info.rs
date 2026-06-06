@@ -663,6 +663,9 @@ pub struct MatchInfo {
 
     pub epee_5: bool,
     pub epee_wl: bool,
+
+    pub repeater_swap_sides: bool,
+    pub repeater_swap_sides_is_repeater: bool,
 }
 
 impl MatchInfo {
@@ -715,6 +718,9 @@ impl MatchInfo {
 
             epee_5: false,
             epee_wl: false,
+
+            repeater_swap_sides: false,
+            repeater_swap_sides_is_repeater: false,
         }
     }
 }
@@ -744,7 +750,7 @@ where
 {
     if let Some(instant) = instant {
         let duration: Duration = instant.elapsed();
-        duration.serialize(serializer)
+        Some(duration).serialize(serializer)
     } else {
         None::<Duration>.serialize(serializer)
     }

@@ -8,6 +8,7 @@ use std::time::Duration;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::hw_config::RepeaterRole::Receiver;
 use crate::hw_config::Resolution;
 use crate::match_info::MatchInfo;
 use crate::modules::VirtuosoModule;
@@ -152,6 +153,39 @@ impl VirtuosoModule for SdlFrontend {
         {
             use std::borrow::Cow;
             use std::process::{Command, Output};
+
+            // TODO
+            // let output: Result<Output, std::io::Error> = Command::new("sudo")
+            //     .arg("plymouth")
+            //     .arg("quit")
+            //     .arg("--retain-splash")
+            //     .output();
+
+            // match output {
+            //     Ok(output) => {
+            //         let stdout: Cow<'_, str> = String::from_utf8_lossy(&output.stdout);
+            //         let stderr: Cow<'_, str> = String::from_utf8_lossy(&output.stderr);
+
+            //         if !stdout.trim().is_empty() {
+            //             self.context.logger.error(format!(
+            //                 "{} {}",
+            //                 "Warning: wlr-randr stdout is not empty, stdout:", stdout
+            //             ));
+            //         }
+
+            //         if !stderr.trim().is_empty() {
+            //             self.context.logger.error(format!(
+            //                 "{} {}",
+            //                 "Warning: wlr-randr stderr is not empty, stderr:", stderr
+            //             ));
+            //         }
+            //     }
+            //     Err(err) => {
+            //         self.context
+            //             .logger
+            //             .error(format!("Failed to run wlr-randr, err: {err}"));
+            //     }
+            // }
 
             let output: Result<Output, std::io::Error> =
                 match self.context.hw_config.display.resolution {

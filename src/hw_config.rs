@@ -9,6 +9,9 @@ use std::path::PathBuf;
 #[cfg(feature = "gpio-cdev")]
 use crate::gpio::PinLocation;
 
+#[cfg(feature = "gpiod")]
+use gpiod;
+
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "sdl_frontend")]
 pub enum Resolution {
@@ -42,25 +45,30 @@ impl Resolution {
     }
 }
 
-#[cfg(feature = "gpio-cdev")]
-fn read_pin_value(pin: PinLocation) -> bool {
-    let line: gpio_cdev::Line = pin.to_line().unwrap();
-
-    let handler: gpio_cdev::LineHandle = match line.request(
-        gpio_cdev::LineRequestFlags::INPUT,
-        0,
-        "hardware configuration",
-    ) {
-        Ok(line_handler) => line_handler,
-        Err(_err) => {
-            return false;
-        }
+#[cfg(feature = "gpiod")]
+fn read_pin_value_pullup(pin: PinLocation) -> bool {
+    let chip = match gpiod::Chip::new(pin.chip) {
+        Ok(c) => c,
+        Err(_) => return false,
     };
 
-    match handler.get_value() {
-        Ok(val) => val != 0,
-        Err(_err) => false,
+    let opts: gpiod::Options<gpiod::Input, [u32; 1], &str> = gpiod::Options::input([pin.line])
+        .consumer("Config jumpers")
+        .bias(gpiod::Bias::PullUp);
+
+    let lines = if let Ok(lines) = chip.request_lines(opts) {
+        lines
+    } else {
+        return false;
+    };
+
+    let mut values = [false; 1];
+
+    if lines.get_values(&mut values).is_err() {
+        return false;
     }
+
+    values[0]
 }
 
 #[cfg(feature = "sdl_frontend")]
@@ -71,9 +79,9 @@ fn load_pins_resolution() -> Resolution {
         let res_1920x480_pin: PinLocation = PinLocation::from_phys_number(27).unwrap();
         let res_1920x360_pin: PinLocation = PinLocation::from_phys_number(28).unwrap();
 
-        let res_1920x550: bool = read_pin_value(res_1920x550_pin);
-        let res_1920x480: bool = read_pin_value(res_1920x480_pin);
-        let res_1920x360: bool = read_pin_value(res_1920x360_pin);
+        let res_1920x550: bool = !read_pin_value_pullup(res_1920x550_pin);
+        let res_1920x480: bool = !read_pin_value_pullup(res_1920x480_pin);
+        let res_1920x360: bool = !read_pin_value_pullup(res_1920x360_pin);
 
         return match (res_1920x550, res_1920x480, res_1920x360) {
             (false, false, false) => Resolution::Res1920X1080,
@@ -92,7 +100,7 @@ fn load_pins_swap_sides() -> bool {
     #[cfg(feature = "gpio-cdev")]
     {
         let swap_sides_pin: PinLocation = PinLocation::from_phys_number(7).unwrap();
-        return read_pin_value(swap_sides_pin);
+        return read_pin_value_pullup(swap_sides_pin);
     }
     #[cfg(not(feature = "gpio-cdev"))]
     return false;
@@ -103,22 +111,20 @@ fn load_pins_swap_sides() -> bool {
 pub struct DisplayConfig {
     #[serde(default = "load_pins_resolution")]
     pub resolution: Resolution,
-    #[serde(default = "load_pins_swap_sides")]
-    pub swap_sides: bool,
 }
 
 #[serde_inline_default]
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "gpio_frontend")]
 pub struct GpioFrontendConfig {
-    // #[serde_inline_default(PinLocation::from_phys_number(31).unwrap())]
-    // pub left_white_led_pin: PinLocation,
+    #[serde_inline_default(PinLocation::from_phys_number(40).unwrap())]
+    pub left_white_led_pin: PinLocation,
     #[serde_inline_default(PinLocation::from_phys_number(29).unwrap())]
     pub left_color_led_pin: PinLocation,
     #[serde_inline_default(PinLocation::from_phys_number(35).unwrap())]
     pub right_color_led_pin: PinLocation,
-    // #[serde_inline_default(PinLocation::from_phys_number(38).unwrap())]
-    // pub right_white_led_pin: PinLocation,
+    #[serde_inline_default(PinLocation::from_phys_number(31).unwrap())]
+    pub right_white_led_pin: PinLocation,
     #[serde_inline_default(PinLocation::from_phys_number(5).unwrap())]
     pub beeper_pin: PinLocation,
 }
@@ -183,10 +189,9 @@ pub enum RepeaterRole {
 fn load_pins_repeater_role() -> RepeaterRole {
     #[cfg(feature = "gpio-cdev")]
     {
-        let btn_1: PinLocation = PinLocation::from_phys_number(32).unwrap();
-        let btn_2: PinLocation = PinLocation::from_phys_number(36).unwrap();
+        let repeater_role: PinLocation = PinLocation::from_phys_number(16).unwrap();
 
-        return if read_pin_value(btn_1) | read_pin_value(btn_2) {
+        return if read_pin_value_pullup(repeater_role) {
             RepeaterRole::Transmitter
         } else {
             RepeaterRole::Receiver
@@ -208,6 +213,8 @@ pub struct RepeaterConfig {
     pub uart_speed: u32,
     #[serde(default = "load_pins_repeater_role")]
     pub role: RepeaterRole,
+    #[serde(default = "load_pins_swap_sides")]
+    pub swap_sides: bool,
 }
 
 fn is_false(b: &bool) -> bool {

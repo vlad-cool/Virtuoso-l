@@ -28,13 +28,13 @@ impl modules::VirtuosoModule for GpioFrontend {
             .unwrap_with_logger(logger)
             .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "led indicators")
             .unwrap_with_logger(logger);
-        // let gpio_left_white_led = hw_config
-        //     .gpio
-        //     .left_white_led_pin
-        //     .to_line()
-        //     .unwrap_with_logger(logger)
-        //     .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "led indicators")
-        //     .unwrap_with_logger(logger);
+        let gpio_left_white_led = hw_config
+            .gpio
+            .left_white_led_pin
+            .to_line()
+            .unwrap_with_logger(logger)
+            .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "led indicators")
+            .unwrap_with_logger(logger);
         let gpio_right_color_led = hw_config
             .gpio
             .right_color_led_pin
@@ -42,13 +42,13 @@ impl modules::VirtuosoModule for GpioFrontend {
             .unwrap_with_logger(logger)
             .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "led indicators")
             .unwrap_with_logger(logger);
-        // let gpio_right_white_led = hw_config
-        //     .gpio
-        //     .right_white_led_pin
-        //     .to_line()
-        //     .unwrap_with_logger(logger)
-        //     .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "led indicators")
-        //     .unwrap_with_logger(logger);
+        let gpio_right_white_led = hw_config
+            .gpio
+            .right_white_led_pin
+            .to_line()
+            .unwrap_with_logger(logger)
+            .request(gpio_cdev::LineRequestFlags::OUTPUT, 0, "led indicators")
+            .unwrap_with_logger(logger);
 
         let beeper_pin = hw_config
             .gpio
@@ -76,16 +76,16 @@ impl modules::VirtuosoModule for GpioFrontend {
                     || match_info_data.right_fencer.medical_interventions > 0
                         && match_info_data.timer_controller.medical_right_flash();
 
-                // let left_white_led_state: bool = match_info_data.left_fencer.white_light;
-                // let right_white_led_state: bool = match_info_data.right_fencer.white_light;
+                let left_white_led_state: bool = match_info_data.left_fencer.white_light;
+                let right_white_led_state: bool = match_info_data.right_fencer.white_light;
 
                 std::mem::drop(match_info_data);
 
                 // TODO Bad fix for sides swap
                 self.set_led_state("left color", &gpio_right_color_led, left_color_led_state);
-                // self.set_led_state("left white", &gpio_right_white_led, left_white_led_state);
+                self.set_led_state("left white", &gpio_right_white_led, left_white_led_state);
                 self.set_led_state("right color", &gpio_left_color_led, right_color_led_state);
-                // self.set_led_state("right white", &gpio_left_white_led, right_white_led_state);
+                self.set_led_state("right white", &gpio_left_white_led, right_white_led_state);
             }
 
             thread::sleep(Duration::from_millis(50));
