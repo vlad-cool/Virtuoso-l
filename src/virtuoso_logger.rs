@@ -4,7 +4,9 @@ use std::io::Write;
 use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
 use std::sync::mpsc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
+
+use sdl2::mouse::SystemCursor::No;
 
 use crate::virtuoso_config::{LogLevelOption, VirtuosoConfig};
 
@@ -34,6 +36,7 @@ struct LogMessage {
     level: LogLevel,
     source: String,
     message: String,
+    time: Option<Duration>,
 }
 
 #[derive(Clone)]
@@ -44,7 +47,18 @@ enum LogCommand {
 
 impl fmt::Display for LogMessage {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[{}] {}: {}", self.level, self.source, self.message)
+        write!(
+            f,
+            "[{}]{} {}: {}",
+            self.level,
+            if let Some(time) = self.time {
+                format!(" {:.3}", time.as_secs_f32())
+            } else {
+                "".to_string()
+            },
+            self.source,
+            self.message
+        )
     }
 }
 
@@ -54,6 +68,7 @@ pub struct Logger {
     log_levels: std::vec::Vec<LogLevel>,
     source: String,
     debug: bool,
+    start_time: Option<Instant>,
 }
 
 impl Logger {
@@ -66,6 +81,7 @@ impl Logger {
             level,
             source: self.source.clone(),
             message,
+            time: self.start_time.map(|time| time.elapsed()),
         };
         if let Err(err) = self.tx.send(LogCommand::LogMessage(msg)) {
             eprintln!("Failed to send message to logger, error: {err}");
@@ -120,6 +136,7 @@ pub struct VirtuosoLogger {
     file: Option<File>,
     socket: Option<UdpSocket>,
     print_ip: bool,
+    start_time: Option<Instant>,
 }
 
 impl VirtuosoLogger {
@@ -225,6 +242,11 @@ impl VirtuosoLogger {
             file,
             socket,
             print_ip: config.udp_print_ip,
+            start_time: if config.hide_time {
+                None
+            } else {
+                Some(Instant::now())
+            },
         }
     }
 
@@ -268,6 +290,7 @@ impl VirtuosoLogger {
             log_levels: self.log_levels.clone(),
             source,
             debug: false,
+            start_time: self.start_time,
         }
     }
 }

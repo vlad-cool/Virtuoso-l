@@ -76,6 +76,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
 
         if data.repeater_swap_sides_is_repeater != self.sides_swapped {
             self.sides_swapped = data.repeater_swap_sides_is_repeater;
+            self.updated = true;
         }
     }
 

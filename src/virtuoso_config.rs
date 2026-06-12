@@ -57,6 +57,8 @@ pub struct LoggerConfig {
     pub log_level: Option<LogLevelOption>,
     pub log_path: Option<String>,
     #[serde(default, skip_serializing_if = "is_false")]
+    pub hide_time: bool,
+    #[serde(default, skip_serializing_if = "is_false")]
     pub stderr: bool,
     #[serde(default, skip_serializing_if = "is_false")]
     pub udp: bool,
@@ -71,6 +73,7 @@ impl Default for LoggerConfig {
         Self {
             log_level: None,
             log_path: None,
+            hide_time: false,
             stderr: false,
             udp: false,
             udp_port: None,

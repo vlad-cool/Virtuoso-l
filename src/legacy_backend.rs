@@ -156,8 +156,10 @@ impl modules::VirtuosoModule for LegacyBackend {
 
             self.swap_sides_tx = Some(swap_sides_tx);
 
+            let logger_clone: Logger = self.context.logger.clone();
+
             thread::spawn(move || {
-                swap_sides_handler(swap_sides_rx, ir_transmitter_tx_1, tx_1);
+                swap_sides_handler(swap_sides_rx, ir_transmitter_tx_1, tx_1, logger_clone);
             });
         }
 
@@ -1293,7 +1295,7 @@ fn rc5_receiver(tx: mpsc::SyncSender<InputData>, logger: Logger, line: gpio_cdev
 
     let mut receieve_buf: [u32; 14] = [1; 14];
     let mut index: usize = 1;
-    let mut last_toggle_value: u32 = 2;
+    let mut last_buf: [u32; 14] = [2; 14];
 
     for event in line
         .events(
@@ -1332,18 +1334,15 @@ fn rc5_receiver(tx: mpsc::SyncSender<InputData>, logger: Logger, line: gpio_cdev
             index += 1;
 
             if index == 14 {
-                let toggle_bit: u32 = receieve_buf[2];
-
                 logger.debug(format!("Got ir packet: {receieve_buf:?}"));
 
-                let frame: IrFrame =
-                    IrFrame::from_buf(receieve_buf, toggle_bit != last_toggle_value);
+                let frame: IrFrame = IrFrame::from_buf(receieve_buf, last_buf != receieve_buf);
 
                 tx.send(InputData::IrCommand(frame)).log_err(&logger);
 
                 index = 1;
+                last_buf = receieve_buf;
                 receieve_buf = [1; 14];
-                last_toggle_value = toggle_bit;
             }
         }
     }
@@ -1418,17 +1417,25 @@ fn swap_sides_handler(
     rx: mpsc::Receiver<IrFrame>,
     ir_tx: mpsc::SyncSender<IrFrame>,
     main_tx: mpsc::SyncSender<InputData>,
+    logger: Logger,
 ) {
     loop {
         match rx.recv() {
-            Err(RecvError) => {}
+            Err(RecvError) => {
+                break;
+            }
             Ok(msg) => {
                 if msg.new {
-                    std::thread::sleep(Duration::from_millis(500));
+                    std::thread::sleep(Duration::from_millis(1000));
                     if rx.try_recv().is_err() {
-                        ir_tx.send(msg);
+                        ir_tx.send(msg).unwrap_with_logger(&logger);
+                        logger.debug("Swapping sides main".into());
                     } else {
-                        main_tx.send(InputData::SwapSides);
+                        main_tx
+                            .send(InputData::SwapSides)
+                            .unwrap_with_logger(&logger);
+                        logger.debug("Swapping sides repeater".into());
+                        while rx.try_recv().is_ok() {}
                     }
                 }
             }

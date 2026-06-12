@@ -11,6 +11,8 @@ pub struct Drawer<'a> {
     left_name_widget: Label<'a>,
     right_name_widget: Label<'a>,
 
+    sides_swapped: bool,
+
     left_name: String,
     left_name_updated: bool,
     right_name: String,
@@ -38,6 +40,8 @@ impl<'a> Drawer<'a> {
                     context.logger,
                 ),
 
+                sides_swapped: false,
+
                 left_name: "".to_string(),
                 left_name_updated: true,
                 right_name: "".to_string(),
@@ -59,16 +63,23 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             self.right_name = data.right_fencer.name.clone();
             self.right_name_updated = true;
         }
+
+        if data.repeater_swap_sides_is_repeater != self.sides_swapped {
+            self.sides_swapped = data.repeater_swap_sides_is_repeater;
+        }
     }
 
     fn render(&mut self) {
+        let (left_fencer, right_fencer) = if self.sides_swapped {
+            ("Green fencer".to_string(), "Red fencer".to_string())
+        } else {
+            ("Red fencer".to_string(), "Green fencer".to_string())
+        };
+
         if self.left_name_updated {
             if self.left_name == "" {
-                self.left_name_widget.render(
-                    "Left Fencer".to_string(),
-                    FENCER_NAME_TEXT_DARK,
-                    None,
-                );
+                self.left_name_widget
+                    .render(left_fencer.to_string(), FENCER_NAME_TEXT_DARK, None);
             } else {
                 self.left_name_widget
                     .render(self.left_name.clone(), FENCER_NAME_TEXT, None);
@@ -78,7 +89,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         if self.right_name_updated {
             if self.right_name == "" {
                 self.right_name_widget.render(
-                    "Right Fencer".to_string(),
+                    right_fencer.to_string(),
                     FENCER_NAME_TEXT_DARK,
                     None,
                 );

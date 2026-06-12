@@ -13,6 +13,9 @@ pub struct Drawer<'a> {
     r_color_widget_passive: Indicator<'a>,
     r_white_widget_passive: Indicator<'a>,
 
+    sides_swapped: bool,
+    sides_swapped_updated: bool,
+
     l_color_led_on: bool,
     l_white_led_on: bool,
     r_color_led_on: bool,
@@ -72,6 +75,9 @@ impl<'a> Drawer<'a> {
                 context.logger,
             ),
 
+            sides_swapped: false,
+            sides_swapped_updated: true,
+
             l_color_led_on: false,
             l_white_led_on: false,
             r_color_led_on: false,
@@ -79,15 +85,9 @@ impl<'a> Drawer<'a> {
             timer: None,
         };
 
-        res.l_color_widget_active.render(colors::COLOR_LABELS_RED);
         res.l_white_widget_active.render(colors::WHITE_LABELS_LIGHT);
-        res.r_color_widget_active.render(colors::COLOR_LABELS_GREEN);
         res.r_white_widget_active.render(colors::WHITE_LABELS_LIGHT);
-        res.l_color_widget_passive
-            .render(colors::COLOR_LABELS_DARK_RED);
         res.l_white_widget_passive.render(colors::WHITE_LABELS_DARK);
-        res.r_color_widget_passive
-            .render(colors::COLOR_LABELS_DARK_GREEN);
         res.r_white_widget_passive.render(colors::WHITE_LABELS_DARK);
 
         return res;
@@ -102,9 +102,25 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         self.l_white_led_on = data.left_fencer.white_light;
         self.r_color_led_on = data.right_fencer.color_light;
         self.r_white_led_on = data.right_fencer.white_light;
+
+        if data.repeater_swap_sides_is_repeater != self.sides_swapped {
+            self.sides_swapped = data.repeater_swap_sides_is_repeater;
+            self.sides_swapped_updated = true;
+        }
     }
 
     fn render(&mut self) {
+        if self.sides_swapped_updated {
+            self.l_color_widget_active
+                .render(colors::get_label_left(self.sides_swapped));
+            self.r_color_widget_active
+                .render(colors::get_label_right(self.sides_swapped));
+            self.l_color_widget_passive
+                .render(colors::get_label_left_dark(self.sides_swapped));
+            self.r_color_widget_passive
+                .render(colors::get_label_right_dark(self.sides_swapped));
+        }
+
         let left_medical: bool = if let Some(timer) = self.timer {
             timer.medical_left_flash()
         } else {

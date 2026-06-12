@@ -4,7 +4,7 @@ use std::io::{Read, Write};
 use std::time::Duration;
 
 use crate::hw_config::RepeaterRole;
-use crate::match_info::MatchInfo;
+use crate::match_info::{MatchInfo, Priority};
 use crate::modules::{self, VirtuosoModuleContext};
 use crate::virtuoso_logger::LoggerUnwrap;
 
@@ -54,34 +54,51 @@ enum RecvError {
 impl modules::VirtuosoModule for Repeater {
     fn run(mut self) {
         match self.context.hw_config.repeater.role {
-            RepeaterRole::Receiver => loop {
-                match self.receive() {
-                    Ok(Message::MatchInfo(modified_count, mut match_info)) => {
-                        self.context
-                            .logger
-                            .debug(format!("Got match info [{}]", modified_count));
-
-                        match_info.repeater_swap_sides_is_repeater =
-                            self.context.hw_config.repeater.swap_sides
-                                ^ match_info.repeater_swap_sides;
-
-                        if match_info.repeater_swap_sides_is_repeater {
-                            (match_info.left_fencer, match_info.right_fencer) =
-                                (match_info.right_fencer, match_info.left_fencer)
-                        }
-
-                        self.context
-                            .match_info
-                            .lock()
-                            .unwrap()
-                            .clone_from(&match_info);
-                    }
-                    Err(err) => self
-                        .context
-                        .logger
-                        .error(format!("Failed to receive match info, error: {err:?}")),
+            RepeaterRole::Receiver => {
+                {
+                    let mut match_info: std::sync::MutexGuard<'_, MatchInfo> =
+                        self.context.match_info.lock().unwrap();
+                    match_info.repeater_swap_sides_is_repeater =
+                        self.context.hw_config.repeater.swap_sides ^ match_info.repeater_swap_sides;
                 }
-            },
+                self.context.match_info_data_updated();
+
+                loop {
+                    match self.receive() {
+                        Ok(Message::MatchInfo(modified_count, mut match_info)) => {
+                            self.context
+                                .logger
+                                .debug(format!("Got match info [{}]", modified_count));
+
+                            match_info.repeater_swap_sides_is_repeater =
+                                self.context.hw_config.repeater.swap_sides
+                                    ^ match_info.repeater_swap_sides;
+
+                            if match_info.repeater_swap_sides_is_repeater {
+                                (match_info.left_fencer, match_info.right_fencer) =
+                                    (match_info.right_fencer, match_info.left_fencer);
+
+                                match_info.priority = match match_info.priority {
+                                    Priority::Left => Priority::Right,
+                                    Priority::Right => Priority::Left,
+                                    Priority::None => Priority::None,
+                                };
+                            }
+
+                            self.context
+                                .match_info
+                                .lock()
+                                .unwrap()
+                                .clone_from(&match_info);
+                            self.context.match_info_data_updated();
+                        }
+                        Err(err) => self
+                            .context
+                            .logger
+                            .error(format!("Failed to receive match info, error: {err:?}")),
+                    }
+                }
+            }
             RepeaterRole::Transmitter => loop {
                 let match_info: std::sync::MutexGuard<'_, MatchInfo> =
                     self.context.match_info.lock().unwrap();

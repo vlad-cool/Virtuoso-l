@@ -27,10 +27,10 @@ pub const PASSIVE_DARK_RED: Color = Color::RGB(0x2d, 0x06, 0x07);
 pub const PASSIVE_TEXT_LIGHT: Color = Color::RGB(0xdf, 0xdf, 0xdf);
 pub const PASSIVE_TEXT_DARK: Color = Color::RGB(0x4c, 0x4c, 0x4c);
 
-pub const COLOR_LABELS_RED: Color = Color::RGB(0xe3, 0x1e, 0x24);
-pub const COLOR_LABELS_DARK_RED: Color = Color::RGB(0x2d, 0x06, 0x07);
-pub const COLOR_LABELS_GREEN: Color = Color::RGB(0x00, 0x98, 0x46);
-pub const COLOR_LABELS_DARK_GREEN: Color = Color::RGB(0x00, 0x1e, 0x0e);
+const COLOR_LABELS_RED: Color = Color::RGB(0xe3, 0x1e, 0x24);
+const COLOR_LABELS_DARK_RED: Color = Color::RGB(0x2d, 0x06, 0x07);
+const COLOR_LABELS_GREEN: Color = Color::RGB(0x00, 0x98, 0x46);
+const COLOR_LABELS_DARK_GREEN: Color = Color::RGB(0x00, 0x1e, 0x0e);
 pub const WHITE_LABELS_LIGHT: Color = Color::RGB(0xe6, 0xe6, 0xe6);
 pub const WHITE_LABELS_DARK: Color = Color::RGB(0x22, 0x22, 0x22);
 
@@ -120,5 +120,37 @@ pub fn get_priority_right_dark(sides_swapped: bool) -> Color {
         PRIORITY_LEFT_DARK
     } else {
         PRIORITY_RIGHT_DARK
+    }
+}
+
+pub fn get_label_left(sides_swapped: bool) -> Color {
+    if sides_swapped {
+        COLOR_LABELS_GREEN
+    } else {
+        COLOR_LABELS_RED
+    }
+}
+
+pub fn get_label_left_dark(sides_swapped: bool) -> Color {
+    if sides_swapped {
+        COLOR_LABELS_DARK_GREEN
+    } else {
+        COLOR_LABELS_DARK_RED
+    }
+}
+
+pub fn get_label_right(sides_swapped: bool) -> Color {
+    if sides_swapped {
+        COLOR_LABELS_RED
+    } else {
+        COLOR_LABELS_GREEN
+    }
+}
+
+pub fn get_label_right_dark(sides_swapped: bool) -> Color {
+    if sides_swapped {
+        COLOR_LABELS_DARK_RED
+    } else {
+        COLOR_LABELS_DARK_GREEN
     }
 }

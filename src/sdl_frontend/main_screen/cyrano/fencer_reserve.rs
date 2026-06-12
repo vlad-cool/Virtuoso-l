@@ -3,13 +3,15 @@ use sdl2::ttf::Font;
 use std::rc::Rc;
 
 use crate::match_info::MatchInfo;
-use crate::sdl_frontend::colors::{COLOR_LABELS_GREEN, COLOR_LABELS_RED};
+use crate::sdl_frontend::colors;
 use crate::sdl_frontend::widgets::Label;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
 pub struct Drawer<'a> {
     left_reserve_widget: Label<'a>,
     right_reserve_widget: Label<'a>,
+
+    sides_swapped: bool,
 
     left_reserve: bool,
     left_reserve_updated: bool,
@@ -38,6 +40,8 @@ impl<'a> Drawer<'a> {
                     context.logger,
                 ),
 
+                sides_swapped: false,
+
                 left_reserve: false,
                 left_reserve_updated: true,
                 right_reserve: false,
@@ -59,13 +63,19 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             self.right_reserve = data.right_fencer.reserve_introduction;
             self.right_reserve_updated = true;
         }
+
+        if data.repeater_swap_sides_is_repeater != self.sides_swapped {
+            self.sides_swapped = data.repeater_swap_sides_is_repeater;
+            self.left_reserve_updated = true;
+            self.right_reserve_updated = true;
+        }
     }
 
     fn render(&mut self) {
         if self.left_reserve_updated {
             self.left_reserve_widget.render(
                 format!("{}", if self.left_reserve { "R" } else { "N" }),
-                COLOR_LABELS_RED,
+                colors::get_score_left(self.sides_swapped),
                 None,
             );
             self.left_reserve_updated = false;
@@ -73,7 +83,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         if self.right_reserve_updated {
             self.right_reserve_widget.render(
                 format!("{}", if self.right_reserve { "R" } else { "N" }),
-                COLOR_LABELS_GREEN,
+                colors::get_score_right(self.sides_swapped),
                 None,
             );
             self.right_reserve_updated = false;
