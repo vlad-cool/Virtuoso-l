@@ -6,6 +6,13 @@ pub struct LegacyBackendConfig {
     pub rc5_address: u32,
 }
 
+#[cfg(feature = "repeater")]
+#[derive(Default, Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct RepeaterConfig {
+    #[serde(default)]
+    pub swap_sides: bool,
+}
+
 #[cfg(feature = "legacy_backend")]
 impl Default for LegacyBackendConfig {
     fn default() -> Self {
@@ -88,6 +95,8 @@ pub struct VirtuosoConfig {
     #[cfg(feature = "legacy_backend")]
     #[serde(default)]
     pub legacy_backend: LegacyBackendConfig,
+    #[cfg(feature = "repeater")]
+    pub repeater: RepeaterConfig,
     #[cfg(feature = "cyrano_server")]
     #[serde(default)]
     pub cyrano_server: CyranoServerConfig,

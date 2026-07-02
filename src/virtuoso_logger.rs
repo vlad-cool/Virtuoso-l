@@ -6,8 +6,6 @@ use std::str::FromStr;
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
-use sdl2::mouse::SystemCursor::No;
-
 use crate::virtuoso_config::{LogLevelOption, VirtuosoConfig};
 
 #[derive(Debug, Copy, Clone, PartialEq)]

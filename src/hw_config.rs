@@ -95,17 +95,6 @@ fn load_pins_resolution() -> Resolution {
     return Resolution::Res1920X1080;
 }
 
-#[cfg(feature = "sdl_frontend")]
-fn load_pins_swap_sides() -> bool {
-    #[cfg(feature = "gpio-cdev")]
-    {
-        let swap_sides_pin: PinLocation = PinLocation::from_phys_number(7).unwrap();
-        return read_pin_value_pullup(swap_sides_pin);
-    }
-    #[cfg(not(feature = "gpio-cdev"))]
-    return false;
-}
-
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg(feature = "sdl_frontend")]
 pub struct DisplayConfig {
@@ -213,8 +202,6 @@ pub struct RepeaterConfig {
     pub uart_speed: u32,
     #[serde(default = "load_pins_repeater_role")]
     pub role: RepeaterRole,
-    #[serde(default = "load_pins_swap_sides")]
-    pub swap_sides: bool,
 }
 
 fn is_false(b: &bool) -> bool {

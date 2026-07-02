@@ -8,7 +8,6 @@ use std::time::Duration;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::hw_config::RepeaterRole::Receiver;
 use crate::hw_config::Resolution;
 use crate::match_info::MatchInfo;
 use crate::modules::VirtuosoModule;

@@ -58,8 +58,7 @@ impl modules::VirtuosoModule for Repeater {
                 {
                     let mut match_info: std::sync::MutexGuard<'_, MatchInfo> =
                         self.context.match_info.lock().unwrap();
-                    match_info.repeater_swap_sides_is_repeater =
-                        self.context.hw_config.repeater.swap_sides ^ match_info.repeater_swap_sides;
+                    match_info.repeater_swap_sides_is_repeater = match_info.repeater_swap_sides;
                 }
                 self.context.match_info_data_updated();
 
@@ -71,8 +70,7 @@ impl modules::VirtuosoModule for Repeater {
                                 .debug(format!("Got match info [{}]", modified_count));
 
                             match_info.repeater_swap_sides_is_repeater =
-                                self.context.hw_config.repeater.swap_sides
-                                    ^ match_info.repeater_swap_sides;
+                                match_info.repeater_swap_sides;
 
                             if match_info.repeater_swap_sides_is_repeater {
                                 (match_info.left_fencer, match_info.right_fencer) =

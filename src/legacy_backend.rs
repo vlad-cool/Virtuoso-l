@@ -2,12 +2,11 @@
 use gpio_cdev;
 #[cfg(feature = "legacy_backend_full")]
 use gpio_cdev::Line;
-use sdl2::mouse::SystemCursor::No;
 use serialport::SerialPort;
 
 use std::io::Read;
 use std::sync::mpsc::RecvError;
-use std::sync::{Arc, Mutex, MutexGuard, mpsc};
+use std::sync::{MutexGuard, mpsc};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -33,8 +32,6 @@ pub struct LegacyBackend {
 
     #[cfg(feature = "legacy_backend_full")]
     rc5_tx: Option<mpsc::SyncSender<IrFrame>>,
-    #[cfg(feature = "legacy_backend_full")]
-    swap_sides_tx: Option<mpsc::SyncSender<IrFrame>>,
 
     reset_passive: bool,
     last_second: bool,
@@ -116,7 +113,6 @@ impl modules::VirtuosoModule for LegacyBackend {
         #[cfg(feature = "legacy_backend_full")]
         {
             let tx: mpsc::SyncSender<InputData> = tx.clone();
-            let tx_1: mpsc::SyncSender<InputData> = tx.clone();
 
             let logger_clone: Logger = self.context.logger.clone();
             let ir_line_rx: Line = self
@@ -135,31 +131,17 @@ impl modules::VirtuosoModule for LegacyBackend {
                 .to_line()
                 .unwrap_with_logger(&self.context.logger);
 
-            // let line_clone: Line = ir_line.clone();
-            // let pause_ir_receiver_1: Arc<AtomicBool> = pause_ir_receiver.clone();
-            // let pause_ir_receiver_2: Arc<AtomicBool> = pause_ir_receiver_1.clone();
             thread::spawn(move || {
                 rc5_receiver(tx, logger_clone, ir_line_rx);
             });
 
             let (ir_transmitter_tx, ir_transmitter_rx) = mpsc::sync_channel::<IrFrame>(8);
-            let ir_transmitter_tx_1 = ir_transmitter_tx.clone();
 
             self.rc5_tx = Some(ir_transmitter_tx);
 
             let logger_clone: Logger = self.context.logger.clone();
             thread::spawn(move || {
                 rc5_transmitter(ir_transmitter_rx, logger_clone, ir_line_tx);
-            });
-
-            let (swap_sides_tx, swap_sides_rx) = mpsc::sync_channel::<IrFrame>(8);
-
-            self.swap_sides_tx = Some(swap_sides_tx);
-
-            let logger_clone: Logger = self.context.logger.clone();
-
-            thread::spawn(move || {
-                swap_sides_handler(swap_sides_rx, ir_transmitter_tx_1, tx_1, logger_clone);
             });
         }
 
@@ -178,13 +160,6 @@ impl modules::VirtuosoModule for LegacyBackend {
                         #[cfg(feature = "legacy_backend_full")]
                         InputData::IrCommand(msg) => {
                             self.apply_ir_data(msg);
-                        }
-                        #[cfg(feature = "legacy_backend_full")]
-                        InputData::SwapSides => {
-                            let mut match_info_data = self.context.match_info.lock().unwrap();
-                            match_info_data.repeater_swap_sides ^= true;
-                            std::mem::drop(match_info_data);
-                            self.context.match_info_data_updated();
                         }
                     };
                     self.set_auto_statuses();
@@ -220,8 +195,6 @@ impl LegacyBackend {
 
             #[cfg(feature = "legacy_backend_full")]
             rc5_tx: None,
-            #[cfg(feature = "legacy_backend_full")]
-            swap_sides_tx: None,
 
             reset_passive: false,
             last_second: false,
@@ -338,9 +311,8 @@ impl LegacyBackend {
 
         #[cfg(feature = "legacy_backend_full")]
         if !self.context.hw_config.legacy_backend.legacy_remote_cards {
-            let sides_swapped: bool = !(msg.yellow_card_left || msg.red_card_left) && {
-                msg.yellow_card_right || msg.red_card_right
-            };
+            let sides_swapped: bool = !(msg.yellow_card_left || msg.red_card_left)
+                && (msg.yellow_card_right || msg.red_card_right);
 
             if match_info_data.sides_swapped != sides_swapped {
                 match_info_data.sides_swapped = sides_swapped;
@@ -459,7 +431,18 @@ impl LegacyBackend {
 
     #[cfg(feature = "legacy_backend_full")]
     fn apply_ir_data(&mut self, msg: IrFrame) {
-        if !self.context.hw_config.legacy_backend.legacy_remote_cards {
+        if self.weapon_select_btn_pressed
+            && msg.address == self.rc5_address
+            && msg.command == IrCommands::FlipSides
+        {
+            if msg.new {
+                let mut match_info: MutexGuard<'_, MatchInfo> =
+                    self.context.match_info.lock().unwrap();
+                match_info.repeater_swap_sides = !match_info.repeater_swap_sides;
+                std::mem::drop(match_info);
+                self.context.match_info_data_updated();
+            }
+        } else if !self.context.hw_config.legacy_backend.legacy_remote_cards {
             if let Some(tx) = self.rc5_tx.as_ref() {
                 if msg.address == self.rc5_address && msg.command.retranslate() {
                     tx.send(IrFrame {
@@ -491,10 +474,6 @@ impl LegacyBackend {
                     Some(Instant::now() + Duration::from_secs(2));
             }
             self.context.match_info_data_updated();
-        } else if msg.address == self.rc5_address && msg.command == IrCommands::FlipSides {
-            if let Some(tx) = &self.swap_sides_tx {
-                tx.send(msg);
-            }
         } else if msg.new && msg.address == self.rc5_address {
             let mut match_info_data: MutexGuard<'_, MatchInfo> =
                 self.context.match_info.lock().unwrap();
@@ -899,8 +878,6 @@ enum InputData {
     PinsData(PinsData),
     #[cfg(feature = "legacy_backend_full")]
     IrCommand(IrFrame),
-    #[cfg(feature = "legacy_backend_full")]
-    SwapSides,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -1003,7 +980,7 @@ fn uart_handler(tx: mpsc::SyncSender<InputData>, port: serialport::TTYPort) {
                         if Some(data) != prev_msg {
                             tx.send(InputData::UartData(data)).unwrap();
                         } else {
-                            eprintln!("Got uart packet duplicate");
+                            // eprintln!("Got uart packet duplicate");
                         }
 
                         prev_msg = Some(data);
@@ -1186,7 +1163,7 @@ impl IrCommands {
             IrCommands::PriorityRaffle => true,
 
             IrCommands::SetTime => true,
-            // IrCommands::FlipSides => true,
+            IrCommands::FlipSides => true,
             IrCommands::ChangeWeapon => true,
 
             IrCommands::Reset => true,
@@ -1334,9 +1311,9 @@ fn rc5_receiver(tx: mpsc::SyncSender<InputData>, logger: Logger, line: gpio_cdev
             index += 1;
 
             if index == 14 {
-                logger.debug(format!("Got ir packet: {receieve_buf:?}"));
-
                 let frame: IrFrame = IrFrame::from_buf(receieve_buf, last_buf != receieve_buf);
+
+                logger.debug(format!("Got ir frame: {frame:?}"));
 
                 tx.send(InputData::IrCommand(frame)).log_err(&logger);
 
@@ -1409,36 +1386,5 @@ fn pins_handler(
         old_pins_data = Some(new_pins_data);
 
         thread::sleep(Duration::from_millis(10));
-    }
-}
-
-#[cfg(feature = "legacy_backend_full")]
-fn swap_sides_handler(
-    rx: mpsc::Receiver<IrFrame>,
-    ir_tx: mpsc::SyncSender<IrFrame>,
-    main_tx: mpsc::SyncSender<InputData>,
-    logger: Logger,
-) {
-    loop {
-        match rx.recv() {
-            Err(RecvError) => {
-                break;
-            }
-            Ok(msg) => {
-                if msg.new {
-                    std::thread::sleep(Duration::from_millis(1000));
-                    if rx.try_recv().is_err() {
-                        ir_tx.send(msg).unwrap_with_logger(&logger);
-                        logger.debug("Swapping sides main".into());
-                    } else {
-                        main_tx
-                            .send(InputData::SwapSides)
-                            .unwrap_with_logger(&logger);
-                        logger.debug("Swapping sides repeater".into());
-                        while rx.try_recv().is_ok() {}
-                    }
-                }
-            }
-        }
     }
 }
