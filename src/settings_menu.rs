@@ -9,12 +9,22 @@ use self_update::cargo_crate_version;
 
 use crate::modules::{HardwareConfig, Logger};
 
+const BLOCK_SIZE: usize = 512;
+
 /*
 IP info / settings
 Mirroring
 IR info (current address)
 Licenses
 */
+
+#[derive(Debug, Clone, Copy)]
+enum RepeaterUpdateState {
+    Wait,
+    Transmitting(usize, usize),
+    Applying,
+}
+
 
 #[derive(Debug, Clone)]
 pub enum MenuItem {
@@ -26,7 +36,8 @@ pub enum MenuItem {
 pub enum MenuElement {
     IpAddressWln,
     IpAddressEth,
-    UpdateBtn(String),
+    Update(String),
+    RepeaterUpdate,
     ExitBtn,
 }
 
@@ -82,14 +93,14 @@ impl MenuElement {
                     MenuItem::Label(format!("No\ninterface\nfound"))
                 }
             }
-            Self::UpdateBtn(status) => MenuItem::Button(format!("Update\n{status}")),
+            Self::Update(status) => MenuItem::Button(format!("Update\n{status}")),
             Self::ExitBtn => MenuItem::Button(format!("Exit")),
         }
     }
 
     pub fn press(&mut self, logger: &Logger, menu_shown: Arc<AtomicBool>) {
         match self {
-            Self::UpdateBtn(res_status) => {
+            Self::Update(res_status) => {
                 let mut backend: self_update::backends::github::UpdateBuilder =
                     self_update::backends::github::Update::configure();
 
@@ -182,13 +193,16 @@ impl SettingsMenu {
         Self {
             tabs: vec![
                 MenuTab {
-                    name: "Internet".to_string(),
+                    name: "Connection".to_string(),
                     elements: vec![MenuElement::IpAddressEth, MenuElement::IpAddressWln],
                     index: 0,
                 },
                 MenuTab {
                     name: "Update".to_string(),
-                    elements: vec![MenuElement::UpdateBtn("".to_string())],
+                    elements: vec![
+                        MenuElement::Update("".to_string()),
+                        MenuElement::RepeaterUpdate,
+                    ],
                     index: 0,
                 },
                 MenuTab {

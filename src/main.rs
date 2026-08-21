@@ -7,6 +7,7 @@ mod port_manager;
 mod settings_menu;
 mod virtuoso_config;
 mod virtuoso_logger;
+mod repeater_bridge;
 
 use crate::hw_config::HardwareConfig;
 use crate::modules::{SettingsMenu, VirtuosoModule, VirtuosoModuleContext};
@@ -36,6 +37,14 @@ mod gpio_frontend;
 mod repeater;
 
 fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    
+    if args.len() > 1 && args[1] == "--repeater-bridge".to_string() {
+        crate::repeater_bridge::run_client(args);
+        return;
+    }
+
+
     #[cfg(feature = "video_recorder")]
     compile_error!("Video recorder feature is not implemented yet");
 
