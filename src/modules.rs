@@ -41,6 +41,8 @@ pub struct VirtuosoModuleContext {
     pub cyrano_command_rx: Arc<Mutex<Option<mpsc::Receiver<CyranoCommand>>>>,
 
     pub port_manager: Arc<Mutex<PortManager>>,
+
+    pub updating: Arc<AtomicBool>,
 }
 
 impl VirtuosoModuleContext {
@@ -68,6 +70,8 @@ impl VirtuosoModuleContext {
             cyrano_command_rx: Arc::new(Mutex::new(Some(cyrano_rx))),
 
             port_manager: Arc::new(Mutex::new(PortManager::new())),
+
+            updating: Arc::new(AtomicBool::new(false)),
         }
     }
 

@@ -3,6 +3,7 @@ use sdl2::rwops::RWops;
 use sdl2::video::{Window, WindowContext};
 
 use std::sync::MutexGuard;
+use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use std::cell::RefCell;
@@ -77,8 +78,8 @@ mod start_time;
 mod auto_status;
 #[path = "main_screen/led_repeater.rs"]
 mod led_repeater;
-#[path = "settings_menu/menu.rs"]
-mod menu;
+#[path = "settings_menu/update.rs"]
+mod update;
 #[path = "main_screen/message.rs"]
 mod message;
 #[path = "main_screen/passive_card.rs"]
@@ -423,7 +424,9 @@ impl VirtuosoModule for SdlFrontend {
             }
         }
 
-        let mut settings_menu: menu::Drawer<'_> = menu::Drawer::new(widget_context.clone());
+        let mut updater: update::Drawer<'_> = update::Drawer::new(widget_context.clone());
+
+        let mut was_updating: bool = false;
 
         canvas.borrow_mut().present();
 
@@ -443,13 +446,18 @@ impl VirtuosoModule for SdlFrontend {
 
             if self
                 .context
-                .settings_menu_shown
+                .updating
                 .load(std::sync::atomic::Ordering::Relaxed)
             {
+                if !was_updating {
+                    updater.start_update(self.context.updating.clone());
+                }
+
                 canvas.borrow_mut().clear();
-                settings_menu.update(&self.context.settings_menu.lock().unwrap());
-                settings_menu.render();
+                updater.update(&self.context.settings_menu.lock().unwrap());
+                updater.render();
                 canvas.borrow_mut().present();
+
                 std::thread::sleep(Duration::from_millis(40));
             } else {
                 let data: MutexGuard<'_, MatchInfo> = self
@@ -468,6 +476,8 @@ impl VirtuosoModule for SdlFrontend {
                 }
                 canvas.borrow_mut().present();
             }
+
+            was_updating = self.context.updating.load(Ordering::Relaxed);
         }
     }
 }

@@ -1,3 +1,4 @@
+use self_update::backends::gitea::Update;
 use serde::{Deserialize, Serialize};
 use serialport::SerialPort;
 use std::io::{Read, Write};
@@ -30,6 +31,7 @@ pub struct Repeater {
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 enum Message {
     MatchInfo(u32, MatchInfo),
+    Update,
     // Potentially more types for updates and other
 }
 
@@ -37,6 +39,7 @@ impl std::fmt::Display for Message {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Message::MatchInfo(_, _) => write!(f, "match info"),
+            Message::Update => write!(f, "update"),
         }
     }
 }
@@ -90,6 +93,11 @@ impl modules::VirtuosoModule for Repeater {
                                 .clone_from(&match_info);
                             self.context.match_info_data_updated();
                         }
+                        Ok(Message::Update) => {
+                            self.context
+                                .updating
+                                .store(true, std::sync::atomic::Ordering::Relaxed);
+                        }
                         Err(err) => self
                             .context
                             .logger
@@ -98,8 +106,16 @@ impl modules::VirtuosoModule for Repeater {
                 }
             }
             RepeaterRole::Transmitter => loop {
-                let match_info: std::sync::MutexGuard<'_, MatchInfo> =
+                let mut match_info: std::sync::MutexGuard<'_, MatchInfo> =
                     self.context.match_info.lock().unwrap();
+
+                if match_info.repeater_update {
+                    match_info.repeater_update = false;
+                    std::mem::drop(match_info);
+                    self.transmit(&Message::Update);
+                    continue;
+                }
+
                 let modified_count: u32 = self.context.get_modified_count();
 
                 let match_info_cloned: MatchInfo = match_info.clone();

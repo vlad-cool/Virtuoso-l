@@ -666,6 +666,8 @@ pub struct MatchInfo {
 
     pub repeater_swap_sides: bool,
     pub repeater_swap_sides_is_repeater: bool,
+
+    pub repeater_update: bool,
 }
 
 impl MatchInfo {
@@ -721,6 +723,8 @@ impl MatchInfo {
 
             repeater_swap_sides: false,
             repeater_swap_sides_is_repeater: false,
+
+            repeater_update: false,
         }
     }
 }

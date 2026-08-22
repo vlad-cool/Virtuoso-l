@@ -444,7 +444,31 @@ impl LegacyBackend {
             }
         } else if !self.context.hw_config.legacy_backend.legacy_remote_cards {
             if let Some(tx) = self.rc5_tx.as_ref() {
-                if msg.address == self.rc5_address && msg.command.retranslate() {
+                use crate::legacy_backend::IrCommands::LeftScoreDecrement;
+
+                let mut match_info: MutexGuard<'_, MatchInfo> =
+                    self.context.match_info.lock().unwrap();
+                match_info.repeater_swap_sides = !match_info.repeater_swap_sides;
+                let left_score = match_info.left_fencer.score;
+                let right_score = match_info.right_fencer.score;
+                std::mem::drop(match_info);
+
+                if msg.address == self.rc5_address
+                    && msg.command == LeftScoreDecrement
+                    && left_score == 0
+                {
+                    self.context
+                        .updating
+                        .store(true, std::sync::atomic::Ordering::Relaxed);
+                } else if msg.address == self.rc5_address
+                    && msg.command == LeftScoreDecrement
+                    && right_score == 0
+                {
+                    let mut match_info: MutexGuard<'_, MatchInfo> =
+                        self.context.match_info.lock().unwrap();
+                    match_info.repeater_update = true;
+                    std::mem::drop(match_info);
+                } else if msg.address == self.rc5_address && msg.command.retranslate() {
                     tx.send(IrFrame {
                         new: msg.new,
                         address: self.context.hw_config.legacy_backend.rc5_output_addr,
