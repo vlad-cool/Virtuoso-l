@@ -456,6 +456,7 @@ impl LegacyBackend {
                 if msg.address == self.rc5_address
                     && msg.command == LeftScoreDecrement
                     && left_score == 0
+                    && self.weapon_select_btn_pressed
                 {
                     self.context
                         .updating
@@ -463,6 +464,7 @@ impl LegacyBackend {
                 } else if msg.address == self.rc5_address
                     && msg.command == LeftScoreDecrement
                     && right_score == 0
+                    && self.weapon_select_btn_pressed
                 {
                     let mut match_info: MutexGuard<'_, MatchInfo> =
                         self.context.match_info.lock().unwrap();
