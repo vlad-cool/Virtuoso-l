@@ -32,7 +32,6 @@ pub struct Repeater {
 enum Message {
     MatchInfo(u32, MatchInfo),
     Update,
-    // Potentially more types for updates and other
 }
 
 impl std::fmt::Display for Message {
@@ -94,14 +93,18 @@ impl modules::VirtuosoModule for Repeater {
                             self.context.match_info_data_updated();
                         }
                         Ok(Message::Update) => {
+                            self.context.logger.info("Starting update on the repeater".to_string());
                             self.context
                                 .updating
                                 .store(true, std::sync::atomic::Ordering::Relaxed);
                         }
-                        Err(err) => self
-                            .context
-                            .logger
-                            .error(format!("Failed to receive match info, error: {err:?}")),
+                        Err(err) => match err {
+                            RecvError::Timeout => {}
+                            err => self
+                                .context
+                                .logger
+                                .error(format!("Failed to receive match info, error: {err:?}")),
+                        },
                     }
                 }
             }

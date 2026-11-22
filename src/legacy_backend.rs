@@ -441,43 +441,44 @@ impl LegacyBackend {
                 match_info.repeater_swap_sides = !match_info.repeater_swap_sides;
                 std::mem::drop(match_info);
                 self.context.match_info_data_updated();
-            }
-        } else if !self.context.hw_config.legacy_backend.legacy_remote_cards {
-            if let Some(tx) = self.rc5_tx.as_ref() {
-                use crate::legacy_backend::IrCommands::LeftScoreDecrement;
-
-                let mut match_info: MutexGuard<'_, MatchInfo> =
-                    self.context.match_info.lock().unwrap();
-                match_info.repeater_swap_sides = !match_info.repeater_swap_sides;
-                let left_score = match_info.left_fencer.score;
-                let right_score = match_info.right_fencer.score;
-                std::mem::drop(match_info);
-
-                if msg.address == self.rc5_address
-                    && msg.command == LeftScoreDecrement
-                    && left_score == 0
-                    && self.weapon_select_btn_pressed
-                {
-                    self.context
-                        .updating
-                        .store(true, std::sync::atomic::Ordering::Relaxed);
-                } else if msg.address == self.rc5_address
-                    && msg.command == LeftScoreDecrement
-                    && right_score == 0
-                    && self.weapon_select_btn_pressed
-                {
+            } else if !self.context.hw_config.legacy_backend.legacy_remote_cards {
+                if let Some(tx) = self.rc5_tx.as_ref() {
                     let mut match_info: MutexGuard<'_, MatchInfo> =
                         self.context.match_info.lock().unwrap();
-                    match_info.repeater_update = true;
+                    match_info.repeater_swap_sides = !match_info.repeater_swap_sides;
                     std::mem::drop(match_info);
-                } else if msg.address == self.rc5_address && msg.command.retranslate() {
-                    tx.send(IrFrame {
-                        new: msg.new,
-                        address: self.context.hw_config.legacy_backend.rc5_output_addr,
-                        command: msg.command,
-                    })
-                    .log_err(&self.context.logger);
                 }
+            }
+        }
+
+        if self.weapon_select_btn_pressed && msg.address == self.rc5_address {
+            let (left_score, right_score) = {
+                let match_info: MutexGuard<'_, MatchInfo> = self.context.match_info.lock().unwrap();
+                (match_info.left_fencer.score, match_info.right_fencer.score)
+            };
+
+            if msg.command == IrCommands::LeftScoreDecrement && left_score == 0 {
+                self.context.logger.info("Starting update on main machine".to_string());
+                self.context
+                .updating
+                .store(true, std::sync::atomic::Ordering::Relaxed);
+        } else if msg.command == IrCommands::RightScoreDecrement && right_score == 0 {
+                self.context.logger.info("Starting update on repeater".to_string());
+                let mut match_info: MutexGuard<'_, MatchInfo> =
+                    self.context.match_info.lock().unwrap();
+                match_info.repeater_update = true;
+                std::mem::drop(match_info);
+            }
+        }
+
+        if msg.address == self.rc5_address && msg.command.retranslate() {
+            if let Some(tx) = &self.rc5_tx {
+                tx.send(IrFrame {
+                    new: msg.new,
+                    address: self.context.hw_config.legacy_backend.rc5_output_addr,
+                    command: msg.command,
+                })
+                .log_err(&self.context.logger);
             }
         }
 

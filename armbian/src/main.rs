@@ -480,6 +480,7 @@ fn install_packages(main_partition: &PathBuf, qemu_name: &str) {
             "install",
             "-y",
             "sway",
+            "wayvnc",
             "mingetty",
             "overlayroot",
             "libsdl2-2.0-0",
@@ -581,6 +582,7 @@ root    ALL=(ALL:ALL) ALL
 %sudo ALL=(ALL:ALL) ALL, NOPASSWD: /usr/sbin/update-initramfs
 @includedir /etc/sudoers.d
 pi ALL=(ALL) NOPASSWD: /usr/bin/plymouth
+pi ALL=(ALL) NOPASSWD: /usr/sbin/reboot
 ".as_bytes(),
     )
     .expect(&"Failed to write to file".red());

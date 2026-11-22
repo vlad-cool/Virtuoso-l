@@ -42,6 +42,10 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     }
 
     fn render(&mut self) {
+        if !self.timer.is_passive_timer_enabled() {
+            return;
+        }
+
         {
             let passive_timer: Duration = self
                 .timer

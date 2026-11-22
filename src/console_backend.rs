@@ -45,6 +45,7 @@ enum Field {
     SettingsNextMenu,
     SettingsNextElement,
     SettingsPress,
+    RunUpdate,
 
     LeftFlag,
 
@@ -89,6 +90,7 @@ impl std::fmt::Display for Field {
             Field::SettingsNextMenu => write!(f, "Settings Next Menu"),
             Field::SettingsNextElement => write!(f, "Settings Next Element"),
             Field::SettingsPress => write!(f, "Settings Press"),
+            Field::RunUpdate => write!(f, "Run Update"),
 
             Field::LeftFlag => write!(f, "Left Flag"),
 
@@ -143,6 +145,7 @@ fn parse_field(input: &str) -> Field {
         "menunext" => Field::SettingsNextMenu,
         "elementnext" => Field::SettingsNextElement,
         "menupress" => Field::SettingsPress,
+        "runupdate" => Field::RunUpdate,
 
         "leftflag" => Field::LeftFlag,
 
@@ -270,6 +273,11 @@ impl ConsoleBackend {
                     self.context.settings_menu_shown.clone(),
                 );
             }
+            Field::RunUpdate => {
+                self.context
+                    .updating
+                    .store(value > 0, std::sync::atomic::Ordering::Relaxed);
+            }
 
             Field::Medical => {
                 if value == 0 {
@@ -348,6 +356,7 @@ impl ConsoleBackend {
             Field::SettingsNextMenu => {}
             Field::SettingsNextElement => {}
             Field::SettingsPress => {}
+            Field::RunUpdate => {}
 
             Field::Medical => {}
 

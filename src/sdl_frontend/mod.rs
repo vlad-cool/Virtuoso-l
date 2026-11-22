@@ -78,8 +78,6 @@ mod start_time;
 mod auto_status;
 #[path = "main_screen/led_repeater.rs"]
 mod led_repeater;
-#[path = "settings_menu/update.rs"]
-mod update;
 #[path = "main_screen/message.rs"]
 mod message;
 #[path = "main_screen/passive_card.rs"]
@@ -100,6 +98,8 @@ mod score;
 mod static_widget;
 #[path = "main_screen/timer.rs"]
 mod timer;
+#[path = "settings_menu/update.rs"]
+mod update;
 #[path = "main_screen/weapon.rs"]
 mod weapon;
 
@@ -450,8 +450,12 @@ impl VirtuosoModule for SdlFrontend {
                 .load(std::sync::atomic::Ordering::Relaxed)
             {
                 if !was_updating {
+                    self.context.logger.info("Starting update 1!".to_string());
                     updater.start_update(self.context.updating.clone());
+                    self.context.logger.info("Starting update 2!".to_string());
                 }
+
+                was_updating = true;
 
                 canvas.borrow_mut().clear();
                 updater.update(&self.context.settings_menu.lock().unwrap());
@@ -460,6 +464,7 @@ impl VirtuosoModule for SdlFrontend {
 
                 std::thread::sleep(Duration::from_millis(40));
             } else {
+                was_updating = false;
                 let data: MutexGuard<'_, MatchInfo> = self
                     .context
                     .match_info
@@ -476,8 +481,6 @@ impl VirtuosoModule for SdlFrontend {
                 }
                 canvas.borrow_mut().present();
             }
-
-            was_updating = self.context.updating.load(Ordering::Relaxed);
         }
     }
 }

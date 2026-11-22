@@ -13,7 +13,6 @@ pub struct Drawer<'a> {
     texture_cache: LabelTextureCache<'a>,
 
     timer: TimerController,
-
     updated: bool,
 }
 

@@ -8,6 +8,7 @@ use std::sync::atomic::AtomicBool;
 use std::thread;
 use std::time::Duration;
 
+use crate::modules::Logger;
 use crate::sdl_frontend::WidgetContext;
 use crate::sdl_frontend::colors;
 use crate::sdl_frontend::colors::*;
@@ -20,6 +21,7 @@ pub struct Drawer<'a> {
     status_widget: Label<'a>,
     status: Arc<Mutex<String>>,
     status_string: String,
+    logger: Logger,
 }
 
 impl<'a> Drawer<'a> {
@@ -40,8 +42,9 @@ impl<'a> Drawer<'a> {
                 },
                 context.logger,
             ),
-            status: Arc::new(Mutex::new("".to_string())),
+            status: Arc::new(Mutex::new("Idle".to_string())),
             status_string: "".to_string(),
+            logger: context.logger.clone(),
         }
     }
 
@@ -60,10 +63,13 @@ impl<'a> Drawer<'a> {
 
     pub fn start_update(&self, state: Arc<AtomicBool>) {
         let status_clone: Arc<Mutex<String>> = self.status.clone();
-        thread::spawn(move || Self::update_process(status_clone, state));
+        let logger = self.logger.clone();
+        thread::spawn(move || Self::update_process(status_clone, state, logger));
     }
 
-    fn update_process(status: Arc<Mutex<String>>, state: Arc<AtomicBool>) {
+    fn update_process(status: Arc<Mutex<String>>, state: Arc<AtomicBool>, logger: Logger) {
+        *status.lock().unwrap() = "Fetching update".to_string();
+
         let mut backend: self_update::backends::github::UpdateBuilder =
             self_update::backends::github::Update::configure();
 
@@ -78,7 +84,7 @@ impl<'a> Drawer<'a> {
         let update = match update_builder.build() {
             Ok(update) => update,
             Err(err) => {
-                // logger.error(format!("Failed to build updater, err: {err}"));
+                logger.error(format!("Failed to build updater, err: {err}"));
                 *status.lock().unwrap() = format!("Error: {err}");
                 std::thread::sleep(Duration::from_secs(10));
                 state.store(false, std::sync::atomic::Ordering::Relaxed);
@@ -86,16 +92,22 @@ impl<'a> Drawer<'a> {
             }
         };
 
+        logger.info("Update built".to_string());
+
+        *status.lock().unwrap() = format!("Downloading update");
+
         let update_status: self_update::Status = match update.update() {
             Ok(status) => status,
             Err(err) => {
-                // logger.error(format!("Failed to update, err: {err}"));
+                logger.error(format!("Failed to update, err: {err}"));
                 *status.lock().unwrap() = format!("Error: {err}");
                 std::thread::sleep(Duration::from_secs(10));
                 state.store(false, std::sync::atomic::Ordering::Relaxed);
                 return;
             }
         };
+
+        logger.info(format!("Update status: {update_status}"));
 
         if update_status.updated() {
             *status.lock().unwrap() =
@@ -105,5 +117,7 @@ impl<'a> Drawer<'a> {
         }
         std::thread::sleep(Duration::from_secs(10));
         state.store(false, std::sync::atomic::Ordering::Relaxed);
+
+        logger.info(format!("Update finished"));
     }
 }

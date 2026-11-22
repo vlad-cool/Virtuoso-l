@@ -7,6 +7,7 @@ mod port_manager;
 mod settings_menu;
 mod virtuoso_config;
 mod virtuoso_logger;
+mod virtuoso_updater;
 
 use crate::hw_config::HardwareConfig;
 use crate::modules::{SettingsMenu, VirtuosoModule, VirtuosoModuleContext};
