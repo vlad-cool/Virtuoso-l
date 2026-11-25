@@ -34,6 +34,9 @@ mod cyrano_status;
 #[path = "main_screen/cyrano/fencer_flag.rs"]
 mod fencer_flag;
 #[cfg(feature = "cyrano_server")]
+#[path = "main_screen/cyrano/fencer_photo.rs"]
+mod fencer_photo;
+#[cfg(feature = "cyrano_server")]
 #[path = "main_screen/cyrano/fencer_id.rs"]
 mod fencer_id;
 #[cfg(feature = "cyrano_server")]
@@ -420,6 +423,9 @@ impl VirtuosoModule for SdlFrontend {
                 widgets.push(Box::new(widget));
             }
             if let Some(widget) = fencer_flag::Drawer::new(widget_context.clone()) {
+                widgets.push(Box::new(widget));
+            }
+            if let Some(widget) = fencer_photo::Drawer::new(widget_context.clone()) {
                 widgets.push(Box::new(widget));
             }
         }

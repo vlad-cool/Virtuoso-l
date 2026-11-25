@@ -1,16 +1,19 @@
+use std::rc::Rc;
 use std::time::Duration;
 
 use sdl2;
 use sdl2::pixels::Color;
+use sdl2::ttf::Font;
 
 use crate::match_info::{MatchInfo, TimerController};
-use crate::sdl_frontend::colors;
+use crate::sdl_frontend::colors::{self, INACTIVE};
 use crate::sdl_frontend::layout_structure::RectangleProperties;
-use crate::sdl_frontend::widgets::Indicator;
+use crate::sdl_frontend::widgets::{Card, Indicator};
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
 pub struct Drawer<'a> {
     passive_indicator_widget: Indicator<'a>,
+    passive_indicator_background_widget: Card<'a>,
     position: RectangleProperties,
 
     timer: TimerController,
@@ -19,6 +22,25 @@ pub struct Drawer<'a> {
 
 impl<'a> Drawer<'a> {
     pub fn new(context: WidgetContext<'a>) -> Self {
+        let font: Rc<Font<'_, '_>> = context.get_font(0);
+
+        let mut passive_indicator_background_widget = Card::new(
+            context.canvas.clone(),
+            context.texture_creator,
+            font,
+            context.layout.passive_indicator.to_text_properties(0),
+            context.layout.passive_indicator,
+            context.logger,
+        );
+
+        passive_indicator_background_widget.render(
+            &"".to_string(),
+            0,
+            INACTIVE,
+            INACTIVE,
+            INACTIVE,
+        );
+
         Self {
             passive_indicator_widget: Indicator::new(
                 context.canvas.clone(),
@@ -26,6 +48,7 @@ impl<'a> Drawer<'a> {
                 context.layout.passive_indicator,
                 context.logger,
             ),
+            passive_indicator_background_widget,
             position: context.layout.passive_indicator.clone(),
             timer: TimerController::new(),
             updated: true,
@@ -80,6 +103,8 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             self.passive_indicator_widget.render(color);
             self.updated = false;
         }
+
+        self.passive_indicator_background_widget.draw();
         self.passive_indicator_widget.draw();
     }
 }

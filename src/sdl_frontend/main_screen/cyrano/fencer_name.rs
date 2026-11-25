@@ -3,7 +3,7 @@ use sdl2::ttf::Font;
 use std::rc::Rc;
 
 use crate::match_info::MatchInfo;
-use crate::sdl_frontend::colors::{FENCER_NAME_TEXT, FENCER_NAME_TEXT_DARK};
+use crate::sdl_frontend::colors::{FENCER_NAME_TEXT, INACTIVE};
 use crate::sdl_frontend::widgets::Label;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
@@ -72,16 +72,18 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     }
 
     fn render(&mut self) {
-        let (left_fencer, right_fencer) = if self.sides_swapped {
-            ("Green fencer".to_string(), "Red fencer".to_string())
-        } else {
-            ("Red fencer".to_string(), "Green fencer".to_string())
-        };
+        // let (left_fencer, right_fencer) = if self.sides_swapped {
+        //     ("Green fencer".to_string(), "Red fencer".to_string())
+        // } else {
+        //     ("Red fencer".to_string(), "Green fencer".to_string())
+        // };
+        let (left_fencer, right_fencer) =
+            ("Fencer's name".to_string(), "Fencer's name".to_string());
 
         if self.left_name_updated {
             if self.left_name == "" {
                 self.left_name_widget
-                    .render(left_fencer.to_string(), FENCER_NAME_TEXT_DARK, None);
+                    .render(left_fencer.to_string(), INACTIVE, None);
             } else {
                 self.left_name_widget
                     .render(self.left_name.clone(), FENCER_NAME_TEXT, None);
@@ -92,7 +94,7 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
             if self.right_name == "" {
                 self.right_name_widget.render(
                     right_fencer.to_string(),
-                    FENCER_NAME_TEXT_DARK,
+                    INACTIVE,
                     None,
                 );
             } else {

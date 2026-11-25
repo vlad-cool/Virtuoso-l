@@ -19,6 +19,16 @@ impl RectangleProperties {
             radius: 0,
         }
     }
+
+    pub fn to_text_properties(&self, font_size: u16) -> TextProperties {
+        TextProperties {
+            x: self.x,
+            y: self.y,
+            width: self.width,
+            height: self.height,
+            font_size,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -38,6 +48,15 @@ impl TextProperties {
             width: 0,
             height: 0,
             font_size: 0,
+        }
+    }
+    pub fn to_rect_properties(&self) -> RectangleProperties {
+        RectangleProperties {
+            x: self.x,
+            y: self.y,
+            width: self.width,
+            height: self.height,
+            radius: 0,
         }
     }
 }

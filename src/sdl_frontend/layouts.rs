@@ -547,7 +547,7 @@ pub const LAYOUT_1920X1080: Layout = Layout {
             y: 0,
             width: 700,
             height: 170,
-            font_size: 140,
+            font_size: 120,
         },
         left_nation: TextProperties {
             x: 290,
@@ -618,7 +618,7 @@ pub const LAYOUT_1920X1080: Layout = Layout {
             y: 0,
             width: 700,
             height: 170,
-            font_size: 140,
+            font_size: 120,
         },
         right_nation: TextProperties {
             x: 1510,

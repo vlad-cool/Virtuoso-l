@@ -6,6 +6,8 @@ use std::path::Path;
 use std::process::Command;
 use std::vec::Vec;
 
+#[allow(unused)]
+
 fn generate_licenses() {
     match Command::new("cargo")
         .args(["license", "--avoid-dev-deps", "--all-features", "--json"])

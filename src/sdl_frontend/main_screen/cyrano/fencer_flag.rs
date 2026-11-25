@@ -1,16 +1,20 @@
 use std::path::PathBuf;
+use std::rc::Rc;
 use std::str::FromStr;
 
 use rust_iso3166::{self, CountryCode};
+use sdl2::ttf::Font;
 
 use crate::match_info::MatchInfo;
-use crate::sdl_frontend::widgets::Image;
+use crate::sdl_frontend::colors::INACTIVE;
+use crate::sdl_frontend::widgets::{Image, Label};
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
 pub struct Drawer<'a> {
     left_nation_widget: Image<'a>,
     right_nation_widget: Image<'a>,
-
+    left_nation_empty: Label<'a>,
+    right_nation_empty: Label<'a>,
     left_country: Option<rust_iso3166::CountryCode>,
     left_country_present: bool,
     left_country_updated: bool,
@@ -22,6 +26,26 @@ pub struct Drawer<'a> {
 impl<'a> Drawer<'a> {
     pub fn new(context: WidgetContext<'a>) -> Option<Self> {
         if let Some(layout) = &context.layout.cyrano_layout {
+            let font: Rc<Font<'_, '_>> = context.get_font(layout.left_nation.font_size);
+
+            let mut left_nation_empty: Label<'_> = Label::new(
+                context.canvas.clone(),
+                context.texture_creator,
+                font.clone(),
+                layout.left_flag.to_text_properties(0),
+                context.logger,
+            );
+            let mut right_nation_empty: Label<'_> = Label::new(
+                context.canvas.clone(),
+                context.texture_creator,
+                font.clone(),
+                layout.right_flag.to_text_properties(0),
+                context.logger,
+            );
+            
+            left_nation_empty.render("FLAG".to_string(), INACTIVE, None);
+            right_nation_empty.render("FLAG".to_string(), INACTIVE, None);
+
             Some(Self {
                 left_nation_widget: Image::new(
                     context.canvas.clone(),
@@ -35,6 +59,8 @@ impl<'a> Drawer<'a> {
                     layout.right_flag,
                     context.logger,
                 ),
+                left_nation_empty,
+                right_nation_empty,
 
                 left_country: None,
                 left_country_present: false,
@@ -131,8 +157,14 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
         if self.left_country_present {
             self.left_nation_widget.draw();
         }
+        else {
+            self.left_nation_empty.draw();
+        }
         if self.right_country_present {
             self.right_nation_widget.draw();
+        }
+        else {
+            self.right_nation_empty.draw();
         }
     }
 }

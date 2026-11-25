@@ -3,7 +3,7 @@ use sdl2::ttf::Font;
 use std::rc::Rc;
 
 use crate::match_info::MatchInfo;
-use crate::sdl_frontend::colors::FENCER_NATION_TEXT;
+use crate::sdl_frontend::colors::{INACTIVE, FENCER_NATION_TEXT};
 use crate::sdl_frontend::widgets::Label;
 use crate::sdl_frontend::{VirtuosoWidget, WidgetContext};
 
@@ -62,14 +62,25 @@ impl<'a> VirtuosoWidget for Drawer<'a> {
     }
 
     fn render(&mut self) {
+        let (left_fencer, left_color) = if self.left_nation == "" {
+            (&"CIT".to_string(), INACTIVE)
+        } else {
+            (&self.left_nation, FENCER_NATION_TEXT)
+        };
+        let (right_fencer, right_color) = if self.right_nation == "" {
+            (&"CIT".to_string(), INACTIVE)
+        } else {
+            (&self.right_nation, FENCER_NATION_TEXT)
+        };
+
         if self.left_nation_updated {
             self.left_nation_widget
-                .render(self.left_nation.clone(), FENCER_NATION_TEXT, None);
+                .render(left_fencer.clone(), left_color, None);
             self.left_nation_updated = false;
         }
         if self.right_nation_updated {
             self.right_nation_widget
-                .render(self.right_nation.clone(), FENCER_NATION_TEXT, None);
+                .render(right_fencer.clone(), right_color, None);
             self.right_nation_updated = false;
         }
 
