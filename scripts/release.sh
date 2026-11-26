@@ -1,52 +1,52 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -euo pipefail
 
-VERSION=$(yq '.package.version' Cargo.toml)
+VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+BIN=Virtuoso
+X86="$BIN-$VERSION-x86_64-unknown-linux-gnu"
+ARM="$BIN-$VERSION-armv7-unknown-linux-gnueabihf"
+
+confirm() {
+    read -r -p "Do you want to continue anyway? [y/N] " response
+    case "$response" in
+        [yY][eE][sS]|[yY]) echo "Continuing..." ;;
+        *) echo "Aborted."; exit 1 ;;
+    esac
+}
+
+cleanup() { rm -f "$X86" "$ARM"; }
+trap cleanup EXIT
 
 if [[ -n "$(git status --porcelain)" ]]; then
     echo "Warning: You have uncommitted Git changes:"
     git status --short
-    echo ""
-    read -r -p "Do you want to continue anyway? [y/N] " response
-    case "$response" in
-        [yY][eE][sS]|[yY]) 
-            echo "Continuing..."
-            ;;
-        *)
-            echo "Aborted."
-            exit 1
-            ;;
-    esac
+    echo
+    confirm
+fi
+
+git fetch --quiet
+if [[ -n "$(git log '@{u}..HEAD' --oneline 2>/dev/null)" ]]; then
+    echo "Warning: You have local commits that are not pushed."
+    confirm
 fi
 
 if gh release view "v$VERSION" >/dev/null 2>&1; then
-    echo "Warning: Looks like release with such tag already exists:"
-    git status --short
-    echo ""
-    read -r -p "Do you want to continue anyway? [y/N] " response
-    case "$response" in
-        [yY][eE][sS]|[yY]) 
-            echo "Continuing..."
-            ;;
-        *)
-            echo "Aborted."
-            exit 1
-            ;;
-    esac
+    echo "Warning: A release with the tag v$VERSION already exists."
+    confirm
 fi
 
-echo Pushing $VERSION version
+echo "Releasing version $VERSION"
 
-cross build --target armv7-unknown-linux-gnueabihf --release --no-default-features --features=embeded_device,sdl_frontend,legacy_backend_full,gpio_frontend,repeater,cyrano_server
+cross build --target armv7-unknown-linux-gnueabihf --release \
+--no-default-features \
+--features=embeded_device,sdl_frontend,legacy_backend_full,gpio_frontend,repeater,cyrano_server
 cargo build --release
 
-cp target/release/Virtuoso Virtuoso-$VERSION-x86_64-unknown-linux-gnu 
-cp target/armv7-unknown-linux-gnueabihf/release/Virtuoso Virtuoso-$VERSION-armv7-unknown-linux-gnueabihf
+cp "target/release/$BIN" "$X86"
+cp "target/armv7-unknown-linux-gnueabihf/release/$BIN" "$ARM"
 
-gh release create v$VERSION \
-    --title "Release v$VERSION" \
-    --notes "Automated release" \
-    Virtuoso-$VERSION-x86_64-unknown-linux-gnu  \
-    Virtuoso-$VERSION-armv7-unknown-linux-gnueabihf
-
-rm Virtuoso-$VERSION-x86_64-unknown-linux-gnu
-rm Virtuoso-$VERSION-armv7-unknown-linux-gnueabihf
+gh release create "v$VERSION" \
+--target "$(git rev-parse HEAD)" \
+--title "Release v$VERSION" \
+--notes "Automated release" \
+"$X86" "$ARM"
